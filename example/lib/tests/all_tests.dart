@@ -624,7 +624,7 @@ Future<TestResult> _testSaveToDisk() async {
     sheet.updateCell(CellIndex.indexByString('A1'), TextCellValue('Saved!'));
 
     final bytes = excel.encode()!;
-    final dir = await getTemporaryDirectory();
+  final dir = await _resolveWritableDirectory();
     final file = File('${dir.path}/test_output.xlsx');
     await file.writeAsBytes(bytes);
 
@@ -643,5 +643,15 @@ Future<TestResult> _testSaveToDisk() async {
         passed: false,
         message: 'Exception: $e',
         durationMs: sw.elapsedMilliseconds);
+  }
+}
+
+Future<Directory> _resolveWritableDirectory() async {
+  try {
+    return await getTemporaryDirectory();
+  } on MissingPluginException {
+    return Directory.systemTemp;
+  } on UnsupportedError {
+    return Directory.systemTemp;
   }
 }

@@ -19,4 +19,5 @@ doc/api/
 .tmp/
 *.xlsx
 !example/assets/example.xlsx
+!test/test_resources/*.xlsx
 test/test_output/

@@ -13,17 +13,26 @@ void main() {
       await tester.pumpWidget(const ExcelPlusTestApp());
       await tester.pumpAndSettle();
 
-      // Tap the "Run All" button
+      expect(find.text('Workbook Studio'), findsWidgets);
+      expect(find.text('Open Bundled Sample'), findsOneWidget);
+
+      await tester.tap(find.text('Open Bundled Sample'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Bundled example.xlsx'), findsOneWidget);
+
+      final validationNav = find.byKey(const Key('nav_validation_lab'));
+      expect(validationNav, findsOneWidget);
+      await tester.tap(validationNav);
+      await tester.pumpAndSettle();
+
       final runAllBtn = find.byKey(const Key('run_all_button'));
       expect(runAllBtn, findsOneWidget);
       await tester.tap(runAllBtn);
 
-      // Wait for all tests to complete — poll until not running.
-      // Each pump advances the frame and lets async test futures resolve.
       final state = tester.state<TestRunnerScreenState>(
           find.byType(TestRunnerScreen));
 
-      // Give generous timeout for mobile (100K cell test can be slow)
       const maxWait = Duration(minutes: 5);
       final deadline = DateTime.now().add(maxWait);
 
@@ -32,12 +41,10 @@ void main() {
       }
       await tester.pumpAndSettle();
 
-      // Assert all tests ran
       final allTests = buildAllTests();
       expect(state.results.length, allTests.length,
           reason: 'Not all tests produced results');
 
-      // Check each test individually for clear failure messages
       for (final test in allTests) {
         final result = state.results[test.name];
         expect(result, isNotNull, reason: '${test.name} has no result');
@@ -53,17 +60,14 @@ void main() {
             reason: '${test.name} FAILED: ${result.message}');
       }
 
-      // Summary
       expect(state.failCount, 0,
           reason:
               '${state.failCount} test(s) failed out of ${allTests.length}');
 
-      // Print the full human-readable report
       final report = state.generateReport();
       debugPrint('');
       debugPrint(report);
 
-      // Verify report was saved to device
       expect(state.lastReportPath, isNotNull,
           reason: 'Test report should have been saved to device');
       debugPrint('Report saved to: ${state.lastReportPath}');

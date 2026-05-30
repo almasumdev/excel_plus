@@ -1,6 +1,6 @@
 name: excel_plus
 description: Read, create, and edit Excel .xlsx files in Dart and Flutter with high performance and low memory usage.
-version: 0.0.3
+version: 0.0.4
 homepage: https://github.com/Masum-MSNR/excel_plus
 repository: https://github.com/Masum-MSNR/excel_plus
 issue_tracker: https://github.com/Masum-MSNR/excel_plus/issues

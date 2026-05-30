@@ -1,3 +1,10 @@
+## 0.0.4
+
+- Upgraded the `xml` dependency to `^7.0.1` and updated internal XML name handling for compatibility.
+- Reworked the example app into a real workbook demo with import, inline editing, styling, sheet tools, and export flows.
+- Added a dedicated Validation Lab screen, bundled workbook sample, and safer temp-directory fallback when platform storage plugins are unavailable.
+- Improved the example web bootstrap so debug runs use a compatible renderer while wasm builds still opt into `skwasm`.
+
 ## 0.0.3
 
 - Organized API docs into 5 categories: Core, Cell Values, Styling, Number Formats, Layout.
