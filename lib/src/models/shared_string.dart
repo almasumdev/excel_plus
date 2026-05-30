@@ -104,9 +104,9 @@ class SharedString {
 
   /// Returns or lazily builds the XML element for this shared string.
   XmlElement get node {
-    _node ??= XmlElement(XmlName('si'), [], [
-      XmlElement(XmlName('t'),
-          [XmlAttribute(XmlName("space", "xml"), "preserve")],
+    _node ??= XmlElement(_xmlName('si'), [], [
+      XmlElement(_xmlName('t'),
+          [XmlAttribute(_xmlName("space", "xml"), "preserve")],
           [XmlText(_cachedValue)]),
     ]);
     return _node!;

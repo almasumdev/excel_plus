@@ -33,8 +33,9 @@ void main() {
   var bytes = excel.encode();
   final saveMs = sw.elapsedMilliseconds;
   final rssAfterSave = ProcessInfo.currentRss / (1024 * 1024);
-  final fileSize = bytes != null ? (bytes.length / (1024 * 1024)).toStringAsFixed(1) : '?';
-  print('[SAVE]   ${saveMs}ms | RSS: ${rssAfterSave.toStringAsFixed(1)} MB | File: ${fileSize} MB');
+  final fileSize =
+      bytes != null ? (bytes.length / (1024 * 1024)).toStringAsFixed(1) : '?';
+  print('[SAVE]   ${saveMs}ms | RSS: ${rssAfterSave.toStringAsFixed(1)} MB | File: $fileSize MB');
 
   // Write to temp file for read benchmark
   final tmpFile = File('benchmark_tmp.xlsx');

@@ -53,48 +53,48 @@ class HeaderFooter {
     final attributes = <XmlAttribute>[];
     if (alignWithMargins != null) {
       attributes.add(XmlAttribute(
-          XmlName("alignWithMargins"), alignWithMargins.toString()));
+          _xmlName("alignWithMargins"), alignWithMargins.toString()));
     }
     if (differentFirst != null) {
       attributes.add(
-          XmlAttribute(XmlName("differentFirst"), differentFirst.toString()));
+          XmlAttribute(_xmlName("differentFirst"), differentFirst.toString()));
     }
     if (differentOddEven != null) {
       attributes.add(XmlAttribute(
-          XmlName("differentOddEven"), differentOddEven.toString()));
+          _xmlName("differentOddEven"), differentOddEven.toString()));
     }
     if (scaleWithDoc != null) {
       attributes
-          .add(XmlAttribute(XmlName("scaleWithDoc"), scaleWithDoc.toString()));
+          .add(XmlAttribute(_xmlName("scaleWithDoc"), scaleWithDoc.toString()));
     }
 
     final children = <XmlNode>[];
     if (evenHeader != null) {
       children.add(XmlElement(
-          XmlName("evenHeader"), [], [XmlText(evenHeader!)]));
+          _xmlName("evenHeader"), [], [XmlText(evenHeader!)]));
     }
     if (evenFooter != null) {
       children.add(XmlElement(
-          XmlName("evenFooter"), [], [XmlText(evenFooter!)]));
+          _xmlName("evenFooter"), [], [XmlText(evenFooter!)]));
     }
     if (firstHeader != null) {
       children.add(XmlElement(
-          XmlName("firstHeader"), [], [XmlText(firstHeader!)]));
+          _xmlName("firstHeader"), [], [XmlText(firstHeader!)]));
     }
     if (firstFooter != null) {
       children.add(XmlElement(
-          XmlName("firstFooter"), [], [XmlText(firstFooter!)]));
+          _xmlName("firstFooter"), [], [XmlText(firstFooter!)]));
     }
     if (oddHeader != null) {
       children.add(XmlElement(
-          XmlName("oddHeader"), [], [XmlText(oddHeader!)]));
+          _xmlName("oddHeader"), [], [XmlText(oddHeader!)]));
     }
     if (oddFooter != null) {
       children.add(XmlElement(
-          XmlName("oddFooter"), [], [XmlText(oddFooter!)]));
+          _xmlName("oddFooter"), [], [XmlText(oddFooter!)]));
     }
 
-    return XmlElement(XmlName("headerFooter"), attributes, children);
+    return XmlElement(_xmlName("headerFooter"), attributes, children);
   }
 
   /// Parses a [HeaderFooter] from an XML element.

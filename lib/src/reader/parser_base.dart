@@ -80,12 +80,12 @@ abstract class _ParserBase {
             .first
             .children
             .add(XmlElement(
-              XmlName('Relationship'),
+              _xmlName('Relationship'),
               <XmlAttribute>[
-                XmlAttribute(XmlName('Id'), 'rId$rIdNumber'),
-                XmlAttribute(XmlName('Type'),
+                XmlAttribute(_xmlName('Id'), 'rId$rIdNumber'),
+                XmlAttribute(_xmlName('Type'),
                     'http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings'),
-                XmlAttribute(XmlName('Target'), 'sharedStrings.xml')
+                XmlAttribute(_xmlName('Target'), 'sharedStrings.xml')
               ],
             ));
         if (!_rId.contains('rId$rIdNumber')) {
@@ -109,10 +109,10 @@ abstract class _ParserBase {
               .first
               .children
               .add(XmlElement(
-                XmlName('Override'),
+                _xmlName('Override'),
                 <XmlAttribute>[
-                  XmlAttribute(XmlName('PartName'), '/xl/sharedStrings.xml'),
-                  XmlAttribute(XmlName('ContentType'), content),
+                  XmlAttribute(_xmlName('PartName'), '/xl/sharedStrings.xml'),
+                  XmlAttribute(_xmlName('ContentType'), content),
                 ],
               ));
         }

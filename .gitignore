@@ -18,4 +18,5 @@ doc/api/
 # Temporary/generated files (benchmarks, test outputs)
 .tmp/
 *.xlsx
+!example/assets/example.xlsx
 test/test_output/

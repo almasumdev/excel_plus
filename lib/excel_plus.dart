@@ -52,3 +52,6 @@ part 'src/utils/archive_utils.dart';
 part 'src/utils/cell_utils.dart';
 part 'src/utils/color_utils.dart';
 part 'src/utils/fast_list.dart';
+
+XmlName _xmlName(String local, [String? prefix]) =>
+    XmlName.parts(local, prefix: prefix);

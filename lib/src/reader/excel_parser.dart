@@ -398,10 +398,10 @@ class Parser extends _ParserBase with _ParserStylesMixin {
         ?.findAllElements('Relationships')
         .first
         .children
-        .add(XmlElement(XmlName('Relationship'), <XmlAttribute>[
-          XmlAttribute(XmlName('Id'), 'rId$ridNumber'),
-          XmlAttribute(XmlName('Type'), '$_relationships/worksheet'),
-          XmlAttribute(XmlName('Target'), 'worksheets/sheet$sheetNumber.xml'),
+        .add(XmlElement(_xmlName('Relationship'), <XmlAttribute>[
+          XmlAttribute(_xmlName('Id'), 'rId$ridNumber'),
+          XmlAttribute(_xmlName('Type'), '$_relationships/worksheet'),
+          XmlAttribute(_xmlName('Target'), 'worksheets/sheet$sheetNumber.xml'),
         ]));
 
     if (!_rId.contains('rId$ridNumber')) {
@@ -413,12 +413,12 @@ class Parser extends _ParserBase with _ParserStylesMixin {
         .first
         .children
         .add(XmlElement(
-          XmlName('sheet'),
+          _xmlName('sheet'),
           <XmlAttribute>[
-            XmlAttribute(XmlName('state'), 'visible'),
-            XmlAttribute(XmlName('name'), newSheet),
-            XmlAttribute(XmlName('sheetId'), '$sheetNumber'),
-            XmlAttribute(XmlName('r:id'), 'rId$ridNumber')
+            XmlAttribute(_xmlName('state'), 'visible'),
+            XmlAttribute(_xmlName('name'), newSheet),
+            XmlAttribute(_xmlName('sheetId'), '$sheetNumber'),
+            XmlAttribute(_xmlName('r:id'), 'rId$ridNumber')
           ],
         ));
 
@@ -442,12 +442,12 @@ class Parser extends _ParserBase with _ParserStylesMixin {
         .first
         .children
         .add(XmlElement(
-          XmlName('Override'),
+          _xmlName('Override'),
           <XmlAttribute>[
-            XmlAttribute(XmlName('ContentType'),
+            XmlAttribute(_xmlName('ContentType'),
                 'application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml'),
             XmlAttribute(
-                XmlName('PartName'), '/xl/worksheets/sheet$sheetNumber.xml'),
+                _xmlName('PartName'), '/xl/worksheets/sheet$sheetNumber.xml'),
           ],
         ));
     // Set sheetData reference directly — don't re-parse via _parseTable

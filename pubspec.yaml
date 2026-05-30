@@ -15,8 +15,8 @@ environment:
   sdk: ^3.11.4
 
 dependencies:
-  archive: ^4.0.4
-  xml: ^6.3.0
+  archive: ^4.0.9
+  xml: ^7.0.1
   web: ^1.1.1
 
 dev_dependencies:

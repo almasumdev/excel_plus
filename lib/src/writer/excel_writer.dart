@@ -45,7 +45,7 @@ class ExcelWriter extends _WriterBase with _WriterStylesMixin {
       final sheetData = xmlFile.findAllElements('sheetData').first;
       final index = worksheet.children.indexOf(sheetData);
 
-      worksheet.children.insert(index, XmlElement(XmlName('cols'), [], []));
+      worksheet.children.insert(index, XmlElement(_xmlName('cols'), [], []));
     }
 
     var columns = columnElements.first;
@@ -89,7 +89,7 @@ class ExcelWriter extends _WriterBase with _WriterStylesMixin {
     }
     List<XmlElement> sheetList =
         _excel._xmlFiles['xl/workbook.xml']!.findAllElements('sheet').toList();
-    XmlElement elementFound = XmlElement(XmlName(''));
+    XmlElement elementFound = XmlElement(_xmlName(''));
 
     int position = -1;
     for (int i = 0; i < sheetList.length; i++) {
@@ -173,7 +173,7 @@ class ExcelWriter extends _WriterBase with _WriterStylesMixin {
       worksheet.children.insert(
         index + 1,
         XmlElement(
-            XmlName('mergeCells'), [XmlAttribute(XmlName('count'), '0')]),
+            _xmlName('mergeCells'), [XmlAttribute(_xmlName('count'), '0')]),
       );
       mergeElement = xmlFile.findAllElements('mergeCells').first;
     }
@@ -183,7 +183,7 @@ class ExcelWriter extends _WriterBase with _WriterStylesMixin {
 
     if (mergeElement.getAttributeNode('count') == null) {
       mergeElement.attributes.add(
-          XmlAttribute(XmlName('count'), spannedItems.length.toString()));
+          XmlAttribute(_xmlName('count'), spannedItems.length.toString()));
     } else {
       mergeElement.getAttributeNode('count')!.value =
           spannedItems.length.toString();
@@ -192,7 +192,7 @@ class ExcelWriter extends _WriterBase with _WriterStylesMixin {
     mergeElement.children.clear();
     for (final ref in spannedItems) {
       mergeElement.children.add(XmlElement(
-          XmlName('mergeCell'), [XmlAttribute(XmlName('ref'), ref)], []));
+          _xmlName('mergeCell'), [XmlAttribute(_xmlName('ref'), ref)], []));
     }
   }
 
@@ -213,22 +213,22 @@ class ExcelWriter extends _WriterBase with _WriterStylesMixin {
     if (itrSheetViewsElement.isNotEmpty) {
       itrSheetViewsElement.first.children.clear();
       itrSheetViewsElement.first.children.add(XmlElement(
-        XmlName('sheetView'),
+        _xmlName('sheetView'),
         [
           if (sheetObject.isRTL)
-            XmlAttribute(XmlName('rightToLeft'), '1'),
-          XmlAttribute(XmlName('workbookViewId'), '0'),
+            XmlAttribute(_xmlName('rightToLeft'), '1'),
+          XmlAttribute(_xmlName('workbookViewId'), '0'),
         ],
       ));
     } else {
       xmlFile.findAllElements('worksheet').first.children.add(
-        XmlElement(XmlName('sheetViews'), [], [
+        XmlElement(_xmlName('sheetViews'), [], [
           XmlElement(
-            XmlName('sheetView'),
+            _xmlName('sheetView'),
             [
               if (sheetObject.isRTL)
-                XmlAttribute(XmlName('rightToLeft'), '1'),
-              XmlAttribute(XmlName('workbookViewId'), '0'),
+                XmlAttribute(_xmlName('rightToLeft'), '1'),
+              XmlAttribute(_xmlName('workbookViewId'), '0'),
             ],
           )
         ]),
@@ -307,17 +307,17 @@ class ExcelWriter extends _WriterBase with _WriterStylesMixin {
           worksheetElement.children.remove(sheetFormatPrElement);
         }
       } else if (defaultRowHeight != null || defaultColumnWidth != null) {
-        sheetFormatPrElement = XmlElement(XmlName('sheetFormatPr'), [], []);
+        sheetFormatPrElement = XmlElement(_xmlName('sheetFormatPr'), [], []);
         worksheetElement.children.insert(0, sheetFormatPrElement);
       }
 
       if (defaultRowHeight != null) {
         sheetFormatPrElement!.attributes.add(XmlAttribute(
-            XmlName('defaultRowHeight'), defaultRowHeight.toStringAsFixed(2)));
+            _xmlName('defaultRowHeight'), defaultRowHeight.toStringAsFixed(2)));
       }
       if (defaultColumnWidth != null) {
         sheetFormatPrElement!.attributes.add(XmlAttribute(
-            XmlName('defaultColWidth'), defaultColumnWidth.toStringAsFixed(2)));
+            _xmlName('defaultColWidth'), defaultColumnWidth.toStringAsFixed(2)));
       }
 
       _setColumns(sheetObject, xmlFile);

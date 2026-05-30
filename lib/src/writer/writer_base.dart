@@ -12,12 +12,12 @@ abstract class _WriterBase {
   _WriterBase(this._excel, this.parser);
 
   void _addNewColumn(XmlElement columns, int min, int max, double width) {
-    columns.children.add(XmlElement(XmlName('col'), [
-      XmlAttribute(XmlName('min'), (min + 1).toString()),
-      XmlAttribute(XmlName('max'), (max + 1).toString()),
-      XmlAttribute(XmlName('width'), width.toStringAsFixed(2)),
-      XmlAttribute(XmlName('bestFit'), "1"),
-      XmlAttribute(XmlName('customWidth'), "1"),
+    columns.children.add(XmlElement(_xmlName('col'), [
+      XmlAttribute(_xmlName('min'), (min + 1).toString()),
+      XmlAttribute(_xmlName('max'), (max + 1).toString()),
+      XmlAttribute(_xmlName('width'), width.toStringAsFixed(2)),
+      XmlAttribute(_xmlName('bestFit'), "1"),
+      XmlAttribute(_xmlName('customWidth'), "1"),
     ], []));
   }
 
