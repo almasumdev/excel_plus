@@ -75,19 +75,21 @@ class SharedString {
 
   /// Creates a [SharedString] from an XML element.
   SharedString({required XmlElement node})
-      : _node = node,
-        _cachedValue = _extractStringValue(node),
-        _isRichText = node.childElements.any((e) => e.localName == 'r');
+    : _node = node,
+      _cachedValue = _extractStringValue(node),
+      _isRichText = node.childElements.any((e) => e.localName == 'r');
 
   SharedString._fromText(String value)
-      : _node = null,
-        _cachedValue = value,
-        _isRichText = false;
+    : _node = null,
+      _cachedValue = value,
+      _isRichText = false;
 
   @override
   String toString() {
-    assert(false,
-        'prefer stringValue over SharedString.toString() in development');
+    assert(
+      false,
+      'prefer stringValue over SharedString.toString() in development',
+    );
     return _cachedValue;
   }
 
@@ -105,9 +107,11 @@ class SharedString {
   /// Returns or lazily builds the XML element for this shared string.
   XmlElement get node {
     _node ??= XmlElement(_xmlName('si'), [], [
-      XmlElement(_xmlName('t'),
-          [XmlAttribute(_xmlName("space", "xml"), "preserve")],
-          [XmlText(_cachedValue)]),
+      XmlElement(
+        _xmlName('t'),
+        [XmlAttribute(_xmlName("space", "xml"), "preserve")],
+        [XmlText(_cachedValue)],
+      ),
     ]);
     return _node!;
   }
@@ -161,23 +165,28 @@ class SharedString {
                       break;
                     case 'u': //18.4.13 u (Underline)
                       style = style.copyWith(
-                          underlineVal:
-                              runProperty.getAttribute('val') == 'double'
-                                  ? Underline.Double
-                                  : Underline.Single);
+                        underlineVal:
+                            runProperty.getAttribute('val') == 'double'
+                            ? Underline.Double
+                            : Underline.Single,
+                      );
                       break;
                     case 'sz': //18.4.11 sz (Font Size)
-                      style =
-                          style.copyWith(fontSizeVal: getDouble(runProperty));
+                      style = style.copyWith(
+                        fontSizeVal: getDouble(runProperty),
+                      );
                       break;
                     case 'rFont': //18.4.5 rFont (Font)
                       style = style.copyWith(
-                          fontFamilyVal: runProperty.getAttribute('val'));
+                        fontFamilyVal: runProperty.getAttribute('val'),
+                      );
                       break;
                     case 'color': //18.3.1.15 color (Data Bar Color)
                       style = style.copyWith(
-                          fontColorHexVal:
-                              runProperty.getAttribute('rgb')?.excelColor);
+                        fontColorHexVal: runProperty
+                            .getAttribute('rgb')
+                            ?.excelColor,
+                      );
                       break;
                   }
                 }

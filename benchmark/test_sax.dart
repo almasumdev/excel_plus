@@ -10,7 +10,9 @@ void main() {
   // Test self-closing
   final xml2 = '<sheetData/>';
   for (final e in parseEvents(xml2)) {
-    if (e is XmlStartElementEvent) print('START: ${e.name} selfClose=${e.isSelfClosing}');
+    if (e is XmlStartElementEvent) {
+      print('START: ${e.name} selfClose=${e.isSelfClosing}');
+    }
     if (e is XmlEndElementEvent) print('END: ${e.name}');
   }
 

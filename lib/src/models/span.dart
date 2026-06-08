@@ -14,13 +14,11 @@ class _Span {
     required this.columnSpanEnd,
   });
 
-  _Span.fromCellIndex({
-    required CellIndex start,
-    required CellIndex end,
-  })  : rowSpanStart = start.rowIndex,
-        columnSpanStart = start.columnIndex,
-        rowSpanEnd = end.rowIndex,
-        columnSpanEnd = end.columnIndex;
+  _Span.fromCellIndex({required CellIndex start, required CellIndex end})
+    : rowSpanStart = start.rowIndex,
+      columnSpanStart = start.columnIndex,
+      rowSpanEnd = end.rowIndex,
+      columnSpanEnd = end.columnIndex;
 
   @override
   bool operator ==(Object other) =>

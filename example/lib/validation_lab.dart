@@ -83,8 +83,10 @@ class TestRunnerScreenState extends State<TestRunnerScreen> {
       _currentIndex = -1;
       _passCount = _results.values.where((r) => r != null && r.passed).length;
       _failCount = _results.values.where((r) => r != null && !r.passed).length;
-      _totalDurationMs =
-          _results.values.fold(0, (sum, r) => sum + (r?.durationMs ?? 0));
+      _totalDurationMs = _results.values.fold(
+        0,
+        (sum, r) => sum + (r?.durationMs ?? 0),
+      );
     });
   }
 
@@ -95,14 +97,23 @@ class TestRunnerScreenState extends State<TestRunnerScreen> {
         '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}';
 
     final buf = StringBuffer();
-    buf.writeln('╔══════════════════════════════════════════════════════════════╗');
-    buf.writeln('║              excel_plus — Integration Test Report           ║');
-    buf.writeln('╠══════════════════════════════════════════════════════════════╣');
+    buf.writeln(
+      '╔══════════════════════════════════════════════════════════════╗',
+    );
+    buf.writeln(
+      '║              excel_plus — Integration Test Report           ║',
+    );
+    buf.writeln(
+      '╠══════════════════════════════════════════════════════════════╣',
+    );
     buf.writeln('║  Date     : $timestamp');
     buf.writeln(
-        '║  Platform : ${Platform.operatingSystem} ${Platform.operatingSystemVersion}');
+      '║  Platform : ${Platform.operatingSystem} ${Platform.operatingSystemVersion}',
+    );
     buf.writeln('║  Dart     : ${Platform.version.split(' ').first}');
-    buf.writeln('╚══════════════════════════════════════════════════════════════╝');
+    buf.writeln(
+      '╚══════════════════════════════════════════════════════════════╝',
+    );
     buf.writeln();
 
     const numW = 4;
@@ -112,9 +123,11 @@ class TestRunnerScreenState extends State<TestRunnerScreen> {
     const memW = 10;
 
     buf.writeln(
-        '${'#'.padRight(numW)} ${'STATUS'.padRight(statusW)} ${'TEST NAME'.padRight(nameW)} ${'TIME'.padLeft(timeW)} ${'MEMORY'.padLeft(memW)}   MESSAGE');
+      '${'#'.padRight(numW)} ${'STATUS'.padRight(statusW)} ${'TEST NAME'.padRight(nameW)} ${'TIME'.padLeft(timeW)} ${'MEMORY'.padLeft(memW)}   MESSAGE',
+    );
     buf.writeln(
-        '${'─' * numW} ${'─' * statusW} ${'─' * nameW} ${'─' * timeW} ${'─' * memW}   ${'─' * 30}');
+      '${'─' * numW} ${'─' * statusW} ${'─' * nameW} ${'─' * timeW} ${'─' * memW}   ${'─' * 30}',
+    );
 
     var idx = 1;
     for (final test in _tests) {
@@ -122,7 +135,9 @@ class TestRunnerScreenState extends State<TestRunnerScreen> {
       final num = idx.toString().padRight(numW);
       final status = result == null
           ? 'SKIP'.padRight(statusW)
-          : (result.passed ? 'PASS'.padRight(statusW) : 'FAIL'.padRight(statusW));
+          : (result.passed
+                ? 'PASS'.padRight(statusW)
+                : 'FAIL'.padRight(statusW));
       final name = test.name.padRight(nameW);
       final time = result != null
           ? '${result.durationMs}ms'.padLeft(timeW)
@@ -151,9 +166,11 @@ class TestRunnerScreenState extends State<TestRunnerScreen> {
       buf.writeln('  ├─ Skipped  : $skipped');
     }
     buf.writeln(
-        '  ├─ Duration : ${_totalDurationMs}ms (${(_totalDurationMs / 1000).toStringAsFixed(1)}s)');
+      '  ├─ Duration : ${_totalDurationMs}ms (${(_totalDurationMs / 1000).toStringAsFixed(1)}s)',
+    );
     buf.writeln(
-        '  └─ Result   : ${_failCount == 0 && ran == total ? '✅ ALL PASSED' : '❌ FAILURES DETECTED'}');
+      '  └─ Result   : ${_failCount == 0 && ran == total ? '✅ ALL PASSED' : '❌ FAILURES DETECTED'}',
+    );
     buf.writeln();
 
     final failures = _tests.where((t) {
@@ -234,10 +251,7 @@ class TestRunnerScreenState extends State<TestRunnerScreen> {
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [
-                      colorScheme.secondaryContainer,
-                      Colors.white,
-                    ],
+                    colors: [colorScheme.secondaryContainer, Colors.white],
                   ),
                 ),
                 child: Column(
@@ -267,7 +281,9 @@ class TestRunnerScreenState extends State<TestRunnerScreen> {
                           ),
                         ),
                         Text(
-                          _running ? 'Running regression suite…' : 'Regression suite for the example app',
+                          _running
+                              ? 'Running regression suite…'
+                              : 'Regression suite for the example app',
                           style: theme.textTheme.headlineSmall?.copyWith(
                             fontWeight: FontWeight.w800,
                           ),
@@ -291,10 +307,14 @@ class TestRunnerScreenState extends State<TestRunnerScreen> {
                               ? const SizedBox(
                                   width: 18,
                                   height: 18,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
                                 )
                               : const Icon(Icons.play_arrow_rounded),
-                          label: Text(_running ? 'Running...' : 'Run All Checks'),
+                          label: Text(
+                            _running ? 'Running...' : 'Run All Checks',
+                          ),
                         ),
                         OutlinedButton.icon(
                           onPressed: _results.isEmpty || _running
@@ -305,7 +325,9 @@ class TestRunnerScreenState extends State<TestRunnerScreen> {
                                     return;
                                   }
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Report saved to $path')),
+                                    SnackBar(
+                                      content: Text('Report saved to $path'),
+                                    ),
                                   );
                                 },
                           icon: const Icon(Icons.description_outlined),
@@ -390,8 +412,8 @@ class TestRunnerScreenState extends State<TestRunnerScreen> {
                           color: result == null
                               ? colorScheme.outlineVariant
                               : result.passed
-                                  ? const Color(0xFF84CC16)
-                                  : const Color(0xFFF87171),
+                              ? const Color(0xFF84CC16)
+                              : const Color(0xFFF87171),
                         ),
                       ),
                       child: Row(
@@ -425,8 +447,8 @@ class TestRunnerScreenState extends State<TestRunnerScreen> {
                                     color: result == null
                                         ? colorScheme.onSurfaceVariant
                                         : result.passed
-                                            ? const Color(0xFF166534)
-                                            : const Color(0xFF991B1B),
+                                        ? const Color(0xFF166534)
+                                        : const Color(0xFF991B1B),
                                   ),
                                 ),
                               ],

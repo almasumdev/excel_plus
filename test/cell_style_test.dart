@@ -9,17 +9,23 @@ void main() {
       var excel = Excel.createExcel();
       var sheet = excel['Sheet1'];
       sheet.updateCell(CellIndex.indexByString('A1'), TextCellValue('bold'));
-      sheet.cell(CellIndex.indexByString('A1')).cellStyle =
-          CellStyle(bold: true);
+      sheet.cell(CellIndex.indexByString('A1')).cellStyle = CellStyle(
+        bold: true,
+      );
 
       sheet.updateCell(CellIndex.indexByString('B1'), TextCellValue('italic'));
-      sheet.cell(CellIndex.indexByString('B1')).cellStyle =
-          CellStyle(italic: true);
+      sheet.cell(CellIndex.indexByString('B1')).cellStyle = CellStyle(
+        italic: true,
+      );
 
       sheet.updateCell(
-          CellIndex.indexByString('C1'), TextCellValue('bold+italic'));
-      sheet.cell(CellIndex.indexByString('C1')).cellStyle =
-          CellStyle(bold: true, italic: true);
+        CellIndex.indexByString('C1'),
+        TextCellValue('bold+italic'),
+      );
+      sheet.cell(CellIndex.indexByString('C1')).cellStyle = CellStyle(
+        bold: true,
+        italic: true,
+      );
 
       var bytes = excel.encode();
       saveTestOutput(bytes, 'style_bold_italic');
@@ -38,32 +44,36 @@ void main() {
       var excel = Excel.createExcel();
       var sheet = excel['Sheet1'];
       sheet.updateCell(CellIndex.indexByString('A1'), TextCellValue('big'));
-      sheet.cell(CellIndex.indexByString('A1')).cellStyle =
-          CellStyle(fontSize: 24);
+      sheet.cell(CellIndex.indexByString('A1')).cellStyle = CellStyle(
+        fontSize: 24,
+      );
 
       var bytes = excel.encode();
       saveTestOutput(bytes, 'style_font_size');
       var decoded = Excel.decodeBytes(bytes!);
       expect(
-          decoded['Sheet1']
-              .cell(CellIndex.indexByString('A1'))
-              .cellStyle
-              ?.fontSize,
-          24);
+        decoded['Sheet1']
+            .cell(CellIndex.indexByString('A1'))
+            .cellStyle
+            ?.fontSize,
+        24,
+      );
     });
 
     test('Font color roundtrip', () {
       var excel = Excel.createExcel();
       var sheet = excel['Sheet1'];
       sheet.updateCell(CellIndex.indexByString('A1'), TextCellValue('red'));
-      sheet.cell(CellIndex.indexByString('A1')).cellStyle =
-          CellStyle(fontColorHex: ExcelColor.red);
+      sheet.cell(CellIndex.indexByString('A1')).cellStyle = CellStyle(
+        fontColorHex: ExcelColor.red,
+      );
 
       var bytes = excel.encode();
       saveTestOutput(bytes, 'style_font_color');
       var decoded = Excel.decodeBytes(bytes!);
-      var style =
-          decoded['Sheet1'].cell(CellIndex.indexByString('A1')).cellStyle;
+      var style = decoded['Sheet1']
+          .cell(CellIndex.indexByString('A1'))
+          .cellStyle;
       expect(style?.fontColor, ExcelColor.red);
     });
 
@@ -71,15 +81,19 @@ void main() {
       var excel = Excel.createExcel();
       var sheet = excel['Sheet1'];
       sheet.updateCell(
-          CellIndex.indexByString('A1'), TextCellValue('yellow bg'));
-      sheet.cell(CellIndex.indexByString('A1')).cellStyle =
-          CellStyle(backgroundColorHex: ExcelColor.yellow);
+        CellIndex.indexByString('A1'),
+        TextCellValue('yellow bg'),
+      );
+      sheet.cell(CellIndex.indexByString('A1')).cellStyle = CellStyle(
+        backgroundColorHex: ExcelColor.yellow,
+      );
 
       var bytes = excel.encode();
       saveTestOutput(bytes, 'style_background_color');
       var decoded = Excel.decodeBytes(bytes!);
-      var style =
-          decoded['Sheet1'].cell(CellIndex.indexByString('A1')).cellStyle;
+      var style = decoded['Sheet1']
+          .cell(CellIndex.indexByString('A1'))
+          .cellStyle;
       expect(style?.backgroundColor, ExcelColor.yellow);
     });
 
@@ -95,8 +109,9 @@ void main() {
       var bytes = excel.encode();
       saveTestOutput(bytes, 'style_alignment');
       var decoded = Excel.decodeBytes(bytes!);
-      var style =
-          decoded['Sheet1'].cell(CellIndex.indexByString('A1')).cellStyle;
+      var style = decoded['Sheet1']
+          .cell(CellIndex.indexByString('A1'))
+          .cellStyle;
       expect(style?.horizontalAlignment, HorizontalAlign.Center);
       expect(style?.verticalAlignment, VerticalAlign.Center);
     });
@@ -105,14 +120,16 @@ void main() {
       var excel = Excel.createExcel();
       var sheet = excel['Sheet1'];
       sheet.updateCell(CellIndex.indexByString('A1'), TextCellValue('wrapped'));
-      sheet.cell(CellIndex.indexByString('A1')).cellStyle =
-          CellStyle(textWrapping: TextWrapping.WrapText);
+      sheet.cell(CellIndex.indexByString('A1')).cellStyle = CellStyle(
+        textWrapping: TextWrapping.WrapText,
+      );
 
       var bytes = excel.encode();
       saveTestOutput(bytes, 'style_text_wrapping');
       var decoded = Excel.decodeBytes(bytes!);
-      var style =
-          decoded['Sheet1'].cell(CellIndex.indexByString('A1')).cellStyle;
+      var style = decoded['Sheet1']
+          .cell(CellIndex.indexByString('A1'))
+          .cellStyle;
       expect(style?.wrap, TextWrapping.WrapText);
     });
 
@@ -120,15 +137,19 @@ void main() {
       var excel = Excel.createExcel();
       var sheet = excel['Sheet1'];
       sheet.updateCell(
-          CellIndex.indexByString('A1'), TextCellValue('underlined'));
-      sheet.cell(CellIndex.indexByString('A1')).cellStyle =
-          CellStyle(underline: Underline.Single);
+        CellIndex.indexByString('A1'),
+        TextCellValue('underlined'),
+      );
+      sheet.cell(CellIndex.indexByString('A1')).cellStyle = CellStyle(
+        underline: Underline.Single,
+      );
 
       var bytes = excel.encode();
       saveTestOutput(bytes, 'style_underline');
       var decoded = Excel.decodeBytes(bytes!);
-      var style =
-          decoded['Sheet1'].cell(CellIndex.indexByString('A1')).cellStyle;
+      var style = decoded['Sheet1']
+          .cell(CellIndex.indexByString('A1'))
+          .cellStyle;
       expect(style?.underline, Underline.Single);
     });
 
@@ -136,7 +157,9 @@ void main() {
       var excel = Excel.createExcel();
       var sheet = excel['Sheet1'];
       sheet.updateCell(
-          CellIndex.indexByString('A1'), TextCellValue('bordered'));
+        CellIndex.indexByString('A1'),
+        TextCellValue('bordered'),
+      );
       sheet.cell(CellIndex.indexByString('A1')).cellStyle = CellStyle(
         leftBorder: Border(borderStyle: BorderStyle.Thin),
         rightBorder: Border(borderStyle: BorderStyle.Thick),
@@ -147,8 +170,9 @@ void main() {
       var bytes = excel.encode();
       saveTestOutput(bytes, 'style_borders');
       var decoded = Excel.decodeBytes(bytes!);
-      var style =
-          decoded['Sheet1'].cell(CellIndex.indexByString('A1')).cellStyle;
+      var style = decoded['Sheet1']
+          .cell(CellIndex.indexByString('A1'))
+          .cellStyle;
       expect(style?.leftBorder.borderStyle, BorderStyle.Thin);
       expect(style?.rightBorder.borderStyle, BorderStyle.Thick);
       expect(style?.topBorder.borderStyle, BorderStyle.Dashed);
@@ -168,16 +192,17 @@ void main() {
     test('Rotation roundtrip', () {
       var excel = Excel.createExcel();
       var sheet = excel['Sheet1'];
-      sheet.updateCell(
-          CellIndex.indexByString('A1'), TextCellValue('rotated'));
-      sheet.cell(CellIndex.indexByString('A1')).cellStyle =
-          CellStyle(rotation: 45);
+      sheet.updateCell(CellIndex.indexByString('A1'), TextCellValue('rotated'));
+      sheet.cell(CellIndex.indexByString('A1')).cellStyle = CellStyle(
+        rotation: 45,
+      );
 
       var bytes = excel.encode();
       saveTestOutput(bytes, 'style_rotation');
       var decoded = Excel.decodeBytes(bytes!);
-      var style =
-          decoded['Sheet1'].cell(CellIndex.indexByString('A1')).cellStyle;
+      var style = decoded['Sheet1']
+          .cell(CellIndex.indexByString('A1'))
+          .cellStyle;
       expect(style?.rotation, 45);
     });
 
@@ -200,8 +225,9 @@ void main() {
       var bytes = excel.encode();
       saveTestOutput(bytes, 'style_combined');
       var decoded = Excel.decodeBytes(bytes!);
-      var style =
-          decoded['Sheet1'].cell(CellIndex.indexByString('A1')).cellStyle;
+      var style = decoded['Sheet1']
+          .cell(CellIndex.indexByString('A1'))
+          .cellStyle;
       expect(style?.isBold, true);
       expect(style?.isItalic, true);
       expect(style?.fontSize, 18);

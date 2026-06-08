@@ -54,7 +54,14 @@ CellValue _generateValue(int row, int col, Random rng) {
     final refCol = String.fromCharCode(65 + (col - 38));
     return FormulaCellValue('=$refCol${row + 1}&"_calc"');
   } else {
-    final suffixes = ['café', 'naïve', '日本語', '🎉data', 'line1\nline2', 'tab\there'];
+    final suffixes = [
+      'café',
+      'naïve',
+      '日本語',
+      '🎉data',
+      'line1\nline2',
+      'tab\there',
+    ];
     return TextCellValue('Mix_${row}_${suffixes[col - 44]}');
   }
 }
@@ -69,11 +76,7 @@ CellStyle _styleForColumn(int col) {
       ExcelColor.fromHexString('FF800080'),
       ExcelColor.fromHexString('FFFF8C00'),
     ];
-    return CellStyle(
-      bold: true,
-      fontColorHex: colors[col],
-      fontSize: 10 + col,
-    );
+    return CellStyle(bold: true, fontColorHex: colors[col], fontSize: 10 + col);
   } else if (col < 12) {
     return CellStyle(
       horizontalAlign: HorizontalAlign.Right,
@@ -105,10 +108,7 @@ CellStyle _styleForColumn(int col) {
       fontColorHex: ExcelColor.fromHexString('FF006400'),
     );
   } else if (col < 34) {
-    return CellStyle(
-      horizontalAlign: HorizontalAlign.Left,
-      italic: true,
-    );
+    return CellStyle(horizontalAlign: HorizontalAlign.Left, italic: true);
   } else if (col < 38) {
     return CellStyle(
       horizontalAlign: HorizontalAlign.Center,
@@ -219,8 +219,11 @@ void main() {
       for (var r = 0; r < 10; r++) {
         for (var c = 0; c < _cols; c++) {
           final idx = CellIndex.indexByColumnRow(columnIndex: c, rowIndex: r);
-          sheet.updateCell(idx, _generateValue(r, c, rng),
-              cellStyle: _styleForColumn(c));
+          sheet.updateCell(
+            idx,
+            _generateValue(r, c, rng),
+            cellStyle: _styleForColumn(c),
+          );
         }
       }
 
@@ -247,73 +250,124 @@ void main() {
 
       // Col 8: right-aligned + light blue background
       checkStyle(8, (s) {
-        expect(s.horizontalAlignment, HorizontalAlign.Right,
-            reason: 'col 8 h-align');
-        expect(s.backgroundColor, ExcelColor.fromHexString('FFE6F0FF'),
-            reason: 'col 8 bg color');
+        expect(
+          s.horizontalAlignment,
+          HorizontalAlign.Right,
+          reason: 'col 8 h-align',
+        );
+        expect(
+          s.backgroundColor,
+          ExcelColor.fromHexString('FFE6F0FF'),
+          reason: 'col 8 bg color',
+        );
       });
 
       // Col 14: italic + top/bottom thin borders
       checkStyle(14, (s) {
         expect(s.isItalic, true, reason: 'col 14 italic');
-        expect(s.topBorder.borderStyle, BorderStyle.Thin,
-            reason: 'col 14 top border');
-        expect(s.bottomBorder.borderStyle, BorderStyle.Thin,
-            reason: 'col 14 bottom border');
+        expect(
+          s.topBorder.borderStyle,
+          BorderStyle.Thin,
+          reason: 'col 14 top border',
+        );
+        expect(
+          s.bottomBorder.borderStyle,
+          BorderStyle.Thin,
+          reason: 'col 14 bottom border',
+        );
       });
 
       // Col 20: center + bold
       checkStyle(20, (s) {
         expect(s.isBold, true, reason: 'col 20 bold');
-        expect(s.horizontalAlignment, HorizontalAlign.Center,
-            reason: 'col 20 h-align');
-        expect(s.verticalAlignment, VerticalAlign.Center,
-            reason: 'col 20 v-align');
+        expect(
+          s.horizontalAlignment,
+          HorizontalAlign.Center,
+          reason: 'col 20 h-align',
+        );
+        expect(
+          s.verticalAlignment,
+          VerticalAlign.Center,
+          reason: 'col 20 v-align',
+        );
       });
 
       // Col 24: center + dark green font
       checkStyle(24, (s) {
-        expect(s.horizontalAlignment, HorizontalAlign.Center,
-            reason: 'col 24 h-align');
-        expect(s.fontColor, ExcelColor.fromHexString('FF006400'),
-            reason: 'col 24 font color');
+        expect(
+          s.horizontalAlignment,
+          HorizontalAlign.Center,
+          reason: 'col 24 h-align',
+        );
+        expect(
+          s.fontColor,
+          ExcelColor.fromHexString('FF006400'),
+          reason: 'col 24 font color',
+        );
       });
 
       // Col 30: left-aligned + italic
       checkStyle(30, (s) {
-        expect(s.horizontalAlignment, HorizontalAlign.Left,
-            reason: 'col 30 h-align');
+        expect(
+          s.horizontalAlignment,
+          HorizontalAlign.Left,
+          reason: 'col 30 h-align',
+        );
         expect(s.isItalic, true, reason: 'col 30 italic');
       });
 
       // Col 36: center + background
       checkStyle(36, (s) {
-        expect(s.horizontalAlignment, HorizontalAlign.Center,
-            reason: 'col 36 h-align');
-        expect(s.backgroundColor, ExcelColor.fromHexString('FFFFF0E0'),
-            reason: 'col 36 bg color');
+        expect(
+          s.horizontalAlignment,
+          HorizontalAlign.Center,
+          reason: 'col 36 h-align',
+        );
+        expect(
+          s.backgroundColor,
+          ExcelColor.fromHexString('FFFFF0E0'),
+          reason: 'col 36 bg color',
+        );
       });
 
       // Col 40: bold + underline + dark red font
       checkStyle(40, (s) {
         expect(s.isBold, true, reason: 'col 40 bold');
         expect(s.underline, Underline.Single, reason: 'col 40 underline');
-        expect(s.fontColor, ExcelColor.fromHexString('FF8B0000'),
-            reason: 'col 40 font color');
+        expect(
+          s.fontColor,
+          ExcelColor.fromHexString('FF8B0000'),
+          reason: 'col 40 font color',
+        );
       });
 
       // Col 46: cornsilk bg + all medium borders + wrap
       checkStyle(46, (s) {
-        expect(s.backgroundColor, ExcelColor.fromHexString('FFFFF8DC'),
-            reason: 'col 46 bg color');
-        expect(s.leftBorder.borderStyle, BorderStyle.Medium,
-            reason: 'col 46 left border');
-        expect(s.rightBorder.borderStyle, BorderStyle.Medium,
-            reason: 'col 46 right border');
-        expect(s.topBorder.borderStyle, BorderStyle.Medium,
-            reason: 'col 46 top border');
-        expect(s.bottomBorder.borderStyle, BorderStyle.Medium,
-            reason: 'col 46 bottom border');
+        expect(
+          s.backgroundColor,
+          ExcelColor.fromHexString('FFFFF8DC'),
+          reason: 'col 46 bg color',
+        );
+        expect(
+          s.leftBorder.borderStyle,
+          BorderStyle.Medium,
+          reason: 'col 46 left border',
+        );
+        expect(
+          s.rightBorder.borderStyle,
+          BorderStyle.Medium,
+          reason: 'col 46 right border',
+        );
+        expect(
+          s.topBorder.borderStyle,
+          BorderStyle.Medium,
+          reason: 'col 46 top border',
+        );
+        expect(
+          s.bottomBorder.borderStyle,
+          BorderStyle.Medium,
+          reason: 'col 46 bottom border',
+        );
         expect(s.wrap, TextWrapping.WrapText, reason: 'col 46 wrapping');
       });
     });
@@ -330,8 +384,11 @@ void main() {
           for (var c = 0; c < 16 && (colOffset + c) < _cols; c++) {
             final gc = colOffset + c;
             final idx = CellIndex.indexByColumnRow(columnIndex: c, rowIndex: r);
-            sheet.updateCell(idx, _generateValue(r, gc, rng),
-                cellStyle: _styleForColumn(gc));
+            sheet.updateCell(
+              idx,
+              _generateValue(r, gc, rng),
+              cellStyle: _styleForColumn(gc),
+            );
           }
         }
       }
@@ -382,10 +439,15 @@ void main() {
       );
 
       for (var g = 0; g < groups.length; g++) {
-        final startIdx =
-            CellIndex.indexByColumnRow(columnIndex: starts[g], rowIndex: 0);
-        sheet.updateCell(startIdx, TextCellValue(groups[g]),
-            cellStyle: headerStyle);
+        final startIdx = CellIndex.indexByColumnRow(
+          columnIndex: starts[g],
+          rowIndex: 0,
+        );
+        sheet.updateCell(
+          startIdx,
+          TextCellValue(groups[g]),
+          cellStyle: headerStyle,
+        );
         if (starts[g] != ends[g]) {
           sheet.merge(
             CellIndex.indexByColumnRow(columnIndex: starts[g], rowIndex: 0),
@@ -399,8 +461,11 @@ void main() {
       for (var r = 1; r <= _rows; r++) {
         for (var c = 0; c < _cols; c++) {
           final idx = CellIndex.indexByColumnRow(columnIndex: c, rowIndex: r);
-          sheet.updateCell(idx, _generateValue(r - 1, c, rng),
-              cellStyle: _styleForColumn(c));
+          sheet.updateCell(
+            idx,
+            _generateValue(r - 1, c, rng),
+            cellStyle: _styleForColumn(c),
+          );
         }
       }
 

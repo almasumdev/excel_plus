@@ -15,10 +15,7 @@ void main() {
     test('Read and write cell value', () {
       var excel = Excel.createExcel();
       var sheet = excel['Sheet1'];
-      sheet.updateCell(
-        CellIndex.indexByString('A1'),
-        TextCellValue('test'),
-      );
+      sheet.updateCell(CellIndex.indexByString('A1'), TextCellValue('test'));
       var value = sheet.cell(CellIndex.indexByString('A1')).value;
       expect(value, isA<TextCellValue>());
       expect((value as TextCellValue).value.toString(), 'test');
@@ -72,31 +69,56 @@ void main() {
       sheet.updateCell(CellIndex.indexByString('A5'), DoubleCellValue(2.0));
 
       sheet.updateCell(
-          CellIndex.indexByString('B1'), FormulaCellValue('SUM(A1:A3)'));
+        CellIndex.indexByString('B1'),
+        FormulaCellValue('SUM(A1:A3)'),
+      );
       sheet.updateCell(
-          CellIndex.indexByString('B2'), FormulaCellValue('AVERAGE(A1:A5)'));
+        CellIndex.indexByString('B2'),
+        FormulaCellValue('AVERAGE(A1:A5)'),
+      );
       sheet.updateCell(
-          CellIndex.indexByString('B3'), FormulaCellValue('COUNT(A1:A5)'));
+        CellIndex.indexByString('B3'),
+        FormulaCellValue('COUNT(A1:A5)'),
+      );
       sheet.updateCell(
-          CellIndex.indexByString('B4'), FormulaCellValue('MIN(A1:A5)'));
+        CellIndex.indexByString('B4'),
+        FormulaCellValue('MIN(A1:A5)'),
+      );
       sheet.updateCell(
-          CellIndex.indexByString('B5'), FormulaCellValue('MAX(A1:A5)'));
+        CellIndex.indexByString('B5'),
+        FormulaCellValue('MAX(A1:A5)'),
+      );
 
       var bytes = excel.encode();
       saveTestOutput(bytes, 'formula_math');
       var decoded = Excel.decodeBytes(bytes!);
       var s = decoded['Sheet1'];
 
-      expect((s.cell(CellIndex.indexByString('B1')).value as FormulaCellValue)
-          .formula, 'SUM(A1:A3)');
-      expect((s.cell(CellIndex.indexByString('B2')).value as FormulaCellValue)
-          .formula, 'AVERAGE(A1:A5)');
-      expect((s.cell(CellIndex.indexByString('B3')).value as FormulaCellValue)
-          .formula, 'COUNT(A1:A5)');
-      expect((s.cell(CellIndex.indexByString('B4')).value as FormulaCellValue)
-          .formula, 'MIN(A1:A5)');
-      expect((s.cell(CellIndex.indexByString('B5')).value as FormulaCellValue)
-          .formula, 'MAX(A1:A5)');
+      expect(
+        (s.cell(CellIndex.indexByString('B1')).value as FormulaCellValue)
+            .formula,
+        'SUM(A1:A3)',
+      );
+      expect(
+        (s.cell(CellIndex.indexByString('B2')).value as FormulaCellValue)
+            .formula,
+        'AVERAGE(A1:A5)',
+      );
+      expect(
+        (s.cell(CellIndex.indexByString('B3')).value as FormulaCellValue)
+            .formula,
+        'COUNT(A1:A5)',
+      );
+      expect(
+        (s.cell(CellIndex.indexByString('B4')).value as FormulaCellValue)
+            .formula,
+        'MIN(A1:A5)',
+      );
+      expect(
+        (s.cell(CellIndex.indexByString('B5')).value as FormulaCellValue)
+            .formula,
+        'MAX(A1:A5)',
+      );
     });
 
     test('Arithmetic and logical formulas roundtrip', () {
@@ -107,39 +129,74 @@ void main() {
       sheet.updateCell(CellIndex.indexByString('A2'), IntCellValue(50));
 
       sheet.updateCell(
-          CellIndex.indexByString('B1'), FormulaCellValue('A1+A2'));
+        CellIndex.indexByString('B1'),
+        FormulaCellValue('A1+A2'),
+      );
       sheet.updateCell(
-          CellIndex.indexByString('B2'), FormulaCellValue('A1-A2'));
+        CellIndex.indexByString('B2'),
+        FormulaCellValue('A1-A2'),
+      );
       sheet.updateCell(
-          CellIndex.indexByString('B3'), FormulaCellValue('A1*A2'));
+        CellIndex.indexByString('B3'),
+        FormulaCellValue('A1*A2'),
+      );
       sheet.updateCell(
-          CellIndex.indexByString('B4'), FormulaCellValue('A1/A2'));
-      sheet.updateCell(CellIndex.indexByString('B5'),
-          FormulaCellValue('IF(A1>A2,"bigger","smaller")'));
-      sheet.updateCell(CellIndex.indexByString('B6'),
-          FormulaCellValue('ROUND(AVERAGE(A1:A2),2)'));
-      sheet.updateCell(CellIndex.indexByString('B7'),
-          FormulaCellValue('CONCATENATE("Total: ",A1+A2)'));
+        CellIndex.indexByString('B4'),
+        FormulaCellValue('A1/A2'),
+      );
+      sheet.updateCell(
+        CellIndex.indexByString('B5'),
+        FormulaCellValue('IF(A1>A2,"bigger","smaller")'),
+      );
+      sheet.updateCell(
+        CellIndex.indexByString('B6'),
+        FormulaCellValue('ROUND(AVERAGE(A1:A2),2)'),
+      );
+      sheet.updateCell(
+        CellIndex.indexByString('B7'),
+        FormulaCellValue('CONCATENATE("Total: ",A1+A2)'),
+      );
 
       var bytes = excel.encode();
       saveTestOutput(bytes, 'formula_arithmetic_logical');
       var decoded = Excel.decodeBytes(bytes!);
       var s = decoded['Sheet1'];
 
-      expect((s.cell(CellIndex.indexByString('B1')).value as FormulaCellValue)
-          .formula, 'A1+A2');
-      expect((s.cell(CellIndex.indexByString('B2')).value as FormulaCellValue)
-          .formula, 'A1-A2');
-      expect((s.cell(CellIndex.indexByString('B3')).value as FormulaCellValue)
-          .formula, 'A1*A2');
-      expect((s.cell(CellIndex.indexByString('B4')).value as FormulaCellValue)
-          .formula, 'A1/A2');
-      expect((s.cell(CellIndex.indexByString('B5')).value as FormulaCellValue)
-          .formula, 'IF(A1>A2,"bigger","smaller")');
-      expect((s.cell(CellIndex.indexByString('B6')).value as FormulaCellValue)
-          .formula, 'ROUND(AVERAGE(A1:A2),2)');
-      expect((s.cell(CellIndex.indexByString('B7')).value as FormulaCellValue)
-          .formula, 'CONCATENATE("Total: ",A1+A2)');
+      expect(
+        (s.cell(CellIndex.indexByString('B1')).value as FormulaCellValue)
+            .formula,
+        'A1+A2',
+      );
+      expect(
+        (s.cell(CellIndex.indexByString('B2')).value as FormulaCellValue)
+            .formula,
+        'A1-A2',
+      );
+      expect(
+        (s.cell(CellIndex.indexByString('B3')).value as FormulaCellValue)
+            .formula,
+        'A1*A2',
+      );
+      expect(
+        (s.cell(CellIndex.indexByString('B4')).value as FormulaCellValue)
+            .formula,
+        'A1/A2',
+      );
+      expect(
+        (s.cell(CellIndex.indexByString('B5')).value as FormulaCellValue)
+            .formula,
+        'IF(A1>A2,"bigger","smaller")',
+      );
+      expect(
+        (s.cell(CellIndex.indexByString('B6')).value as FormulaCellValue)
+            .formula,
+        'ROUND(AVERAGE(A1:A2),2)',
+      );
+      expect(
+        (s.cell(CellIndex.indexByString('B7')).value as FormulaCellValue)
+            .formula,
+        'CONCATENATE("Total: ",A1+A2)',
+      );
     });
 
     test('setFormula roundtrip', () {
@@ -162,19 +219,21 @@ void main() {
 
     test('Cross-sheet reference formula roundtrip', () {
       var excel = Excel.createExcel();
-      excel['Data']
-          .updateCell(CellIndex.indexByString('A1'), IntCellValue(42));
-      excel['Summary'].updateCell(CellIndex.indexByString('A1'),
-          FormulaCellValue("Data!A1*2"));
+      excel['Data'].updateCell(CellIndex.indexByString('A1'), IntCellValue(42));
+      excel['Summary'].updateCell(
+        CellIndex.indexByString('A1'),
+        FormulaCellValue("Data!A1*2"),
+      );
 
       var bytes = excel.encode();
       saveTestOutput(bytes, 'formula_cross_sheet');
       var decoded = Excel.decodeBytes(bytes!);
       expect(
-          (decoded['Summary'].cell(CellIndex.indexByString('A1')).value
-                  as FormulaCellValue)
-              .formula,
-          'Data!A1*2');
+        (decoded['Summary'].cell(CellIndex.indexByString('A1')).value
+                as FormulaCellValue)
+            .formula,
+        'Data!A1*2',
+      );
     });
   });
 
@@ -189,7 +248,9 @@ void main() {
       sheet.updateCell(CellIndex.indexByString('D1'), BoolCellValue(true));
       sheet.updateCell(CellIndex.indexByString('E1'), BoolCellValue(false));
       sheet.updateCell(
-          CellIndex.indexByString('F1'), FormulaCellValue('SUM(B1,C1)'));
+        CellIndex.indexByString('F1'),
+        FormulaCellValue('SUM(B1,C1)'),
+      );
       sheet.updateCell(CellIndex.indexByString('A2'), TextCellValue('world'));
       sheet.updateCell(CellIndex.indexByString('B2'), IntCellValue(-100));
       sheet.updateCell(CellIndex.indexByString('C2'), DoubleCellValue(0.0));
@@ -203,53 +264,60 @@ void main() {
 
       expect(s.cell(CellIndex.indexByString('A1')).value, isA<TextCellValue>());
       expect(
-          (s.cell(CellIndex.indexByString('A1')).value as TextCellValue)
-              .value
-              .toString(),
-          'hello');
+        (s.cell(CellIndex.indexByString('A1')).value as TextCellValue).value
+            .toString(),
+        'hello',
+      );
 
       expect(s.cell(CellIndex.indexByString('B1')).value, isA<IntCellValue>());
       expect(
-          (s.cell(CellIndex.indexByString('B1')).value as IntCellValue).value,
-          42);
+        (s.cell(CellIndex.indexByString('B1')).value as IntCellValue).value,
+        42,
+      );
 
       expect(
-          s.cell(CellIndex.indexByString('C1')).value, isA<DoubleCellValue>());
+        s.cell(CellIndex.indexByString('C1')).value,
+        isA<DoubleCellValue>(),
+      );
       expect(
-          (s.cell(CellIndex.indexByString('C1')).value as DoubleCellValue)
-              .value,
-          closeTo(3.14, 0.001));
+        (s.cell(CellIndex.indexByString('C1')).value as DoubleCellValue).value,
+        closeTo(3.14, 0.001),
+      );
+
+      expect(s.cell(CellIndex.indexByString('D1')).value, isA<BoolCellValue>());
+      expect(
+        (s.cell(CellIndex.indexByString('D1')).value as BoolCellValue).value,
+        true,
+      );
+
+      expect(s.cell(CellIndex.indexByString('E1')).value, isA<BoolCellValue>());
+      expect(
+        (s.cell(CellIndex.indexByString('E1')).value as BoolCellValue).value,
+        false,
+      );
 
       expect(
-          s.cell(CellIndex.indexByString('D1')).value, isA<BoolCellValue>());
+        s.cell(CellIndex.indexByString('F1')).value,
+        isA<FormulaCellValue>(),
+      );
       expect(
-          (s.cell(CellIndex.indexByString('D1')).value as BoolCellValue).value,
-          true);
-
-      expect(
-          s.cell(CellIndex.indexByString('E1')).value, isA<BoolCellValue>());
-      expect(
-          (s.cell(CellIndex.indexByString('E1')).value as BoolCellValue).value,
-          false);
-
-      expect(s.cell(CellIndex.indexByString('F1')).value,
-          isA<FormulaCellValue>());
-      expect(
-          (s.cell(CellIndex.indexByString('F1')).value as FormulaCellValue)
-              .formula,
-          'SUM(B1,C1)');
+        (s.cell(CellIndex.indexByString('F1')).value as FormulaCellValue)
+            .formula,
+        'SUM(B1,C1)',
+      );
 
       expect(s.cell(CellIndex.indexByString('A2')).value, isA<TextCellValue>());
       expect(
-          (s.cell(CellIndex.indexByString('A2')).value as TextCellValue)
-              .value
-              .toString(),
-          'world');
+        (s.cell(CellIndex.indexByString('A2')).value as TextCellValue).value
+            .toString(),
+        'world',
+      );
 
       expect(s.cell(CellIndex.indexByString('B2')).value, isA<IntCellValue>());
       expect(
-          (s.cell(CellIndex.indexByString('B2')).value as IntCellValue).value,
-          -100);
+        (s.cell(CellIndex.indexByString('B2')).value as IntCellValue).value,
+        -100,
+      );
     });
 
     test('DateCellValue roundtrip', () {
@@ -296,7 +364,13 @@ void main() {
       sheet.updateCell(
         CellIndex.indexByString('A1'),
         DateTimeCellValue(
-            year: 2025, month: 12, day: 25, hour: 10, minute: 30, second: 15),
+          year: 2025,
+          month: 12,
+          day: 25,
+          hour: 10,
+          minute: 30,
+          second: 15,
+        ),
       );
 
       var bytes = excel.encode();
@@ -329,13 +403,21 @@ void main() {
       var excel = Excel.createExcel();
       var sheet = excel['Sheet1'];
       sheet.updateCell(
-          CellIndex.indexByString('A1'), TextCellValue('a & b < c > d "e"'));
+        CellIndex.indexByString('A1'),
+        TextCellValue('a & b < c > d "e"'),
+      );
       sheet.updateCell(
-          CellIndex.indexByString('A2'), TextCellValue("it's a test"));
-      sheet.updateCell(CellIndex.indexByString('A3'),
-          TextCellValue('Unicode: \u00e9\u00f1\u00fc \u4e16\u754c'));
+        CellIndex.indexByString('A2'),
+        TextCellValue("it's a test"),
+      );
       sheet.updateCell(
-          CellIndex.indexByString('A4'), TextCellValue('Emoji: \u{1F600}'));
+        CellIndex.indexByString('A3'),
+        TextCellValue('Unicode: \u00e9\u00f1\u00fc \u4e16\u754c'),
+      );
+      sheet.updateCell(
+        CellIndex.indexByString('A4'),
+        TextCellValue('Emoji: \u{1F600}'),
+      );
 
       var bytes = excel.encode();
       saveTestOutput(bytes, 'cellvalue_special_chars');
@@ -343,25 +425,25 @@ void main() {
       var s = decoded['Sheet1'];
 
       expect(
-          (s.cell(CellIndex.indexByString('A1')).value as TextCellValue)
-              .value
-              .toString(),
-          'a & b < c > d "e"');
+        (s.cell(CellIndex.indexByString('A1')).value as TextCellValue).value
+            .toString(),
+        'a & b < c > d "e"',
+      );
       expect(
-          (s.cell(CellIndex.indexByString('A2')).value as TextCellValue)
-              .value
-              .toString(),
-          "it's a test");
+        (s.cell(CellIndex.indexByString('A2')).value as TextCellValue).value
+            .toString(),
+        "it's a test",
+      );
       expect(
-          (s.cell(CellIndex.indexByString('A3')).value as TextCellValue)
-              .value
-              .toString(),
-          'Unicode: \u00e9\u00f1\u00fc \u4e16\u754c');
+        (s.cell(CellIndex.indexByString('A3')).value as TextCellValue).value
+            .toString(),
+        'Unicode: \u00e9\u00f1\u00fc \u4e16\u754c',
+      );
       expect(
-          (s.cell(CellIndex.indexByString('A4')).value as TextCellValue)
-              .value
-              .toString(),
-          'Emoji: \u{1F600}');
+        (s.cell(CellIndex.indexByString('A4')).value as TextCellValue).value
+            .toString(),
+        'Emoji: \u{1F600}',
+      );
     });
 
     test('Many rows/columns roundtrip', () {
@@ -387,10 +469,16 @@ void main() {
           var val = s
               .cell(CellIndex.indexByColumnRow(columnIndex: c, rowIndex: r))
               .value;
-          expect(val, isA<TextCellValue>(),
-              reason: 'Cell R${r}C$c should be TextCellValue');
-          expect((val as TextCellValue).value.toString(), 'R${r}C$c',
-              reason: 'Cell R${r}C$c value mismatch');
+          expect(
+            val,
+            isA<TextCellValue>(),
+            reason: 'Cell R${r}C$c should be TextCellValue',
+          );
+          expect(
+            (val as TextCellValue).value.toString(),
+            'R${r}C$c',
+            reason: 'Cell R${r}C$c value mismatch',
+          );
         }
       }
     });
@@ -402,8 +490,10 @@ void main() {
       var bytes = File(file).readAsBytesSync();
       var excel = Excel.decodeBytes(bytes);
       expect(excel.tables['Sheet1']!.maxColumns, equals(3));
-      expect(excel.tables['Sheet1']!.rows[1][1]!.value.toString(),
-          equals('Washington'));
+      expect(
+        excel.tables['Sheet1']!.rows[1][1]!.value.toString(),
+        equals('Washington'),
+      );
       saveTestOutput(excel.save(), 'read_example');
     });
 
@@ -411,16 +501,26 @@ void main() {
       var file = './test/test_resources/dataTypesUsingMsExcel365Desktop.xlsx';
       var bytes = File(file).readAsBytesSync();
       var excel = Excel.decodeBytes(bytes);
-      expect(excel.tables['Tabelle1']!.rows[2][1]?.value,
-          equals(TextCellValue('Some text')));
-      expect(excel.tables['Tabelle1']?.rows[3][1]?.value,
-          equals(IntCellValue(42)));
-      expect(excel.tables['Tabelle1']?.rows[4][1]?.value,
-          equals(DoubleCellValue(12.3)));
-      expect(excel.tables['Tabelle1']?.rows[7][1]?.value,
-          equals(BoolCellValue(true)));
-      expect(excel.tables['Tabelle1']?.rows[8][1]?.value,
-          equals(BoolCellValue(false)));
+      expect(
+        excel.tables['Tabelle1']!.rows[2][1]?.value,
+        equals(TextCellValue('Some text')),
+      );
+      expect(
+        excel.tables['Tabelle1']?.rows[3][1]?.value,
+        equals(IntCellValue(42)),
+      );
+      expect(
+        excel.tables['Tabelle1']?.rows[4][1]?.value,
+        equals(DoubleCellValue(12.3)),
+      );
+      expect(
+        excel.tables['Tabelle1']?.rows[7][1]?.value,
+        equals(BoolCellValue(true)),
+      );
+      expect(
+        excel.tables['Tabelle1']?.rows[8][1]?.value,
+        equals(BoolCellValue(false)),
+      );
       saveTestOutput(excel.save(), 'read_ms_excel_365');
     });
 
@@ -439,16 +539,21 @@ void main() {
       expect(encoded, isNotNull);
       var decoded = Excel.decodeBytes(encoded!);
 
-      expect(decoded.tables['Sheet1']!.rows[1][1]!.value.toString(),
-          equals('Washington'));
-      expect(decoded['Sheet1'].cell(CellIndex.indexByString('D1')).value,
-          isA<TextCellValue>());
       expect(
-          (decoded['Sheet1'].cell(CellIndex.indexByString('D1')).value
-                  as TextCellValue)
-              .value
-              .toString(),
-          'NewColumn');
+        decoded.tables['Sheet1']!.rows[1][1]!.value.toString(),
+        equals('Washington'),
+      );
+      expect(
+        decoded['Sheet1'].cell(CellIndex.indexByString('D1')).value,
+        isA<TextCellValue>(),
+      );
+      expect(
+        (decoded['Sheet1'].cell(CellIndex.indexByString('D1')).value
+                as TextCellValue)
+            .value
+            .toString(),
+        'NewColumn',
+      );
     });
 
     test('Read spannedItemExample.xlsx', () {

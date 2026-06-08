@@ -25,6 +25,5 @@ class TestResult {
   });
 
   @override
-  String toString() =>
-      '${passed ? "PASS" : "FAIL"} ($durationMs ms) $message';
+  String toString() => '${passed ? "PASS" : "FAIL"} ($durationMs ms) $message';
 }

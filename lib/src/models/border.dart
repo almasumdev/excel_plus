@@ -12,10 +12,10 @@ class Border {
 
   /// Creates a [Border] with an optional [borderStyle] and [borderColorHex].
   Border({BorderStyle? borderStyle, ExcelColor? borderColorHex})
-      : borderStyle = borderStyle == BorderStyle.None ? null : borderStyle,
-        borderColorHex = borderColorHex != null
-            ? _isColorAppropriate(borderColorHex.colorHex)
-            : null;
+    : borderStyle = borderStyle == BorderStyle.None ? null : borderStyle,
+      borderColorHex = borderColorHex != null
+          ? _isColorAppropriate(borderColorHex.colorHex)
+          : null;
 
   @override
   String toString() {
@@ -66,14 +66,14 @@ class _BorderSet {
 
   @override
   int get hashCode => Object.hash(
-        leftBorder,
-        rightBorder,
-        topBorder,
-        bottomBorder,
-        diagonalBorder,
-        diagonalBorderUp,
-        diagonalBorderDown,
-      );
+    leftBorder,
+    rightBorder,
+    topBorder,
+    bottomBorder,
+    diagonalBorder,
+    diagonalBorderUp,
+    diagonalBorderDown,
+  );
 }
 
 /// Available border line styles in Excel.

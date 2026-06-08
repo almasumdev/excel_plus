@@ -52,46 +52,56 @@ class HeaderFooter {
   XmlNode toXmlElement() {
     final attributes = <XmlAttribute>[];
     if (alignWithMargins != null) {
-      attributes.add(XmlAttribute(
-          _xmlName("alignWithMargins"), alignWithMargins.toString()));
+      attributes.add(
+        XmlAttribute(_xmlName("alignWithMargins"), alignWithMargins.toString()),
+      );
     }
     if (differentFirst != null) {
       attributes.add(
-          XmlAttribute(_xmlName("differentFirst"), differentFirst.toString()));
+        XmlAttribute(_xmlName("differentFirst"), differentFirst.toString()),
+      );
     }
     if (differentOddEven != null) {
-      attributes.add(XmlAttribute(
-          _xmlName("differentOddEven"), differentOddEven.toString()));
+      attributes.add(
+        XmlAttribute(_xmlName("differentOddEven"), differentOddEven.toString()),
+      );
     }
     if (scaleWithDoc != null) {
-      attributes
-          .add(XmlAttribute(_xmlName("scaleWithDoc"), scaleWithDoc.toString()));
+      attributes.add(
+        XmlAttribute(_xmlName("scaleWithDoc"), scaleWithDoc.toString()),
+      );
     }
 
     final children = <XmlNode>[];
     if (evenHeader != null) {
-      children.add(XmlElement(
-          _xmlName("evenHeader"), [], [XmlText(evenHeader!)]));
+      children.add(
+        XmlElement(_xmlName("evenHeader"), [], [XmlText(evenHeader!)]),
+      );
     }
     if (evenFooter != null) {
-      children.add(XmlElement(
-          _xmlName("evenFooter"), [], [XmlText(evenFooter!)]));
+      children.add(
+        XmlElement(_xmlName("evenFooter"), [], [XmlText(evenFooter!)]),
+      );
     }
     if (firstHeader != null) {
-      children.add(XmlElement(
-          _xmlName("firstHeader"), [], [XmlText(firstHeader!)]));
+      children.add(
+        XmlElement(_xmlName("firstHeader"), [], [XmlText(firstHeader!)]),
+      );
     }
     if (firstFooter != null) {
-      children.add(XmlElement(
-          _xmlName("firstFooter"), [], [XmlText(firstFooter!)]));
+      children.add(
+        XmlElement(_xmlName("firstFooter"), [], [XmlText(firstFooter!)]),
+      );
     }
     if (oddHeader != null) {
-      children.add(XmlElement(
-          _xmlName("oddHeader"), [], [XmlText(oddHeader!)]));
+      children.add(
+        XmlElement(_xmlName("oddHeader"), [], [XmlText(oddHeader!)]),
+      );
     }
     if (oddFooter != null) {
-      children.add(XmlElement(
-          _xmlName("oddFooter"), [], [XmlText(oddFooter!)]));
+      children.add(
+        XmlElement(_xmlName("oddFooter"), [], [XmlText(oddFooter!)]),
+      );
     }
 
     return XmlElement(_xmlName("headerFooter"), attributes, children);
@@ -100,20 +110,25 @@ class HeaderFooter {
   /// Parses a [HeaderFooter] from an XML element.
   static HeaderFooter fromXmlElement(XmlElement headerFooterElement) {
     return HeaderFooter(
-        alignWithMargins:
-            headerFooterElement.getAttribute("alignWithMargins")?.parseBool(),
-        differentFirst:
-            headerFooterElement.getAttribute("differentFirst")?.parseBool(),
-        differentOddEven:
-            headerFooterElement.getAttribute("differentOddEven")?.parseBool(),
-        scaleWithDoc:
-            headerFooterElement.getAttribute("scaleWithDoc")?.parseBool(),
-        evenHeader: headerFooterElement.getElement("evenHeader")?.innerText,
-        evenFooter: headerFooterElement.getElement("evenFooter")?.innerText,
-        firstHeader: headerFooterElement.getElement("firstHeader")?.innerText,
-        firstFooter: headerFooterElement.getElement("firstFooter")?.innerText,
-        oddFooter: headerFooterElement.getElement("oddFooter")?.innerText,
-        oddHeader: headerFooterElement.getElement("oddHeader")?.innerText);
+      alignWithMargins: headerFooterElement
+          .getAttribute("alignWithMargins")
+          ?.parseBool(),
+      differentFirst: headerFooterElement
+          .getAttribute("differentFirst")
+          ?.parseBool(),
+      differentOddEven: headerFooterElement
+          .getAttribute("differentOddEven")
+          ?.parseBool(),
+      scaleWithDoc: headerFooterElement
+          .getAttribute("scaleWithDoc")
+          ?.parseBool(),
+      evenHeader: headerFooterElement.getElement("evenHeader")?.innerText,
+      evenFooter: headerFooterElement.getElement("evenFooter")?.innerText,
+      firstHeader: headerFooterElement.getElement("firstHeader")?.innerText,
+      firstFooter: headerFooterElement.getElement("firstFooter")?.innerText,
+      oddFooter: headerFooterElement.getElement("oddFooter")?.innerText,
+      oddHeader: headerFooterElement.getElement("oddHeader")?.innerText,
+    );
   }
 }
 

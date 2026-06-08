@@ -31,7 +31,8 @@ void main() {
       await tester.tap(runAllBtn);
 
       final state = tester.state<TestRunnerScreenState>(
-          find.byType(TestRunnerScreen));
+        find.byType(TestRunnerScreen),
+      );
 
       const maxWait = Duration(minutes: 5);
       final deadline = DateTime.now().add(maxWait);
@@ -42,8 +43,11 @@ void main() {
       await tester.pumpAndSettle();
 
       final allTests = buildAllTests();
-      expect(state.results.length, allTests.length,
-          reason: 'Not all tests produced results');
+      expect(
+        state.results.length,
+        allTests.length,
+        reason: 'Not all tests produced results',
+      );
 
       for (final test in allTests) {
         final result = state.results[test.name];
@@ -54,22 +58,31 @@ void main() {
             ? ' | mem: ${result.peakMemoryKB}KB'
             : '';
         debugPrint(
-            '[$status] ${test.name} — ${result.durationMs}ms$mem | ${result.message}');
+          '[$status] ${test.name} — ${result.durationMs}ms$mem | ${result.message}',
+        );
 
-        expect(result.passed, isTrue,
-            reason: '${test.name} FAILED: ${result.message}');
+        expect(
+          result.passed,
+          isTrue,
+          reason: '${test.name} FAILED: ${result.message}',
+        );
       }
 
-      expect(state.failCount, 0,
-          reason:
-              '${state.failCount} test(s) failed out of ${allTests.length}');
+      expect(
+        state.failCount,
+        0,
+        reason: '${state.failCount} test(s) failed out of ${allTests.length}',
+      );
 
       final report = state.generateReport();
       debugPrint('');
       debugPrint(report);
 
-      expect(state.lastReportPath, isNotNull,
-          reason: 'Test report should have been saved to device');
+      expect(
+        state.lastReportPath,
+        isNotNull,
+        reason: 'Test report should have been saved to device',
+      );
       debugPrint('Report saved to: ${state.lastReportPath}');
     });
   });

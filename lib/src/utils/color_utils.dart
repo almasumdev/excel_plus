@@ -51,24 +51,18 @@ int _hexadecimalToDecimal(String hexString) {
         _hexTableReverse.containsKey(hexString[i]) == false) {
       throw Exception('Non-hex value was passed to the function');
     } else {
-      decimalVal += (pow(16, hexString.length - i - 1) *
-              (int.tryParse(hexString[i]) != null
-                  ? int.parse(hexString[i])
-                  : _hexTableReverse[hexString[i]]!))
-          .toInt();
+      decimalVal +=
+          (pow(16, hexString.length - i - 1) *
+                  (int.tryParse(hexString[i]) != null
+                      ? int.parse(hexString[i])
+                      : _hexTableReverse[hexString[i]]!))
+              .toInt();
     }
   }
   return isNegative ? -1 * decimalVal : decimalVal;
 }
 
-const _hexTable = {
-  10: 'A',
-  11: 'B',
-  12: 'C',
-  13: 'D',
-  14: 'E',
-  15: 'F',
-};
+const _hexTable = {10: 'A', 11: 'B', 12: 'C', 13: 'D', 14: 'E', 15: 'F'};
 
 final _hexTableReverse = _hexTable.map((k, v) => MapEntry(v, k));
 
@@ -77,6 +71,6 @@ extension StringExt on String {
   ExcelColor get excelColor => this == 'none'
       ? ExcelColor.none
       : _assertHexString(this)
-          ? ExcelColor.valuesAsMap[this] ?? ExcelColor._(this)
-          : ExcelColor.black;
+      ? ExcelColor.valuesAsMap[this] ?? ExcelColor._(this)
+      : ExcelColor.black;
 }

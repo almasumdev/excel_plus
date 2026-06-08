@@ -13,13 +13,13 @@ class Data {
   int _columnIndex;
 
   Data._clone(Sheet sheet, Data dataObject)
-      : this._(
-          sheet,
-          dataObject._rowIndex,
-          dataObject.columnIndex,
-          value: dataObject._value,
-          cellStyleVal: dataObject._cellStyle,
-        );
+    : this._(
+        sheet,
+        dataObject._rowIndex,
+        dataObject.columnIndex,
+        value: dataObject._value,
+        cellStyleVal: dataObject._cellStyle,
+      );
 
   Data._(
     Sheet sheet,
@@ -27,11 +27,11 @@ class Data {
     int column, {
     CellValue? value,
     CellStyle? cellStyleVal,
-  })  : _sheet = sheet,
-        _value = value,
-        _cellStyle = cellStyleVal,
-        _rowIndex = row,
-        _columnIndex = column;
+  }) : _sheet = sheet,
+       _value = value,
+       _cellStyle = cellStyleVal,
+       _rowIndex = row,
+       _columnIndex = column;
 
   /// Creates an empty [Data] cell at the given [row] and [column] in [sheet].
   static Data newData(Sheet sheet, int row, int column) {
@@ -50,7 +50,9 @@ class Data {
   /// returns the string based cellId as A1, A2 or Z5
   CellIndex get cellIndex {
     return CellIndex.indexByColumnRow(
-        columnIndex: _columnIndex, rowIndex: _rowIndex);
+      columnIndex: _columnIndex,
+      rowIndex: _rowIndex,
+    );
   }
 
   /// Helps to set the formula

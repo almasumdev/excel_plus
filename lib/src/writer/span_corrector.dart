@@ -10,8 +10,9 @@ void _selfCorrectSpanMap(Excel excel) {
   for (final key in excel._mergeChangeLook) {
     if (excel._sheetMap[key] != null &&
         excel._sheetMap[key]!._spanList.isNotEmpty) {
-      List<_Span?> spanList =
-          List<_Span?>.from(excel._sheetMap[key]!._spanList);
+      List<_Span?> spanList = List<_Span?>.from(
+        excel._sheetMap[key]!._spanList,
+      );
 
       bool changed = true;
       while (changed) {

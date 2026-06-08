@@ -12,13 +12,15 @@ abstract class _WriterBase {
   _WriterBase(this._excel, this.parser);
 
   void _addNewColumn(XmlElement columns, int min, int max, double width) {
-    columns.children.add(XmlElement(_xmlName('col'), [
-      XmlAttribute(_xmlName('min'), (min + 1).toString()),
-      XmlAttribute(_xmlName('max'), (max + 1).toString()),
-      XmlAttribute(_xmlName('width'), width.toStringAsFixed(2)),
-      XmlAttribute(_xmlName('bestFit'), "1"),
-      XmlAttribute(_xmlName('customWidth'), "1"),
-    ], []));
+    columns.children.add(
+      XmlElement(_xmlName('col'), [
+        XmlAttribute(_xmlName('min'), (min + 1).toString()),
+        XmlAttribute(_xmlName('max'), (max + 1).toString()),
+        XmlAttribute(_xmlName('width'), width.toStringAsFixed(2)),
+        XmlAttribute(_xmlName('bestFit'), "1"),
+        XmlAttribute(_xmlName('customWidth'), "1"),
+      ], []),
+    );
   }
 
   double _calcAutoFitColumnWidth(Sheet sheet, int column) {
@@ -26,8 +28,10 @@ abstract class _WriterBase {
     sheet._sheetData.forEach((key, value) {
       if (value.containsKey(column) &&
           value[column]!.value is! FormulaCellValue) {
-        maxNumOfCharacters =
-            max(value[column]!.value.toString().length, maxNumOfCharacters);
+        maxNumOfCharacters = max(
+          value[column]!.value.toString().length,
+          maxNumOfCharacters,
+        );
       }
     });
 
@@ -50,13 +54,17 @@ abstract class _WriterBase {
       }
       buf.write('>');
 
-      for (var colIndex = 0;
-          colIndex < sheetObject._maxColumns;
-          colIndex++) {
+      for (var colIndex = 0; colIndex < sheetObject._maxColumns; colIndex++) {
         var data = sheetObject._sheetData[rowIndex]![colIndex];
         if (data == null) continue;
-        _writeCellXml(buf, sheetName, colIndex, rowIndex, data.value,
-            data.cellStyle?.numberFormat);
+        _writeCellXml(
+          buf,
+          sheetName,
+          colIndex,
+          rowIndex,
+          data.value,
+          data.cellStyle?.numberFormat,
+        );
       }
       buf.write('</row>');
     }
@@ -64,8 +72,14 @@ abstract class _WriterBase {
   }
 
   /// Writes a single cell's XML directly to a StringBuffer.
-  void _writeCellXml(StringBuffer buf, String sheet, int columnIndex,
-      int rowIndex, CellValue? value, NumFormat? numberFormat) {
+  void _writeCellXml(
+    StringBuffer buf,
+    String sheet,
+    int columnIndex,
+    int rowIndex,
+    CellValue? value,
+    NumFormat? numberFormat,
+  ) {
     SharedString? sharedString;
     if (value is TextCellValue) {
       sharedString = _excel._sharedStrings.tryFind(value.toString());
@@ -114,40 +128,44 @@ abstract class _WriterBase {
         final v = switch (numberFormat) {
           NumericNumFormat() => numberFormat.writeInt(value),
           _ => throw Exception(
-              '$numberFormat does not work for ${value.runtimeType}'),
+            '$numberFormat does not work for ${value.runtimeType}',
+          ),
         };
         buf.write('<v>$v</v>');
       case DoubleCellValue():
         final v = switch (numberFormat) {
           NumericNumFormat() => numberFormat.writeDouble(value),
           _ => throw Exception(
-              '$numberFormat does not work for ${value.runtimeType}'),
+            '$numberFormat does not work for ${value.runtimeType}',
+          ),
         };
         buf.write('<v>$v</v>');
       case DateTimeCellValue():
         final v = switch (numberFormat) {
           DateTimeNumFormat() => numberFormat.writeDateTime(value),
           _ => throw Exception(
-              '$numberFormat does not work for ${value.runtimeType}'),
+            '$numberFormat does not work for ${value.runtimeType}',
+          ),
         };
         buf.write('<v>$v</v>');
       case DateCellValue():
         final v = switch (numberFormat) {
           DateTimeNumFormat() => numberFormat.writeDate(value),
           _ => throw Exception(
-              '$numberFormat does not work for ${value.runtimeType}'),
+            '$numberFormat does not work for ${value.runtimeType}',
+          ),
         };
         buf.write('<v>$v</v>');
       case TimeCellValue():
         final v = switch (numberFormat) {
           TimeNumFormat() => numberFormat.writeTime(value),
           _ => throw Exception(
-              '$numberFormat does not work for ${value.runtimeType}'),
+            '$numberFormat does not work for ${value.runtimeType}',
+          ),
         };
         buf.write('<v>$v</v>');
       case TextCellValue():
-        buf.write(
-            '<v>${_excel._sharedStrings.indexOf(sharedString!)}</v>');
+        buf.write('<v>${_excel._sharedStrings.indexOf(sharedString!)}</v>');
       case BoolCellValue():
         buf.write('<v>${value.value ? '1' : '0'}</v>');
     }
@@ -157,12 +175,12 @@ abstract class _WriterBase {
   static String _escapeXmlValue(String input) => _escapeXml(input);
 
   _BorderSet _createBorderSetFromCellStyle(CellStyle cellStyle) => _BorderSet(
-        leftBorder: cellStyle.leftBorder,
-        rightBorder: cellStyle.rightBorder,
-        topBorder: cellStyle.topBorder,
-        bottomBorder: cellStyle.bottomBorder,
-        diagonalBorder: cellStyle.diagonalBorder,
-        diagonalBorderUp: cellStyle.diagonalBorderUp,
-        diagonalBorderDown: cellStyle.diagonalBorderDown,
-      );
+    leftBorder: cellStyle.leftBorder,
+    rightBorder: cellStyle.rightBorder,
+    topBorder: cellStyle.topBorder,
+    bottomBorder: cellStyle.bottomBorder,
+    diagonalBorder: cellStyle.diagonalBorder,
+    diagonalBorderUp: cellStyle.diagonalBorderUp,
+    diagonalBorderDown: cellStyle.diagonalBorderDown,
+  );
 }

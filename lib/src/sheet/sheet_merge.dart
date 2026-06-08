@@ -21,7 +21,8 @@ mixin _SheetMergeMixin on _SheetBase {
     if ((startColumn == endColumn && startRow == endRow) ||
         (startColumn < 0 || startRow < 0 || endColumn < 0 || endRow < 0) ||
         (_spannedItems.contains(
-            getSpanCellId(startColumn, startRow, endColumn, endRow)))) {
+          getSpanCellId(startColumn, startRow, endColumn, endRow),
+        ))) {
       return;
     }
 
@@ -145,7 +146,8 @@ mixin _SheetMergeMixin on _SheetBase {
 
     CellIndex end = endIndices[startIndices.indexOf(start)];
 
-    bool hasBorder = mergedCellStyle.topBorder != Border() ||
+    bool hasBorder =
+        mergedCellStyle.topBorder != Border() ||
         mergedCellStyle.bottomBorder != Border() ||
         mergedCellStyle.leftBorder != Border() ||
         mergedCellStyle.rightBorder != Border() ||
@@ -230,15 +232,24 @@ mixin _SheetMergeMixin on _SheetBase {
       }
 
       final locationChange = _isLocationChangeRequired(
-          startColumn, startRow, endColumn, endRow, spanObj);
+        startColumn,
+        startRow,
+        endColumn,
+        endRow,
+        spanObj,
+      );
 
       if (locationChange.$1) {
         startColumn = locationChange.$2.$1;
         startRow = locationChange.$2.$2;
         endColumn = locationChange.$2.$3;
         endRow = locationChange.$2.$4;
-        String sp = getSpanCellId(spanObj.columnSpanStart, spanObj.rowSpanStart,
-            spanObj.columnSpanEnd, spanObj.rowSpanEnd);
+        String sp = getSpanCellId(
+          spanObj.columnSpanStart,
+          spanObj.rowSpanStart,
+          spanObj.columnSpanEnd,
+          spanObj.rowSpanEnd,
+        );
         if (_spannedItems.contains(sp)) {
           _spannedItems.remove(sp);
         }

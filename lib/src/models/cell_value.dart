@@ -99,14 +99,14 @@ class DateCellValue extends CellValue {
     required this.year,
     required this.month,
     required this.day,
-  })  : assert(month <= 12 && month >= 1),
-        assert(day <= 31 && day >= 1);
+  }) : assert(month <= 12 && month >= 1),
+       assert(day <= 31 && day >= 1);
 
   /// Creates a date cell value from a [DateTime].
   DateCellValue.fromDateTime(DateTime dt)
-      : year = dt.year,
-        month = dt.month,
-        day = dt.day;
+    : year = dt.year,
+      month = dt.month,
+      day = dt.day;
 
   /// Converts to a local [DateTime].
   DateTime asDateTimeLocal() {
@@ -212,16 +212,17 @@ class TimeCellValue extends CellValue {
     this.second = 0,
     this.millisecond = 0,
     this.microsecond = 0,
-  })  : assert(hour >= 0),
-        assert(minute <= 60 && minute >= 0),
-        assert(second <= 60 && second >= 0),
-        assert(millisecond <= 1000 && millisecond >= 0),
-        assert(microsecond <= 1000 && microsecond >= 0);
+  }) : assert(hour >= 0),
+       assert(minute <= 60 && minute >= 0),
+       assert(second <= 60 && second >= 0),
+       assert(millisecond <= 1000 && millisecond >= 0),
+       assert(microsecond <= 1000 && microsecond >= 0);
 
   /// [fractionOfDay]=1.0 is 24 hours, 0.5 is 12 hours and so on.
   factory TimeCellValue.fromFractionOfDay(num fractionOfDay) {
-    var duration =
-        Duration(milliseconds: (fractionOfDay * 24 * 3600 * 1000).round());
+    var duration = Duration(
+      milliseconds: (fractionOfDay * 24 * 3600 * 1000).round(),
+    );
     return TimeCellValue.fromDuration(duration);
   }
 
@@ -239,11 +240,11 @@ class TimeCellValue extends CellValue {
 
   /// Creates a [TimeCellValue] by extracting the time from a [DateTime].
   TimeCellValue.fromTimeOfDateTime(DateTime dt)
-      : hour = dt.hour,
-        minute = dt.minute,
-        second = dt.second,
-        millisecond = dt.millisecond,
-        microsecond = dt.microsecond;
+    : hour = dt.hour,
+      minute = dt.minute,
+      second = dt.second,
+      millisecond = dt.millisecond,
+      microsecond = dt.microsecond;
 
   /// Converts this time value to a [Duration].
   Duration asDuration() {
@@ -262,14 +263,8 @@ class TimeCellValue extends CellValue {
   }
 
   @override
-  int get hashCode => Object.hash(
-        runtimeType,
-        hour,
-        minute,
-        second,
-        millisecond,
-        microsecond,
-      );
+  int get hashCode =>
+      Object.hash(runtimeType, hour, minute, second, millisecond, microsecond);
 
   @override
   operator ==(Object other) {
@@ -321,35 +316,51 @@ class DateTimeCellValue extends CellValue {
     this.second = 0,
     this.millisecond = 0,
     this.microsecond = 0,
-  })  : assert(month <= 12 && month >= 1),
-        assert(day <= 31 && day >= 1),
-        assert(hour <= 24 && hour >= 0),
-        assert(minute <= 60 && minute >= 0),
-        assert(second <= 60 && second >= 0),
-        assert(millisecond <= 1000 && millisecond >= 0),
-        assert(microsecond <= 1000 && microsecond >= 0);
+  }) : assert(month <= 12 && month >= 1),
+       assert(day <= 31 && day >= 1),
+       assert(hour <= 24 && hour >= 0),
+       assert(minute <= 60 && minute >= 0),
+       assert(second <= 60 && second >= 0),
+       assert(millisecond <= 1000 && millisecond >= 0),
+       assert(microsecond <= 1000 && microsecond >= 0);
 
   /// Creates a [DateTimeCellValue] from a [DateTime].
   DateTimeCellValue.fromDateTime(DateTime date)
-      : year = date.year,
-        month = date.month,
-        day = date.day,
-        hour = date.hour,
-        minute = date.minute,
-        second = date.second,
-        millisecond = date.millisecond,
-        microsecond = date.microsecond;
+    : year = date.year,
+      month = date.month,
+      day = date.day,
+      hour = date.hour,
+      minute = date.minute,
+      second = date.second,
+      millisecond = date.millisecond,
+      microsecond = date.microsecond;
 
   /// Converts to a local [DateTime].
   DateTime asDateTimeLocal() {
     return DateTime(
-        year, month, day, hour, minute, second, millisecond, microsecond);
+      year,
+      month,
+      day,
+      hour,
+      minute,
+      second,
+      millisecond,
+      microsecond,
+    );
   }
 
   /// Converts to a UTC [DateTime].
   DateTime asDateTimeUtc() {
     return DateTime.utc(
-        year, month, day, hour, minute, second, millisecond, microsecond);
+      year,
+      month,
+      day,
+      hour,
+      minute,
+      second,
+      millisecond,
+      microsecond,
+    );
   }
 
   @override
@@ -359,16 +370,16 @@ class DateTimeCellValue extends CellValue {
 
   @override
   int get hashCode => Object.hash(
-        runtimeType,
-        year,
-        month,
-        day,
-        hour,
-        minute,
-        second,
-        millisecond,
-        microsecond,
-      );
+    runtimeType,
+    year,
+    month,
+    day,
+    hour,
+    minute,
+    second,
+    millisecond,
+    microsecond,
+  );
 
   @override
   operator ==(Object other) {

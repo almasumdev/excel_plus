@@ -73,7 +73,9 @@ void main() {
       var excel = Excel.createExcel();
       var sheet = excel['Sheet1'];
       sheet.updateCell(
-          CellIndex.indexByString('A1'), TextCellValue('Some text'));
+        CellIndex.indexByString('A1'),
+        TextCellValue('Some text'),
+      );
       sheet.setColumnAutoFit(0);
       expect(sheet.getColumnAutoFit(0), true);
       saveTestOutput(excel.save(), 'dim_auto_fit');
@@ -86,14 +88,18 @@ void main() {
       var sheet = excel['Sheet1'];
       sheet.updateCell(CellIndex.indexByString('A1'), TextCellValue('hello'));
       sheet.updateCell(
-          CellIndex.indexByString('A2'), TextCellValue('hello world'));
+        CellIndex.indexByString('A2'),
+        TextCellValue('hello world'),
+      );
       sheet.updateCell(CellIndex.indexByString('A3'), TextCellValue('bye'));
 
       int count = sheet.findAndReplace('hello', 'hi');
       expect(count, 2);
       expect(sheet.cell(CellIndex.indexByString('A1')).value.toString(), 'hi');
-      expect(sheet.cell(CellIndex.indexByString('A2')).value.toString(),
-          'hi world');
+      expect(
+        sheet.cell(CellIndex.indexByString('A2')).value.toString(),
+        'hi world',
+      );
       expect(sheet.cell(CellIndex.indexByString('A3')).value.toString(), 'bye');
       saveTestOutput(excel.save(), 'findreplace_basic');
     });

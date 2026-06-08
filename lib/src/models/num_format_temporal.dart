@@ -9,9 +9,7 @@ double _toDayFraction(Duration delta) =>
 ///
 /// {@category Number Formats}
 sealed class DateTimeNumFormat extends NumFormat {
-  const DateTimeNumFormat({
-    required super.formatCode,
-  });
+  const DateTimeNumFormat({required super.formatCode});
 
   @override
   CellValue read(String v) {
@@ -49,16 +47,16 @@ sealed class DateTimeNumFormat extends NumFormat {
 
   @override
   bool accepts(CellValue? value) => switch (value) {
-        null => true,
-        FormulaCellValue() => true,
-        IntCellValue() => false,
-        TextCellValue() => false,
-        BoolCellValue() => false,
-        DoubleCellValue() => false,
-        DateCellValue() => true,
-        DateTimeCellValue() => true,
-        TimeCellValue() => false,
-      };
+    null => true,
+    FormulaCellValue() => true,
+    IntCellValue() => false,
+    TextCellValue() => false,
+    BoolCellValue() => false,
+    DoubleCellValue() => false,
+    DateCellValue() => true,
+    DateTimeCellValue() => true,
+    TimeCellValue() => false,
+  };
 }
 
 /// A standard date/time format with a fixed format ID.
@@ -85,9 +83,7 @@ class StandardDateTimeNumFormat extends DateTimeNumFormat
 /// {@category Number Formats}
 class CustomDateTimeNumFormat extends DateTimeNumFormat
     implements CustomNumFormat {
-  const CustomDateTimeNumFormat({
-    required super.formatCode,
-  });
+  const CustomDateTimeNumFormat({required super.formatCode});
 
   @override
   String toString() {
@@ -99,9 +95,7 @@ class CustomDateTimeNumFormat extends DateTimeNumFormat
 ///
 /// {@category Number Formats}
 sealed class TimeNumFormat extends NumFormat {
-  const TimeNumFormat({
-    required super.formatCode,
-  });
+  const TimeNumFormat({required super.formatCode});
 
   @override
   CellValue read(String v) {
@@ -155,16 +149,16 @@ sealed class TimeNumFormat extends NumFormat {
 
   @override
   bool accepts(CellValue? value) => switch (value) {
-        null => true,
-        FormulaCellValue() => true,
-        IntCellValue() => false,
-        TextCellValue() => false,
-        BoolCellValue() => false,
-        DoubleCellValue() => false,
-        DateCellValue() => false,
-        DateTimeCellValue() => false,
-        TimeCellValue() => true,
-      };
+    null => true,
+    FormulaCellValue() => true,
+    IntCellValue() => false,
+    TextCellValue() => false,
+    BoolCellValue() => false,
+    DoubleCellValue() => false,
+    DateCellValue() => false,
+    DateTimeCellValue() => false,
+    TimeCellValue() => true,
+  };
 }
 
 /// A standard time format with a fixed format ID.
@@ -189,9 +183,7 @@ class StandardTimeNumFormat extends TimeNumFormat implements StandardNumFormat {
 ///
 /// {@category Number Formats}
 class CustomTimeNumFormat extends TimeNumFormat implements CustomNumFormat {
-  const CustomTimeNumFormat({
-    required super.formatCode,
-  });
+  const CustomTimeNumFormat({required super.formatCode});
 
   @override
   String toString() {

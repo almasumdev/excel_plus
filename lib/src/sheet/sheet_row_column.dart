@@ -30,12 +30,9 @@ mixin _SheetRowColumnMixin on _SheetBase {
           startColumn -= 1;
         }
         endColumn -= 1;
-        if (
-            (columnIndex == (endColumn + 1)) &&
-                (columnIndex ==
-                    (columnIndex < startColumn
-                        ? startColumn + 1
-                        : startColumn))) {
+        if ((columnIndex == (endColumn + 1)) &&
+            (columnIndex ==
+                (columnIndex < startColumn ? startColumn + 1 : startColumn))) {
           _spanList[i] = null;
         } else {
           _Span newSpanObj = _Span(
@@ -170,17 +167,26 @@ mixin _SheetRowColumnMixin on _SheetBase {
               }
             }
           }
-          columnMap[columnIndex] = Data.newData(this as Sheet, rowKey, columnIndex);
+          columnMap[columnIndex] = Data.newData(
+            this as Sheet,
+            rowKey,
+            columnIndex,
+          );
           data[rowKey] = Map<int, Data>.from(columnMap);
         }
         _sheetData = Map<int, Map<int, Data>>.from(data);
       } else {
-        _sheetData[sortedKeys.first]![columnIndex] =
-            Data.newData(this as Sheet, sortedKeys.first, columnIndex);
+        _sheetData[sortedKeys.first]![columnIndex] = Data.newData(
+          this as Sheet,
+          sortedKeys.first,
+          columnIndex,
+        );
       }
     } else {
       _sheetData = <int, Map<int, Data>>{};
-      _sheetData[0] = {columnIndex: Data.newData(this as Sheet, 0, columnIndex)};
+      _sheetData[0] = {
+        columnIndex: Data.newData(this as Sheet, 0, columnIndex),
+      };
     }
     if (_maxColumns - 1 <= columnIndex) {
       _maxColumns += 1;
@@ -215,9 +221,8 @@ mixin _SheetRowColumnMixin on _SheetBase {
           startRow -= 1;
         }
         endRow -= 1;
-        if (
-            (rowIndex == (endRow + 1)) &&
-                (rowIndex == (rowIndex < startRow ? startRow + 1 : startRow))) {
+        if ((rowIndex == (endRow + 1)) &&
+            (rowIndex == (rowIndex < startRow ? startRow + 1 : startRow))) {
           _spanList[i] = null;
         } else {
           final _Span newSpanObj = _Span(
@@ -232,8 +237,12 @@ mixin _SheetRowColumnMixin on _SheetBase {
         _excel._mergeChanges = true;
       }
       if (_spanList[i] != null) {
-        final String rc =
-            getSpanCellId(startColumn, startRow, endColumn, endRow);
+        final String rc = getSpanCellId(
+          startColumn,
+          startRow,
+          endColumn,
+          endRow,
+        );
         if (!_spannedItems.contains(rc)) {
           _spannedItems.add(rc);
         }

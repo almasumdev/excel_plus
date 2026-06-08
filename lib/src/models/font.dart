@@ -10,14 +10,15 @@ class _FontStyle {
   Underline _underline = Underline.None;
   int? _fontSize;
 
-  _FontStyle(
-      {ExcelColor? fontColorHex = ExcelColor.black,
-      int? fontSize,
-      String? fontFamily,
-      FontScheme fontScheme = FontScheme.Unset,
-      bool bold = false,
-      Underline underline = Underline.None,
-      bool italic = false}) {
+  _FontStyle({
+    ExcelColor? fontColorHex = ExcelColor.black,
+    int? fontSize,
+    String? fontFamily,
+    FontScheme fontScheme = FontScheme.Unset,
+    bool bold = false,
+    Underline underline = Underline.None,
+    bool italic = false,
+  }) {
     _bold = bold;
 
     _fontSize = fontSize;
@@ -111,14 +112,14 @@ class _FontStyle {
 
   @override
   int get hashCode => Object.hash(
-        _bold,
-        _italic,
-        _fontSize,
-        _underline,
-        _fontFamily,
-        _fontColorHex,
-        _fontScheme,
-      );
+    _bold,
+    _italic,
+    _fontSize,
+    _underline,
+    _fontFamily,
+    _fontColorHex,
+    _fontScheme,
+  );
 }
 
 /// Available font families.
@@ -316,6 +317,8 @@ enum FontFamily {
 ///
 /// @nodoc
 String getFontFamily(FontFamily fontFamily) {
-  return (fontFamily.toString().replaceAll('FontFamily.', ''))
-      .replaceAll('_', ' ');
+  return (fontFamily.toString().replaceAll(
+    'FontFamily.',
+    '',
+  )).replaceAll('_', ' ');
 }

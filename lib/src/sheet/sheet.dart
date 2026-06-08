@@ -8,29 +8,35 @@ class Sheet extends _SheetBase with _SheetRowColumnMixin, _SheetMergeMixin {
   /// It will clone the object by changing the `this` reference of previous oldSheetObject and putting `new this` reference, with copying the values too
   ///
   Sheet._clone(Excel excel, String sheetName, Sheet oldSheetObject)
-      : this._(excel, sheetName,
-            sh: oldSheetObject._sheetData,
-            spanL_: oldSheetObject._spanList,
-            spanI_: oldSheetObject._spannedItems,
-            maxRowsVal: oldSheetObject._maxRows,
-            maxColumnsVal: oldSheetObject._maxColumns,
-            columnWidthsVal: oldSheetObject._columnWidths,
-            rowHeightsVal: oldSheetObject._rowHeights,
-            columnAutoFitVal: oldSheetObject._columnAutoFit,
-            isRTLVal: oldSheetObject._isRTL,
-            headerFooter: oldSheetObject._headerFooter);
+    : this._(
+        excel,
+        sheetName,
+        sh: oldSheetObject._sheetData,
+        spanL_: oldSheetObject._spanList,
+        spanI_: oldSheetObject._spannedItems,
+        maxRowsVal: oldSheetObject._maxRows,
+        maxColumnsVal: oldSheetObject._maxColumns,
+        columnWidthsVal: oldSheetObject._columnWidths,
+        rowHeightsVal: oldSheetObject._rowHeights,
+        columnAutoFitVal: oldSheetObject._columnAutoFit,
+        isRTLVal: oldSheetObject._isRTL,
+        headerFooter: oldSheetObject._headerFooter,
+      );
 
-  Sheet._(super.excel, super.sheet,
-      {Map<int, Map<int, Data>>? sh,
-      List<_Span?>? spanL_,
-      FastList<String>? spanI_,
-      int? maxRowsVal,
-      int? maxColumnsVal,
-      bool? isRTLVal,
-      Map<int, double>? columnWidthsVal,
-      Map<int, double>? rowHeightsVal,
-      Map<int, bool>? columnAutoFitVal,
-      HeaderFooter? headerFooter}) {
+  Sheet._(
+    super.excel,
+    super.sheet, {
+    Map<int, Map<int, Data>>? sh,
+    List<_Span?>? spanL_,
+    FastList<String>? spanI_,
+    int? maxRowsVal,
+    int? maxColumnsVal,
+    bool? isRTLVal,
+    Map<int, double>? columnWidthsVal,
+    Map<int, double>? rowHeightsVal,
+    Map<int, bool>? columnAutoFitVal,
+    HeaderFooter? headerFooter,
+  }) {
     _headerFooter = headerFooter;
 
     if (spanL_ != null) {
@@ -164,11 +170,11 @@ class Sheet extends _SheetBase with _SheetRowColumnMixin, _SheetMergeMixin {
   /// returns `2-D dynamic List` of the sheet elements in that range.
   ///
   List<List<dynamic>?> selectRangeValues(CellIndex start, {CellIndex? end}) {
-    var list =
-        (end == null ? selectRange(start) : selectRange(start, end: end));
+    var list = (end == null
+        ? selectRange(start)
+        : selectRange(start, end: end));
     return list
-        .map((List<Data?>? e) =>
-            e?.map((e1) => e1?.value).toList())
+        .map((List<Data?>? e) => e?.map((e1) => e1?.value).toList())
         .toList();
   }
 
@@ -181,8 +187,11 @@ class Sheet extends _SheetBase with _SheetRowColumnMixin, _SheetMergeMixin {
   ///
   /// If `sheet` does not exist then it will be automatically created.
   ///
-  void updateCell(CellIndex cellIndex, CellValue? value,
-      {CellStyle? cellStyle}) {
+  void updateCell(
+    CellIndex cellIndex,
+    CellValue? value, {
+    CellStyle? cellStyle,
+  }) {
     int columnIndex = cellIndex.columnIndex;
     int rowIndex = cellIndex.rowIndex;
     if (columnIndex < 0 || rowIndex < 0) {
@@ -207,16 +216,18 @@ class Sheet extends _SheetBase with _SheetRowColumnMixin, _SheetMergeMixin {
     if (cellStyle != null) {
       final numberFormat = cellStyle.numberFormat;
       if (!numberFormat.accepts(value)) {
-        cellStyle =
-            cellStyle.copyWith(numberFormat: NumFormat.defaultFor(value));
+        cellStyle = cellStyle.copyWith(
+          numberFormat: NumFormat.defaultFor(value),
+        );
       }
     } else {
       final cellStyleBefore =
           _sheetData[cellIndex.rowIndex]?[cellIndex.columnIndex]?.cellStyle;
       if (cellStyleBefore != null &&
           !cellStyleBefore.numberFormat.accepts(value)) {
-        cellStyle =
-            cellStyleBefore.copyWith(numberFormat: NumFormat.defaultFor(value));
+        cellStyle = cellStyleBefore.copyWith(
+          numberFormat: NumFormat.defaultFor(value),
+        );
       }
     }
 
@@ -292,12 +303,15 @@ class Sheet extends _SheetBase with _SheetRowColumnMixin, _SheetMergeMixin {
   ///
   /// If `first` is set to `3` then it will replace only first `3 occurrences` of the `source` with `target`.
   ///
-  int findAndReplace(Pattern source, String target,
-      {int first = -1,
-      int startingRow = -1,
-      int endingRow = -1,
-      int startingColumn = -1,
-      int endingColumn = -1}) {
+  int findAndReplace(
+    Pattern source,
+    String target, {
+    int first = -1,
+    int startingRow = -1,
+    int endingRow = -1,
+    int startingColumn = -1,
+    int endingColumn = -1,
+  }) {
     int replaceCount = 0,
         startingRow0 = 0,
         endingRow0 = -1,
@@ -338,8 +352,9 @@ class Sheet extends _SheetBase with _SheetRowColumnMixin, _SheetMergeMixin {
         if (sourceData is! TextCellValue) {
           continue;
         }
-        final result =
-            sourceData.value.toString().replaceAllMapped(source, (match) {
+        final result = sourceData.value.toString().replaceAllMapped(source, (
+          match,
+        ) {
           if (first == -1 || first != replaceCount) {
             ++replaceCount;
             return target;

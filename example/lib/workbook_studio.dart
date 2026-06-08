@@ -42,16 +42,35 @@ class _WorkbookStudioScreenState extends State<WorkbookStudioScreen> {
 
   static final List<_ColorChoice> _colorChoices = [
     _ColorChoice('Clear', Colors.transparent, ExcelColor.none),
-    _ColorChoice('Sand', const Color(0xFFF5E5C5), ExcelColor.fromHexString('#FFF5E5C5')),
-    _ColorChoice('Mint', const Color(0xFFD9FBEA), ExcelColor.fromHexString('#FFD9FBEA')),
-    _ColorChoice('Sky', const Color(0xFFDBEAFE), ExcelColor.fromHexString('#FFDBEAFE')),
-    _ColorChoice('Rose', const Color(0xFFFFE4E6), ExcelColor.fromHexString('#FFFFE4E6')),
+    _ColorChoice(
+      'Sand',
+      const Color(0xFFF5E5C5),
+      ExcelColor.fromHexString('#FFF5E5C5'),
+    ),
+    _ColorChoice(
+      'Mint',
+      const Color(0xFFD9FBEA),
+      ExcelColor.fromHexString('#FFD9FBEA'),
+    ),
+    _ColorChoice(
+      'Sky',
+      const Color(0xFFDBEAFE),
+      ExcelColor.fromHexString('#FFDBEAFE'),
+    ),
+    _ColorChoice(
+      'Rose',
+      const Color(0xFFFFE4E6),
+      ExcelColor.fromHexString('#FFFFE4E6'),
+    ),
   ];
 
   @override
   void initState() {
     super.initState();
-    _replaceWorkbook(_buildShowcaseWorkbook(), sourceLabel: 'Showcase workbook');
+    _replaceWorkbook(
+      _buildShowcaseWorkbook(),
+      sourceLabel: 'Showcase workbook',
+    );
   }
 
   @override
@@ -67,17 +86,12 @@ class _WorkbookStudioScreenState extends State<WorkbookStudioScreen> {
   Widget build(BuildContext context) {
     final mainPane = ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
-      children: [
-        _buildGridCard(context),
-      ],
+      children: [_buildGridCard(context)],
     );
 
     return Stack(
       children: [
-        ColoredBox(
-          color: const Color(0xFFF3F4F6),
-          child: mainPane,
-        ),
+        ColoredBox(color: const Color(0xFFF3F4F6), child: mainPane),
         if (_isBusy)
           Positioned.fill(
             child: ColoredBox(
@@ -116,10 +130,13 @@ class _WorkbookStudioScreenState extends State<WorkbookStudioScreen> {
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final viewportColumnCount =
-              _visibleColumnCountForWidth(constraints.maxWidth);
-          final columnWidth =
-              _columnWidthForViewport(constraints.maxWidth, viewportColumnCount);
+          final viewportColumnCount = _visibleColumnCountForWidth(
+            constraints.maxWidth,
+          );
+          final columnWidth = _columnWidthForViewport(
+            constraints.maxWidth,
+            viewportColumnCount,
+          );
           final wideHeader = constraints.maxWidth >= _wideHeaderBreakpoint;
 
           return Column(
@@ -233,21 +250,28 @@ class _WorkbookStudioScreenState extends State<WorkbookStudioScreen> {
             tooltip: 'Previous columns',
             onPressed: _columnOffset == 0
                 ? null
-                : () => setState(() => _columnOffset =
-                    (_columnOffset - viewportColumnCount).clamp(0, 1 << 20)),
+                : () => setState(
+                    () => _columnOffset = (_columnOffset - viewportColumnCount)
+                        .clamp(0, 1 << 20),
+                  ),
           ),
           _buildViewportButton(
             icon: Icons.keyboard_arrow_right,
             tooltip: 'Next columns',
-            onPressed: () => setState(() => _columnOffset += viewportColumnCount),
+            onPressed: () =>
+                setState(() => _columnOffset += viewportColumnCount),
           ),
           _buildViewportButton(
             icon: Icons.keyboard_arrow_up,
             tooltip: 'Previous rows',
             onPressed: _rowOffset == 0
                 ? null
-                : () => setState(() =>
-                    _rowOffset = (_rowOffset - _visibleRowCount).clamp(0, 1 << 20)),
+                : () => setState(
+                    () => _rowOffset = (_rowOffset - _visibleRowCount).clamp(
+                      0,
+                      1 << 20,
+                    ),
+                  ),
           ),
           _buildViewportButton(
             icon: Icons.keyboard_arrow_down,
@@ -305,7 +329,8 @@ class _WorkbookStudioScreenState extends State<WorkbookStudioScreen> {
                 message: choice.label,
                 child: InkWell(
                   borderRadius: BorderRadius.circular(8),
-                  onTap: () => setState(() => _backgroundColor = choice.excelColor),
+                  onTap: () =>
+                      setState(() => _backgroundColor = choice.excelColor),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 150),
                     width: 32,
@@ -387,7 +412,8 @@ class _WorkbookStudioScreenState extends State<WorkbookStudioScreen> {
       runSpacing: 8,
       alignment: WrapAlignment.end,
       children: [
-        if (_lastExportLocation != null) _buildMetaChip(context, 'Saved', 'Ready'),
+        if (_lastExportLocation != null)
+          _buildMetaChip(context, 'Saved', 'Ready'),
         if (_lastExportBytes != null)
           _buildMetaChip(
             context,
@@ -573,7 +599,8 @@ class _WorkbookStudioScreenState extends State<WorkbookStudioScreen> {
                   rowIndex: rowIndex,
                   columnIndex: columnIndex,
                   cell: cell,
-                  selected: rowIndex == _selectedRow &&
+                  selected:
+                      rowIndex == _selectedRow &&
                       columnIndex == _selectedColumn,
                 );
               }),
@@ -635,7 +662,10 @@ class _WorkbookStudioScreenState extends State<WorkbookStudioScreen> {
     return usableWidth ~/ _minGridColumnWidth;
   }
 
-  double _columnWidthForViewport(double availableWidth, int visibleColumnCount) {
+  double _columnWidthForViewport(
+    double availableWidth,
+    int visibleColumnCount,
+  ) {
     if (!availableWidth.isFinite) {
       return _minGridColumnWidth;
     }
@@ -660,10 +690,7 @@ class _WorkbookStudioScreenState extends State<WorkbookStudioScreen> {
     final fillColor = _flutterColorFromExcel(style?.backgroundColor);
     final textColor = _flutterColorFromExcel(style?.fontColor);
     final backgroundColor = selected
-        ? Color.alphaBlend(
-            const Color(0x3321A366),
-            fillColor ?? Colors.white,
-          )
+        ? Color.alphaBlend(const Color(0x3321A366), fillColor ?? Colors.white)
         : (fillColor ?? Colors.white);
     final textStyle = theme.textTheme.bodySmall?.copyWith(
       color: textColor ?? const Color(0xFF111827),
@@ -760,17 +787,19 @@ class _WorkbookStudioScreenState extends State<WorkbookStudioScreen> {
   }
 
   Future<void> _loadShowcaseWorkbook() async {
-    setState(() => _replaceWorkbook(
-          _buildShowcaseWorkbook(),
-          sourceLabel: 'Showcase workbook',
-        ));
+    setState(
+      () => _replaceWorkbook(
+        _buildShowcaseWorkbook(),
+        sourceLabel: 'Showcase workbook',
+      ),
+    );
   }
 
   Future<void> _createBlankWorkbook() async {
-    setState(() => _replaceWorkbook(
-          Excel.createExcel(),
-          sourceLabel: 'Blank workbook',
-        ));
+    setState(
+      () =>
+          _replaceWorkbook(Excel.createExcel(), sourceLabel: 'Blank workbook'),
+    );
   }
 
   Future<void> _loadBundledExample() async {
@@ -845,7 +874,7 @@ class _WorkbookStudioScreenState extends State<WorkbookStudioScreen> {
           .replaceAll(RegExp(r'[^a-zA-Z0-9_-]+'), '_')
           .replaceAll(RegExp(r'_+'), '_')
           .trim();
-        final suggestedName =
+      final suggestedName =
           '${baseName.isEmpty ? 'excel_plus_export' : baseName}.xlsx';
 
       String? savedPath;
@@ -872,7 +901,8 @@ class _WorkbookStudioScreenState extends State<WorkbookStudioScreen> {
       setState(() {
         _lastExportBytes = bytes.length;
         _lastExportLocation =
-            savedPath ?? (kIsWeb ? 'Browser download started' : 'Export completed');
+            savedPath ??
+            (kIsWeb ? 'Browser download started' : 'Export completed');
         _statusMessage = savedPath == null
             ? 'Export started in the browser.'
             : 'Workbook exported to $savedPath';
@@ -887,7 +917,9 @@ class _WorkbookStudioScreenState extends State<WorkbookStudioScreen> {
   }
 
   Future<String> _writeFallbackExport(String fileName, Uint8List bytes) async {
-    final target = File('${Directory.systemTemp.path}${Platform.pathSeparator}$fileName');
+    final target = File(
+      '${Directory.systemTemp.path}${Platform.pathSeparator}$fileName',
+    );
     await target.writeAsBytes(bytes, flush: true);
     return target.path;
   }
@@ -955,7 +987,8 @@ class _WorkbookStudioScreenState extends State<WorkbookStudioScreen> {
       return;
     }
 
-    final confirmed = await showDialog<bool>(
+    final confirmed =
+        await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
             title: const Text('Delete sheet?'),
@@ -1055,22 +1088,24 @@ class _WorkbookStudioScreenState extends State<WorkbookStudioScreen> {
       value = switch (_editorKind) {
         CellEditorKind.text =>
           cellValueText.isEmpty ? null : TextCellValue(_valueController.text),
-        CellEditorKind.integer => cellValueText.isEmpty
-            ? null
-            : IntCellValue(int.parse(cellValueText)),
-        CellEditorKind.decimal => cellValueText.isEmpty
-            ? null
-            : DoubleCellValue(double.parse(cellValueText)),
-        CellEditorKind.boolean => cellValueText.isEmpty
-            ? null
-            : BoolCellValue(_parseBool(cellValueText)),
-        CellEditorKind.formula => cellValueText.isEmpty
-            ? null
-            : FormulaCellValue(
-                cellValueText.startsWith('=')
-                    ? cellValueText.substring(1)
-                    : cellValueText,
-              ),
+        CellEditorKind.integer =>
+          cellValueText.isEmpty ? null : IntCellValue(int.parse(cellValueText)),
+        CellEditorKind.decimal =>
+          cellValueText.isEmpty
+              ? null
+              : DoubleCellValue(double.parse(cellValueText)),
+        CellEditorKind.boolean =>
+          cellValueText.isEmpty
+              ? null
+              : BoolCellValue(_parseBool(cellValueText)),
+        CellEditorKind.formula =>
+          cellValueText.isEmpty
+              ? null
+              : FormulaCellValue(
+                  cellValueText.startsWith('=')
+                      ? cellValueText.substring(1)
+                      : cellValueText,
+                ),
       };
     } catch (e) {
       _showMessage('Could not apply this value: $e');
@@ -1083,7 +1118,8 @@ class _WorkbookStudioScreenState extends State<WorkbookStudioScreen> {
     );
     final existingStyle = _cellAt(_selectedRow, _selectedColumn)?.cellStyle;
 
-    final shouldAttachStyle = existingStyle != null ||
+    final shouldAttachStyle =
+        existingStyle != null ||
         _bold ||
         _italic ||
         _backgroundColor != ExcelColor.none;
@@ -1132,7 +1168,9 @@ class _WorkbookStudioScreenState extends State<WorkbookStudioScreen> {
       case 'no':
         return false;
       default:
-        throw const FormatException('Use true/false, yes/no, or 1/0 for booleans.');
+        throw const FormatException(
+          'Use true/false, yes/no, or 1/0 for booleans.',
+        );
     }
   }
 
@@ -1210,8 +1248,9 @@ class _WorkbookStudioScreenState extends State<WorkbookStudioScreen> {
     if (!mounted) {
       return;
     }
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   static String _cellLabel(int columnIndex, int rowIndex) =>
@@ -1286,7 +1325,9 @@ Excel _buildShowcaseWorkbook() {
           columnIndex: columnIndex,
           rowIndex: rowIndex + 2,
         ),
-        columnIndex == 2 ? IntCellValue(int.parse(value)) : TextCellValue(value),
+        columnIndex == 2
+            ? IntCellValue(int.parse(value))
+            : TextCellValue(value),
       );
     }
   }

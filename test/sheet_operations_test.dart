@@ -7,10 +7,14 @@ void main() {
   group('Sheet operations', () {
     test('Multiple sheets roundtrip', () {
       var excel = Excel.createExcel();
-      excel['SheetA']
-          .updateCell(CellIndex.indexByString('A1'), TextCellValue('Alpha'));
-      excel['SheetB']
-          .updateCell(CellIndex.indexByString('B2'), IntCellValue(99));
+      excel['SheetA'].updateCell(
+        CellIndex.indexByString('A1'),
+        TextCellValue('Alpha'),
+      );
+      excel['SheetB'].updateCell(
+        CellIndex.indexByString('B2'),
+        IntCellValue(99),
+      );
 
       var bytes = excel.encode();
       saveTestOutput(bytes, 'sheet_multiple_roundtrip');
@@ -19,32 +23,37 @@ void main() {
       expect(decoded.sheets.keys, contains('SheetA'));
       expect(decoded.sheets.keys, contains('SheetB'));
       expect(
-          (decoded['SheetA'].cell(CellIndex.indexByString('A1')).value
-                  as TextCellValue)
-              .value
-              .toString(),
-          'Alpha');
+        (decoded['SheetA'].cell(CellIndex.indexByString('A1')).value
+                as TextCellValue)
+            .value
+            .toString(),
+        'Alpha',
+      );
       expect(
-          (decoded['SheetB'].cell(CellIndex.indexByString('B2')).value
-                  as IntCellValue)
-              .value,
-          99);
+        (decoded['SheetB'].cell(CellIndex.indexByString('B2')).value
+                as IntCellValue)
+            .value,
+        99,
+      );
     });
 
     test('Rename sheet', () {
       var excel = Excel.createExcel();
-      excel['Original']
-          .updateCell(CellIndex.indexByString('A1'), TextCellValue('data'));
+      excel['Original'].updateCell(
+        CellIndex.indexByString('A1'),
+        TextCellValue('data'),
+      );
       excel.rename('Original', 'Renamed');
 
       expect(excel.sheets.keys, contains('Renamed'));
       expect(excel.sheets.keys, isNot(contains('Original')));
       expect(
-          (excel['Renamed'].cell(CellIndex.indexByString('A1')).value
-                  as TextCellValue)
-              .value
-              .toString(),
-          'data');
+        (excel['Renamed'].cell(CellIndex.indexByString('A1')).value
+                as TextCellValue)
+            .value
+            .toString(),
+        'data',
+      );
 
       var bytes = excel.encode();
       saveTestOutput(bytes, 'sheet_rename');
@@ -55,10 +64,14 @@ void main() {
 
     test('Delete sheet', () {
       var excel = Excel.createExcel();
-      excel['Keep']
-          .updateCell(CellIndex.indexByString('A1'), TextCellValue('keep'));
-      excel['Remove']
-          .updateCell(CellIndex.indexByString('A1'), TextCellValue('remove'));
+      excel['Keep'].updateCell(
+        CellIndex.indexByString('A1'),
+        TextCellValue('keep'),
+      );
+      excel['Remove'].updateCell(
+        CellIndex.indexByString('A1'),
+        TextCellValue('remove'),
+      );
       excel.delete('Remove');
 
       expect(excel.sheets.keys, contains('Keep'));
@@ -73,26 +86,33 @@ void main() {
     test('Copy sheet', () {
       var excel = Excel.createExcel();
       excel['Source'].updateCell(
-          CellIndex.indexByString('A1'), TextCellValue('original'));
+        CellIndex.indexByString('A1'),
+        TextCellValue('original'),
+      );
       excel.copy('Source', 'Destination');
 
       expect(excel.sheets.keys, contains('Source'));
       expect(excel.sheets.keys, contains('Destination'));
       expect(
-          (excel['Destination'].cell(CellIndex.indexByString('A1')).value
-                  as TextCellValue)
-              .value
-              .toString(),
-          'original');
+        (excel['Destination'].cell(CellIndex.indexByString('A1')).value
+                as TextCellValue)
+            .value
+            .toString(),
+        'original',
+      );
       saveTestOutput(excel.save(), 'sheet_copy');
     });
 
     test('Default sheet get/set', () {
       var excel = Excel.createExcel();
-      excel['First']
-          .updateCell(CellIndex.indexByString('A1'), TextCellValue('f'));
-      excel['Second']
-          .updateCell(CellIndex.indexByString('A1'), TextCellValue('s'));
+      excel['First'].updateCell(
+        CellIndex.indexByString('A1'),
+        TextCellValue('f'),
+      );
+      excel['Second'].updateCell(
+        CellIndex.indexByString('A1'),
+        TextCellValue('s'),
+      );
 
       var result = excel.setDefaultSheet('Second');
       expect(result, true);
@@ -165,13 +185,19 @@ void main() {
 
       sheet.insertRow(1);
 
-      expect(sheet.cell(CellIndex.indexByString('A1')).value.toString(),
-          'row0');
+      expect(
+        sheet.cell(CellIndex.indexByString('A1')).value.toString(),
+        'row0',
+      );
       expect(sheet.cell(CellIndex.indexByString('A2')).value, isNull);
-      expect(sheet.cell(CellIndex.indexByString('A3')).value.toString(),
-          'row1');
-      expect(sheet.cell(CellIndex.indexByString('A4')).value.toString(),
-          'row2');
+      expect(
+        sheet.cell(CellIndex.indexByString('A3')).value.toString(),
+        'row1',
+      );
+      expect(
+        sheet.cell(CellIndex.indexByString('A4')).value.toString(),
+        'row2',
+      );
       saveTestOutput(excel.save(), 'rowcol_insert_row');
     });
 
@@ -184,10 +210,14 @@ void main() {
 
       sheet.removeRow(1);
 
-      expect(sheet.cell(CellIndex.indexByString('A1')).value.toString(),
-          'row0');
-      expect(sheet.cell(CellIndex.indexByString('A2')).value.toString(),
-          'row2');
+      expect(
+        sheet.cell(CellIndex.indexByString('A1')).value.toString(),
+        'row0',
+      );
+      expect(
+        sheet.cell(CellIndex.indexByString('A2')).value.toString(),
+        'row2',
+      );
       saveTestOutput(excel.save(), 'rowcol_remove_row');
     });
 
@@ -200,13 +230,19 @@ void main() {
 
       sheet.insertColumn(1);
 
-      expect(sheet.cell(CellIndex.indexByString('A1')).value.toString(),
-          'col0');
+      expect(
+        sheet.cell(CellIndex.indexByString('A1')).value.toString(),
+        'col0',
+      );
       expect(sheet.cell(CellIndex.indexByString('B1')).value, isNull);
-      expect(sheet.cell(CellIndex.indexByString('C1')).value.toString(),
-          'col1');
-      expect(sheet.cell(CellIndex.indexByString('D1')).value.toString(),
-          'col2');
+      expect(
+        sheet.cell(CellIndex.indexByString('C1')).value.toString(),
+        'col1',
+      );
+      expect(
+        sheet.cell(CellIndex.indexByString('D1')).value.toString(),
+        'col2',
+      );
       saveTestOutput(excel.save(), 'rowcol_insert_col');
     });
 
@@ -219,10 +255,14 @@ void main() {
 
       sheet.removeColumn(1);
 
-      expect(sheet.cell(CellIndex.indexByString('A1')).value.toString(),
-          'col0');
-      expect(sheet.cell(CellIndex.indexByString('B1')).value.toString(),
-          'col2');
+      expect(
+        sheet.cell(CellIndex.indexByString('A1')).value.toString(),
+        'col0',
+      );
+      expect(
+        sheet.cell(CellIndex.indexByString('B1')).value.toString(),
+        'col2',
+      );
       saveTestOutput(excel.save(), 'rowcol_remove_col');
     });
 
@@ -235,9 +275,9 @@ void main() {
 
       expect(sheet.cell(CellIndex.indexByString('A2')).value.toString(), 'a');
       expect(
-          (sheet.cell(CellIndex.indexByString('B2')).value as IntCellValue)
-              .value,
-          1);
+        (sheet.cell(CellIndex.indexByString('B2')).value as IntCellValue).value,
+        1,
+      );
       expect(sheet.cell(CellIndex.indexByString('C2')).value, isNull);
       saveTestOutput(excel.save(), 'rowcol_append_row');
     });
@@ -248,19 +288,21 @@ void main() {
       sheet.updateCell(CellIndex.indexByString('A1'), TextCellValue('r0'));
       sheet.updateCell(CellIndex.indexByString('A2'), TextCellValue('r1'));
 
-      sheet.insertRowIterables(
-          [TextCellValue('new0'), TextCellValue('new1')], 1);
+      sheet.insertRowIterables([
+        TextCellValue('new0'),
+        TextCellValue('new1'),
+      ], 1);
 
       expect(
-          (sheet.cell(CellIndex.indexByString('A2')).value as TextCellValue)
-              .value
-              .toString(),
-          'new0');
+        (sheet.cell(CellIndex.indexByString('A2')).value as TextCellValue).value
+            .toString(),
+        'new0',
+      );
       expect(
-          (sheet.cell(CellIndex.indexByString('B2')).value as TextCellValue)
-              .value
-              .toString(),
-          'new1');
+        (sheet.cell(CellIndex.indexByString('B2')).value as TextCellValue).value
+            .toString(),
+        'new1',
+      );
       saveTestOutput(excel.save(), 'rowcol_insert_iterables');
     });
 
@@ -268,21 +310,23 @@ void main() {
       var excel = Excel.createExcel();
       var sheet = excel['Sheet1'];
       sheet.insertRowIterables(
-          [TextCellValue('x'), TextCellValue('y')], 0,
-          startingColumn: 2);
+        [TextCellValue('x'), TextCellValue('y')],
+        0,
+        startingColumn: 2,
+      );
 
       expect(sheet.cell(CellIndex.indexByString('A1')).value, isNull);
       expect(sheet.cell(CellIndex.indexByString('B1')).value, isNull);
       expect(
-          (sheet.cell(CellIndex.indexByString('C1')).value as TextCellValue)
-              .value
-              .toString(),
-          'x');
+        (sheet.cell(CellIndex.indexByString('C1')).value as TextCellValue).value
+            .toString(),
+        'x',
+      );
       expect(
-          (sheet.cell(CellIndex.indexByString('D1')).value as TextCellValue)
-              .value
-              .toString(),
-          'y');
+        (sheet.cell(CellIndex.indexByString('D1')).value as TextCellValue).value
+            .toString(),
+        'y',
+      );
       saveTestOutput(excel.save(), 'rowcol_insert_iterables_offset');
     });
 
@@ -294,8 +338,10 @@ void main() {
       sheet.updateCell(CellIndex.indexByString('B2'), IntCellValue(99));
 
       sheet.clearRow(1);
-      expect(sheet.cell(CellIndex.indexByString('A1')).value.toString(),
-          'keep');
+      expect(
+        sheet.cell(CellIndex.indexByString('A1')).value.toString(),
+        'keep',
+      );
       expect(sheet.cell(CellIndex.indexByString('A2')).value, isNull);
       expect(sheet.cell(CellIndex.indexByString('B2')).value, isNull);
       saveTestOutput(excel.save(), 'rowcol_clear_row');
@@ -341,7 +387,9 @@ void main() {
       sheet.merge(CellIndex.indexByString('A1'), CellIndex.indexByString('B2'));
       sheet.merge(CellIndex.indexByString('D1'), CellIndex.indexByString('F1'));
       sheet.merge(
-          CellIndex.indexByString('A5'), CellIndex.indexByString('A10'));
+        CellIndex.indexByString('A5'),
+        CellIndex.indexByString('A10'),
+      );
 
       var bytes = excel.encode();
       saveTestOutput(bytes, 'merge_multiple');
@@ -365,10 +413,14 @@ void main() {
 
     test('getMergedCells via Excel class', () {
       var excel = Excel.createExcel();
-      excel['Sheet1']
-          .merge(CellIndex.indexByString('A1'), CellIndex.indexByString('B2'));
-      excel['Sheet1']
-          .merge(CellIndex.indexByString('D4'), CellIndex.indexByString('E5'));
+      excel['Sheet1'].merge(
+        CellIndex.indexByString('A1'),
+        CellIndex.indexByString('B2'),
+      );
+      excel['Sheet1'].merge(
+        CellIndex.indexByString('D4'),
+        CellIndex.indexByString('E5'),
+      );
 
       var merged = excel.getMergedCells('Sheet1');
       expect(merged, contains('A1:B2'));
@@ -379,11 +431,16 @@ void main() {
     test('Merge with custom value', () {
       var excel = Excel.createExcel();
       var sheet = excel['Sheet1'];
-      sheet.merge(CellIndex.indexByString('A1'), CellIndex.indexByString('C1'),
-          customValue: TextCellValue('Merged Header'));
+      sheet.merge(
+        CellIndex.indexByString('A1'),
+        CellIndex.indexByString('C1'),
+        customValue: TextCellValue('Merged Header'),
+      );
 
-      expect(sheet.cell(CellIndex.indexByString('A1')).value.toString(),
-          'Merged Header');
+      expect(
+        sheet.cell(CellIndex.indexByString('A1')).value.toString(),
+        'Merged Header',
+      );
       saveTestOutput(excel.save(), 'merge_custom_value');
     });
   });

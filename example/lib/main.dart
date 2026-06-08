@@ -57,10 +57,7 @@ class ExampleHomeShell extends StatefulWidget {
 class _ExampleHomeShellState extends State<ExampleHomeShell> {
   int _selectedIndex = 0;
 
-  static const _pages = [
-    WorkbookStudioScreen(),
-    TestRunnerScreen(),
-  ];
+  static const _pages = [WorkbookStudioScreen(), TestRunnerScreen()];
 
   @override
   Widget build(BuildContext context) {
@@ -80,7 +77,8 @@ class _ExampleHomeShellState extends State<ExampleHomeShell> {
                   padding: const EdgeInsets.symmetric(vertical: 10),
                   child: _ShellNavigation(
                     selectedIndex: _selectedIndex,
-                    onSelected: (index) => setState(() => _selectedIndex = index),
+                    onSelected: (index) =>
+                        setState(() => _selectedIndex = index),
                   ),
                 ),
                 const SizedBox(width: 20),
@@ -99,10 +97,7 @@ class _ExampleHomeShellState extends State<ExampleHomeShell> {
                 ),
               ),
             Expanded(
-              child: IndexedStack(
-                index: _selectedIndex,
-                children: _pages,
-              ),
+              child: IndexedStack(index: _selectedIndex, children: _pages),
             ),
           ],
         ),

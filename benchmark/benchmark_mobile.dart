@@ -4,7 +4,9 @@ import 'package:excel_plus/excel_plus.dart';
 void main() {
   const rows = 2000;
   const cols = 50;
-  print('=== Mobile-realistic: ${rows * cols} cells ($rows rows × $cols cols) ===\n');
+  print(
+    '=== Mobile-realistic: ${rows * cols} cells ($rows rows × $cols cols) ===\n',
+  );
 
   var excel = Excel.createExcel();
   var sheet = excel['Sheet1'];
@@ -18,12 +20,16 @@ void main() {
     }
   }
   final createMs = sw.elapsedMilliseconds;
-  print('[CREATE] ${createMs}ms | RSS: ${(ProcessInfo.currentRss / (1024 * 1024)).toStringAsFixed(1)} MB');
+  print(
+    '[CREATE] ${createMs}ms | RSS: ${(ProcessInfo.currentRss / (1024 * 1024)).toStringAsFixed(1)} MB',
+  );
 
   sw.reset();
   var bytes = excel.encode()!;
   final saveMs = sw.elapsedMilliseconds;
-  print('[SAVE]   ${saveMs}ms | RSS: ${(ProcessInfo.currentRss / (1024 * 1024)).toStringAsFixed(1)} MB | File: ${(bytes.length / 1024).toStringAsFixed(0)} KB');
+  print(
+    '[SAVE]   ${saveMs}ms | RSS: ${(ProcessInfo.currentRss / (1024 * 1024)).toStringAsFixed(1)} MB | File: ${(bytes.length / 1024).toStringAsFixed(0)} KB',
+  );
 
   // Write and re-read
   File('benchmark_mobile_tmp.xlsx').writeAsBytesSync(bytes);
@@ -34,7 +40,9 @@ void main() {
   var s2 = excel2['Sheet1'];
   s2.cell(CellIndex.indexByString('A1')).value;
   final readMs = sw.elapsedMilliseconds;
-  print('[OPEN]   ${readMs}ms | RSS: ${(ProcessInfo.currentRss / (1024 * 1024)).toStringAsFixed(1)} MB | ${s2.maxRows} rows × ${s2.maxColumns} cols');
+  print(
+    '[OPEN]   ${readMs}ms | RSS: ${(ProcessInfo.currentRss / (1024 * 1024)).toStringAsFixed(1)} MB | ${s2.maxRows} rows × ${s2.maxColumns} cols',
+  );
 
   File('benchmark_mobile_tmp.xlsx').deleteSync();
 }

@@ -11,8 +11,10 @@ class CellIndex {
   ///CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0 ); // A1
   ///CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 1 ); // A2
   ///```
-  factory CellIndex.indexByColumnRow(
-      {required int columnIndex, required int rowIndex}) {
+  factory CellIndex.indexByColumnRow({
+    required int columnIndex,
+    required int rowIndex,
+  }) {
     return CellIndex._(columnIndex: columnIndex, rowIndex: rowIndex);
   }
 

@@ -8,8 +8,8 @@ class FastList<K> {
   FastList();
 
   FastList.from(FastList<K> other)
-      : _map = Map<K, int>.from(other._map),
-        _index = other._index;
+    : _map = Map<K, int>.from(other._map),
+      _index = other._index;
 
   void add(K key) {
     if (_map[key] == null) {
