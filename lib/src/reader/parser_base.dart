@@ -26,8 +26,9 @@ abstract class _ParserBase {
       _damagedExcel();
     }
     file!.decompress();
-    _excel._xmlFiles["[Content_Types].xml"] =
-        XmlDocument.parse(utf8.decode(file.content));
+    _excel._xmlFiles["[Content_Types].xml"] = XmlDocument.parse(
+      utf8.decode(file.content),
+    );
   }
 
   void _parseRelations() {
@@ -63,8 +64,9 @@ abstract class _ParserBase {
   }
 
   void _parseSharedStrings() {
-    var sharedStrings =
-        _excel._archive.findFile(_excel._absSharedStringsTarget);
+    var sharedStrings = _excel._archive.findFile(
+      _excel._absSharedStringsTarget,
+    );
     if (sharedStrings == null) {
       _excel._sharedStringsTarget = 'sharedStrings.xml';
 
@@ -79,15 +81,16 @@ abstract class _ParserBase {
             ?.findAllElements('Relationships')
             .first
             .children
-            .add(XmlElement(
-              _xmlName('Relationship'),
-              <XmlAttribute>[
+            .add(
+              XmlElement(_xmlName('Relationship'), <XmlAttribute>[
                 XmlAttribute(_xmlName('Id'), 'rId$rIdNumber'),
-                XmlAttribute(_xmlName('Type'),
-                    'http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings'),
-                XmlAttribute(_xmlName('Target'), 'sharedStrings.xml')
-              ],
-            ));
+                XmlAttribute(
+                  _xmlName('Type'),
+                  'http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings',
+                ),
+                XmlAttribute(_xmlName('Target'), 'sharedStrings.xml'),
+              ]),
+            );
         if (!_rId.contains('rId$rIdNumber')) {
           _rId.add('rId$rIdNumber');
         }
@@ -98,39 +101,40 @@ abstract class _ParserBase {
         _excel._xmlFiles["[Content_Types].xml"]
             ?.findAllElements('Override')
             .forEach((node) {
-          var value = node.getAttribute('ContentType');
-          if (value == content) {
-            contain = false;
-          }
-        });
+              var value = node.getAttribute('ContentType');
+              if (value == content) {
+                contain = false;
+              }
+            });
         if (contain) {
           _excel._xmlFiles["[Content_Types].xml"]
               ?.findAllElements('Types')
               .first
               .children
-              .add(XmlElement(
-                _xmlName('Override'),
-                <XmlAttribute>[
+              .add(
+                XmlElement(_xmlName('Override'), <XmlAttribute>[
                   XmlAttribute(_xmlName('PartName'), '/xl/sharedStrings.xml'),
                   XmlAttribute(_xmlName('ContentType'), content),
-                ],
-              ));
+                ]),
+              );
         }
       }
 
       var content = utf8.encode(
-          "<sst xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" count=\"0\" uniqueCount=\"0\"/>");
+        "<sst xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" count=\"0\" uniqueCount=\"0\"/>",
+      );
       _excel._archive.addFile(
-          ArchiveFile("xl/sharedStrings.xml", content.length, content));
+        ArchiveFile("xl/sharedStrings.xml", content.length, content),
+      );
       sharedStrings = _excel._archive.findFile("xl/sharedStrings.xml");
     }
     sharedStrings!.decompress();
     var xmlStr = utf8.decode(sharedStrings.content);
 
     // Store a minimal empty <sst/> DOM so the writer can find the key.
-    _excel._xmlFiles["xl/${_excel._sharedStringsTarget}"] =
-        XmlDocument.parse(
-            '<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="0" uniqueCount="0"/>');
+    _excel._xmlFiles["xl/${_excel._sharedStringsTarget}"] = XmlDocument.parse(
+      '<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="0" uniqueCount="0"/>',
+    );
 
     // SAX-parse shared strings — no full DOM tree created.
     _saxParseSharedStrings(xmlStr);
@@ -196,15 +200,15 @@ abstract class _ParserBase {
               if (hasRichContent && richXmlBuf != null) {
                 richXmlBuf.write('</si>');
                 // Parse just this one <si> as DOM for rich text support
-                final siElement = XmlDocument.parse(richXmlBuf.toString())
-                    .rootElement;
+                final siElement = XmlDocument.parse(
+                  richXmlBuf.toString(),
+                ).rootElement;
                 final ss = SharedString(node: siElement);
                 _excel._sharedStrings.add(ss, ss.stringValue);
               } else {
                 // Simple string — no DOM needed
                 final val = textBuf.toString();
-                _excel._sharedStrings
-                    .add(SharedString._fromText(val), val);
+                _excel._sharedStrings.add(SharedString._fromText(val), val);
               }
               inSi = false;
             }
@@ -244,6 +248,19 @@ abstract class _ParserBase {
         .replaceAll('&', '&amp;')
         .replaceAll('<', '&lt;')
         .replaceAll('>', '&gt;');
+  }
+
+  /// Reads an OOXML boolean toggle property such as `<b>` (bold) or `<i>`
+  /// (italic). Per the spec, an absent element means `false`; a present element
+  /// with no `val` attribute means `true`; and an explicit `val` of `0`/`false`
+  /// means `false` while `1`/`true` means `true`. The previous logic treated
+  /// mere presence as `true`, so `<b val="0"/>` was wrongly read as bold.
+  bool _boolToggle(XmlElement node, String child) {
+    final elements = node.findElements(child);
+    if (elements.isEmpty) return false;
+    final val = elements.first.getAttribute('val')?.trim().toLowerCase();
+    if (val == null) return true;
+    return !(val == '0' || val == 'false');
   }
 
   dynamic _nodeChildren(XmlElement node, String child, {var attribute}) {

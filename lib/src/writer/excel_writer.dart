@@ -58,8 +58,9 @@ class ExcelWriter extends _WriterBase with _WriterStylesMixin {
     final customWidths = sheetObject.getColumnWidths;
 
     final columnCount = max(
-        autoFits.isEmpty ? 0 : autoFits.keys.reduce(max) + 1,
-        customWidths.isEmpty ? 0 : customWidths.keys.reduce(max) + 1);
+      autoFits.isEmpty ? 0 : autoFits.keys.reduce(max) + 1,
+      customWidths.isEmpty ? 0 : customWidths.keys.reduce(max) + 1,
+    );
 
     List<double> columnWidths = <double>[];
 
@@ -87,8 +88,9 @@ class ExcelWriter extends _WriterBase with _WriterStylesMixin {
     if (sheetName == null || _excel._xmlFiles['xl/workbook.xml'] == null) {
       return false;
     }
-    List<XmlElement> sheetList =
-        _excel._xmlFiles['xl/workbook.xml']!.findAllElements('sheet').toList();
+    List<XmlElement> sheetList = _excel._xmlFiles['xl/workbook.xml']!
+        .findAllElements('sheet')
+        .toList();
     XmlElement elementFound = XmlElement(_xmlName(''));
 
     int position = -1;
@@ -136,7 +138,13 @@ class ExcelWriter extends _WriterBase with _WriterStylesMixin {
 
     if (sheet.headerFooter == null) return;
 
-    sheetXmlElement.children.add(sheet.headerFooter!.toXmlElement());
+    // Insert at the schema-correct position. headerFooter must precede
+    // drawing/legacyDrawing etc., so a blind append corrupts files that
+    // already contain those later-ordered elements.
+    _insertWorksheetChildOrdered(
+      sheetXmlElement,
+      sheet.headerFooter!.toXmlElement() as XmlElement,
+    );
   }
 
   /// Applies merge cell elements for a single sheet into its XML DOM.
@@ -151,8 +159,9 @@ class ExcelWriter extends _WriterBase with _WriterStylesMixin {
 
     var xmlFile = _excel._xmlFiles[_excel._xmlSheetId[sheetName]]!;
 
-    Iterable<XmlElement> iterMergeElement =
-        xmlFile.findAllElements('mergeCells');
+    Iterable<XmlElement> iterMergeElement = xmlFile.findAllElements(
+      'mergeCells',
+    );
     late XmlElement mergeElement;
 
     if (iterMergeElement.isNotEmpty) {
@@ -164,35 +173,42 @@ class ExcelWriter extends _WriterBase with _WriterStylesMixin {
         return;
       }
       var worksheet = worksheetElements.first;
-      int index = worksheet.children
-          .indexOf(xmlFile.findAllElements('sheetData').first);
+      int index = worksheet.children.indexOf(
+        xmlFile.findAllElements('sheetData').first,
+      );
       if (index == -1) {
         _damagedExcel();
         return;
       }
       worksheet.children.insert(
         index + 1,
-        XmlElement(
-            _xmlName('mergeCells'), [XmlAttribute(_xmlName('count'), '0')]),
+        XmlElement(_xmlName('mergeCells'), [
+          XmlAttribute(_xmlName('count'), '0'),
+        ]),
       );
       mergeElement = xmlFile.findAllElements('mergeCells').first;
     }
 
-    List<String> spannedItems =
-        List<String>.from(_excel._sheetMap[sheetName]!.spannedItems);
+    List<String> spannedItems = List<String>.from(
+      _excel._sheetMap[sheetName]!.spannedItems,
+    );
 
     if (mergeElement.getAttributeNode('count') == null) {
       mergeElement.attributes.add(
-          XmlAttribute(_xmlName('count'), spannedItems.length.toString()));
+        XmlAttribute(_xmlName('count'), spannedItems.length.toString()),
+      );
     } else {
-      mergeElement.getAttributeNode('count')!.value =
-          spannedItems.length.toString();
+      mergeElement.getAttributeNode('count')!.value = spannedItems.length
+          .toString();
     }
 
     mergeElement.children.clear();
     for (final ref in spannedItems) {
-      mergeElement.children.add(XmlElement(
-          _xmlName('mergeCell'), [XmlAttribute(_xmlName('ref'), ref)], []));
+      mergeElement.children.add(
+        XmlElement(_xmlName('mergeCell'), [
+          XmlAttribute(_xmlName('ref'), ref),
+        ], []),
+      );
     }
   }
 
@@ -212,27 +228,26 @@ class ExcelWriter extends _WriterBase with _WriterStylesMixin {
 
     if (itrSheetViewsElement.isNotEmpty) {
       itrSheetViewsElement.first.children.clear();
-      itrSheetViewsElement.first.children.add(XmlElement(
-        _xmlName('sheetView'),
-        [
-          if (sheetObject.isRTL)
-            XmlAttribute(_xmlName('rightToLeft'), '1'),
+      itrSheetViewsElement.first.children.add(
+        XmlElement(_xmlName('sheetView'), [
+          if (sheetObject.isRTL) XmlAttribute(_xmlName('rightToLeft'), '1'),
           XmlAttribute(_xmlName('workbookViewId'), '0'),
-        ],
-      ));
-    } else {
-      xmlFile.findAllElements('worksheet').first.children.add(
-        XmlElement(_xmlName('sheetViews'), [], [
-          XmlElement(
-            _xmlName('sheetView'),
-            [
-              if (sheetObject.isRTL)
-                XmlAttribute(_xmlName('rightToLeft'), '1'),
-              XmlAttribute(_xmlName('workbookViewId'), '0'),
-            ],
-          )
         ]),
       );
+    } else {
+      xmlFile
+          .findAllElements('worksheet')
+          .first
+          .children
+          .add(
+            XmlElement(_xmlName('sheetViews'), [], [
+              XmlElement(_xmlName('sheetView'), [
+                if (sheetObject.isRTL)
+                  XmlAttribute(_xmlName('rightToLeft'), '1'),
+                XmlAttribute(_xmlName('workbookViewId'), '0'),
+              ]),
+            ]),
+          );
     }
   }
 
@@ -297,8 +312,8 @@ class ExcelWriter extends _WriterBase with _WriterStylesMixin {
 
       XmlElement? sheetFormatPrElement =
           worksheetElement.findElements('sheetFormatPr').isNotEmpty
-              ? worksheetElement.findElements('sheetFormatPr').first
-              : null;
+          ? worksheetElement.findElements('sheetFormatPr').first
+          : null;
 
       if (sheetFormatPrElement != null) {
         sheetFormatPrElement.attributes.clear();
@@ -312,12 +327,20 @@ class ExcelWriter extends _WriterBase with _WriterStylesMixin {
       }
 
       if (defaultRowHeight != null) {
-        sheetFormatPrElement!.attributes.add(XmlAttribute(
-            _xmlName('defaultRowHeight'), defaultRowHeight.toStringAsFixed(2)));
+        sheetFormatPrElement!.attributes.add(
+          XmlAttribute(
+            _xmlName('defaultRowHeight'),
+            defaultRowHeight.toStringAsFixed(2),
+          ),
+        );
       }
       if (defaultColumnWidth != null) {
-        sheetFormatPrElement!.attributes.add(XmlAttribute(
-            _xmlName('defaultColWidth'), defaultColumnWidth.toStringAsFixed(2)));
+        sheetFormatPrElement!.attributes.add(
+          XmlAttribute(
+            _xmlName('defaultColWidth'),
+            defaultColumnWidth.toStringAsFixed(2),
+          ),
+        );
       }
 
       _setColumns(sheetObject, xmlFile);
@@ -325,14 +348,12 @@ class ExcelWriter extends _WriterBase with _WriterStylesMixin {
       _setHeaderFooter(sheetName);
 
       // Apply merge cells into the DOM before serialization
-      if (_excel._mergeChanges &&
-          _excel._mergeChangeLook.contains(sheetName)) {
+      if (_excel._mergeChanges && _excel._mergeChangeLook.contains(sheetName)) {
         _applyMergeForSheet(sheetName);
       }
 
       // Apply RTL into the DOM before serialization
-      if (_excel._rtlChanges &&
-          _excel._rtlChangeLook.contains(sheetName)) {
+      if (_excel._rtlChanges && _excel._rtlChangeLook.contains(sheetName)) {
         _applyRTLForSheet(sheetName);
       }
 
@@ -351,8 +372,7 @@ class ExcelWriter extends _WriterBase with _WriterStylesMixin {
       // Store directly as archive file — skip the later DOM serialization loop
       var xmlSheetId = _excel._xmlSheetId[sheetName]!;
       var bytes = utf8.encode(sheetXml);
-      _archiveFiles[xmlSheetId] =
-          ArchiveFile(xmlSheetId, bytes.length, bytes);
+      _archiveFiles[xmlSheetId] = ArchiveFile(xmlSheetId, bytes.length, bytes);
     });
   }
 }

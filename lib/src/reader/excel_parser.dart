@@ -75,10 +75,7 @@ class Parser extends _ParserBase with _ParserStylesMixin {
 
         CellIndex startIndex = CellIndex.indexByString(startCell),
             endIndex = CellIndex.indexByString(endCell);
-        _Span spanObj = _Span.fromCellIndex(
-          start: startIndex,
-          end: endIndex,
-        );
+        _Span spanObj = _Span.fromCellIndex(start: startIndex, end: endIndex);
         if (!sheet._spanList.contains(spanObj)) {
           sheet._spanList.add(spanObj);
           _deleteAllButTopLeftCellsOfSpanObj(spanObj, sheet);
@@ -161,7 +158,8 @@ class Parser extends _ParserBase with _ParserStylesMixin {
       // Extract sheetData inner content for SAX parsing
       sheetDataXml = xmlStr.substring(openTagEnd + 1, sheetDataEnd);
       // Build envelope: everything before <sheetData...> + <sheetData/> + everything after </sheetData>
-      envelopeXml = '${xmlStr.substring(0, sheetDataStart)}<sheetData/>${xmlStr.substring(sheetDataEnd + '</sheetData>'.length)}';
+      envelopeXml =
+          '${xmlStr.substring(0, sheetDataStart)}<sheetData/>${xmlStr.substring(sheetDataEnd + '</sheetData>'.length)}';
     }
 
     // Parse the lightweight envelope DOM (no cell data — just worksheet structure)
@@ -199,6 +197,7 @@ class Parser extends _ParserBase with _ParserStylesMixin {
     final wrappedXml = '<sheetData>$xml</sheetData>';
 
     int currentRow = -1;
+    int currentCol = -1; // tracks column for cells that omit the `r` attribute
     String? cellRef;
     String? cellType;
     int cellStyle = 0;
@@ -208,8 +207,9 @@ class Parser extends _ParserBase with _ParserStylesMixin {
 
     for (final event in parseEvents(wrappedXml)) {
       if (event is XmlStartElementEvent) {
-        switch (event.name) {
+        switch (_localName(event.name)) {
           case 'row':
+            currentCol = -1;
             for (final attr in event.attributes) {
               if (attr.localName == 'r') {
                 currentRow = (int.tryParse(attr.value) ?? 0) - 1;
@@ -236,6 +236,16 @@ class Parser extends _ParserBase with _ParserStylesMixin {
                   cellStyle = int.tryParse(attr.value) ?? 0;
               }
             }
+            // Cells may legally omit the `r` coordinate; in that case the
+            // column is the next one after the previous cell in this row.
+            if (cellRef != null) {
+              currentCol = _cellCoordsFromCellId(cellRef).$2;
+            } else {
+              currentCol += 1;
+              if (currentRow >= 0) {
+                cellRef = getCellId(currentCol, currentRow);
+              }
+            }
           case 'v':
             currentElement = 'v';
             valueBuf.clear();
@@ -243,19 +253,25 @@ class Parser extends _ParserBase with _ParserStylesMixin {
             currentElement = 'f';
             formulaBuf = StringBuffer();
           case 't':
-            // inline string <is><t>text</t></is>
+            // inline string <is><t>text</t></is> — may contain multiple runs,
+            // so accumulate (do not clear) across <t> elements.
             if (cellType == 'inlineStr') {
               currentElement = 't';
-              valueBuf.clear();
             }
         }
       } else if (event is XmlEndElementEvent) {
-        switch (event.name) {
+        switch (_localName(event.name)) {
           case 'c':
             if (cellRef != null && currentRow >= 0) {
               _processSaxCell(
-                  sheetObject, sheetName, cellRef, cellType, cellStyle,
-                  valueBuf.toString(), formulaBuf?.toString());
+                sheetObject,
+                sheetName,
+                cellRef,
+                cellType,
+                cellStyle,
+                valueBuf.toString(),
+                formulaBuf?.toString(),
+              );
             }
             currentElement = null;
           case 'v':
@@ -277,8 +293,15 @@ class Parser extends _ParserBase with _ParserStylesMixin {
   }
 
   /// Processes a single cell extracted from SAX events.
-  void _processSaxCell(Sheet sheetObject, String sheetName, String cellRef,
-      String? type, int styleIndex, String rawValue, String? formula) {
+  void _processSaxCell(
+    Sheet sheetObject,
+    String sheetName,
+    String cellRef,
+    String? type,
+    int styleIndex,
+    String rawValue,
+    String? formula,
+  ) {
     final coords = _cellCoordsFromCellId(cellRef);
     final rowIndex = coords.$1;
     final columnIndex = coords.$2;
@@ -296,13 +319,22 @@ class Parser extends _ParserBase with _ParserStylesMixin {
 
     switch (type) {
       case 's': // shared string
-        final ss = _excel._sharedStrings.value(int.parse(rawValue));
-        value = TextCellValue.span(ss!.textSpan);
+        final idx = int.tryParse(rawValue);
+        final ss = idx != null ? _excel._sharedStrings.value(idx) : null;
+        // Guard against out-of-range / non-numeric indexes instead of crashing.
+        value = ss != null ? TextCellValue.span(ss.textSpan) : null;
       case 'b': // boolean
-        value = BoolCellValue(rawValue == '1');
-      case 'e': // error
-      case 'str': // formula result string
-        value = FormulaCellValue(rawValue);
+        value = formula != null
+            ? FormulaCellValue(formula)
+            : BoolCellValue(rawValue == '1');
+      case 'e': // error value (e.g. #DIV/0!, #N/A)
+      case 'str': // formula string result
+        // The cached value (rawValue) is the formula's result, not the formula.
+        value = formula != null
+            ? FormulaCellValue(formula)
+            : TextCellValue(rawValue);
+      case 'd': // ISO-8601 date string (ST_CellType "d")
+        value = _readIsoDateCell(rawValue, formula);
       case 'inlineStr':
         value = TextCellValue(rawValue);
       case 'n': // number (explicit)
@@ -327,8 +359,26 @@ class Parser extends _ParserBase with _ParserStylesMixin {
     sheetObject.updateCell(
       CellIndex.indexByColumnRow(columnIndex: columnIndex, rowIndex: rowIndex),
       value,
-      cellStyle: _excel._cellStyleList[styleIndex],
+      cellStyle: styleIndex >= 0 && styleIndex < _excel._cellStyleList.length
+          ? _excel._cellStyleList[styleIndex]
+          : null,
     );
+  }
+
+  /// Reads a `t="d"` ISO-8601 date cell. Returns a [DateCellValue] for a pure
+  /// date or a [DateTimeCellValue] when a time component is present. Falls back
+  /// to text if the value is not parseable instead of throwing.
+  CellValue? _readIsoDateCell(String rawValue, String? formula) {
+    if (formula != null) return FormulaCellValue(formula);
+    final dt = DateTime.tryParse(rawValue);
+    if (dt == null) {
+      return rawValue.isEmpty ? null : TextCellValue(rawValue);
+    }
+    final hasTime =
+        dt.hour != 0 || dt.minute != 0 || dt.second != 0 || dt.millisecond != 0;
+    return hasTime
+        ? DateTimeCellValue.fromDateTime(dt)
+        : DateCellValue.fromDateTime(dt);
   }
 
   static String _parseValue(XmlElement node) {
@@ -361,9 +411,9 @@ class Parser extends _ParserBase with _ParserStylesMixin {
     int sheetId0 = -1;
     List<int> sheetIdList = <int>[];
 
-    _excel._xmlFiles['xl/workbook.xml']
-        ?.findAllElements('sheet')
-        .forEach((sheetIdNode) {
+    _excel._xmlFiles['xl/workbook.xml']?.findAllElements('sheet').forEach((
+      sheetIdNode,
+    ) {
       var sheetId = sheetIdNode.getAttribute('sheetId');
       if (sheetId != null) {
         int t = int.parse(sheetId.toString());
@@ -398,11 +448,16 @@ class Parser extends _ParserBase with _ParserStylesMixin {
         ?.findAllElements('Relationships')
         .first
         .children
-        .add(XmlElement(_xmlName('Relationship'), <XmlAttribute>[
-          XmlAttribute(_xmlName('Id'), 'rId$ridNumber'),
-          XmlAttribute(_xmlName('Type'), '$_relationships/worksheet'),
-          XmlAttribute(_xmlName('Target'), 'worksheets/sheet$sheetNumber.xml'),
-        ]));
+        .add(
+          XmlElement(_xmlName('Relationship'), <XmlAttribute>[
+            XmlAttribute(_xmlName('Id'), 'rId$ridNumber'),
+            XmlAttribute(_xmlName('Type'), '$_relationships/worksheet'),
+            XmlAttribute(
+              _xmlName('Target'),
+              'worksheets/sheet$sheetNumber.xml',
+            ),
+          ]),
+        );
 
     if (!_rId.contains('rId$ridNumber')) {
       _rId.add('rId$ridNumber');
@@ -412,25 +467,31 @@ class Parser extends _ParserBase with _ParserStylesMixin {
         ?.findAllElements('sheets')
         .first
         .children
-        .add(XmlElement(
-          _xmlName('sheet'),
-          <XmlAttribute>[
+        .add(
+          XmlElement(_xmlName('sheet'), <XmlAttribute>[
             XmlAttribute(_xmlName('state'), 'visible'),
             XmlAttribute(_xmlName('name'), newSheet),
             XmlAttribute(_xmlName('sheetId'), '$sheetNumber'),
-            XmlAttribute(_xmlName('r:id'), 'rId$ridNumber')
-          ],
-        ));
+            XmlAttribute(_xmlName('r:id'), 'rId$ridNumber'),
+          ]),
+        );
 
     _worksheetTargets['rId$ridNumber'] = 'worksheets/sheet$sheetNumber.xml';
 
     var content = utf8.encode(
-        "<worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" xmlns:mc=\"http://schemas.openxmlformats.org/markup-compatibility/2006\" mc:Ignorable=\"x14ac xr xr2 xr3\" xmlns:x14ac=\"http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac\" xmlns:xr=\"http://schemas.microsoft.com/office/spreadsheetml/2014/revision\" xmlns:xr2=\"http://schemas.microsoft.com/office/spreadsheetml/2015/revision2\" xmlns:xr3=\"http://schemas.microsoft.com/office/spreadsheetml/2016/revision3\"> <dimension ref=\"A1\"/> <sheetViews> <sheetView workbookViewId=\"0\"/> </sheetViews> <sheetData/> <pageMargins left=\"0.7\" right=\"0.7\" top=\"0.75\" bottom=\"0.75\" header=\"0.3\" footer=\"0.3\"/> </worksheet>");
+      "<worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" xmlns:mc=\"http://schemas.openxmlformats.org/markup-compatibility/2006\" mc:Ignorable=\"x14ac xr xr2 xr3\" xmlns:x14ac=\"http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac\" xmlns:xr=\"http://schemas.microsoft.com/office/spreadsheetml/2014/revision\" xmlns:xr2=\"http://schemas.microsoft.com/office/spreadsheetml/2015/revision2\" xmlns:xr3=\"http://schemas.microsoft.com/office/spreadsheetml/2016/revision3\"> <dimension ref=\"A1\"/> <sheetViews> <sheetView workbookViewId=\"0\"/> </sheetViews> <sheetData/> <pageMargins left=\"0.7\" right=\"0.7\" top=\"0.75\" bottom=\"0.75\" header=\"0.3\" footer=\"0.3\"/> </worksheet>",
+    );
 
-    _excel._archive.addFile(ArchiveFile(
-        'xl/worksheets/sheet$sheetNumber.xml', content.length, content));
-    var newSheet0 =
-        _excel._archive.findFile('xl/worksheets/sheet$sheetNumber.xml');
+    _excel._archive.addFile(
+      ArchiveFile(
+        'xl/worksheets/sheet$sheetNumber.xml',
+        content.length,
+        content,
+      ),
+    );
+    var newSheet0 = _excel._archive.findFile(
+      'xl/worksheets/sheet$sheetNumber.xml',
+    );
 
     newSheet0!.decompress();
     var document = XmlDocument.parse(utf8.decode(newSheet0.content));
@@ -441,15 +502,18 @@ class Parser extends _ParserBase with _ParserStylesMixin {
         ?.findAllElements('Types')
         .first
         .children
-        .add(XmlElement(
-          _xmlName('Override'),
-          <XmlAttribute>[
-            XmlAttribute(_xmlName('ContentType'),
-                'application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml'),
+        .add(
+          XmlElement(_xmlName('Override'), <XmlAttribute>[
             XmlAttribute(
-                _xmlName('PartName'), '/xl/worksheets/sheet$sheetNumber.xml'),
-          ],
-        ));
+              _xmlName('ContentType'),
+              'application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml',
+            ),
+            XmlAttribute(
+              _xmlName('PartName'),
+              '/xl/worksheets/sheet$sheetNumber.xml',
+            ),
+          ]),
+        );
     // Set sheetData reference directly — don't re-parse via _parseTable
     // which would overwrite user-set properties (isRTL, headerFooter, etc.)
     var sheetData = document.findAllElements('sheetData').first;
@@ -504,8 +568,9 @@ class Parser extends _ParserBase with _ParserStylesMixin {
     results = worksheet.findAllElements("col");
     if (results.isNotEmpty) {
       for (var element in results) {
-        String? colAttribute =
-            element.getAttribute("min"); // i think min refers to the column
+        String? colAttribute = element.getAttribute(
+          "min",
+        ); // i think min refers to the column
         String? widthAttribute = element.getAttribute("width");
         if (colAttribute != null && widthAttribute != null) {
           int? col = int.tryParse(colAttribute);
@@ -527,8 +592,9 @@ class Parser extends _ParserBase with _ParserStylesMixin {
     results = worksheet.findAllElements("row");
     if (results.isNotEmpty) {
       for (var element in results) {
-        String? rowAttribute =
-            element.getAttribute("r"); // i think min refers to the column
+        String? rowAttribute = element.getAttribute(
+          "r",
+        ); // i think min refers to the column
         String? heightAttribute = element.getAttribute("ht");
         if (rowAttribute != null && heightAttribute != null) {
           int? row = int.tryParse(rowAttribute);

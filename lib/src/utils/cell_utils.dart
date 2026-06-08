@@ -1,12 +1,26 @@
 part of '../../excel_plus.dart';
 
+/// Characters that are illegal in XML 1.0 documents. Tab (0x09), LF (0x0A),
+/// and CR (0x0D) are the only control characters allowed, so everything else
+/// below 0x20 must be stripped or the resulting file is rejected as corrupt.
+final RegExp _illegalXmlChars = RegExp(r'[\x00-\x08\x0B\x0C\x0E-\x1F]');
+
 String _escapeXml(String input) {
   return input
+      .replaceAll(_illegalXmlChars, '')
       .replaceAll('&', '&amp;')
       .replaceAll('<', '&lt;')
       .replaceAll('>', '&gt;')
       .replaceAll('"', '&quot;')
       .replaceAll("'", '&apos;');
+}
+
+/// Strips the namespace prefix from a qualified XML name, e.g. `x:row` -> `row`.
+/// Some producers serialize the spreadsheetml namespace with a prefix, so the
+/// SAX cell parser must compare local names rather than the raw event name.
+String _localName(String qualifiedName) {
+  final i = qualifiedName.indexOf(':');
+  return i == -1 ? qualifiedName : qualifiedName.substring(i + 1);
 }
 
 bool _listEquals<T>(List<T>? a, List<T>? b) {
@@ -107,14 +121,18 @@ String _normalizeNewLine(String text) {
 ///
 (int x, int y) _cellCoordsFromCellId(String cellId) {
   var letters = cellId.runes.map(_letterOnly);
-  var lettersPart = utf8.decode(letters.where((rune) {
-    return rune > 0;
-  }).toList(growable: false));
+  var lettersPart = utf8.decode(
+    letters
+        .where((rune) {
+          return rune > 0;
+        })
+        .toList(growable: false),
+  );
   var numericsPart = cellId.substring(lettersPart.length);
 
   return (
     int.parse(numericsPart) - 1,
-    lettersToNumeric(lettersPart) - 1
+    lettersToNumeric(lettersPart) - 1,
   ); // [x , y]
 }
 
@@ -137,45 +155,45 @@ String getSpanCellId(int startColumn, int startRow, int endColumn, int endRow) {
 ///
 ///returns updated SpanObject location as there might be cross-sectional interaction between the two spanning objects.
 ///
-(
-  bool changeValue,
-  (int startColumn, int startRow, int endColumn, int endRow)
-) _isLocationChangeRequired(
-    int startColumn, int startRow, int endColumn, int endRow, _Span spanObj) {
-  bool changeValue = (
-          // Overlapping checker
-          startRow <= spanObj.rowSpanStart &&
-              startColumn <= spanObj.columnSpanStart &&
-              endRow >= spanObj.rowSpanEnd &&
-              endColumn >= spanObj.columnSpanEnd)
+(bool changeValue, (int startColumn, int startRow, int endColumn, int endRow))
+_isLocationChangeRequired(
+  int startColumn,
+  int startRow,
+  int endColumn,
+  int endRow,
+  _Span spanObj,
+) {
+  bool changeValue =
+      (
+      // Overlapping checker
+      startRow <= spanObj.rowSpanStart &&
+          startColumn <= spanObj.columnSpanStart &&
+          endRow >= spanObj.rowSpanEnd &&
+          endColumn >= spanObj.columnSpanEnd)
       // first check starts here
       ||
       ( // outwards checking
-          ((startColumn < spanObj.columnSpanStart &&
-                      endColumn >= spanObj.columnSpanStart) ||
-                  (startColumn <= spanObj.columnSpanEnd &&
-                      endColumn > spanObj.columnSpanEnd))
-              // inwards checking
-              &&
-              ((startRow >= spanObj.rowSpanStart &&
-                      startRow <= spanObj.rowSpanEnd) ||
-                  (endRow >= spanObj.rowSpanStart &&
-                      endRow <= spanObj.rowSpanEnd)))
-
+      ((startColumn < spanObj.columnSpanStart &&
+                  endColumn >= spanObj.columnSpanStart) ||
+              (startColumn <= spanObj.columnSpanEnd &&
+                  endColumn > spanObj.columnSpanEnd))
+          // inwards checking
+          &&
+          ((startRow >= spanObj.rowSpanStart &&
+                  startRow <= spanObj.rowSpanEnd) ||
+              (endRow >= spanObj.rowSpanStart && endRow <= spanObj.rowSpanEnd)))
       // second check starts here
       ||
       (
-          // outwards checking
-          ((startRow < spanObj.rowSpanStart &&
-                      endRow >= spanObj.rowSpanStart) ||
-                  (startRow <= spanObj.rowSpanEnd &&
-                      endRow > spanObj.rowSpanEnd))
-              // inwards checking
-              &&
-              ((startColumn >= spanObj.columnSpanStart &&
-                      startColumn <= spanObj.columnSpanEnd) ||
-                  (endColumn >= spanObj.columnSpanStart &&
-                      endColumn <= spanObj.columnSpanEnd)));
+      // outwards checking
+      ((startRow < spanObj.rowSpanStart && endRow >= spanObj.rowSpanStart) ||
+              (startRow <= spanObj.rowSpanEnd && endRow > spanObj.rowSpanEnd))
+          // inwards checking
+          &&
+          ((startColumn >= spanObj.columnSpanStart &&
+                  startColumn <= spanObj.columnSpanEnd) ||
+              (endColumn >= spanObj.columnSpanStart &&
+                  endColumn <= spanObj.columnSpanEnd)));
 
   if (changeValue) {
     if (startColumn > spanObj.columnSpanStart) {

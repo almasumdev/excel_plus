@@ -1,5 +1,6 @@
 benchmark/
 scripts/
+docs/
 doc/api/
 example/android/
 example/ios/

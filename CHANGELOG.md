@@ -1,3 +1,17 @@
+## 0.0.5
+
+Correctness and robustness fixes (all backward compatible):
+
+- Fixed: illegal XML 1.0 control characters in cell text are now stripped on save, so files no longer open as "corrupt" in Excel.
+- Fixed: `Excel.findAndReplace` now returns the actual replacement count and accepts non-`String` targets without throwing.
+- Fixed: on the web, `save()` now triggers the browser download under wasm builds (`flutter build web --wasm`), not only the JS compiler — the conditional import now uses `dart.library.js_interop`.
+- Fixed: underline styles read `single` vs `double` correctly, and `bold`/`italic` now honour `val="0"` (explicitly-off) instead of always reading as enabled.
+- Fixed: the parser no longer crashes on out-of-range shared-string or style indexes, ISO-8601 (`t="d"`) date cells, or namespace-prefixed worksheet XML (`x:row`, `x:c`).
+- Fixed: cells without an explicit `r` reference are positioned by column order, and inline strings made of multiple runs keep all of their text.
+- Fixed: `getColumnWidth` / `getRowHeight` return Excel's defaults instead of throwing when a sheet defines no defaults.
+- Fixed: `headerFooter` is written in the schema-correct position (before `drawing`), so Excel no longer prompts to repair the file.
+- Improved: more robust style parsing — malformed `numFmt`/border entries degrade gracefully instead of failing.
+
 ## 0.0.4
 
 - Upgraded the `xml` dependency to `^7.0.1` and updated internal XML name handling for compatibility.

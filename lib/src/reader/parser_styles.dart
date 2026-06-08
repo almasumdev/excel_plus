@@ -30,27 +30,28 @@ mixin _ParserStylesMixin on _ParserBase {
       });
 
       document.findAllElements('border').forEach((node) {
-        final diagonalUp = !['0', 'false', null]
-            .contains(node.getAttribute('diagonalUp')?.trim());
-        final diagonalDown = !['0', 'false', null]
-            .contains(node.getAttribute('diagonalDown')?.trim());
+        final diagonalUp = ![
+          '0',
+          'false',
+          null,
+        ].contains(node.getAttribute('diagonalUp')?.trim());
+        final diagonalDown = ![
+          '0',
+          'false',
+          null,
+        ].contains(node.getAttribute('diagonalDown')?.trim());
 
         const List<String> borderElementNamesList = [
           'left',
           'right',
           'top',
           'bottom',
-          'diagonal'
+          'diagonal',
         ];
         Map<String, Border> borderElements = {};
         for (var elementName in borderElementNamesList) {
-          XmlElement? element;
-          try {
-            element = node.findElements(elementName).single;
-          } on StateError catch (_) {
-            // Either there is no element, or there are too many ones.
-            // Silently ignore this element.
-          }
+          final matches = node.findElements(elementName);
+          final XmlElement? element = matches.isEmpty ? null : matches.first;
 
           final borderStyleAttribute = element?.getAttribute('style')?.trim();
           final borderStyle = borderStyleAttribute != null
@@ -58,14 +59,17 @@ mixin _ParserStylesMixin on _ParserBase {
               : null;
 
           String? borderColorHex;
-          try {
-            final color = element?.findElements('color').single;
-            borderColorHex = color?.getAttribute('rgb')?.trim();
-          } on StateError catch (_) {}
+          if (element != null) {
+            final colors = element.findElements('color');
+            if (colors.isNotEmpty) {
+              borderColorHex = colors.first.getAttribute('rgb')?.trim();
+            }
+          }
 
           borderElements[elementName] = Border(
-              borderStyle: borderStyle,
-              borderColorHex: borderColorHex?.excelColor);
+            borderStyle: borderStyle,
+            borderColorHex: borderColorHex?.excelColor,
+          );
         }
 
         final borderSet = _BorderSet(
@@ -82,11 +86,13 @@ mixin _ParserStylesMixin on _ParserBase {
 
       document.findAllElements('numFmts').forEach((node1) {
         node1.findAllElements('numFmt').forEach((node) {
-          final numFmtId = int.parse(node.getAttribute('numFmtId')!);
-          final formatCode = node.getAttribute('formatCode')!;
-          if (numFmtId >= 164) {
-            _excel._numFormats
-                .add(numFmtId, NumFormat.custom(formatCode: formatCode));
+          final numFmtId = int.tryParse(node.getAttribute('numFmtId') ?? '');
+          final formatCode = node.getAttribute('formatCode');
+          if (numFmtId != null && formatCode != null && numFmtId >= 164) {
+            _excel._numFormats.add(
+              numFmtId,
+              NumFormat.custom(formatCode: formatCode),
+            );
           }
         });
       });
@@ -125,24 +131,19 @@ mixin _ParserStylesMixin on _ParserBase {
               fontSize = double.parse(size).round();
             }
 
-            var bold = _nodeChildren(font, 'b');
-            if (bold != null && bold is bool && bold) {
-              isBold = true;
-            }
+            isBold = _boolToggle(font, 'b');
+            isItalic = _boolToggle(font, 'i');
 
-            var italic = _nodeChildren(font, 'i');
-            if (italic != null && italic) {
-              isItalic = true;
-            }
-
-            var underline0 = _nodeChildren(font, 'u', attribute: 'val');
-            if (underline0 != null) {
-              underline = Underline.Double;
-            } else {
-              var singleUnderline = _nodeChildren(font, 'u');
-              if (singleUnderline != null) {
-                underline = Underline.Single;
-              }
+            // Underline: presence of <u> means underlined. Only val="double"
+            // or "doubleAccounting" is a double underline; everything else
+            // (val="single"/"singleAccounting"/bare <u/>) is a single underline.
+            if (_nodeChildren(font, 'u') != null) {
+              final underlineVal = _nodeChildren(font, 'u', attribute: 'val');
+              underline =
+                  (underlineVal == 'double' ||
+                      underlineVal == 'doubleAccounting')
+                  ? Underline.Double
+                  : Underline.Single;
             }
 
             var family = _nodeChildren(font, 'name', attribute: 'val');
@@ -152,8 +153,9 @@ mixin _ParserStylesMixin on _ParserBase {
 
             var scheme = _nodeChildren(font, 'scheme', attribute: 'val');
             if (scheme != null) {
-              fontScheme =
-                  scheme == "major" ? FontScheme.Major : FontScheme.Minor;
+              fontScheme = scheme == "major"
+                  ? FontScheme.Major
+                  : FontScheme.Minor;
             }
 
             fontStyle.isBold = isBold;
@@ -211,11 +213,11 @@ mixin _ParserStylesMixin on _ParserBase {
             });
           }
 
-          var numFormat = _excel._numFormats.getByNumFmtId(numFmtId);
-          if (numFormat == null) {
-            assert(false, 'missing numFmt for $numFmtId');
-            numFormat = NumFormat.standard_0;
-          }
+          // Fall back to General format for any numFmtId we do not model
+          // rather than crashing on real-world files that reference it.
+          var numFormat =
+              _excel._numFormats.getByNumFmtId(numFmtId) ??
+              NumFormat.standard_0;
 
           CellStyle cellStyle = CellStyle(
             fontColorHex: fontColor.excelColor,
@@ -226,8 +228,8 @@ mixin _ParserStylesMixin on _ParserBase {
             underline: underline,
             backgroundColorHex:
                 backgroundColor == 'none' || backgroundColor.isEmpty
-                    ? ExcelColor.none
-                    : backgroundColor.excelColor,
+                ? ExcelColor.none
+                : backgroundColor.excelColor,
             horizontalAlign: horizontalAlign,
             verticalAlign: verticalAlign,
             textWrapping: textWrapping,

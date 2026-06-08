@@ -58,8 +58,9 @@ class _SheetBase {
     _checkMaxRow(cellIndex.rowIndex);
     if (cellIndex.columnIndex < 0 || cellIndex.rowIndex < 0) {
       _damagedExcel(
-          text:
-              '${cellIndex.columnIndex < 0 ? "Column" : "Row"} Index: ${cellIndex.columnIndex < 0 ? cellIndex.columnIndex : cellIndex.rowIndex} Negative index does not exist.');
+        text:
+            '${cellIndex.columnIndex < 0 ? "Column" : "Row"} Index: ${cellIndex.columnIndex < 0 ? cellIndex.columnIndex : cellIndex.rowIndex} Negative index does not exist.',
+      );
     }
 
     /// increasing the row count
@@ -75,14 +76,20 @@ class _SheetBase {
     /// if the sheetData contains the row then start putting the column
     if (_sheetData[cellIndex.rowIndex] != null) {
       if (_sheetData[cellIndex.rowIndex]![cellIndex.columnIndex] == null) {
-        _sheetData[cellIndex.rowIndex]![cellIndex.columnIndex] =
-            Data.newData(this as Sheet, cellIndex.rowIndex, cellIndex.columnIndex);
+        _sheetData[cellIndex.rowIndex]![cellIndex.columnIndex] = Data.newData(
+          this as Sheet,
+          cellIndex.rowIndex,
+          cellIndex.columnIndex,
+        );
       }
     } else {
       /// else put the column with map showing.
       _sheetData[cellIndex.rowIndex] = {
-        cellIndex.columnIndex:
-            Data.newData(this as Sheet, cellIndex.rowIndex, cellIndex.columnIndex)
+        cellIndex.columnIndex: Data.newData(
+          this as Sheet,
+          cellIndex.rowIndex,
+          cellIndex.columnIndex,
+        ),
       };
     }
 
@@ -143,7 +150,11 @@ class _SheetBase {
     }
     var cell = row[columnIndex];
     if (cell == null) {
-      row[columnIndex] = cell = Data.newData(this as Sheet, rowIndex, columnIndex);
+      row[columnIndex] = cell = Data.newData(
+        this as Sheet,
+        rowIndex,
+        columnIndex,
+      );
     }
 
     cell._value = value;
@@ -182,7 +193,10 @@ class _SheetBase {
 
   /// Checking if the columnIndex and the rowIndex passed is inside the spanObjectList.
   bool _isInsideSpanObject(
-      List<_Span> spanObjectList, int columnIndex, int rowIndex) {
+    List<_Span> spanObjectList,
+    int columnIndex,
+    int rowIndex,
+  ) {
     for (int i = 0; i < spanObjectList.length; i++) {
       _Span spanObject = spanObjectList[i];
 
@@ -202,7 +216,9 @@ class _SheetBase {
 
   /// It is used to check if cell at rowIndex, columnIndex is inside any spanning cell or not.
   (int newRowIndex, int newColumnIndex) _isInsideSpanning(
-      int rowIndex, int columnIndex) {
+    int rowIndex,
+    int columnIndex,
+  ) {
     int newRowIndex = rowIndex, newColumnIndex = columnIndex;
 
     for (int i = 0; i < _spanList.length; i++) {
@@ -266,8 +282,12 @@ class _SheetBase {
       if (spanObj == null) {
         continue;
       }
-      String rC = getSpanCellId(spanObj.columnSpanStart, spanObj.rowSpanStart,
-          spanObj.columnSpanEnd, spanObj.rowSpanEnd);
+      String rC = getSpanCellId(
+        spanObj.columnSpanStart,
+        spanObj.rowSpanStart,
+        spanObj.columnSpanEnd,
+        spanObj.rowSpanEnd,
+      );
       if (!_spannedItems.contains(rC)) {
         _spannedItems.add(rC);
       }
@@ -349,7 +369,9 @@ class _SheetBase {
     if (_columnWidths.containsKey(columnIndex)) {
       return _columnWidths[columnIndex]!;
     }
-    return _defaultColumnWidth!;
+    // Fall back to Excel's default when the file omits defaultColWidth and no
+    // default was set, instead of throwing a null-check error.
+    return _defaultColumnWidth ?? _excelDefaultColumnWidth;
   }
 
   /// returns height of row index
@@ -357,7 +379,7 @@ class _SheetBase {
     if (_rowHeights.containsKey(rowIndex)) {
       return _rowHeights[rowIndex]!;
     }
-    return _defaultRowHeight!;
+    return _defaultRowHeight ?? _excelDefaultRowHeight;
   }
 
   ///
