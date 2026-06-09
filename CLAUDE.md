@@ -95,9 +95,19 @@ Keep layers separate: the reader must not depend on writer logic and vice versa.
 ## Testing
 
 - Cover both **read and write round-trips**; use real `.xlsx` files in
-  `test/test_resources/`.
-- For reader edge cases, build a minimal `.xlsx` in memory — see `buildXlsx` in
-  [test/phase0_fixes_test.dart](test/phase0_fixes_test.dart).
+  `test/test_resources/` (load them via `loadResource('name.xlsx')`).
+- For reader edge cases, build a minimal `.xlsx` in memory — see `buildXlsx` /
+  `readPart` in [test/test_helper.dart](test/test_helper.dart).
+- **Naming & filing conventions** (keep the suite consistent — no grab-bags):
+  - One suite per cohesive source module or feature, named `<feature>_test.dart`;
+    the `test/` tree should mirror `lib/src/`. Never name a file after a project
+    phase or a vague catch-all (`features_test.dart`, `phaseN_*`).
+  - `group(...)` names are **Title Case noun phrases** naming the area under test.
+  - `test(...)` names are **lowercase-first behavior sentences** — state what must
+    be true, not just the method exercised.
+  - Shared helpers live in `test_helper.dart` (non-suite): `saveTestOutput`
+    (opt-in via `DEBUG_TEST_OUTPUT`, off by default so `dart test` does no disk
+    I/O), `loadResource`, `buildXlsx`, `readPart`.
 - Run `dart analyze` and `dart test` before committing; commit after each
   meaningful change with a clear conventional-commit message.
 

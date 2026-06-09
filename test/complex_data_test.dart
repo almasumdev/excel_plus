@@ -145,8 +145,8 @@ CellStyle _styleForColumn(int col) {
 }
 
 void main() {
-  group('Complex data 100x50 roundtrip', () {
-    test('create with mixed types and styles, encode, decode, verify all', () {
+  group('Complex data roundtrip', () {
+    test('a 100x50 sheet of mixed types and styles roundtrips every cell', () {
       final excel = Excel.createExcel();
       final sheet = excel['ComplexData'];
 
@@ -210,7 +210,7 @@ void main() {
       expect(mismatches, 0, reason: 'All 5000 cell values must roundtrip');
     });
 
-    test('styles survive roundtrip for each column group', () {
+    test('every column-group style survives encode and decode', () {
       final excel = Excel.createExcel();
       final sheet = excel['StyledData'];
       final rng = Random(_seed);
@@ -372,45 +372,51 @@ void main() {
       });
     });
 
-    test('multiple styled sheets in same workbook', () {
-      final excel = Excel.createExcel();
-      final rng = Random(_seed);
+    test(
+      'multiple styled sheets in one workbook survive encode and decode',
+      () {
+        final excel = Excel.createExcel();
+        final rng = Random(_seed);
 
-      // Create 3 sheets each with different column subsets
-      for (var si = 0; si < 3; si++) {
-        final sheet = excel['Sheet_$si'];
-        final colOffset = si * 16;
-        for (var r = 0; r < 50; r++) {
-          for (var c = 0; c < 16 && (colOffset + c) < _cols; c++) {
-            final gc = colOffset + c;
-            final idx = CellIndex.indexByColumnRow(columnIndex: c, rowIndex: r);
-            sheet.updateCell(
-              idx,
-              _generateValue(r, gc, rng),
-              cellStyle: _styleForColumn(gc),
-            );
+        // Create 3 sheets each with different column subsets
+        for (var si = 0; si < 3; si++) {
+          final sheet = excel['Sheet_$si'];
+          final colOffset = si * 16;
+          for (var r = 0; r < 50; r++) {
+            for (var c = 0; c < 16 && (colOffset + c) < _cols; c++) {
+              final gc = colOffset + c;
+              final idx = CellIndex.indexByColumnRow(
+                columnIndex: c,
+                rowIndex: r,
+              );
+              sheet.updateCell(
+                idx,
+                _generateValue(r, gc, rng),
+                cellStyle: _styleForColumn(gc),
+              );
+            }
           }
         }
-      }
 
-      final bytes = excel.save()!;
-      saveTestOutput(bytes, 'complex_multi_sheet');
-      final decoded = Excel.decodeBytes(bytes);
+        final bytes = excel.save()!;
+        saveTestOutput(bytes, 'complex_multi_sheet');
+        final decoded = Excel.decodeBytes(bytes);
 
-      expect(decoded.sheets.containsKey('Sheet_0'), true);
-      expect(decoded.sheets.containsKey('Sheet_1'), true);
-      expect(decoded.sheets.containsKey('Sheet_2'), true);
+        expect(decoded.sheets.containsKey('Sheet_0'), true);
+        expect(decoded.sheets.containsKey('Sheet_1'), true);
+        expect(decoded.sheets.containsKey('Sheet_2'), true);
 
-      // Verify row/col counts
-      expect(decoded['Sheet_0'].maxRows, 50);
-      expect(decoded['Sheet_0'].maxColumns, 16);
-      expect(decoded['Sheet_1'].maxRows, 50);
-      expect(decoded['Sheet_1'].maxColumns, 16);
-      expect(decoded['Sheet_2'].maxRows, 50);
-      expect(decoded['Sheet_2'].maxColumns, greaterThanOrEqualTo(2));
-    });
+        // Verify row/col counts
+        expect(decoded['Sheet_0'].maxRows, 50);
+        expect(decoded['Sheet_0'].maxColumns, 16);
+        expect(decoded['Sheet_1'].maxRows, 50);
+        expect(decoded['Sheet_1'].maxColumns, 16);
+        expect(decoded['Sheet_2'].maxRows, 50);
+        expect(decoded['Sheet_2'].maxColumns, greaterThanOrEqualTo(2));
+      },
+    );
 
-    test('header row with merged cells and bold style', () {
+    test('a merged, styled header row survives encode and decode', () {
       final excel = Excel.createExcel();
       final sheet = excel['HeaderTest'];
 

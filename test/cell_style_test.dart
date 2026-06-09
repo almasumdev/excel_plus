@@ -4,8 +4,8 @@ import 'package:test/test.dart';
 import 'test_helper.dart';
 
 void main() {
-  group('CellStyle roundtrip', () {
-    test('Bold and italic roundtrip', () {
+  group('Cell style roundtrip', () {
+    test('bold and italic survive encode and decode', () {
       var excel = Excel.createExcel();
       var sheet = excel['Sheet1'];
       sheet.updateCell(CellIndex.indexByString('A1'), TextCellValue('bold'));
@@ -40,7 +40,7 @@ void main() {
       expect(s.cell(CellIndex.indexByString('C1')).cellStyle?.isItalic, true);
     });
 
-    test('Font size roundtrip', () {
+    test('font size survives encode and decode', () {
       var excel = Excel.createExcel();
       var sheet = excel['Sheet1'];
       sheet.updateCell(CellIndex.indexByString('A1'), TextCellValue('big'));
@@ -60,7 +60,7 @@ void main() {
       );
     });
 
-    test('Font color roundtrip', () {
+    test('font color survives encode and decode', () {
       var excel = Excel.createExcel();
       var sheet = excel['Sheet1'];
       sheet.updateCell(CellIndex.indexByString('A1'), TextCellValue('red'));
@@ -77,7 +77,7 @@ void main() {
       expect(style?.fontColor, ExcelColor.red);
     });
 
-    test('Background color roundtrip', () {
+    test('background color survives encode and decode', () {
       var excel = Excel.createExcel();
       var sheet = excel['Sheet1'];
       sheet.updateCell(
@@ -97,7 +97,7 @@ void main() {
       expect(style?.backgroundColor, ExcelColor.yellow);
     });
 
-    test('Horizontal and vertical alignment roundtrip', () {
+    test('horizontal and vertical alignment survive encode and decode', () {
       var excel = Excel.createExcel();
       var sheet = excel['Sheet1'];
       sheet.updateCell(CellIndex.indexByString('A1'), TextCellValue('center'));
@@ -116,7 +116,7 @@ void main() {
       expect(style?.verticalAlignment, VerticalAlign.Center);
     });
 
-    test('Text wrapping roundtrip', () {
+    test('text wrapping survives encode and decode', () {
       var excel = Excel.createExcel();
       var sheet = excel['Sheet1'];
       sheet.updateCell(CellIndex.indexByString('A1'), TextCellValue('wrapped'));
@@ -133,7 +133,7 @@ void main() {
       expect(style?.wrap, TextWrapping.WrapText);
     });
 
-    test('Underline roundtrip', () {
+    test('underline survives encode and decode', () {
       var excel = Excel.createExcel();
       var sheet = excel['Sheet1'];
       sheet.updateCell(
@@ -153,7 +153,7 @@ void main() {
       expect(style?.underline, Underline.Single);
     });
 
-    test('Borders roundtrip', () {
+    test('per-side border styles survive encode and decode', () {
       var excel = Excel.createExcel();
       var sheet = excel['Sheet1'];
       sheet.updateCell(
@@ -179,17 +179,20 @@ void main() {
       expect(style?.bottomBorder.borderStyle, BorderStyle.Double);
     });
 
-    test('CellStyle.copyWith', () {
-      var original = CellStyle(bold: true, fontSize: 12);
-      var copy = original.copyWith(italicVal: true, fontSizeVal: 16);
-      expect(copy.isBold, true);
-      expect(copy.isItalic, true);
-      expect(copy.fontSize, 16);
-      expect(original.isItalic, false);
-      expect(original.fontSize, 12);
-    });
+    test(
+      'copyWith overrides only the given fields and leaves the original unchanged',
+      () {
+        var original = CellStyle(bold: true, fontSize: 12);
+        var copy = original.copyWith(italicVal: true, fontSizeVal: 16);
+        expect(copy.isBold, true);
+        expect(copy.isItalic, true);
+        expect(copy.fontSize, 16);
+        expect(original.isItalic, false);
+        expect(original.fontSize, 12);
+      },
+    );
 
-    test('Rotation roundtrip', () {
+    test('text rotation survives encode and decode', () {
       var excel = Excel.createExcel();
       var sheet = excel['Sheet1'];
       sheet.updateCell(CellIndex.indexByString('A1'), TextCellValue('rotated'));
@@ -206,7 +209,7 @@ void main() {
       expect(style?.rotation, 45);
     });
 
-    test('Combined style roundtrip', () {
+    test('a combined multi-property style survives encode and decode', () {
       var excel = Excel.createExcel();
       var sheet = excel['Sheet1'];
       sheet.updateCell(CellIndex.indexByString('A1'), TextCellValue('styled'));

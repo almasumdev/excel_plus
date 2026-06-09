@@ -5,7 +5,7 @@ import 'test_helper.dart';
 
 void main() {
   group('Sheet operations', () {
-    test('Multiple sheets roundtrip', () {
+    test('multiple sheets survive encode and decode', () {
       var excel = Excel.createExcel();
       excel['SheetA'].updateCell(
         CellIndex.indexByString('A1'),
@@ -37,7 +37,7 @@ void main() {
       );
     });
 
-    test('Rename sheet', () {
+    test('rename moves a sheet and its data to the new name', () {
       var excel = Excel.createExcel();
       excel['Original'].updateCell(
         CellIndex.indexByString('A1'),
@@ -62,7 +62,7 @@ void main() {
       expect(decoded.sheets.keys, isNot(contains('Original')));
     });
 
-    test('Delete sheet', () {
+    test('delete removes a sheet', () {
       var excel = Excel.createExcel();
       excel['Keep'].updateCell(
         CellIndex.indexByString('A1'),
@@ -83,7 +83,7 @@ void main() {
       expect(decoded.sheets.keys, isNot(contains('Remove')));
     });
 
-    test('Copy sheet', () {
+    test('copy duplicates a sheet under a new name', () {
       var excel = Excel.createExcel();
       excel['Source'].updateCell(
         CellIndex.indexByString('A1'),
@@ -103,7 +103,7 @@ void main() {
       saveTestOutput(excel.save(), 'sheet_copy');
     });
 
-    test('Default sheet get/set', () {
+    test('setDefaultSheet and getDefaultSheet agree', () {
       var excel = Excel.createExcel();
       excel['First'].updateCell(
         CellIndex.indexByString('A1'),
@@ -120,7 +120,7 @@ void main() {
       saveTestOutput(excel.save(), 'sheet_default');
     });
 
-    test('Sheet maxRows/maxColumns', () {
+    test('maxRows and maxColumns reflect the populated range', () {
       var excel = Excel.createExcel();
       var sheet = excel['Sheet1'];
       sheet.updateCell(CellIndex.indexByString('C5'), TextCellValue('val'));
@@ -129,14 +129,14 @@ void main() {
       saveTestOutput(excel.save(), 'sheet_max_rows_cols');
     });
 
-    test('Sheet sheetName', () {
+    test('sheetName returns the sheet key', () {
       var excel = Excel.createExcel();
       var sheet = excel['MySheet'];
       expect(sheet.sheetName, 'MySheet');
       saveTestOutput(excel.save(), 'sheet_name');
     });
 
-    test('Sheet rows getter', () {
+    test('the rows getter exposes populated cells', () {
       var excel = Excel.createExcel();
       var sheet = excel['Sheet1'];
       sheet.updateCell(CellIndex.indexByString('A1'), TextCellValue('r0c0'));
@@ -149,7 +149,7 @@ void main() {
       saveTestOutput(excel.save(), 'sheet_rows_getter');
     });
 
-    test('Sheet row(int) method', () {
+    test('row(int) returns a single row with nulls for gaps', () {
       var excel = Excel.createExcel();
       var sheet = excel['Sheet1'];
       sheet.updateCell(CellIndex.indexByString('A2'), TextCellValue('val'));
@@ -162,7 +162,7 @@ void main() {
       saveTestOutput(excel.save(), 'sheet_row_method');
     });
 
-    test('RTL roundtrip', () {
+    test('right-to-left flag survives encode and decode', () {
       var excel = Excel.createExcel();
       var sheet = excel['RTLSheet'];
       sheet.isRTL = true;
@@ -266,7 +266,7 @@ void main() {
       saveTestOutput(excel.save(), 'rowcol_remove_col');
     });
 
-    test('appendRow', () {
+    test('appendRow adds a row after the last populated row', () {
       var excel = Excel.createExcel();
       var sheet = excel['Sheet1'];
       sheet.updateCell(CellIndex.indexByString('A1'), TextCellValue('header'));
@@ -282,7 +282,7 @@ void main() {
       saveTestOutput(excel.save(), 'rowcol_append_row');
     });
 
-    test('insertRowIterables', () {
+    test('insertRowIterables inserts a row of values at the given index', () {
       var excel = Excel.createExcel();
       var sheet = excel['Sheet1'];
       sheet.updateCell(CellIndex.indexByString('A1'), TextCellValue('r0'));
@@ -306,7 +306,7 @@ void main() {
       saveTestOutput(excel.save(), 'rowcol_insert_iterables');
     });
 
-    test('insertRowIterables with startingColumn', () {
+    test('insertRowIterables honors the starting column offset', () {
       var excel = Excel.createExcel();
       var sheet = excel['Sheet1'];
       sheet.insertRowIterables(
@@ -330,7 +330,7 @@ void main() {
       saveTestOutput(excel.save(), 'rowcol_insert_iterables_offset');
     });
 
-    test('clearRow', () {
+    test('clearRow empties every cell in the target row', () {
       var excel = Excel.createExcel();
       var sheet = excel['Sheet1'];
       sheet.updateCell(CellIndex.indexByString('A1'), TextCellValue('keep'));
@@ -347,7 +347,7 @@ void main() {
       saveTestOutput(excel.save(), 'rowcol_clear_row');
     });
 
-    test('Row/column operations roundtrip', () {
+    test('an inserted row survives encode and decode', () {
       var excel = Excel.createExcel();
       var sheet = excel['Sheet1'];
       sheet.updateCell(CellIndex.indexByString('A1'), TextCellValue('r0'));
@@ -366,7 +366,7 @@ void main() {
   });
 
   group('Merge and unmerge', () {
-    test('Merge cells roundtrip', () {
+    test('a merge survives encode and decode', () {
       var excel = Excel.createExcel();
       var sheet = excel['Sheet1'];
       sheet.updateCell(CellIndex.indexByString('A1'), TextCellValue('merged'));
@@ -381,7 +381,7 @@ void main() {
       expect(s.spannedItems, contains('A1:C3'));
     });
 
-    test('Multiple merges roundtrip', () {
+    test('multiple merges survive encode and decode', () {
       var excel = Excel.createExcel();
       var sheet = excel['Sheet1'];
       sheet.merge(CellIndex.indexByString('A1'), CellIndex.indexByString('B2'));
@@ -400,7 +400,7 @@ void main() {
       expect(s.spannedItems, contains('A5:A10'));
     });
 
-    test('Unmerge cells', () {
+    test('unMerge removes a span', () {
       var excel = Excel.createExcel();
       var sheet = excel['Sheet1'];
       sheet.merge(CellIndex.indexByString('A1'), CellIndex.indexByString('C3'));
@@ -411,7 +411,7 @@ void main() {
       saveTestOutput(excel.save(), 'merge_unmerge');
     });
 
-    test('getMergedCells via Excel class', () {
+    test('getMergedCells lists every span on a sheet', () {
       var excel = Excel.createExcel();
       excel['Sheet1'].merge(
         CellIndex.indexByString('A1'),
@@ -428,7 +428,7 @@ void main() {
       saveTestOutput(excel.save(), 'merge_get_merged');
     });
 
-    test('Merge with custom value', () {
+    test('merge can set a custom value on the anchor cell', () {
       var excel = Excel.createExcel();
       var sheet = excel['Sheet1'];
       sheet.merge(
