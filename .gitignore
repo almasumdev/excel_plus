@@ -21,3 +21,6 @@ doc/api/
 !example/assets/example.xlsx
 !test/test_resources/*.xlsx
 test/test_output/
+
+# Claude Code local session artifacts
+.claude/
