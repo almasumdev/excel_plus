@@ -191,5 +191,24 @@ void main() {
           .cellStyle;
       expect(style?.isBold, isFalse);
     });
+
+    test('border styles and merged spans parse from a real file', () {
+      // Each labelled anchor cell carries the border style named in its text.
+      final sheet = Excel.decodeBytes(
+        loadResource('mergedBorders.xlsx'),
+      )['Sheet1'];
+
+      expect(sheet.spannedItems, contains('B50:D52')); // the "Thick" block
+
+      final thick = sheet.cell(CellIndex.indexByString('B50')).cellStyle;
+      expect(thick?.leftBorder.borderStyle, BorderStyle.Thick);
+      expect(thick?.topBorder.borderStyle, BorderStyle.Thick);
+
+      final double = sheet.cell(CellIndex.indexByString('B22')).cellStyle;
+      expect(double?.leftBorder.borderStyle, BorderStyle.Double);
+
+      final thin = sheet.cell(CellIndex.indexByString('B54')).cellStyle;
+      expect(thin?.topBorder.borderStyle, BorderStyle.Thin);
+    });
   });
 }

@@ -11,6 +11,5 @@ example/windows/
 example/web/
 example/build/
 example/test/
-test/test_output/
-test/test_resources/*.xls
+test/
 .github/
