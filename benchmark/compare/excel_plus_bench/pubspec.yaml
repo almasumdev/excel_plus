@@ -1,0 +1,14 @@
+name: excel_plus_bench
+description: >-
+  Isolated head-to-head benchmark harness for excel_plus, mirroring the
+  excel_baseline package so the two can be run separately and compared. Depends
+  on the local excel_plus source via a path dependency. Not published.
+publish_to: none
+version: 0.0.0
+
+environment:
+  sdk: ^3.11.4
+
+dependencies:
+  excel_plus:
+    path: ../../..

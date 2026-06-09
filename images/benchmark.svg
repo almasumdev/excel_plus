@@ -1,50 +1,105 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 280" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1240 500" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
   <defs>
-    <linearGradient id="g1" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#e57373"/><stop offset="100%" stop-color="#d32f2f"/></linearGradient>
-    <linearGradient id="g2" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#64b5f6"/><stop offset="100%" stop-color="#1565c0"/></linearGradient>
+    <linearGradient id="gPlus" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3FCB86"/>
+      <stop offset="100%" stop-color="#1F9E59"/>
+    </linearGradient>
+    <linearGradient id="gExcel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#74829A"/>
+      <stop offset="100%" stop-color="#4A586A"/>
+    </linearGradient>
   </defs>
 
-  <!-- Background -->
-  <rect width="600" height="280" rx="12" fill="#ffffff" stroke="#e0e0e0" stroke-width="1"/>
+  <rect x="0" y="0" width="1240" height="500" fill="#0E1828"/>
 
-  <!-- Title -->
-  <text x="300" y="30" text-anchor="middle" fill="#212121" font-size="15" font-weight="600">Parse Time — Lower is Better</text>
+  <!-- Header -->
+  <text x="44" y="52" fill="#EAF0F7" font-size="27" font-weight="700">Benchmark &#183; excel_plus vs excel</text>
+  <text x="45" y="78" fill="#8A9BB4" font-size="14">Encode / decode time and peak memory at 1M and 5M cells &#8212; same machine, lower is better.</text>
 
   <!-- Legend -->
-  <rect x="190" y="44" width="12" height="12" rx="3" fill="url(#g1)"/>
-  <text x="208" y="55" fill="#c62828" font-size="11" font-weight="500">excel</text>
-  <rect x="320" y="44" width="12" height="12" rx="3" fill="url(#g2)"/>
-  <text x="338" y="55" fill="#1565c0" font-size="11" font-weight="500">excel_plus</text>
+  <rect x="980" y="40" width="14" height="14" rx="2" fill="url(#gPlus)"/>
+  <text x="1001" y="52" fill="#CBD5E1" font-size="14" font-weight="600">excel_plus</text>
+  <rect x="1110" y="40" width="14" height="14" rx="2" fill="url(#gExcel)"/>
+  <text x="1131" y="52" fill="#CBD5E1" font-size="14" font-weight="600">excel</text>
 
-  <!-- Grid lines -->
-  <line x1="110" y1="72" x2="540" y2="72" stroke="#f5f5f5" stroke-width="1"/>
-  <line x1="110" y1="142" x2="540" y2="142" stroke="#f5f5f5" stroke-width="1"/>
-  <line x1="110" y1="212" x2="540" y2="212" stroke="#f5f5f5" stroke-width="1"/>
+  <!-- ===================== Panel 1: Encode time (s) ===================== -->
+  <text x="249" y="110" text-anchor="middle" fill="#DCE4EF" font-size="15" font-weight="700">Encode time <tspan fill="#7E8EA6" font-weight="400">(seconds)</tspan></text>
+  <!-- gridlines + ticks (0..60s) -->
+  <line x1="94" y1="415" x2="404" y2="415" stroke="#2A3A52" stroke-width="1"/>
+  <line x1="94" y1="322" x2="404" y2="322" stroke="#1E2C40" stroke-width="1"/>
+  <line x1="94" y1="228" x2="404" y2="228" stroke="#1E2C40" stroke-width="1"/>
+  <line x1="94" y1="135" x2="404" y2="135" stroke="#1E2C40" stroke-width="1"/>
+  <text x="84" y="419" text-anchor="end" fill="#6E7E96" font-size="11">0</text>
+  <text x="84" y="326" text-anchor="end" fill="#6E7E96" font-size="11">20</text>
+  <text x="84" y="232" text-anchor="end" fill="#6E7E96" font-size="11">40</text>
+  <text x="84" y="139" text-anchor="end" fill="#6E7E96" font-size="11">60</text>
+  <!-- 1M -->
+  <rect x="132" y="371" width="44" height="44" fill="url(#gExcel)"/>
+  <rect x="186" y="407" width="44" height="8" fill="url(#gPlus)"/>
+  <text x="154" y="364" text-anchor="middle" fill="#B9C4D6" font-size="12.5" font-weight="600">9.4 s</text>
+  <text x="208" y="400" text-anchor="middle" fill="#6FE3A8" font-size="12.5" font-weight="700">1.6 s</text>
+  <text x="181" y="436" text-anchor="middle" fill="#C3CCDA" font-size="13" font-weight="600">1M</text>
+  <text x="181" y="454" text-anchor="middle" fill="#46C97F" font-size="12" font-weight="700">5.8&#215;</text>
+  <!-- 5M -->
+  <rect x="268" y="187" width="44" height="228" fill="url(#gExcel)"/>
+  <rect x="322" y="372" width="44" height="43" fill="url(#gPlus)"/>
+  <text x="290" y="180" text-anchor="middle" fill="#B9C4D6" font-size="12.5" font-weight="600">48.8 s</text>
+  <text x="344" y="365" text-anchor="middle" fill="#6FE3A8" font-size="12.5" font-weight="700">9.2 s</text>
+  <text x="317" y="436" text-anchor="middle" fill="#C3CCDA" font-size="13" font-weight="600">5M</text>
+  <text x="317" y="454" text-anchor="middle" fill="#46C97F" font-size="12" font-weight="700">5.3&#215;</text>
 
-  <!-- 10K cells -->
-  <text x="100" y="92" text-anchor="end" fill="#616161" font-size="13" font-weight="500">10K cells</text>
-  <rect x="110" y="78" width="400" height="18" rx="4" fill="url(#g1)"/>
-  <text x="516" y="92" fill="#c62828" font-size="11" font-weight="600">250ms</text>
-  <rect x="110" y="100" width="262" height="18" rx="4" fill="url(#g2)"/>
-  <text x="378" y="114" fill="#1565c0" font-size="11" font-weight="600">164ms</text>
-  <text x="414" y="114" fill="#2e7d32" font-size="9" font-weight="600">34% faster</text>
+  <!-- ===================== Panel 2: Decode time (s) ===================== -->
+  <text x="645" y="110" text-anchor="middle" fill="#DCE4EF" font-size="15" font-weight="700">Decode time <tspan fill="#7E8EA6" font-weight="400">(seconds)</tspan></text>
+  <line x1="490" y1="415" x2="800" y2="415" stroke="#2A3A52" stroke-width="1"/>
+  <line x1="490" y1="322" x2="800" y2="322" stroke="#1E2C40" stroke-width="1"/>
+  <line x1="490" y1="228" x2="800" y2="228" stroke="#1E2C40" stroke-width="1"/>
+  <line x1="490" y1="135" x2="800" y2="135" stroke="#1E2C40" stroke-width="1"/>
+  <text x="480" y="419" text-anchor="end" fill="#6E7E96" font-size="11">0</text>
+  <text x="480" y="326" text-anchor="end" fill="#6E7E96" font-size="11">20</text>
+  <text x="480" y="232" text-anchor="end" fill="#6E7E96" font-size="11">40</text>
+  <text x="480" y="139" text-anchor="end" fill="#6E7E96" font-size="11">60</text>
+  <!-- 1M -->
+  <rect x="528" y="364" width="44" height="51" fill="url(#gExcel)"/>
+  <rect x="582" y="398" width="44" height="17" fill="url(#gPlus)"/>
+  <text x="550" y="357" text-anchor="middle" fill="#B9C4D6" font-size="12.5" font-weight="600">10.9 s</text>
+  <text x="604" y="391" text-anchor="middle" fill="#6FE3A8" font-size="12.5" font-weight="700">3.7 s</text>
+  <text x="577" y="436" text-anchor="middle" fill="#C3CCDA" font-size="13" font-weight="600">1M</text>
+  <text x="577" y="454" text-anchor="middle" fill="#46C97F" font-size="12" font-weight="700">3.0&#215;</text>
+  <!-- 5M -->
+  <rect x="664" y="150" width="44" height="265" fill="url(#gExcel)"/>
+  <rect x="718" y="324" width="44" height="91" fill="url(#gPlus)"/>
+  <text x="686" y="143" text-anchor="middle" fill="#B9C4D6" font-size="12.5" font-weight="600">56.8 s</text>
+  <text x="740" y="317" text-anchor="middle" fill="#6FE3A8" font-size="12.5" font-weight="700">19.5 s</text>
+  <text x="713" y="436" text-anchor="middle" fill="#C3CCDA" font-size="13" font-weight="600">5M</text>
+  <text x="713" y="454" text-anchor="middle" fill="#46C97F" font-size="12" font-weight="700">2.9&#215;</text>
 
-  <!-- 100K cells -->
-  <text x="100" y="162" text-anchor="end" fill="#616161" font-size="13" font-weight="500">100K cells</text>
-  <rect x="110" y="148" width="400" height="18" rx="4" fill="url(#g1)"/>
-  <text x="516" y="162" fill="#c62828" font-size="11" font-weight="600">2.4s</text>
-  <rect x="110" y="170" width="128" height="18" rx="4" fill="url(#g2)"/>
-  <text x="244" y="184" fill="#1565c0" font-size="11" font-weight="600">768ms</text>
-  <text x="283" y="184" fill="#2e7d32" font-size="9" font-weight="600">68% faster</text>
+  <!-- ===================== Panel 3: Peak memory (GB) ===================== -->
+  <text x="1041" y="110" text-anchor="middle" fill="#DCE4EF" font-size="15" font-weight="700">Peak memory <tspan fill="#7E8EA6" font-weight="400">(GB)</tspan></text>
+  <line x1="886" y1="415" x2="1196" y2="415" stroke="#2A3A52" stroke-width="1"/>
+  <line x1="886" y1="335" x2="1196" y2="335" stroke="#1E2C40" stroke-width="1"/>
+  <line x1="886" y1="255" x2="1196" y2="255" stroke="#1E2C40" stroke-width="1"/>
+  <line x1="886" y1="175" x2="1196" y2="175" stroke="#1E2C40" stroke-width="1"/>
+  <text x="876" y="419" text-anchor="end" fill="#6E7E96" font-size="11">0</text>
+  <text x="876" y="339" text-anchor="end" fill="#6E7E96" font-size="11">4</text>
+  <text x="876" y="259" text-anchor="end" fill="#6E7E96" font-size="11">8</text>
+  <text x="876" y="179" text-anchor="end" fill="#6E7E96" font-size="11">12</text>
+  <!-- 1M -->
+  <rect x="924" y="365" width="44" height="50" fill="url(#gExcel)"/>
+  <rect x="978" y="401" width="44" height="14" fill="url(#gPlus)"/>
+  <text x="946" y="358" text-anchor="middle" fill="#B9C4D6" font-size="12.5" font-weight="600">2.5 GB</text>
+  <text x="1000" y="394" text-anchor="middle" fill="#6FE3A8" font-size="12.5" font-weight="700">0.7 GB</text>
+  <text x="973" y="436" text-anchor="middle" fill="#C3CCDA" font-size="13" font-weight="600">1M</text>
+  <text x="973" y="454" text-anchor="middle" fill="#46C97F" font-size="12" font-weight="700">3.5&#215;</text>
+  <!-- 5M -->
+  <rect x="1060" y="174" width="44" height="241" fill="url(#gExcel)"/>
+  <rect x="1114" y="362" width="44" height="53" fill="url(#gPlus)"/>
+  <text x="1082" y="167" text-anchor="middle" fill="#B9C4D6" font-size="12.5" font-weight="600">12.0 GB</text>
+  <text x="1136" y="355" text-anchor="middle" fill="#6FE3A8" font-size="12.5" font-weight="700">2.6 GB</text>
+  <text x="1109" y="436" text-anchor="middle" fill="#C3CCDA" font-size="13" font-weight="600">5M</text>
+  <text x="1109" y="454" text-anchor="middle" fill="#46C97F" font-size="12" font-weight="700">4.6&#215;</text>
 
-  <!-- 5M cells -->
-  <text x="100" y="232" text-anchor="end" fill="#616161" font-size="13" font-weight="500">5M cells</text>
-  <rect x="110" y="218" width="400" height="18" rx="4" fill="url(#g1)"/>
-  <text x="516" y="232" fill="#c62828" font-size="11" font-weight="600">46.3s</text>
-  <rect x="110" y="240" width="54" height="18" rx="4" fill="url(#g2)"/>
-  <text x="170" y="254" fill="#1565c0" font-size="11" font-weight="600">6.2s</text>
-  <text x="198" y="254" fill="#2e7d32" font-size="9" font-weight="600">7× faster</text>
-
-  <!-- Bottom note -->
-  <text x="300" y="272" text-anchor="middle" fill="#9e9e9e" font-size="10">Memory at 5M cells: excel 11.5GB → excel_plus 2.7GB (76% less)</text>
+  <!-- Footer -->
+  <line x1="44" y1="474" x2="1196" y2="474" stroke="#1A2740" stroke-width="1"/>
+  <text x="44" y="492" fill="#5E6E86" font-size="11.5">Multipliers show how much faster / leaner excel_plus is. Reproduce with benchmark/compare.</text>
+  <text x="1196" y="492" text-anchor="end" fill="#5E6E86" font-size="11.5">1M = 20,000&#215;50 &#183; 5M = 100,000&#215;50</text>
 </svg>

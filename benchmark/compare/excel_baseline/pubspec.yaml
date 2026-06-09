@@ -1,0 +1,13 @@
+name: excel_baseline
+description: >-
+  Isolated head-to-head benchmark harness for the original `excel` package.
+  Kept in its own package so it can resolve the old archive/xml majors that
+  `excel` pins, which conflict with excel_plus. Not published.
+publish_to: none
+version: 0.0.0
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  excel: ^4.0.6

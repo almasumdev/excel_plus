@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 372" role="img" aria-label="Preview of a styled Excel sheet produced by excel_plus: a merged green title, a bold header row, colored status cells, borders, and currency formatting">
+  <rect x="20" y="16" width="920" height="356" rx="14" fill="#ffffff" stroke="#d9d9d9" stroke-width="1.5"/>
+
+  <!-- corner + column-letter band -->
+  <rect x="36" y="44" width="40" height="30" fill="#f3f3f3" stroke="#d9d9d9"/>
+  <g font-family="Segoe UI, Arial, sans-serif" font-size="16" fill="#7a7a7a" text-anchor="middle">
+    <rect x="76"  y="44" width="205" height="30" fill="#f3f3f3" stroke="#d9d9d9"/>
+    <rect x="281" y="44" width="205" height="30" fill="#f3f3f3" stroke="#d9d9d9"/>
+    <rect x="486" y="44" width="205" height="30" fill="#f3f3f3" stroke="#d9d9d9"/>
+    <rect x="691" y="44" width="205" height="30" fill="#f3f3f3" stroke="#d9d9d9"/>
+    <text x="178.5" y="64">A</text>
+    <text x="383.5" y="64">B</text>
+    <text x="588.5" y="64">C</text>
+    <text x="793.5" y="64">D</text>
+  </g>
+
+  <!-- row-number gutter -->
+  <g font-family="Segoe UI, Arial, sans-serif" font-size="15" fill="#7a7a7a" text-anchor="middle">
+    <rect x="36" y="74"  width="40" height="56" fill="#f3f3f3" stroke="#d9d9d9"/><text x="56" y="107">1</text>
+    <rect x="36" y="130" width="40" height="56" fill="#f3f3f3" stroke="#d9d9d9"/><text x="56" y="163">2</text>
+    <rect x="36" y="186" width="40" height="56" fill="#f3f3f3" stroke="#d9d9d9"/><text x="56" y="219">3</text>
+    <rect x="36" y="242" width="40" height="56" fill="#f3f3f3" stroke="#d9d9d9"/><text x="56" y="275">4</text>
+    <rect x="36" y="298" width="40" height="56" fill="#f3f3f3" stroke="#d9d9d9"/><text x="56" y="331">5</text>
+  </g>
+
+  <!-- merged title (A1:D1) -->
+  <rect x="76" y="74" width="820" height="56" fill="#21a366"/>
+  <text x="486" y="110" font-family="Segoe UI, Arial, sans-serif" font-size="26" font-weight="800" fill="#ffffff" text-anchor="middle">Q1 Sales Report</text>
+
+  <!-- header row (row 2) -->
+  <rect x="76"  y="130" width="205" height="56" fill="#d7efe1"/>
+  <rect x="281" y="130" width="205" height="56" fill="#d7efe1"/>
+  <rect x="486" y="130" width="205" height="56" fill="#d7efe1"/>
+  <rect x="691" y="130" width="205" height="56" fill="#d7efe1"/>
+  <g font-family="Segoe UI, Arial, sans-serif" font-size="19" font-weight="700" fill="#14502f">
+    <text x="90" y="164">Name</text>
+    <text x="295" y="164">Region</text>
+    <text x="681" y="164" text-anchor="end">Revenue</text>
+    <text x="793.5" y="164" text-anchor="middle">Status</text>
+  </g>
+
+  <!-- data rows -->
+  <g font-family="Segoe UI, Arial, sans-serif" font-size="18" fill="#222222">
+    <text x="90" y="221">Alice</text><text x="295" y="221">East</text>
+    <text x="681" y="221" text-anchor="end">$12,500.00</text>
+    <text x="90" y="277">Bob</text><text x="295" y="277">West</text>
+    <text x="681" y="277" text-anchor="end">$8,200.00</text>
+    <text x="90" y="333">Carol</text><text x="295" y="333">North</text>
+    <text x="681" y="333" text-anchor="end">$15,750.00</text>
+  </g>
+
+  <!-- status pills (column D) -->
+  <g font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="700" text-anchor="middle">
+    <rect x="755" y="200" width="77" height="28" rx="14" fill="#d7efe1"/><text x="793.5" y="219" fill="#1c6b46">Paid</text>
+    <rect x="755" y="256" width="77" height="28" rx="14" fill="#fbe0e0"/><text x="793.5" y="275" fill="#b3261e">Due</text>
+    <rect x="755" y="312" width="77" height="28" rx="14" fill="#d7efe1"/><text x="793.5" y="331" fill="#1c6b46">Paid</text>
+  </g>
+
+  <!-- grid lines -->
+  <g stroke="#d9d9d9" stroke-width="1" fill="none">
+    <line x1="76" y1="74" x2="896" y2="74"/>
+    <line x1="76" y1="130" x2="896" y2="130"/>
+    <line x1="76" y1="186" x2="896" y2="186"/>
+    <line x1="76" y1="242" x2="896" y2="242"/>
+    <line x1="76" y1="298" x2="896" y2="298"/>
+    <line x1="76" y1="354" x2="896" y2="354"/>
+    <line x1="76"  y1="74" x2="76"  y2="354"/>
+    <line x1="281" y1="130" x2="281" y2="354"/>
+    <line x1="486" y1="130" x2="486" y2="354"/>
+    <line x1="691" y1="130" x2="691" y2="354"/>
+    <line x1="896" y1="74" x2="896" y2="354"/>
+  </g>
+</svg>
