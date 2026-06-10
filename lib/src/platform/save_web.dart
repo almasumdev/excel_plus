@@ -10,7 +10,7 @@ class SavingHelper {
       return null;
     }
 
-    final blob = Blob(JSArray.from(Uint8List.fromList(val).toJS));
+    final blob = Blob(<JSAny>[Uint8List.fromList(val).toJS].toJS);
     final url = URL.createObjectURL(blob);
     final anchor = HTMLAnchorElement()
       ..href = url
