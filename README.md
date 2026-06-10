@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Masum-MSNR/excel_plus/main/images/banner.svg"
+  <img src="https://raw.githubusercontent.com/almasumdev/excel_plus/main/images/banner.svg"
        alt="excel_plus — fast, low-memory Excel (.xlsx) library for Dart and Flutter" width="820"/>
 </p>
 
@@ -7,9 +7,9 @@
   <a href="https://pub.dev/packages/excel_plus"><img src="https://img.shields.io/pub/v/excel_plus.svg" alt="pub version"></a>
   <a href="https://pub.dev/packages/excel_plus/score"><img src="https://img.shields.io/pub/points/excel_plus" alt="pub points"></a>
   <a href="https://pub.dev/packages/excel_plus"><img src="https://img.shields.io/pub/likes/excel_plus" alt="pub likes"></a>
-  <a href="https://github.com/Masum-MSNR/excel_plus/stargazers"><img src="https://img.shields.io/github/stars/Masum-MSNR/excel_plus?logo=github" alt="GitHub stars"></a>
-  <a href="https://github.com/Masum-MSNR/excel_plus/network/members"><img src="https://img.shields.io/github/forks/Masum-MSNR/excel_plus?logo=github" alt="GitHub forks"></a>
-  <a href="https://github.com/Masum-MSNR/excel_plus/issues"><img src="https://img.shields.io/github/issues/Masum-MSNR/excel_plus?logo=github" alt="GitHub issues"></a>
+  <a href="https://github.com/almasumdev/excel_plus/stargazers"><img src="https://img.shields.io/github/stars/almasumdev/excel_plus?logo=github" alt="GitHub stars"></a>
+  <a href="https://github.com/almasumdev/excel_plus/network/members"><img src="https://img.shields.io/github/forks/almasumdev/excel_plus?logo=github" alt="GitHub forks"></a>
+  <a href="https://github.com/almasumdev/excel_plus/issues"><img src="https://img.shields.io/github/issues/almasumdev/excel_plus?logo=github" alt="GitHub issues"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
   <a href="https://dart.dev"><img src="https://img.shields.io/badge/Dart-3.11+-0175C2?logo=dart" alt="Dart"></a>
 </p>
@@ -37,7 +37,7 @@ and it reuses untouched parts of a workbook byte-for-byte when saving.
 - Style spreadsheets — fonts, colors, fills, borders, alignment, number formats, and merged cells.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Masum-MSNR/excel_plus/main/images/preview.svg"
+  <img src="https://raw.githubusercontent.com/almasumdev/excel_plus/main/images/preview.svg"
        alt="A styled Excel sheet produced by excel_plus: a merged green title, a bold header row, colored Paid/Due status cells, borders, and currency formatting" width="760"/>
 </p>
 
@@ -52,7 +52,7 @@ against the original [`excel`](https://pub.dev/packages/excel) package — same 
 same workload:
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Masum-MSNR/excel_plus/main/images/benchmark.svg"
+  <img src="https://raw.githubusercontent.com/almasumdev/excel_plus/main/images/benchmark.svg"
        alt="excel_plus vs excel — encode, decode and peak memory at 1M and 5M cells" width="100%">
 </p>
 
@@ -69,7 +69,7 @@ needed ~12 GB RAM). Create time is within noise — both build cells the same wa
 
 The two libraries pin conflicting `archive`/`xml` majors, so they can't run in one
 program; each harness lives in its own package under
-[`benchmark/compare/`](https://github.com/Masum-MSNR/excel_plus/tree/main/benchmark/compare).
+[`benchmark/compare/`](https://github.com/almasumdev/excel_plus/tree/main/benchmark/compare).
 Timings vary by hardware — reproduce both on your own machine:
 
 ```sh
@@ -125,16 +125,16 @@ cd ../excel_plus_bench                && dart pub get && dart run bin/benchmark.
 ## Example
 
 A complete, runnable sample lives in the
-[`example/`](https://github.com/Masum-MSNR/excel_plus/tree/main/example) directory.
+[`example/`](https://github.com/almasumdev/excel_plus/tree/main/example) directory.
 Clone the repository and run it, or copy any snippet from
 [Getting started](#getting-started) below.
 
 ## Other useful links
 
 - [API reference](https://pub.dev/documentation/excel_plus/latest/)
-- [Source code on GitHub](https://github.com/Masum-MSNR/excel_plus)
-- [Changelog](https://github.com/Masum-MSNR/excel_plus/blob/main/CHANGELOG.md)
-- [Issue tracker](https://github.com/Masum-MSNR/excel_plus/issues)
+- [Source code on GitHub](https://github.com/almasumdev/excel_plus)
+- [Changelog](https://github.com/almasumdev/excel_plus/blob/main/CHANGELOG.md)
+- [Issue tracker](https://github.com/almasumdev/excel_plus/issues)
 
 ## Installation
 
@@ -406,9 +406,9 @@ No. excel_plus is a pure Dart library; it works in plain Dart and in Flutter app
 ## Support and feedback
 
 - Found a bug or want a feature? Open an issue on the
-  [issue tracker](https://github.com/Masum-MSNR/excel_plus/issues).
+  [issue tracker](https://github.com/almasumdev/excel_plus/issues).
 - Questions and ideas are welcome via
-  [GitHub Discussions](https://github.com/Masum-MSNR/excel_plus/discussions).
+  [GitHub Discussions](https://github.com/almasumdev/excel_plus/discussions).
 - Pull requests are welcome — see the repository for contribution guidelines.
 
 ## About
@@ -424,12 +424,12 @@ excel_plus is created and owned by **Nurullah Al Masum**.
 
 excel_plus grows with its community — every contributor is listed here:
 
-<a href="https://github.com/Masum-MSNR/excel_plus/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=Masum-MSNR/excel_plus" alt="excel_plus contributors"/>
+<a href="https://github.com/almasumdev/excel_plus/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=almasumdev/excel_plus" alt="excel_plus contributors"/>
 </a>
 
 Want to help? Pull requests are welcome — see [Support and feedback](#support-and-feedback).
 
 If excel_plus helps you, please ⭐ the
-[repository](https://github.com/Masum-MSNR/excel_plus) and 👍 it on
+[repository](https://github.com/almasumdev/excel_plus) and 👍 it on
 [pub.dev](https://pub.dev/packages/excel_plus) — it genuinely helps others find it.
