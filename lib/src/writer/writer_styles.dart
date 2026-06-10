@@ -272,6 +272,7 @@ mixin _WriterStylesMixin on _WriterBase {
       HorizontalAlign horizontalAlign = cellStyle.horizontalAlignment;
       VerticalAlign verticalAlign = cellStyle.verticalAlignment;
       int rotation = cellStyle.rotation;
+      int indent = cellStyle.indent;
       TextWrapping? textWrapping = cellStyle.wrap;
       int backgroundIndex = innerPatternFillIndex[backgroundColor] ?? -1;
       int fontIndex = innerFontStyleIndex[fs] ?? -1;
@@ -319,7 +320,8 @@ mixin _WriterStylesMixin on _WriterBase {
       if (horizontalAlign != HorizontalAlign.Left ||
           textWrapping != null ||
           verticalAlign != VerticalAlign.Bottom ||
-          rotation != 0) {
+          rotation != 0 ||
+          indent > 0) {
         attributes.add(XmlAttribute(_xmlName('applyAlignment'), '1'));
         var childAttributes = <XmlAttribute>[];
 
@@ -349,6 +351,9 @@ mixin _WriterStylesMixin on _WriterBase {
           childAttributes.add(
             XmlAttribute(_xmlName('textRotation'), '$rotation'),
           );
+        }
+        if (indent > 0) {
+          childAttributes.add(XmlAttribute(_xmlName('indent'), '$indent'));
         }
 
         children.add(XmlElement(_xmlName('alignment'), childAttributes, []));

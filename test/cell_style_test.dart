@@ -209,6 +209,27 @@ void main() {
       expect(style?.rotation, 45);
     });
 
+    test('cell indent survives encode and decode', () {
+      var excel = Excel.createExcel();
+      var sheet = excel['Sheet1'];
+      sheet.updateCell(CellIndex.indexByString('A1'), TextCellValue('indented'));
+      sheet.cell(CellIndex.indexByString('A1')).cellStyle = CellStyle(
+        indent: 2,
+      );
+
+      var bytes = excel.encode();
+      saveTestOutput(bytes, 'style_indent');
+      var decoded = Excel.decodeBytes(bytes!);
+      var style = decoded['Sheet1']
+          .cell(CellIndex.indexByString('A1'))
+          .cellStyle;
+      expect(style?.indent, 2);
+    });
+
+    test('negative indent is clamped to zero', () {
+      expect(CellStyle(indent: -3).indent, 0);
+    });
+
     test('a combined multi-property style survives encode and decode', () {
       var excel = Excel.createExcel();
       var sheet = excel['Sheet1'];

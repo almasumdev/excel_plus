@@ -115,6 +115,7 @@ mixin _ParserStylesMixin on _ParserBase {
           VerticalAlign verticalAlign = VerticalAlign.Bottom;
           TextWrapping? textWrapping;
           int rotation = 0;
+          int indent = 0;
           int fontId = _getFontIndex(node, 'fontId');
           _FontStyle fontStyle = _FontStyle();
 
@@ -210,6 +211,11 @@ mixin _ParserStylesMixin on _ParserBase {
               if (rotationString != null) {
                 rotation = (double.tryParse(rotationString) ?? 0.0).floor();
               }
+
+              var indentString = child.getAttribute('indent');
+              if (indentString != null) {
+                indent = int.tryParse(indentString) ?? 0;
+              }
             });
           }
 
@@ -234,6 +240,7 @@ mixin _ParserStylesMixin on _ParserBase {
             verticalAlign: verticalAlign,
             textWrapping: textWrapping,
             rotation: rotation,
+            indent: indent,
             leftBorder: borderSet?.leftBorder,
             rightBorder: borderSet?.rightBorder,
             topBorder: borderSet?.topBorder,

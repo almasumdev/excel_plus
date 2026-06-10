@@ -16,6 +16,7 @@ class CellStyle {
   Underline _underline = Underline.None;
   int? _fontSize;
   int _rotation = 0;
+  int _indent = 0;
   Border _leftBorder;
   Border _rightBorder;
   Border _topBorder;
@@ -41,6 +42,7 @@ class CellStyle {
     Underline underline = Underline.None,
     bool italic = false,
     int rotation = 0,
+    int indent = 0,
     Border? leftBorder,
     Border? rightBorder,
     Border? topBorder,
@@ -57,6 +59,7 @@ class CellStyle {
        _fontFamily = fontFamily,
        _fontScheme = fontScheme ?? FontScheme.Unset,
        _rotation = rotation,
+       _indent = indent < 0 ? 0 : indent,
        _fontColorHex = _isColorAppropriate(fontColorHex.colorHex),
        _backgroundColorHex = _isColorAppropriate(backgroundColorHex.colorHex),
        _verticalAlign = verticalAlign,
@@ -83,6 +86,7 @@ class CellStyle {
     Underline? underlineVal,
     int? fontSizeVal,
     int? rotationVal,
+    int? indentVal,
     Border? leftBorderVal,
     Border? rightBorderVal,
     Border? topBorderVal,
@@ -106,6 +110,7 @@ class CellStyle {
       underline: underlineVal ?? _underline,
       fontSize: fontSizeVal ?? _fontSize,
       rotation: rotationVal ?? _rotation,
+      indent: indentVal ?? _indent,
       leftBorder: leftBorderVal ?? _leftBorder,
       rightBorder: rightBorderVal ?? _rightBorder,
       topBorder: topBorderVal ?? _topBorder,
@@ -197,6 +202,17 @@ class CellStyle {
     _rotation = rotate;
   }
 
+  /// Indentation level, applied on the alignment side of the cell (left for
+  /// left-aligned text, right for right-aligned). Each level is a small amount
+  /// of horizontal padding. Clamped to be non-negative.
+  int get indent {
+    return _indent;
+  }
+
+  set indent(int value) {
+    _indent = value < 0 ? 0 : value;
+  }
+
   Underline get underline {
     return _underline;
   }
@@ -283,6 +299,7 @@ class CellStyle {
       other is CellStyle &&
           other._bold == _bold &&
           other._rotation == _rotation &&
+          other._indent == _indent &&
           other._italic == _italic &&
           other._underline == _underline &&
           other._fontSize == _fontSize &&
@@ -303,9 +320,10 @@ class CellStyle {
           other.numberFormat == numberFormat;
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     _bold,
     _rotation,
+    _indent,
     _italic,
     _underline,
     _fontSize,
@@ -324,5 +342,5 @@ class CellStyle {
     _diagonalBorderUp,
     _diagonalBorderDown,
     numberFormat,
-  );
+  ]);
 }
