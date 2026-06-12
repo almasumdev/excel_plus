@@ -7,11 +7,11 @@
   <a href="https://pub.dev/packages/excel_plus"><img src="https://img.shields.io/pub/v/excel_plus.svg" alt="pub version"></a>
   <a href="https://pub.dev/packages/excel_plus/score"><img src="https://img.shields.io/pub/points/excel_plus" alt="pub points"></a>
   <a href="https://pub.dev/packages/excel_plus"><img src="https://img.shields.io/pub/likes/excel_plus" alt="pub likes"></a>
-  <a href="https://github.com/almasumdev/excel_plus/stargazers"><img src="https://img.shields.io/github/stars/almasumdev/excel_plus?logo=github" alt="GitHub stars"></a>
-  <a href="https://github.com/almasumdev/excel_plus/network/members"><img src="https://img.shields.io/github/forks/almasumdev/excel_plus?logo=github" alt="GitHub forks"></a>
-  <a href="https://github.com/almasumdev/excel_plus/issues"><img src="https://img.shields.io/github/issues/almasumdev/excel_plus?logo=github" alt="GitHub issues"></a>
+  <a href="https://github.com/almasumdev/excel_plus/stargazers"><img src="https://badgen.net/github/stars/almasumdev/excel_plus?icon=github" alt="GitHub stars"></a>
+  <a href="https://github.com/almasumdev/excel_plus/network/members"><img src="https://badgen.net/github/forks/almasumdev/excel_plus?icon=github" alt="GitHub forks"></a>
+  <a href="https://github.com/almasumdev/excel_plus/issues"><img src="https://badgen.net/github/open-issues/almasumdev/excel_plus?icon=github" alt="GitHub issues"></a>
   <a href="https://github.com/almasumdev/excel_plus/actions/workflows/ci.yml"><img src="https://github.com/almasumdev/excel_plus/actions/workflows/ci.yml/badge.svg" alt="CI status"></a>
-  <a href="https://github.com/almasumdev/excel_plus/commits/main"><img src="https://img.shields.io/github/last-commit/almasumdev/excel_plus?logo=github" alt="Last commit"></a>
+  <a href="https://github.com/almasumdev/excel_plus/commits/main"><img src="https://badgen.net/github/last-commit/almasumdev/excel_plus?icon=github" alt="Last commit"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
   <a href="https://dart.dev"><img src="https://img.shields.io/badge/Dart-3.11+-0175C2?logo=dart" alt="Dart"></a>
 </p>
@@ -167,7 +167,7 @@ and the direction is driven by what users request on the
   </a>
 </p>
 
-> **[▶ Try the live demo →](https://masum-excel.web.app)** — build, style and
+> **[▶ Try the live demo](https://masum-excel.web.app)** — build, style and
 > export real `.xlsx` files right in your browser. No install needed.
 
 A complete, runnable sample lives in the
