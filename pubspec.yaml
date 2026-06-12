@@ -8,8 +8,9 @@ topics:
   - excel
   - xlsx
   - spreadsheet
-  - flutter
-  - dart
+  - office
+  - workbook
+
 screenshots:
   - description: The excel_plus logo.
     path: images/logo.png
