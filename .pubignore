@@ -13,3 +13,6 @@ example/build/
 example/test/
 test/
 .github/
+# README references these via absolute raw.githubusercontent URLs, so they
+# don't need to ship in the package.
+images/
