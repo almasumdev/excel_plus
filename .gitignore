@@ -24,3 +24,11 @@ test/test_output/
 
 # Claude Code local session artifacts
 .claude/
+
+# Secrets — NEVER commit credentials. Firebase deploy reads the service-account
+# JSON from the FIREBASE_SERVICE_ACCOUNT GitHub Actions secret, not from a file.
+*-firebase-adminsdk-*.json
+*service-account*.json
+*serviceAccount*.json
+.firebase/
+firebase-debug.log
