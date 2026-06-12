@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
     tags: ['v*']
+  workflow_dispatch: # manual "Run workflow" — required to tag & publish
 
 concurrency:
   group: release-${{ github.ref }}
@@ -12,7 +13,8 @@ concurrency:
 jobs:
   tag:
     name: Validate & tag
-    if: github.ref == 'refs/heads/main'
+    # Only on a manual run — a plain push to main never tags or publishes.
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
       contents: write
