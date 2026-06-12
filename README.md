@@ -1,6 +1,6 @@
 <p align="center">
   <img src="https://raw.githubusercontent.com/almasumdev/excel_plus/main/images/banner.png"
-       alt="excel_plus — fast, low-memory Excel (.xlsx) library for Dart and Flutter" width="820"/>
+       alt="excel_plus — fast, low-memory Excel (.xlsx) library for Dart and Flutter" width="100%"/>
 </p>
 
 <p align="center">
@@ -40,7 +40,7 @@ and it reuses untouched parts of a workbook byte-for-byte when saving.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/almasumdev/excel_plus/main/images/preview.png"
-       alt="A styled Excel sheet produced by excel_plus: a merged green title, a bold header row, colored Paid/Due status cells, borders, and currency formatting" width="760"/>
+       alt="A styled Excel sheet produced by excel_plus: a merged green title, a bold header row, colored Paid/Due status cells, borders, and currency formatting" width="100%"/>
 </p>
 
 ## Performance

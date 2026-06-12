@@ -143,6 +143,7 @@ jobs:
           channelId: live
           projectId: my-pub-packages
           target: masum-excel
+          disableComment: true # main-branch deploy has no PR to comment on
 
   # 5) Tag the release only after the web deploy succeeds. Pushed with a PAT so
   #    the tag triggers the Publish workflow (a GITHUB_TOKEN push would not).
