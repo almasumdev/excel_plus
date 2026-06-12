@@ -67,7 +67,10 @@ class _FeatureDemoPageState extends State<FeatureDemoPage> {
             children: [
               Text(
                 demo.title,
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
               const SizedBox(height: 8),
               Text(

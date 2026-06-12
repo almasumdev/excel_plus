@@ -63,7 +63,12 @@ List<double> _split(List<double> weights, double totalPx) {
 /// [totalPx] (default the whole frame), divided in proportion to [weights] —
 /// use each column's natural content width. The per-column 5px padding cancels
 /// in the sum, so the rendered total is exact regardless of the column count.
-void _fitColumns(Sheet s, List<double> weights, {int first = 0, double? totalPx}) {
+void _fitColumns(
+  Sheet s,
+  List<double> weights, {
+  int first = 0,
+  double? totalPx,
+}) {
   final px = _split(weights, totalPx ?? phoneWidthPx);
   for (var i = 0; i < px.length; i++) {
     s.setColumnWidth(first + i, _colCharsForPx(px[i]));
@@ -240,23 +245,40 @@ Excel _buildInvoice() {
   // Title + company block.
   put(0, 2, TextCellValue('INVOICE'), cs(bold: true, fontSize: 28));
   merge(0, 2, 1, 2);
-  put(2, 2, TextCellValue('Adventure Works Cycles'),
-      cs(bold: true, fontSize: 15, font: red, align: HorizontalAlign.Right));
+  put(
+    2,
+    2,
+    TextCellValue('Adventure Works Cycles'),
+    cs(bold: true, fontSize: 15, font: red, align: HorizontalAlign.Right),
+  );
   merge(2, 2, 4, 2);
-  put(2, 3, TextCellValue('800 Interchange Blvd · Austin, TX'),
-      cs(font: _muted, align: HorizontalAlign.Right));
+  put(
+    2,
+    3,
+    TextCellValue('800 Interchange Blvd · Austin, TX'),
+    cs(font: _muted, align: HorizontalAlign.Right),
+  );
   merge(2, 3, 4, 3);
   spacer(4);
 
   // Bill-to (merged A:B) and invoice meta (label in D, value in E).
   void billTo(int rr, String text, {bool bold = false, bool muted = false}) {
-    put(0, rr, TextCellValue(text), cs(bold: bold, font: muted ? _muted : _ink));
+    put(
+      0,
+      rr,
+      TextCellValue(text),
+      cs(bold: bold, font: muted ? _muted : _ink),
+    );
     merge(0, rr, 1, rr);
   }
 
   void meta(int rr, String label, String value) {
-    put(3, rr, TextCellValue(label),
-        cs(bold: true, font: _muted, align: HorizontalAlign.Right));
+    put(
+      3,
+      rr,
+      TextCellValue(label),
+      cs(bold: true, font: _muted, align: HorizontalAlign.Right),
+    );
     put(4, rr, TextCellValue(value), cs(align: HorizontalAlign.Right));
   }
 
@@ -274,9 +296,18 @@ Excel _buildInvoice() {
   const headerRow = 10;
   final headers = ['Code', 'Description', 'Qty', 'Price', 'Amount'];
   for (var c = 0; c < headers.length; c++) {
-    put(c, headerRow, TextCellValue(headers[c]),
-        cs(bold: true, fill: _ink, font: ExcelColor.white, bordered: true,
-            align: c >= 2 ? HorizontalAlign.Right : HorizontalAlign.Left));
+    put(
+      c,
+      headerRow,
+      TextCellValue(headers[c]),
+      cs(
+        bold: true,
+        fill: _ink,
+        font: ExcelColor.white,
+        bordered: true,
+        align: c >= 2 ? HorizontalAlign.Right : HorizontalAlign.Left,
+      ),
+    );
   }
 
   final items = <(String, String, int, double)>[
@@ -295,12 +326,34 @@ Excel _buildInvoice() {
     final fill = i.isOdd ? zebra : null;
     put(0, r, TextCellValue(code), cs(bordered: true, fill: fill));
     put(1, r, TextCellValue(desc), cs(bordered: true, fill: fill));
-    put(2, r, IntCellValue(qty),
-        cs(bordered: true, fill: fill, align: HorizontalAlign.Right));
-    put(3, r, DoubleCellValue(price),
-        cs(bordered: true, fill: fill, align: HorizontalAlign.Right, fmt: _currency));
-    put(4, r, DoubleCellValue(line),
-        cs(bordered: true, fill: fill, align: HorizontalAlign.Right, fmt: _currency));
+    put(
+      2,
+      r,
+      IntCellValue(qty),
+      cs(bordered: true, fill: fill, align: HorizontalAlign.Right),
+    );
+    put(
+      3,
+      r,
+      DoubleCellValue(price),
+      cs(
+        bordered: true,
+        fill: fill,
+        align: HorizontalAlign.Right,
+        fmt: _currency,
+      ),
+    );
+    put(
+      4,
+      r,
+      DoubleCellValue(line),
+      cs(
+        bordered: true,
+        fill: fill,
+        align: HorizontalAlign.Right,
+        fmt: _currency,
+      ),
+    );
   }
 
   // Totals stack — label merged across C:D, amount under the Amount column (E).
@@ -310,11 +363,32 @@ Excel _buildInvoice() {
   void totalLine(String label, double value, {bool emphasize = false}) {
     final fill = emphasize ? _ink : null;
     final font = emphasize ? ExcelColor.white : _ink;
-    put(2, row, TextCellValue(label),
-        cs(bold: emphasize, fill: fill, font: font, bordered: true, align: HorizontalAlign.Right));
+    put(
+      2,
+      row,
+      TextCellValue(label),
+      cs(
+        bold: emphasize,
+        fill: fill,
+        font: font,
+        bordered: true,
+        align: HorizontalAlign.Right,
+      ),
+    );
     merge(2, row, 3, row);
-    put(4, row, DoubleCellValue(value),
-        cs(bold: emphasize, fill: fill, font: font, bordered: true, align: HorizontalAlign.Right, fmt: _currency));
+    put(
+      4,
+      row,
+      DoubleCellValue(value),
+      cs(
+        bold: emphasize,
+        fill: fill,
+        font: font,
+        bordered: true,
+        align: HorizontalAlign.Right,
+        fmt: _currency,
+      ),
+    );
     row++;
   }
 
@@ -325,29 +399,49 @@ Excel _buildInvoice() {
 
   // Footer note.
   final footerRow = row + 1; // 20
-  put(0, footerRow,
-      TextCellValue('Thank you for your business!    ·    support@adventure-works.com'),
-      cs(italic: true, font: _muted, fill: ExcelColor.fromHexString('FFEDF0EE'), align: HorizontalAlign.Center));
+  put(
+    0,
+    footerRow,
+    TextCellValue(
+      'Thank you for your business!    ·    support@adventure-works.com',
+    ),
+    cs(
+      italic: true,
+      font: _muted,
+      fill: ExcelColor.fromHexString('FFEDF0EE'),
+      align: HorizontalAlign.Center,
+    ),
+  );
   merge(0, footerRow, 4, footerRow);
 
   // Margin + fit the content into the remaining frame. Columns by natural
   // content width (numbers stay fully visible); rows with a taller title/total.
   _layMargin(s);
-  _fitColumns(s, [8, 24, 5, 9, 11], first: dc, totalPx: phoneWidthPx - _marginPxX);
-  _fitRows(s, [
-    0.5, // 0  accent bar
-    0.4, // 1  spacer
-    2.0, // 2  title + company
-    0.9, // 3  address
-    0.4, // 4  spacer
-    1.0, 1.0, 1.0, 1.0, // 5-8  bill-to / meta
-    0.4, // 9  spacer
-    1.2, // 10 header
-    1.0, 1.0, 1.0, 1.0, 1.0, // 11-15 items
-    1.0, 1.0, 1.2, // 16-18 subtotal / tax / TOTAL
-    0.4, // 19 spacer
-    1.1, // 20 footer
-  ], first: dr, totalPx: phoneHeightPx - _marginPxY);
+  _fitColumns(
+    s,
+    [8, 24, 5, 9, 11],
+    first: dc,
+    totalPx: phoneWidthPx - _marginPxX,
+  );
+  _fitRows(
+    s,
+    [
+      0.5, // 0  accent bar
+      0.4, // 1  spacer
+      2.0, // 2  title + company
+      0.9, // 3  address
+      0.4, // 4  spacer
+      1.0, 1.0, 1.0, 1.0, // 5-8  bill-to / meta
+      0.4, // 9  spacer
+      1.2, // 10 header
+      1.0, 1.0, 1.0, 1.0, 1.0, // 11-15 items
+      1.0, 1.0, 1.2, // 16-18 subtotal / tax / TOTAL
+      0.4, // 19 spacer
+      1.1, // 20 footer
+    ],
+    first: dr,
+    totalPx: phoneHeightPx - _marginPxY,
+  );
   return excel;
 }
 
@@ -416,28 +510,74 @@ Excel _buildTimesheet() {
   );
 
   ({ExcelColor fill, ExcelColor font}) chip(String status) => switch (status) {
-    'Present' => (fill: ExcelColor.fromHexString('FFE6F4EA'), font: ExcelColor.fromHexString('FF1E7E34')),
-    'Remote' => (fill: ExcelColor.fromHexString('FFE5EEF9'), font: ExcelColor.fromHexString('FF1F4E79')),
-    'Annual leave' => (fill: ExcelColor.fromHexString('FFFCEFD6'), font: ExcelColor.fromHexString('FF8A6D1B')),
-    _ => (fill: ExcelColor.fromHexString('FFEFF1F3'), font: ExcelColor.fromHexString('FF8A93A0')),
+    'Present' => (
+      fill: ExcelColor.fromHexString('FFE6F4EA'),
+      font: ExcelColor.fromHexString('FF1E7E34'),
+    ),
+    'Remote' => (
+      fill: ExcelColor.fromHexString('FFE5EEF9'),
+      font: ExcelColor.fromHexString('FF1F4E79'),
+    ),
+    'Annual leave' => (
+      fill: ExcelColor.fromHexString('FFFCEFD6'),
+      font: ExcelColor.fromHexString('FF8A6D1B'),
+    ),
+    _ => (
+      fill: ExcelColor.fromHexString('FFEFF1F3'),
+      font: ExcelColor.fromHexString('FF8A93A0'),
+    ),
   };
 
   // Title + info band.
-  put(0, 0, TextCellValue('Timesheet — June 2026'),
-    CellStyle(bold: true, fontSize: 14, fontColorHex: ExcelColor.white, backgroundColorHex: slate, horizontalAlign: HorizontalAlign.Center, verticalAlign: VerticalAlign.Center));
+  put(
+    0,
+    0,
+    TextCellValue('Timesheet — June 2026'),
+    CellStyle(
+      bold: true,
+      fontSize: 14,
+      fontColorHex: ExcelColor.white,
+      backgroundColorHex: slate,
+      horizontalAlign: HorizontalAlign.Center,
+      verticalAlign: VerticalAlign.Center,
+    ),
+  );
   merge(0, 0, 6, 0);
-  put(0, 1, TextCellValue('Jordan Lee    ·    Engineering    ·    Employee #4471'),
-    CellStyle(fontSize: 9, fontColorHex: _muted, backgroundColorHex: ExcelColor.fromHexString('FFEDF0EE'), horizontalAlign: HorizontalAlign.Center, verticalAlign: VerticalAlign.Center));
+  put(
+    0,
+    1,
+    TextCellValue('Jordan Lee    ·    Engineering    ·    Employee #4471'),
+    CellStyle(
+      fontSize: 9,
+      fontColorHex: _muted,
+      backgroundColorHex: ExcelColor.fromHexString('FFEDF0EE'),
+      horizontalAlign: HorizontalAlign.Center,
+      verticalAlign: VerticalAlign.Center,
+    ),
+  );
   merge(0, 1, 6, 1);
 
   // Header.
   const headerRow = 2;
-  final headers = ['Date', 'Day', 'Clock In', 'Clock Out', 'Break', 'Hours', 'Status'];
+  final headers = [
+    'Date',
+    'Day',
+    'Clock In',
+    'Clock Out',
+    'Break',
+    'Hours',
+    'Status',
+  ];
   for (var c = 0; c < headers.length; c++) {
     final align = c == 6
         ? HorizontalAlign.Center
         : (c >= 2 && c <= 5 ? HorizontalAlign.Right : HorizontalAlign.Left);
-    put(c, headerRow, TextCellValue(headers[c]), box(bold: true, fill: slate, font: ExcelColor.white, align: align));
+    put(
+      c,
+      headerRow,
+      TextCellValue(headers[c]),
+      box(bold: true, fill: slate, font: ExcelColor.white, align: align),
+    );
   }
 
   const remoteDays = {5, 12, 26};
@@ -474,32 +614,113 @@ Excel _buildTimesheet() {
     final ss = chip(status);
 
     put(0, r, TextCellValue(dateStr), box(fill: rowFill));
-    put(1, r, TextCellValue(weekdayNames[wi]), box(fill: rowFill, font: isWeekend ? _muted : _ink));
-    put(2, r, TextCellValue(inT), box(fill: rowFill, align: HorizontalAlign.Right));
-    put(3, r, TextCellValue(outT), box(fill: rowFill, align: HorizontalAlign.Right));
-    put(4, r, brk == null ? TextCellValue('') : DoubleCellValue(brk), box(fill: rowFill, align: HorizontalAlign.Right, numberFormat: oneDp));
-    put(5, r, hours == null ? TextCellValue('') : DoubleCellValue(hours),
-      box(fill: rowFill, align: HorizontalAlign.Right, numberFormat: oneDp, bold: overtime, font: overtime ? overtimeRed : _ink));
-    put(6, r, TextCellValue(status), box(bold: true, fill: ss.fill, font: ss.font, align: HorizontalAlign.Center));
+    put(
+      1,
+      r,
+      TextCellValue(weekdayNames[wi]),
+      box(fill: rowFill, font: isWeekend ? _muted : _ink),
+    );
+    put(
+      2,
+      r,
+      TextCellValue(inT),
+      box(fill: rowFill, align: HorizontalAlign.Right),
+    );
+    put(
+      3,
+      r,
+      TextCellValue(outT),
+      box(fill: rowFill, align: HorizontalAlign.Right),
+    );
+    put(
+      4,
+      r,
+      brk == null ? TextCellValue('') : DoubleCellValue(brk),
+      box(fill: rowFill, align: HorizontalAlign.Right, numberFormat: oneDp),
+    );
+    put(
+      5,
+      r,
+      hours == null ? TextCellValue('') : DoubleCellValue(hours),
+      box(
+        fill: rowFill,
+        align: HorizontalAlign.Right,
+        numberFormat: oneDp,
+        bold: overtime,
+        font: overtime ? overtimeRed : _ink,
+      ),
+    );
+    put(
+      6,
+      r,
+      TextCellValue(status),
+      box(
+        bold: true,
+        fill: ss.fill,
+        font: ss.font,
+        align: HorizontalAlign.Center,
+      ),
+    );
   }
 
   // Totals.
   final totalRow = headerRow + 31;
-  put(0, totalRow, TextCellValue('Total worked hours'), box(bold: true, fill: slate, font: ExcelColor.white, align: HorizontalAlign.Right));
+  put(
+    0,
+    totalRow,
+    TextCellValue('Total worked hours'),
+    box(
+      bold: true,
+      fill: slate,
+      font: ExcelColor.white,
+      align: HorizontalAlign.Right,
+    ),
+  );
   merge(0, totalRow, 4, totalRow);
-  put(5, totalRow, DoubleCellValue(totalHours), box(bold: true, fill: slate, font: ExcelColor.white, align: HorizontalAlign.Right, numberFormat: oneDp));
-  put(6, totalRow, TextCellValue('$workedDays days'), box(bold: true, fill: slate, font: ExcelColor.white, align: HorizontalAlign.Center));
+  put(
+    5,
+    totalRow,
+    DoubleCellValue(totalHours),
+    box(
+      bold: true,
+      fill: slate,
+      font: ExcelColor.white,
+      align: HorizontalAlign.Right,
+      numberFormat: oneDp,
+    ),
+  );
+  put(
+    6,
+    totalRow,
+    TextCellValue('$workedDays days'),
+    box(
+      bold: true,
+      fill: slate,
+      font: ExcelColor.white,
+      align: HorizontalAlign.Center,
+    ),
+  );
 
   // Margin + fit the content into the remaining frame.
   _layMargin(s);
-  _fitColumns(s, [6, 3, 8, 9, 5, 5, 12], first: dc, totalPx: phoneWidthPx - _marginPxX);
-  _fitRows(s, [
-    1.6, // 0  title
-    1.0, // 1  info band
-    1.2, // 2  header
-    ...List.filled(30, 1.0), // 3-32 day rows
-    1.2, // 33 totals
-  ], first: dr, totalPx: phoneHeightPx - _marginPxY);
+  _fitColumns(
+    s,
+    [6, 3, 8, 9, 5, 5, 12],
+    first: dc,
+    totalPx: phoneWidthPx - _marginPxX,
+  );
+  _fitRows(
+    s,
+    [
+      1.6, // 0  title
+      1.0, // 1  info band
+      1.2, // 2  header
+      ...List.filled(30, 1.0), // 3-32 day rows
+      1.2, // 33 totals
+    ],
+    first: dr,
+    totalPx: phoneHeightPx - _marginPxY,
+  );
   return excel;
 }
 
@@ -545,38 +766,154 @@ Excel _buildYearlySales() {
   void merge(int c0, int r0, int c1, int r1) =>
       _merge(s, c0 + dc, r0 + dr, c1 + dc, r1 + dr);
 
-  put(0, 0, TextCellValue('Yearly Sales 2026'),
-    CellStyle(bold: true, fontSize: 15, fontColorHex: ExcelColor.white, backgroundColorHex: blue, horizontalAlign: HorizontalAlign.Center, verticalAlign: VerticalAlign.Center));
+  put(
+    0,
+    0,
+    TextCellValue('Yearly Sales 2026'),
+    CellStyle(
+      bold: true,
+      fontSize: 15,
+      fontColorHex: ExcelColor.white,
+      backgroundColorHex: blue,
+      horizontalAlign: HorizontalAlign.Center,
+      verticalAlign: VerticalAlign.Center,
+    ),
+  );
   merge(0, 0, 5, 0);
   put(0, 1, TextCellValue('')); // spacer row keeps its height
 
-  void kpi(int c0, int valueRow, String value, String label, ExcelColor fill, ExcelColor font) {
-    put(c0, valueRow, TextCellValue(value),
-      CellStyle(bold: true, fontSize: 18, backgroundColorHex: fill, fontColorHex: font, horizontalAlign: HorizontalAlign.Center, verticalAlign: VerticalAlign.Center));
+  void kpi(
+    int c0,
+    int valueRow,
+    String value,
+    String label,
+    ExcelColor fill,
+    ExcelColor font,
+  ) {
+    put(
+      c0,
+      valueRow,
+      TextCellValue(value),
+      CellStyle(
+        bold: true,
+        fontSize: 18,
+        backgroundColorHex: fill,
+        fontColorHex: font,
+        horizontalAlign: HorizontalAlign.Center,
+        verticalAlign: VerticalAlign.Center,
+      ),
+    );
     merge(c0, valueRow, c0 + 2, valueRow);
-    put(c0, valueRow + 1, TextCellValue(label),
-      CellStyle(backgroundColorHex: fill, fontColorHex: font, horizontalAlign: HorizontalAlign.Center, verticalAlign: VerticalAlign.Center));
+    put(
+      c0,
+      valueRow + 1,
+      TextCellValue(label),
+      CellStyle(
+        backgroundColorHex: fill,
+        fontColorHex: font,
+        horizontalAlign: HorizontalAlign.Center,
+        verticalAlign: VerticalAlign.Center,
+      ),
+    );
     merge(c0, valueRow + 1, c0 + 2, valueRow + 1);
   }
 
-  kpi(0, 2, '\$ 2.46 M', 'Total Sales', ExcelColor.fromHexString('FFBDD7EE'), ExcelColor.fromHexString('FF1F4E79'));
-  kpi(3, 2, '101%', 'Attainment', ExcelColor.fromHexString('FFC6E0B4'), ExcelColor.fromHexString('FF375623'));
-  kpi(0, 4, '\$ 320 K', 'Best Month · Dec', ExcelColor.fromHexString('FFF8CBAD'), ExcelColor.fromHexString('FF833C00'));
-  kpi(3, 4, '21,529', 'Customers', ExcelColor.fromHexString('FFFFE699'), ExcelColor.fromHexString('FF7F6000'));
+  kpi(
+    0,
+    2,
+    '\$ 2.46 M',
+    'Total Sales',
+    ExcelColor.fromHexString('FFBDD7EE'),
+    ExcelColor.fromHexString('FF1F4E79'),
+  );
+  kpi(
+    3,
+    2,
+    '101%',
+    'Attainment',
+    ExcelColor.fromHexString('FFC6E0B4'),
+    ExcelColor.fromHexString('FF375623'),
+  );
+  kpi(
+    0,
+    4,
+    '\$ 320 K',
+    'Best Month · Dec',
+    ExcelColor.fromHexString('FFF8CBAD'),
+    ExcelColor.fromHexString('FF833C00'),
+  );
+  kpi(
+    3,
+    4,
+    '21,529',
+    'Customers',
+    ExcelColor.fromHexString('FFFFE699'),
+    ExcelColor.fromHexString('FF7F6000'),
+  );
   put(0, 6, TextCellValue('')); // spacer row keeps its height
 
   // Month-by-month table: Sales vs Target, the variance (red when under target),
   // attainment %, and an in-cell bar-chart "Trend" column (best month in green).
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  const sales = [220000, 210000, 180000, 190000, 205000, 230000, 185000, 170000, 160000, 175000, 212000, 320000];
-  const targets = [200000, 200000, 200000, 200000, 200000, 210000, 200000, 190000, 180000, 190000, 210000, 260000];
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+  const sales = [
+    220000,
+    210000,
+    180000,
+    190000,
+    205000,
+    230000,
+    185000,
+    170000,
+    160000,
+    175000,
+    212000,
+    320000,
+  ];
+  const targets = [
+    200000,
+    200000,
+    200000,
+    200000,
+    200000,
+    210000,
+    200000,
+    190000,
+    180000,
+    190000,
+    210000,
+    260000,
+  ];
   const maxAmt = 320000.0;
   const tableTop = 7;
 
   final headers = ['Month', 'Sales', 'Target', 'Variance', 'Attain', 'Trend'];
   for (var c = 0; c < headers.length; c++) {
-    put(c, tableTop, TextCellValue(headers[c]),
-      _bordered(bold: true, fill: blue, font: ExcelColor.white, align: (c >= 1 && c <= 4) ? HorizontalAlign.Right : HorizontalAlign.Left));
+    put(
+      c,
+      tableTop,
+      TextCellValue(headers[c]),
+      _bordered(
+        bold: true,
+        fill: blue,
+        font: ExcelColor.white,
+        align: (c >= 1 && c <= 4)
+            ? HorizontalAlign.Right
+            : HorizontalAlign.Left,
+      ),
+    );
   }
 
   var salesTotal = 0.0, targetTotal = 0.0;
@@ -590,34 +927,126 @@ Excel _buildYearlySales() {
     salesTotal += sale;
     targetTotal += target;
     put(0, r, TextCellValue(months[i]), _bordered());
-    put(1, r, DoubleCellValue(sale), _bordered(align: HorizontalAlign.Right, numberFormat: _currency0));
-    put(2, r, DoubleCellValue(target), _bordered(align: HorizontalAlign.Right, numberFormat: _currency0));
-    put(3, r, DoubleCellValue(variance), _bordered(align: HorizontalAlign.Right, numberFormat: _redParen, font: under ? red : green));
-    put(4, r, DoubleCellValue(attain), _bordered(align: HorizontalAlign.Right, numberFormat: attainPct, font: under ? red : green));
-    put(5, r, TextCellValue(_bar(sale / maxAmt, 11)), _bordered(font: sale == maxAmt ? best : blue));
+    put(
+      1,
+      r,
+      DoubleCellValue(sale),
+      _bordered(align: HorizontalAlign.Right, numberFormat: _currency0),
+    );
+    put(
+      2,
+      r,
+      DoubleCellValue(target),
+      _bordered(align: HorizontalAlign.Right, numberFormat: _currency0),
+    );
+    put(
+      3,
+      r,
+      DoubleCellValue(variance),
+      _bordered(
+        align: HorizontalAlign.Right,
+        numberFormat: _redParen,
+        font: under ? red : green,
+      ),
+    );
+    put(
+      4,
+      r,
+      DoubleCellValue(attain),
+      _bordered(
+        align: HorizontalAlign.Right,
+        numberFormat: attainPct,
+        font: under ? red : green,
+      ),
+    );
+    put(
+      5,
+      r,
+      TextCellValue(_bar(sale / maxAmt, 11)),
+      _bordered(font: sale == maxAmt ? best : blue),
+    );
   }
 
   final totalRow = tableTop + 1 + months.length;
-  put(0, totalRow, TextCellValue('Total'), _bordered(bold: true, fill: blue, font: ExcelColor.white));
-  put(1, totalRow, DoubleCellValue(salesTotal), _bordered(bold: true, fill: blue, font: ExcelColor.white, align: HorizontalAlign.Right, numberFormat: _currency0));
-  put(2, totalRow, DoubleCellValue(targetTotal), _bordered(bold: true, fill: blue, font: ExcelColor.white, align: HorizontalAlign.Right, numberFormat: _currency0));
-  put(3, totalRow, DoubleCellValue(salesTotal - targetTotal), _bordered(bold: true, fill: blue, font: ExcelColor.white, align: HorizontalAlign.Right, numberFormat: _redParen));
-  put(4, totalRow, DoubleCellValue(salesTotal / targetTotal), _bordered(bold: true, fill: blue, font: ExcelColor.white, align: HorizontalAlign.Right, numberFormat: attainPct));
+  put(
+    0,
+    totalRow,
+    TextCellValue('Total'),
+    _bordered(bold: true, fill: blue, font: ExcelColor.white),
+  );
+  put(
+    1,
+    totalRow,
+    DoubleCellValue(salesTotal),
+    _bordered(
+      bold: true,
+      fill: blue,
+      font: ExcelColor.white,
+      align: HorizontalAlign.Right,
+      numberFormat: _currency0,
+    ),
+  );
+  put(
+    2,
+    totalRow,
+    DoubleCellValue(targetTotal),
+    _bordered(
+      bold: true,
+      fill: blue,
+      font: ExcelColor.white,
+      align: HorizontalAlign.Right,
+      numberFormat: _currency0,
+    ),
+  );
+  put(
+    3,
+    totalRow,
+    DoubleCellValue(salesTotal - targetTotal),
+    _bordered(
+      bold: true,
+      fill: blue,
+      font: ExcelColor.white,
+      align: HorizontalAlign.Right,
+      numberFormat: _redParen,
+    ),
+  );
+  put(
+    4,
+    totalRow,
+    DoubleCellValue(salesTotal / targetTotal),
+    _bordered(
+      bold: true,
+      fill: blue,
+      font: ExcelColor.white,
+      align: HorizontalAlign.Right,
+      numberFormat: attainPct,
+    ),
+  );
   put(5, totalRow, TextCellValue(''), _bordered(fill: blue));
 
   // Margin + fit the content into the remaining frame.
   _layMargin(s);
-  _fitColumns(s, [6, 9, 9, 10, 7, 12], first: dc, totalPx: phoneWidthPx - _marginPxX);
-  _fitRows(s, [
-    1.6, // 0  title
-    0.5, // 1  spacer
-    1.4, 1.0, // 2-3 KPI card row 1 (value, label)
-    1.4, 1.0, // 4-5 KPI card row 2 (value, label)
-    0.5, // 6  spacer
-    1.2, // 7  table header
-    ...List.filled(12, 1.0), // 8-19 months
-    1.2, // 20 total
-  ], first: dr, totalPx: phoneHeightPx - _marginPxY);
+  _fitColumns(
+    s,
+    [6, 9, 9, 10, 7, 12],
+    first: dc,
+    totalPx: phoneWidthPx - _marginPxX,
+  );
+  _fitRows(
+    s,
+    [
+      1.6, // 0  title
+      0.5, // 1  spacer
+      1.4, 1.0, // 2-3 KPI card row 1 (value, label)
+      1.4, 1.0, // 4-5 KPI card row 2 (value, label)
+      0.5, // 6  spacer
+      1.2, // 7  table header
+      ...List.filled(12, 1.0), // 8-19 months
+      1.2, // 20 total
+    ],
+    first: dr,
+    totalPx: phoneHeightPx - _marginPxY,
+  );
   return excel;
 }
 

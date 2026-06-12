@@ -75,7 +75,8 @@ class HomePage extends StatelessWidget {
                     Expanded(
                       child: _ShowcaseCard(
                         showcase: showcases[i],
-                        icon: _showcaseIcons[showcases[i].id] ??
+                        icon:
+                            _showcaseIcons[showcases[i].id] ??
                             Icons.table_chart_outlined,
                       ),
                     ),
@@ -86,7 +87,8 @@ class HomePage extends StatelessWidget {
 
               const _SectionHeader(
                 title: 'Explore features',
-                subtitle: 'Each demo builds, previews and exports one capability.',
+                subtitle:
+                    'Each demo builds, previews and exports one capability.',
               ),
               const SizedBox(height: 12),
               LayoutBuilder(
@@ -94,8 +96,7 @@ class HomePage extends StatelessWidget {
                   final width = constraints.maxWidth;
                   final columns = width >= 720 ? 3 : (width >= 480 ? 2 : 1);
                   const gap = 12.0;
-                  final tileWidth =
-                      (width - gap * (columns - 1)) / columns;
+                  final tileWidth = (width - gap * (columns - 1)) / columns;
                   return Wrap(
                     spacing: gap,
                     runSpacing: gap,
@@ -107,10 +108,8 @@ class HomePage extends StatelessWidget {
                             icon: _icons[demo.id] ?? Icons.widgets_outlined,
                             title: demo.title,
                             subtitle: demo.description,
-                            onTap: () => _open(
-                              context,
-                              FeatureDemoPage(demo: demo),
-                            ),
+                            onTap: () =>
+                                _open(context, FeatureDemoPage(demo: demo)),
                           ),
                         ),
                     ],
@@ -143,8 +142,10 @@ class _ShowcaseCardState extends State<_ShowcaseCard> {
   Future<void> _export() async {
     setState(() => _busy = true);
     try {
-      final result =
-          await exportWorkbook(widget.showcase.build(), widget.showcase.exportName);
+      final result = await exportWorkbook(
+        widget.showcase.build(),
+        widget.showcase.exportName,
+      );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -184,7 +185,11 @@ class _ShowcaseCardState extends State<_ShowcaseCard> {
                     color: AppColors.tint,
                     borderRadius: BorderRadius.circular(11),
                   ),
-                  child: Icon(widget.icon, size: 20, color: AppColors.brandDark),
+                  child: Icon(
+                    widget.icon,
+                    size: 20,
+                    color: AppColors.brandDark,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(

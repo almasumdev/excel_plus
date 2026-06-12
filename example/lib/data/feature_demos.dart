@@ -157,7 +157,10 @@ Excel buildValues() {
       ('Boolean', BoolCellValue(true)),
       ('Date', DateCellValue(year: 2026, month: 6, day: 30)),
       ('Time', TimeCellValue(hour: 9, minute: 30)),
-      ('Date-time', DateTimeCellValue(year: 2026, month: 6, day: 30, hour: 14, minute: 5)),
+      (
+        'Date-time',
+        DateTimeCellValue(year: 2026, month: 6, day: 30, hour: 14, minute: 5),
+      ),
       ('Formula', FormulaCellValue('B3*2')),
     ];
     for (var i = 0; i < rows.length; i++) {
@@ -251,7 +254,10 @@ Excel buildFonts() {
       ('Underlined text', st(underline: Underline.Single)),
       ('Large text (18 pt)', st(size: 18)),
       ('Coloured text', st(color: ExcelColor.blue, bold: true)),
-      ('Bold + italic + green', st(bold: true, italic: true, color: ExcelColor.green)),
+      (
+        'Bold + italic + green',
+        st(bold: true, italic: true, color: ExcelColor.green),
+      ),
       ('Courier New family', st(family: 'Courier New')),
     ];
     for (var i = 0; i < rows.length; i++) {
@@ -507,7 +513,11 @@ Excel buildAlignment() {
   build: () {
     final excel = _book('Alignment');
     final s = excel['Alignment'];
-    final hs = [HorizontalAlign.Left, HorizontalAlign.Center, HorizontalAlign.Right];
+    final hs = [
+      HorizontalAlign.Left,
+      HorizontalAlign.Center,
+      HorizontalAlign.Right,
+    ];
     final vs = [VerticalAlign.Top, VerticalAlign.Center, VerticalAlign.Bottom];
     final labels = {
       HorizontalAlign.Left: 'L',
@@ -640,10 +650,18 @@ Excel buildNumberFormats() {
       ('Integer', DoubleCellValue(1299), NumFormat.standard_1),
       ('2 decimals', DoubleCellValue(3.14159), NumFormat.standard_2),
       ('Thousands', DoubleCellValue(1234567), NumFormat.standard_3),
-      ('Currency', DoubleCellValue(1299.5), NumFormat.custom(formatCode: r'$#,##0.00')),
+      (
+        'Currency',
+        DoubleCellValue(1299.5),
+        NumFormat.custom(formatCode: r'$#,##0.00'),
+      ),
       ('Percent', DoubleCellValue(0.1542), NumFormat.standard_10),
       ('Scientific', DoubleCellValue(602214000), NumFormat.standard_11),
-      ('Date', DateCellValue(year: 2026, month: 6, day: 30), NumFormat.standard_15),
+      (
+        'Date',
+        DateCellValue(year: 2026, month: 6, day: 30),
+        NumFormat.standard_15,
+      ),
       ('Time', TimeCellValue(hour: 9, minute: 30), NumFormat.standard_20),
     ];
     for (var i = 0; i < rows.length; i++) {
@@ -732,13 +750,33 @@ Excel buildMerges() {
       CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: 0),
     );
 
-    _put(s, 0, 1, TextCellValue('Vertical'), _box(bold: true, fill: _headerFill, font: ExcelColor.white, align: HorizontalAlign.Center));
+    _put(
+      s,
+      0,
+      1,
+      TextCellValue('Vertical'),
+      _box(
+        bold: true,
+        fill: _headerFill,
+        font: ExcelColor.white,
+        align: HorizontalAlign.Center,
+      ),
+    );
     s.merge(
       CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 1),
       CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 3),
     );
 
-    _put(s, 1, 1, TextCellValue('Merged 3×3 block'), _box(align: HorizontalAlign.Center, fill: ExcelColor.fromHexString('FFEAF3EE')));
+    _put(
+      s,
+      1,
+      1,
+      TextCellValue('Merged 3×3 block'),
+      _box(
+        align: HorizontalAlign.Center,
+        fill: ExcelColor.fromHexString('FFEAF3EE'),
+      ),
+    );
     s.merge(
       CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: 1),
       CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: 3),
@@ -806,7 +844,13 @@ Excel buildFormulas() {
     final s = excel['Formulas'];
     final values = [120.0, 45.0, 18.0, 240.0, 96.0];
     for (var i = 0; i < values.length; i++) {
-      _put(s, 0, i, DoubleCellValue(values[i]), _box(align: HorizontalAlign.Right));
+      _put(
+        s,
+        0,
+        i,
+        DoubleCellValue(values[i]),
+        _box(align: HorizontalAlign.Right),
+      );
     }
     final formulas = <(String, String)>[
       ('Sum', 'SUM(A1:A5)'),
@@ -817,7 +861,13 @@ Excel buildFormulas() {
     ];
     for (var i = 0; i < formulas.length; i++) {
       _put(s, 2, i, TextCellValue(formulas[i].$1), _box(bold: true));
-      _put(s, 3, i, FormulaCellValue(formulas[i].$2), _box(align: HorizontalAlign.Right));
+      _put(
+        s,
+        3,
+        i,
+        FormulaCellValue(formulas[i].$2),
+        _box(align: HorizontalAlign.Right),
+      );
     }
     s.setColumnWidth(0, 10);
     s.setColumnWidth(1, 3);
@@ -869,7 +919,10 @@ Excel buildSizing() {
   build: () {
     final excel = _book('Sizing');
     final s = excel['Sizing'];
-    final fill = _box(fill: ExcelColor.fromHexString('FFEAF3EE'), align: HorizontalAlign.Center);
+    final fill = _box(
+      fill: ExcelColor.fromHexString('FFEAF3EE'),
+      align: HorizontalAlign.Center,
+    );
     _put(s, 0, 0, TextCellValue('S'), fill);
     _put(s, 1, 0, TextCellValue('Medium width'), fill);
     _put(s, 2, 0, TextCellValue('Wide column for long content'), fill);
@@ -936,9 +989,21 @@ Excel buildMultiSheet() {
     _put(summary, 0, 0, TextCellValue('Sheet'), header);
     _put(summary, 1, 0, TextCellValue('Total'), header);
     _put(summary, 0, 1, TextCellValue('Q1'), _box(bold: true));
-    _put(summary, 1, 1, FormulaCellValue('Q1!B1'), _box(align: HorizontalAlign.Right));
+    _put(
+      summary,
+      1,
+      1,
+      FormulaCellValue('Q1!B1'),
+      _box(align: HorizontalAlign.Right),
+    );
     _put(summary, 0, 2, TextCellValue('Q2'), _box(bold: true));
-    _put(summary, 1, 2, FormulaCellValue('Q2!B1'), _box(align: HorizontalAlign.Right));
+    _put(
+      summary,
+      1,
+      2,
+      FormulaCellValue('Q2!B1'),
+      _box(align: HorizontalAlign.Right),
+    );
     summary.setColumnWidth(0, 12);
     summary.setColumnWidth(1, 14);
 

@@ -55,11 +55,15 @@ class StyledSheetView extends StatelessWidget {
       for (var c = 0; c < colCount; c++) {
         if (covered.contains(r * _stride + c)) continue;
         final region = mergeAt[r * _stride + c];
-        final width =
-            region == null ? colW[c] : colX[region.c1 + 1] - colX[region.c0];
-        final height =
-            region == null ? rowH[r] : rowY[region.r1 + 1] - rowY[region.r0];
-        final data = (r < rows.length && c < rows[r].length) ? rows[r][c] : null;
+        final width = region == null
+            ? colW[c]
+            : colX[region.c1 + 1] - colX[region.c0];
+        final height = region == null
+            ? rowH[r]
+            : rowY[region.r1 + 1] - rowY[region.r0];
+        final data = (r < rows.length && c < rows[r].length)
+            ? rows[r][c]
+            : null;
         children.add(
           Positioned(
             left: colX[c],
@@ -105,7 +109,10 @@ class _CellBox extends StatelessWidget {
     final italic = style?.isItalic ?? false;
     final underlined =
         (style?.underline ?? xls.Underline.None) != xls.Underline.None;
-    final fontSize = (style?.fontSize ?? 12).toDouble().clamp(9.0, 22.0).toDouble();
+    final fontSize = (style?.fontSize ?? 12)
+        .toDouble()
+        .clamp(9.0, 22.0)
+        .toDouble();
     final hAlign = style?.horizontalAlignment ?? xls.HorizontalAlign.Left;
     final vAlign = style?.verticalAlignment ?? xls.VerticalAlign.Center;
     final wrap = style?.wrap == xls.TextWrapping.WrapText;
@@ -125,10 +132,7 @@ class _CellBox extends StatelessWidget {
       ),
     );
     if (rotation != 0) {
-      label = Transform.rotate(
-        angle: -rotation * math.pi / 180,
-        child: label,
-      );
+      label = Transform.rotate(angle: -rotation * math.pi / 180, child: label);
     }
 
     // Mirror Excel's cell indent: extra padding on the alignment side.
@@ -253,9 +257,14 @@ String _formatValue(xls.CellValue? value, xls.NumFormat? format) {
     xls.TextCellValue() => value.value.toString(),
     xls.FormulaCellValue() => '=${value.formula}',
     xls.BoolCellValue() => value.value ? 'TRUE' : 'FALSE',
-    xls.IntCellValue() => _formatNumber(value.value.toDouble(), code, integral: true),
+    xls.IntCellValue() => _formatNumber(
+      value.value.toDouble(),
+      code,
+      integral: true,
+    ),
     xls.DoubleCellValue() => _formatNumber(value.value, code),
-    xls.DateCellValue() => '${value.year}-${_two(value.month)}-${_two(value.day)}',
+    xls.DateCellValue() =>
+      '${value.year}-${_two(value.month)}-${_two(value.day)}',
     xls.DateTimeCellValue() =>
       '${value.year}-${_two(value.month)}-${_two(value.day)} '
           '${_two(value.hour)}:${_two(value.minute)}',

@@ -54,5 +54,6 @@ String _ms(int micros) {
   return '${ms.toStringAsFixed(ms < 100 ? 2 : 0)} ms';
 }
 
-String _size(double kb) =>
-    kb >= 1024 ? '${(kb / 1024).toStringAsFixed(2)} MB' : '${kb.toStringAsFixed(1)} KB';
+String _size(double kb) => kb >= 1024
+    ? '${(kb / 1024).toStringAsFixed(2)} MB'
+    : '${kb.toStringAsFixed(1)} KB';

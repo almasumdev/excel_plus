@@ -212,7 +212,10 @@ void main() {
     test('cell indent survives encode and decode', () {
       var excel = Excel.createExcel();
       var sheet = excel['Sheet1'];
-      sheet.updateCell(CellIndex.indexByString('A1'), TextCellValue('indented'));
+      sheet.updateCell(
+        CellIndex.indexByString('A1'),
+        TextCellValue('indented'),
+      );
       sheet.cell(CellIndex.indexByString('A1')).cellStyle = CellStyle(
         indent: 2,
       );
