@@ -17,18 +17,13 @@ concurrency:
   group: ci-release-${{ github.ref }}
   cancel-in-progress: true
 
-# Opt in to Node.js 24 for all JavaScript actions (checkout, flutter-action,
-# setup-dart, firebase deploy) ahead of the Node 20 deprecation.
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   # 1) Checks — must pass for every PR and push.
   checks:
     name: Format, analyze & test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: subosito/flutter-action@v2
         with:
@@ -59,7 +54,7 @@ jobs:
     needs: checks
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: subosito/flutter-action@v2
         with:
@@ -98,7 +93,7 @@ jobs:
       version: ${{ steps.v.outputs.version }}
       is_new: ${{ steps.v.outputs.is_new }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
           fetch-tags: true
@@ -123,7 +118,7 @@ jobs:
     if: needs.version.outputs.is_new == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: subosito/flutter-action@v2
         with:
@@ -135,6 +130,11 @@ jobs:
           flutter pub get
           flutter build web --release --base-href /
 
+      # NOTE: action-hosting-deploy@v0 still ships a Node 20 entry point (no
+      # Node 24 release exists upstream yet), so this one step may print a
+      # "Node.js 20 is deprecated" notice. It is harmless — the deploy works,
+      # and GitHub runs it on Node 24 by default from 2026-06-16. Bump this pin
+      # once FirebaseExtended publishes a Node 24 build.
       - name: Deploy to Firebase Hosting (masum-excel.web.app)
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
@@ -153,7 +153,7 @@ jobs:
     if: needs.version.outputs.is_new == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           token: ${{ secrets.RELEASE_PAT }}
           fetch-depth: 0
