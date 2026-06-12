@@ -18,9 +18,12 @@ linter:
     constant_identifier_names: false
     unnecessary_getters_setters: false
 
-# analyzer:
-#   exclude:
-#     - path/to/excluded/files/**
+analyzer:
+  exclude:
+    # Separate packages with their own pubspec/deps — analyzed on their own,
+    # not as part of the root package (avoids unresolved-import errors in CI).
+    - benchmark/**
+    - example/**
 
 # For more information about the core and recommended set of lints, see
 # https://dart.dev/go/core-lints

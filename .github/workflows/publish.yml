@@ -1,113 +1,18 @@
-name: Release & Deploy
+name: Publish
 
+# Publishing happens on a tag only. The CI & Release workflow creates the
+# v<version> tag after checks, the pana gate and a successful web deploy, and
+# that tag push triggers this workflow.
 on:
   push:
-    branches: [main]
     tags: ['v*']
-  workflow_dispatch: # manual "Run workflow" — required to tag & publish
-
-concurrency:
-  group: release-${{ github.ref }}
-  cancel-in-progress: true
 
 jobs:
-  tag:
-    name: Validate & tag
-    # Only on a manual run — a plain push to main never tags or publishes.
-    if: github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.RELEASE_PAT }}
-          fetch-depth: 0
-
-      - name: Detect version
-        id: ver
-        run: |
-          VERSION=$(grep '^version:' pubspec.yaml | awk '{print $2}')
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          if git rev-parse "v$VERSION" >/dev/null 2>&1; then
-            echo "new=false" >> "$GITHUB_OUTPUT"
-            echo "v$VERSION is already tagged — nothing to release."
-          else
-            echo "new=true" >> "$GITHUB_OUTPUT"
-            echo "Releasing v$VERSION"
-          fi
-
-      - name: Setup Flutter
-        if: steps.ver.outputs.new == 'true'
-        uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-
-      - name: Resolve dependencies
-        if: steps.ver.outputs.new == 'true'
-        run: dart pub get
-
-      - name: Pana — require the full 160 pub points
-        if: steps.ver.outputs.new == 'true'
-        run: |
-          dart pub global activate pana
-          dart pub global run pana --json > pana.json 2> pana.err || true
-          POINTS=$(jq -r '.scores.grantedPoints // empty' pana.json)
-          MAX=$(jq -r '.scores.maxPoints // empty' pana.json)
-          echo "Pana score: ${POINTS:-?}/${MAX:-?}"
-          if [ -z "$POINTS" ]; then
-            echo "::error::Could not read pana score."; tail -n 50 pana.err; exit 1
-          fi
-          if [ "$POINTS" -lt 160 ]; then
-            echo "::error::pana $POINTS/$MAX is below the required 160 — aborting release."
-            exit 1
-          fi
-
-      - name: Confirm the package can publish
-        if: steps.ver.outputs.new == 'true'
-        run: dart pub publish --dry-run
-
-      - name: Create & push tag
-        if: steps.ver.outputs.new == 'true'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag "v${{ steps.ver.outputs.version }}"
-          git push origin "v${{ steps.ver.outputs.version }}"
-
-  deploy-example:
-    name: Deploy example to Firebase Hosting
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-
-      - name: Build example web app
-        working-directory: example
-        run: |
-          flutter pub get
-          flutter build web --release --base-href /
-
-      - name: Deploy to Firebase Hosting (masum-excel.web.app)
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-          channelId: live
-          projectId: my-pub-packages
-          target: masum-excel
-
   publish:
     name: Publish to pub.dev
-    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:
-      id-token: write # pub.dev OIDC publishing
+      id-token: write # pub.dev OIDC automated publishing
     steps:
       - uses: actions/checkout@v4
       - uses: dart-lang/setup-dart@v1
