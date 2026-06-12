@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/almasumdev/excel_plus/main/images/banner.svg"
+  <img src="https://raw.githubusercontent.com/almasumdev/excel_plus/main/images/banner.png"
        alt="excel_plus — fast, low-memory Excel (.xlsx) library for Dart and Flutter" width="820"/>
 </p>
 
@@ -37,7 +37,7 @@ and it reuses untouched parts of a workbook byte-for-byte when saving.
 - Style spreadsheets — fonts, colors, fills, borders, alignment, number formats, and merged cells.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/almasumdev/excel_plus/main/images/preview.svg"
+  <img src="https://raw.githubusercontent.com/almasumdev/excel_plus/main/images/preview.png"
        alt="A styled Excel sheet produced by excel_plus: a merged green title, a bold header row, colored Paid/Due status cells, borders, and currency formatting" width="760"/>
 </p>
 
@@ -79,32 +79,37 @@ cd ../excel_plus_bench                && dart pub get && dart run bin/benchmark.
 
 ## Table of contents
 
-- [Key features](#key-features)
-- [Example](#example)
-- [Other useful links](#other-useful-links)
-- [Installation](#installation)
-- [Getting started](#getting-started)
-  - [Create a simple Excel document](#create-a-simple-excel-document)
-  - [Add text, number, boolean, and date values](#add-text-number-boolean-and-date-values)
-  - [Add formulas](#add-formulas)
-  - [Read an existing Excel file](#read-an-existing-excel-file)
-  - [Read a single cell](#read-a-single-cell)
-  - [Style a cell — font, color, fill, alignment](#style-a-cell--font-color-fill-alignment)
-  - [Add borders](#add-borders)
-  - [Apply number formats](#apply-number-formats)
-  - [Merge and unmerge cells](#merge-and-unmerge-cells)
-  - [Insert and delete rows and columns](#insert-and-delete-rows-and-columns)
-  - [Append a row](#append-a-row)
-  - [Column width, row height, and auto-fit](#column-width-row-height-and-auto-fit)
-  - [Work with multiple sheets](#work-with-multiple-sheets)
-  - [Find and replace](#find-and-replace)
-  - [Save the workbook](#save-the-workbook)
-  - [Flutter — read from assets, edit, and save](#flutter--read-from-assets-edit-and-save)
-- [excel_plus vs excel](#excel_plus-vs-excel)
-- [Migrating from the excel package](#migrating-from-the-excel-package)
-- [FAQ](#faq)
-- [Support and feedback](#support-and-feedback)
-- [About](#about)
+- [Excel (.xlsx) Library for Dart \& Flutter](#excel-xlsx-library-for-dart--flutter)
+  - [Overview](#overview)
+  - [Performance](#performance)
+  - [Table of contents](#table-of-contents)
+  - [Key features](#key-features)
+  - [Example](#example)
+  - [Other useful links](#other-useful-links)
+  - [Installation](#installation)
+  - [Getting started](#getting-started)
+    - [Create a simple Excel document](#create-a-simple-excel-document)
+    - [Add text, number, boolean, and date values](#add-text-number-boolean-and-date-values)
+    - [Add formulas](#add-formulas)
+    - [Read an existing Excel file](#read-an-existing-excel-file)
+    - [Read a single cell](#read-a-single-cell)
+    - [Style a cell — font, color, fill, alignment](#style-a-cell--font-color-fill-alignment)
+    - [Add borders](#add-borders)
+    - [Apply number formats](#apply-number-formats)
+    - [Merge and unmerge cells](#merge-and-unmerge-cells)
+    - [Insert and delete rows and columns](#insert-and-delete-rows-and-columns)
+    - [Append a row](#append-a-row)
+    - [Column width, row height, and auto-fit](#column-width-row-height-and-auto-fit)
+    - [Work with multiple sheets](#work-with-multiple-sheets)
+    - [Find and replace](#find-and-replace)
+    - [Save the workbook](#save-the-workbook)
+    - [Flutter — read from assets, edit, and save](#flutter--read-from-assets-edit-and-save)
+  - [excel\_plus vs excel](#excel_plus-vs-excel)
+  - [Migrating from the excel package](#migrating-from-the-excel-package)
+  - [FAQ](#faq)
+  - [Support and feedback](#support-and-feedback)
+  - [About](#about)
+    - [Contributors](#contributors)
 
 ## Key features
 

@@ -1,10 +1,11 @@
 ## 0.0.5
 
-Correctness and robustness fixes (all backward compatible):
+A small styling addition plus correctness and robustness fixes (all backward compatible):
 
+- Added: `CellStyle.indent` — alignment-side cell padding (OOXML `<alignment indent="N">`), with full read/write round-trip; negative values clamp to zero.
 - Fixed: illegal XML 1.0 control characters in cell text are now stripped on save, so files no longer open as "corrupt" in Excel.
 - Fixed: `Excel.findAndReplace` now returns the actual replacement count and accepts non-`String` targets without throwing.
-- Fixed: on the web, `save()` now triggers the browser download under wasm builds (`flutter build web --wasm`), not only the JS compiler — the conditional import now uses `dart.library.js_interop`.
+- Fixed: on the web, `save()` now triggers the browser download under wasm builds (`flutter build web --wasm`), not only the JS compiler — the conditional import now uses `dart.library.js_interop`, and the download `Blob` is constructed correctly for `dart:js_interop`.
 - Fixed: underline styles read `single` vs `double` correctly, and `bold`/`italic` now honour `val="0"` (explicitly-off) instead of always reading as enabled.
 - Fixed: the parser no longer crashes on out-of-range shared-string or style indexes, ISO-8601 (`t="d"`) date cells, or namespace-prefixed worksheet XML (`x:row`, `x:c`).
 - Fixed: cells without an explicit `r` reference are positioned by column order, and inline strings made of multiple runs keep all of their text.
