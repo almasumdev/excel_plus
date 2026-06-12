@@ -1,0 +1,12 @@
+{
+  "projects": {
+    "default": "my-pub-packages"
+  },
+  "targets": {
+    "my-pub-packages": {
+      "hosting": {
+        "masum-excel": ["masum-excel"]
+      }
+    }
+  }
+}

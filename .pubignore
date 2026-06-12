@@ -13,6 +13,8 @@ example/build/
 example/test/
 test/
 .github/
+firebase.json
+.firebaserc
 # README references these via absolute raw.githubusercontent URLs, so they
 # don't need to ship — but images/logo.png ships as the pub.dev screenshot/logo.
 images/banner.png

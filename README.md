@@ -161,6 +161,15 @@ and the direction is driven by what users request on the
 
 ## Example
 
+<p align="center">
+  <a href="https://masum-excel.web.app">
+    <img src="https://img.shields.io/badge/▶%20Live%20Demo-masum--excel.web.app-21A366?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Open the live demo">
+  </a>
+</p>
+
+> **[▶ Try the live demo →](https://masum-excel.web.app)** — build, style and
+> export real `.xlsx` files right in your browser. No install needed.
+
 A complete, runnable sample lives in the
 [`example/`](https://github.com/almasumdev/excel_plus/tree/main/example) directory.
 Clone the repository and run it, or copy any snippet from
