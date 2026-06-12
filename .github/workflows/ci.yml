@@ -17,6 +17,11 @@ concurrency:
   group: ci-release-${{ github.ref }}
   cancel-in-progress: true
 
+# Opt in to Node.js 24 for all JavaScript actions (checkout, flutter-action,
+# setup-dart, firebase deploy) ahead of the Node 20 deprecation.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   # 1) Checks — must pass for every PR and push.
   checks:

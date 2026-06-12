@@ -7,14 +7,28 @@ on:
   push:
     tags: ['v*']
 
+# Opt in to Node.js 24 for all JavaScript actions (checkout, flutter-action,
+# setup-dart) ahead of the Node 20 deprecation.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   publish:
     name: Publish to pub.dev
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       id-token: write # pub.dev OIDC automated publishing
     steps:
       - uses: actions/checkout@v4
-      - uses: dart-lang/setup-dart@v1
-      - run: dart pub get
-      - run: dart pub publish --force
+
+      # The example app depends on flutter_test from the Flutter SDK, and a root
+      # resolve also resolves example/, so the publish environment needs Flutter
+      # (a Dart-only SDK fails on `flutter_test`). flutter ships dart too.
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - uses: dart-lang/setup-dart@v1 # configures pub.dev OIDC credentials
+
+      - run: flutter pub publish --force
