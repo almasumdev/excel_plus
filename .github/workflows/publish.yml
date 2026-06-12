@@ -1,8 +1,5 @@
 name: Publish
 
-# Publishing happens on a tag only. The CI & Release workflow creates the
-# v<version> tag after checks, the pana gate and a successful web deploy, and
-# that tag push triggers this workflow.
 on:
   push:
     tags: ['v*']
@@ -17,9 +14,8 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      # The example app depends on flutter_test from the Flutter SDK, and a root
-      # resolve also resolves example/, so the publish environment needs Flutter
-      # (a Dart-only SDK fails on `flutter_test`). flutter ships dart too.
+      # pub resolves example/ too, which needs flutter_test from the Flutter
+      # SDK, so a Dart-only setup fails here. flutter ships dart as well.
       - uses: subosito/flutter-action@v2
         with:
           channel: stable

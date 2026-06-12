@@ -1,11 +1,5 @@
 name: CI & Release
 
-# Sequential pipeline:
-#   checks (format/analyze/test, package + example)
-#     -> pana score gate (>= 160)
-#       -> [pull request stops here]
-#       -> [push to main] resolve version -> if new: deploy web -> tag
-#          (the tag then triggers the separate Publish workflow)
 on:
   pull_request:
     branches: [main]
@@ -18,7 +12,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # 1) Checks — must pass for every PR and push.
   checks:
     name: Format, analyze & test
     runs-on: ubuntu-latest
@@ -48,7 +41,6 @@ jobs:
           flutter analyze
           flutter test
 
-  # 2) Pana score gate — runs only after checks pass.
   pana:
     name: Pana score gate
     needs: checks
@@ -83,7 +75,6 @@ jobs:
             echo "::error::pana $POINTS/$MAX is below the required 160 — aborting."; exit 1
           fi
 
-  # 3) Resolve the version — push/manual only (a PR ends after the gate above).
   version:
     name: Resolve version
     needs: pana
@@ -111,7 +102,6 @@ jobs:
             echo "v$VERSION is new — will deploy, tag, then publish."
           fi
 
-  # 4) Deploy the example web app — only when the version is new.
   deploy-web:
     name: Deploy example to Firebase Hosting
     needs: version
@@ -130,11 +120,8 @@ jobs:
           flutter pub get
           flutter build web --release --base-href /
 
-      # NOTE: action-hosting-deploy@v0 still ships a Node 20 entry point (no
-      # Node 24 release exists upstream yet), so this one step may print a
-      # "Node.js 20 is deprecated" notice. It is harmless — the deploy works,
-      # and GitHub runs it on Node 24 by default from 2026-06-16. Bump this pin
-      # once FirebaseExtended publishes a Node 24 build.
+      # Only Node 20 action left (no upstream Node 24 build yet); the harmless
+      # deprecation notice it prints clears once FirebaseExtended ships one.
       - name: Deploy to Firebase Hosting (masum-excel.web.app)
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
@@ -145,8 +132,8 @@ jobs:
           target: masum-excel
           disableComment: true # main-branch deploy has no PR to comment on
 
-  # 5) Tag the release only after the web deploy succeeds. Pushed with a PAT so
-  #    the tag triggers the Publish workflow (a GITHUB_TOKEN push would not).
+  # Push the tag with a PAT so it triggers the Publish workflow — a default
+  # GITHUB_TOKEN push would not.
   tag:
     name: Tag release
     needs: [version, deploy-web]
