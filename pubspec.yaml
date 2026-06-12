@@ -10,6 +10,9 @@ topics:
   - spreadsheet
   - flutter
   - dart
+screenshots:
+  - description: The excel_plus logo.
+    path: images/logo.png
 
 environment:
   sdk: ^3.11.4

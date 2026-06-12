@@ -14,5 +14,7 @@ example/test/
 test/
 .github/
 # README references these via absolute raw.githubusercontent URLs, so they
-# don't need to ship in the package.
-images/
+# don't need to ship — but images/logo.png ships as the pub.dev screenshot/logo.
+images/banner.png
+images/preview.png
+images/benchmark.svg
