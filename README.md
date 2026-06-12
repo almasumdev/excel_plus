@@ -10,6 +10,8 @@
   <a href="https://github.com/almasumdev/excel_plus/stargazers"><img src="https://img.shields.io/github/stars/almasumdev/excel_plus?logo=github" alt="GitHub stars"></a>
   <a href="https://github.com/almasumdev/excel_plus/network/members"><img src="https://img.shields.io/github/forks/almasumdev/excel_plus?logo=github" alt="GitHub forks"></a>
   <a href="https://github.com/almasumdev/excel_plus/issues"><img src="https://img.shields.io/github/issues/almasumdev/excel_plus?logo=github" alt="GitHub issues"></a>
+  <a href="https://github.com/almasumdev/excel_plus/actions/workflows/ci.yml"><img src="https://github.com/almasumdev/excel_plus/actions/workflows/ci.yml/badge.svg" alt="CI status"></a>
+  <a href="https://github.com/almasumdev/excel_plus/commits/main"><img src="https://img.shields.io/github/last-commit/almasumdev/excel_plus?logo=github" alt="Last commit"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
   <a href="https://dart.dev"><img src="https://img.shields.io/badge/Dart-3.11+-0175C2?logo=dart" alt="Dart"></a>
 </p>
@@ -60,10 +62,10 @@ same workload:
 |---|---|---|---|---|
 | **5,000,000 cells** | 48.8 s → 9.2 s · **5.3×** | 56.8 s → 19.5 s · **2.9×** | 12.0 GB → 2.6 GB · **4.6×** | ≈ equal |
 | **1,000,000 cells** | 9.4 s → 1.6 s · **5.8×** | 10.9 s → 3.7 s · **3.0×** | 2.5 GB → 0.7 GB · **3.5×** | ≈ equal |
-| **10,000 cells** | 184 ms → 41 ms · **4.5×** | 141 ms → 75 ms · **1.9×** | ≈ equal¹ | ≈ equal |
-| **500 cells** | 54 ms → 16 ms · **3.3×** | 32 ms → 19 ms · **1.7×** | ≈ equal¹ | ≈ equal |
+| **10,000 cells** | 184 ms → 41 ms · **4.5×** | 141 ms → 75 ms · **1.9×** | ≈ equal* | ≈ equal |
+| **500 cells** | 54 ms → 16 ms · **3.3×** | 32 ms → 19 ms · **1.7×** | ≈ equal* | ≈ equal |
 
-<sub>¹ Below ~100k cells peak memory is dominated by the Dart VM baseline (~250 MB), so
+<sub>* Below ~100k cells peak memory is dominated by the Dart VM baseline (~250 MB), so
 it is comparable; the gap widens with size (3.5× at 1M → **4.6× at 5M**, where `excel`
 needed ~12 GB RAM). Create time is within noise — both build cells the same way.</sub>
 
@@ -84,6 +86,8 @@ cd ../excel_plus_bench                && dart pub get && dart run bin/benchmark.
   - [Performance](#performance)
   - [Table of contents](#table-of-contents)
   - [Key features](#key-features)
+  - [Limitations](#limitations)
+  - [Roadmap](#roadmap)
   - [Example](#example)
   - [Other useful links](#other-useful-links)
   - [Installation](#installation)
@@ -126,6 +130,34 @@ cd ../excel_plus_bench                && dart pub get && dart run bin/benchmark.
 - **Rich text** read support.
 - **Cross-platform** — VM, Web (JS & WASM), Android, iOS, Windows, macOS, Linux.
 - **Source-compatible** drop-in for the `excel` package.
+
+## Limitations
+
+excel_plus focuses on fast, correct **cell data and styling** I/O. The following
+are **not supported yet** — if you need one, please open an issue so it can be
+prioritised:
+
+- **Formula evaluation** — formula cells round-trip as text (e.g. `SUM(A1:A2)`);
+  Excel computes the result when the file is opened. excel_plus stores and
+  preserves formulas but does not evaluate them itself.
+- **Worksheet features** — hyperlinks, data validation / dropdowns, conditional
+  formatting, freeze / split panes, autofilter, sheet protection, named ranges.
+- **Objects & media** — images, charts, comments / notes, pivot tables.
+- **Styling** — rich text is **read-only** (writing flattens runs); theme and
+  indexed (palette) colors are not yet resolved to RGB.
+
+Anything not in this list — reading, creating, editing and styling cells across
+multiple sheets — is supported; see [Key features](#key-features).
+
+## Roadmap
+
+excel_plus is **actively developed** toward broader Excel / Google-Sheets parity.
+Near-term focus (subject to change): hyperlinks, data validation, conditional
+formatting, freeze panes and autofilter, plus theme-color resolution; after that,
+images and comments, then a formula-evaluation engine. Shipped changes are tracked
+in the [changelog](https://github.com/almasumdev/excel_plus/blob/main/CHANGELOG.md),
+and the direction is driven by what users request on the
+[issue tracker](https://github.com/almasumdev/excel_plus/issues).
 
 ## Example
 
@@ -184,6 +216,9 @@ sheet.updateCell(
 ```
 
 ### Add formulas
+
+Formulas are stored and round-tripped as text; Excel (or Sheets/Calc) computes
+the result when the file is opened — excel_plus does not evaluate them itself.
 
 ```dart
 sheet.updateCell(CellIndex.indexByString('A1'), IntCellValue(10));
