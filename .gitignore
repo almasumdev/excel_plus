@@ -32,3 +32,4 @@ test/test_output/
 *serviceAccount*.json
 .firebase/
 firebase-debug.log
+excel_plus.code-workspace
