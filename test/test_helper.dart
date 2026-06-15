@@ -71,13 +71,23 @@ const _emptySharedStrings =
 
 /// Builds a minimal, valid `.xlsx` byte stream around a caller-supplied
 /// `<sheetData>` body so reader edge cases can be exercised directly. Optionally
-/// injects [afterSheetData] worksheet-level XML (e.g. a `<drawing>` element).
+/// injects [afterSheetData] worksheet-level XML (e.g. a `<drawing>` element) and
+/// a [theme] part (`xl/theme/theme1.xml`) so theme-color resolution can be
+/// tested.
 List<int> buildXlsx(
   String sheetDataInner, {
   String? styles,
   String? sharedStrings,
   String afterSheetData = '',
+  String? theme,
 }) {
+  final themeOverride = theme == null
+      ? ''
+      : '\n<Override PartName="/xl/theme/theme1.xml" ContentType="application/vnd.openxmlformats-officedocument.theme+xml"/>';
+  final themeRel = theme == null
+      ? ''
+      : '\n<Relationship Id="rId4" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme" Target="theme/theme1.xml"/>';
+
   final parts = <String, String>{
     '[Content_Types].xml':
         '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -87,7 +97,7 @@ List<int> buildXlsx(
 <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
 <Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
 <Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
-<Override PartName="/xl/sharedStrings.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml"/>
+<Override PartName="/xl/sharedStrings.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml"/>$themeOverride
 </Types>''',
     '_rels/.rels': '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
@@ -98,7 +108,7 @@ List<int> buildXlsx(
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
 <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
 <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
-<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings" Target="sharedStrings.xml"/>
+<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings" Target="sharedStrings.xml"/>$themeRel
 </Relationships>''',
     'xl/workbook.xml':
         '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -107,6 +117,7 @@ List<int> buildXlsx(
 </workbook>''',
     'xl/styles.xml': styles ?? _defaultStyles,
     'xl/sharedStrings.xml': sharedStrings ?? _emptySharedStrings,
+    'xl/theme/theme1.xml': ?theme,
     'xl/worksheets/sheet1.xml':
         '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">

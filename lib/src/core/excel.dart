@@ -58,6 +58,11 @@ class Excel {
   final NumFormatMaintainer _numFormats = NumFormatMaintainer();
   List<_BorderSet> _borderSetList = [];
 
+  /// Theme color palette resolved from `xl/theme/theme1.xml`, ordered by the
+  /// `theme="N"` index used in `styles.xml`. Empty when the workbook has no
+  /// theme part. See [_ParserThemeMixin].
+  List<String?> _themeColors = const [];
+
   final _SharedStringsMaintainer _sharedStrings = _SharedStringsMaintainer._();
 
   String _stylesTarget = '';

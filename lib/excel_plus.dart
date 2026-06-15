@@ -24,6 +24,7 @@ part 'src/models/font.dart';
 part 'src/models/border.dart';
 part 'src/models/header_footer.dart';
 part 'src/models/color.dart';
+part 'src/models/theme_color.dart';
 part 'src/models/enums.dart';
 part 'src/models/span.dart';
 part 'src/models/shared_string.dart';
@@ -38,6 +39,7 @@ part 'src/sheet/sheet.dart';
 
 /// Reader
 part 'src/reader/parser_base.dart';
+part 'src/reader/parser_theme.dart';
 part 'src/reader/parser_styles.dart';
 part 'src/reader/excel_parser.dart';
 

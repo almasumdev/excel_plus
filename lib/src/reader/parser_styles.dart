@@ -2,6 +2,31 @@ part of '../../excel_plus.dart';
 
 /// Mixin providing style parsing from xlsx files for [Parser].
 mixin _ParserStylesMixin on _ParserBase {
+  /// Reads an OOXML `<color>` element into an [ExcelColor], resolving a `theme`
+  /// reference (with optional `tint`) against the workbook palette. A literal
+  /// `rgb` takes precedence. Returns `null` when the element carries no usable
+  /// color (e.g. `auto="1"`, or an unknown `indexed`) so the caller keeps its
+  /// default.
+  ExcelColor? _readColorElement(XmlElement color) {
+    final rgb = color.getAttribute('rgb');
+    if (rgb != null && rgb.isNotEmpty) return rgb.excelColor;
+
+    final themeAttr = color.getAttribute('theme');
+    if (themeAttr != null) {
+      final themeIndex = int.tryParse(themeAttr.trim());
+      if (themeIndex != null) {
+        final tint = double.tryParse(color.getAttribute('tint') ?? '') ?? 0.0;
+        final resolved = _resolveThemeColor(
+          _excel._themeColors,
+          themeIndex,
+          tint,
+        );
+        if (resolved != null) return resolved.excelColor;
+      }
+    }
+    return null;
+  }
+
   void _parseStyles(String stylesTarget) {
     var styles = _excel._archive.findFile('xl/$stylesTarget');
     if (styles != null) {
@@ -18,12 +43,11 @@ mixin _ParserStylesMixin on _ParserBase {
       Iterable<XmlElement> fontList = document.findAllElements('font');
 
       document.findAllElements('patternFill').forEach((node) {
-        String patternType = node.getAttribute('patternType') ?? '', rgb;
-        if (node.children.isNotEmpty) {
-          node.findElements('fgColor').forEach((child) {
-            rgb = child.getAttribute('rgb') ?? '';
-            _excel._patternFill.add(rgb);
-          });
+        final patternType = node.getAttribute('patternType') ?? '';
+        final fgColor = node.findElements('fgColor').firstOrNull;
+        if (fgColor != null) {
+          // Resolve rgb/theme/indexed so theme-based fills aren't lost.
+          _excel._patternFill.add(_readColorElement(fgColor)?.colorHex ?? '');
         } else {
           _excel._patternFill.add(patternType);
         }
@@ -58,17 +82,17 @@ mixin _ParserStylesMixin on _ParserBase {
               ? getBorderStyleByName(borderStyleAttribute)
               : null;
 
-          String? borderColorHex;
+          ExcelColor? borderColor;
           if (element != null) {
-            final colors = element.findElements('color');
-            if (colors.isNotEmpty) {
-              borderColorHex = colors.first.getAttribute('rgb')?.trim();
+            final colorEl = element.findElements('color').firstOrNull;
+            if (colorEl != null) {
+              borderColor = _readColorElement(colorEl);
             }
           }
 
           borderElements[elementName] = Border(
             borderStyle: borderStyle,
-            borderColorHex: borderColorHex?.excelColor,
+            borderColorHex: borderColor,
           );
         }
 
@@ -122,9 +146,10 @@ mixin _ParserStylesMixin on _ParserBase {
           if (fontId < fontList.length) {
             XmlElement font = fontList.elementAt(fontId);
 
-            var clr = _nodeChildren(font, 'color', attribute: 'rgb');
-            if (clr != null && clr is! bool) {
-              fontColor = clr.toString();
+            final fontColorEl = font.findElements('color').firstOrNull;
+            if (fontColorEl != null) {
+              final resolved = _readColorElement(fontColorEl);
+              if (resolved != null) fontColor = resolved.colorHex;
             }
 
             String? size = _nodeChildren(font, 'sz', attribute: 'val');

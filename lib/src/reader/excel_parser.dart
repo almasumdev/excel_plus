@@ -1,12 +1,14 @@
 part of '../../excel_plus.dart';
 
 /// @nodoc
-class Parser extends _ParserBase with _ParserStylesMixin {
+class Parser extends _ParserBase with _ParserThemeMixin, _ParserStylesMixin {
   Parser._(super.excel);
 
   void _startParsing() {
     _putContentXml();
     _parseRelations();
+    // Theme palette must be ready before styles so theme/tint colors resolve.
+    _parseTheme();
     _parseStyles(_excel._stylesTarget);
     _parseSharedStrings();
     _parseContent();
