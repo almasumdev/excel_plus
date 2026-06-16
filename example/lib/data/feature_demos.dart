@@ -1,4 +1,8 @@
+import 'dart:convert';
+
 import 'package:excel_plus/excel_plus.dart';
+
+import 'color_read_sample.dart';
 
 /// One self-contained feature demonstration: a description, a few talking
 /// points, a short snippet shown on screen, the full copyable source, and a
@@ -40,6 +44,7 @@ final featureDemos = <FeatureDemo>[
   _formulas,
   _sizing,
   _multiSheet,
+  _colorsRead,
 ];
 
 FeatureDemo? featureById(String id) {
@@ -1018,3 +1023,112 @@ Excel buildMultiSheet() {
     return excel;
   },
 );
+
+// ---------------------------------------------------------------------------
+// 11. Theme & indexed colours (read)
+// ---------------------------------------------------------------------------
+
+/// Display labels for the references stored in [themeIndexedSampleBase64],
+/// in the same order as cells A1–A9 of that sample.
+const _colorRefs = <String>[
+  'theme 4 · Accent 1',
+  'theme 4 · tint −25%',
+  'theme 4 · tint +40%',
+  'theme 5 · Accent 2',
+  'theme 1 · Text (dark)',
+  'theme 0 · Background (light)',
+  'indexed 2 · red',
+  'indexed 22 · silver',
+  'indexed 64 · automatic',
+];
+
+final _colorsRead = FeatureDemo(
+  id: 'colors_read',
+  title: 'Theme & indexed colours (read)',
+  description:
+      'Excel and Google Sheets store most colours as a theme reference plus a '
+      'tint, or a legacy palette index — not literal RGB. excel_plus resolves '
+      'them to real ARGB on read. This demo decodes a workbook that uses such '
+      'references and shows the colour each one resolved to.',
+  points: [
+    '<color theme="N" tint="X"/> resolved from xl/theme/theme1.xml',
+    'Light/dark index swap + HSL tint, per ECMA-376',
+    'Legacy <color indexed="N"/> via the standard palette',
+    'Read with cellStyle.fontColor / .backgroundColor',
+  ],
+  snippet: '''
+// Colours come back as resolved ARGB, whatever form the file stored them in.
+final excel = Excel.decodeBytes(bytes);
+final sheet = excel.tables.values.first;
+
+final hex = sheet
+    .cell(CellIndex.indexByString('A1'))
+    .cellStyle
+    ?.fontColor
+    .colorHex; // theme="4" -> 'FF4472C4' ''',
+  fullCode: r'''
+import 'package:excel_plus/excel_plus.dart';
+
+/// Reads the resolved font colour of every cell in the first column.
+/// Theme references (<color theme="N" tint="X"/>) and legacy indexed
+/// references (<color indexed="N"/>) are resolved to ARGB automatically —
+/// no extra work needed at the call site.
+List<String> readColours(List<int> xlsxBytes) {
+  final excel = Excel.decodeBytes(xlsxBytes);
+  final sheet = excel.tables.values.first;
+
+  final colours = <String>[];
+  for (var row = 0; row < sheet.maxRows; row++) {
+    final style = sheet
+        .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row))
+        .cellStyle;
+    colours.add(style?.fontColor.colorHex ?? 'none');
+  }
+  return colours; // e.g. ['FF4472C4', 'FF2F5496', 'FF000000', ...]
+}
+''',
+  build: _buildColorsRead,
+);
+
+Excel _buildColorsRead() {
+  // 1) Decode a workbook whose font colours are stored as theme + indexed refs.
+  final decoded = Excel.decodeBytes(base64.decode(themeIndexedSampleBase64));
+  final src = decoded.tables.values.first;
+
+  // 2) Read the colour each reference resolved to.
+  final resolved = <String>[
+    for (var i = 0; i < _colorRefs.length; i++)
+      src
+              .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: i))
+              .cellStyle
+              ?.fontColor
+              .colorHex ??
+          'none',
+  ];
+
+  // 3) Present them as a labelled swatch table.
+  final excel = _book('Colours (read)');
+  final s = excel['Colours (read)'];
+  final header = _box(bold: true, fill: _headerFill, font: ExcelColor.white);
+  _put(s, 0, 0, TextCellValue('Stored reference'), header);
+  _put(s, 1, 0, TextCellValue('Swatch'), header);
+  _put(s, 2, 0, TextCellValue('Resolved ARGB'), header);
+
+  for (var i = 0; i < _colorRefs.length; i++) {
+    final hex = resolved[i];
+    final r = i + 1;
+    _put(s, 0, r, TextCellValue(_colorRefs[i]), _box());
+    _put(
+      s,
+      1,
+      r,
+      TextCellValue(''),
+      hex == 'none' ? _box() : _box(fill: ExcelColor.fromHexString(hex)),
+    );
+    _put(s, 2, r, TextCellValue(hex), _box(align: HorizontalAlign.Center));
+  }
+  s.setColumnWidth(0, 26);
+  s.setColumnWidth(1, 10);
+  s.setColumnWidth(2, 16);
+  return excel;
+}
