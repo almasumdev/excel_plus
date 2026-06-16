@@ -32,7 +32,7 @@ class _FontStyle {
     _underline = underline;
 
     if (fontColorHex != null) {
-      _fontColorHex = _isColorAppropriate(fontColorHex.colorHex).excelColor;
+      _fontColorHex = _appropriateColor(fontColorHex);
     } else {
       _fontColorHex = ExcelColor.black;
     }
@@ -44,7 +44,7 @@ class _FontStyle {
 
   set fontColor(ExcelColor? fontColorHex) {
     if (fontColorHex != null) {
-      _fontColorHex = _isColorAppropriate(fontColorHex.colorHex).excelColor;
+      _fontColorHex = _appropriateColor(fontColorHex);
     } else {
       _fontColorHex = ExcelColor.black;
     }

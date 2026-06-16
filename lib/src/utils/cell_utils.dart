@@ -48,6 +48,14 @@ String _isColorAppropriate(String value) {
   }
 }
 
+/// Normalizes an [ExcelColor] for storage in a style. A theme/indexed reference
+/// is kept intact (its resolved hex is already canonical and the reference must
+/// survive to the writer); a literal color is run through [_isColorAppropriate]
+/// to repair `#`-prefixed or short hex forms.
+ExcelColor _appropriateColor(ExcelColor color) => color._hasReference
+    ? color
+    : _isColorAppropriate(color.colorHex).excelColor;
+
 /// @nodoc
 int lettersToNumeric(String letters) {
   var sum = 0, mul = 1, n = 1;

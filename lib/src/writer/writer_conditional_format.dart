@@ -118,9 +118,7 @@ mixin _WriterConditionalFormatMixin on _WriterBase {
         _colorEl(fmt._colors.first),
       ]);
 
-  XmlElement _colorEl(ExcelColor c) => XmlElement(_xmlName('color'), [
-    XmlAttribute(_xmlName('rgb'), _normalizeArgb(c.colorHex)),
-  ]);
+  XmlElement _colorEl(ExcelColor c) => _colorXml('color', c);
 
   /// Builds a `<dxf>` from the highlight properties of [s] (font bold/italic/
   /// underline/colour and a solid background fill).
@@ -137,10 +135,7 @@ mixin _WriterConditionalFormatMixin on _WriterBase {
               ? [XmlAttribute(_xmlName('val'), 'double')]
               : const [],
         ),
-      if (s.fontColor.colorHex != ExcelColor.black.colorHex)
-        XmlElement(_xmlName('color'), [
-          XmlAttribute(_xmlName('rgb'), _normalizeArgb(s.fontColor.colorHex)),
-        ]),
+      if (_shouldEmitFontColor(s.fontColor)) _colorXml('color', s.fontColor),
     ];
     if (fontProps.isNotEmpty) {
       children.add(XmlElement(_xmlName('font'), [], fontProps));
@@ -150,12 +145,7 @@ mixin _WriterConditionalFormatMixin on _WriterBase {
       children.add(
         XmlElement(_xmlName('fill'), [], [
           XmlElement(_xmlName('patternFill'), [], [
-            XmlElement(_xmlName('bgColor'), [
-              XmlAttribute(
-                _xmlName('rgb'),
-                _normalizeArgb(s.backgroundColor.colorHex),
-              ),
-            ]),
+            _colorXml('bgColor', s.backgroundColor),
           ]),
         ]),
       );

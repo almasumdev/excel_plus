@@ -45,6 +45,7 @@ final featureDemos = <FeatureDemo>[
   _sizing,
   _multiSheet,
   _colorsRead,
+  _themeColorsWrite,
   _hyperlinks,
   _dataValidation,
   _sheetView,
@@ -1140,6 +1141,125 @@ Excel _buildColorsRead() {
   s.setColumnWidth(0, 26);
   s.setColumnWidth(1, 10);
   s.setColumnWidth(2, 16);
+  return excel;
+}
+
+// ---------------------------------------------------------------------------
+// 11b. Theme & indexed colours (write)
+// ---------------------------------------------------------------------------
+
+final _themeColorsWrite = FeatureDemo(
+  id: 'theme_colors',
+  title: 'Theme & indexed colours (write)',
+  description:
+      'Author colours that stay linked to the workbook theme instead of baking '
+      'in literal RGB. ExcelColor.theme(slot) writes <color theme="N"/>, an '
+      'optional tint lightens or darkens the shade, and ExcelColor.indexed(N) '
+      'writes a legacy palette reference. Theme colours follow the document\'s '
+      'colour scheme if it changes.',
+  points: [
+    'ExcelColor.theme(ThemeColor.accentN) -> <color theme="N"/>',
+    'tint: lightens (positive) / darkens (negative) the shade',
+    'ExcelColor.indexed(N) -> legacy <color indexed="N"/>',
+    'Works for font, fill, and border colours',
+  ],
+  snippet: '''
+// A colour that follows the workbook theme (not baked-in RGB).
+final accent = CellStyle(
+  fontColorHex: ExcelColor.theme(ThemeColor.accent1),
+  backgroundColorHex: ExcelColor.theme(ThemeColor.accent1, tint: 0.6),
+);
+
+// Darker shade via a negative tint, and a legacy palette index:
+ExcelColor.theme(ThemeColor.accent2, tint: -0.25);
+ExcelColor.indexed(2); // red''',
+  fullCode: r'''
+import 'package:excel_plus/excel_plus.dart';
+
+Excel buildThemeColours() {
+  final excel = Excel.createExcel();
+  final s = excel[excel.getDefaultSheet() ?? 'Sheet1'];
+
+  // Font + fill in a theme colour — both written as theme references and so
+  // they track the document's colour scheme rather than a fixed RGB value.
+  s.updateCell(
+    CellIndex.indexByString('A1'),
+    TextCellValue('Accent 1'),
+    cellStyle: CellStyle(
+      fontColorHex: ExcelColor.theme(ThemeColor.background1),
+      backgroundColorHex: ExcelColor.theme(ThemeColor.accent1),
+    ),
+  );
+
+  // A lighter shade of the same slot via a positive tint.
+  s.updateCell(
+    CellIndex.indexByString('A2'),
+    TextCellValue('Accent 1, +40%'),
+    cellStyle: CellStyle(
+      backgroundColorHex: ExcelColor.theme(ThemeColor.accent1, tint: 0.4),
+    ),
+  );
+
+  // A legacy indexed-palette colour.
+  s.updateCell(
+    CellIndex.indexByString('A3'),
+    TextCellValue('Indexed 2 (red)'),
+    cellStyle: CellStyle(fontColorHex: ExcelColor.indexed(2)),
+  );
+
+  return excel;
+}
+''',
+  build: _buildThemeColorsWrite,
+);
+
+Excel _buildThemeColorsWrite() {
+  final excel = _book('Theme colours');
+  final s = excel['Theme colours'];
+
+  final header = _box(bold: true, fill: _headerFill, font: ExcelColor.white);
+  _put(s, 0, 0, TextCellValue('Theme slot'), header);
+  _put(s, 1, 0, TextCellValue('Font'), header);
+  _put(s, 2, 0, TextCellValue('Fill'), header);
+  _put(s, 3, 0, TextCellValue('Fill, +40% tint'), header);
+
+  const slots = <(String, ThemeColor)>[
+    ('Accent 1', ThemeColor.accent1),
+    ('Accent 2', ThemeColor.accent2),
+    ('Accent 3', ThemeColor.accent3),
+    ('Accent 4', ThemeColor.accent4),
+    ('Accent 5', ThemeColor.accent5),
+    ('Accent 6', ThemeColor.accent6),
+  ];
+
+  for (var i = 0; i < slots.length; i++) {
+    final (name, slot) = slots[i];
+    final r = i + 1;
+    _put(s, 0, r, TextCellValue(name), _box());
+    // Font painted in the theme colour (text stays linked to the theme).
+    _put(s, 1, r, TextCellValue('Sample'), _box(font: ExcelColor.theme(slot)));
+    // Solid fill in the theme colour.
+    _put(s, 2, r, TextCellValue(''), _box(fill: ExcelColor.theme(slot)));
+    // A lighter shade of the same slot via a positive tint.
+    _put(
+      s,
+      3,
+      r,
+      TextCellValue(''),
+      _box(fill: ExcelColor.theme(slot, tint: 0.4)),
+    );
+  }
+
+  // A couple of legacy indexed-palette colours for contrast.
+  final ir = slots.length + 1;
+  _put(s, 0, ir, TextCellValue('Indexed 2 (red)'), _box());
+  _put(s, 1, ir, TextCellValue('Sample'), _box(font: ExcelColor.indexed(2)));
+  _put(s, 2, ir, TextCellValue(''), _box(fill: ExcelColor.indexed(2)));
+
+  s.setColumnWidth(0, 20);
+  s.setColumnWidth(1, 12);
+  s.setColumnWidth(2, 12);
+  s.setColumnWidth(3, 16);
   return excel;
 }
 

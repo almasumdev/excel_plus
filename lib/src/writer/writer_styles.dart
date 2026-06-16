@@ -5,8 +5,8 @@ mixin _WriterStylesMixin on _WriterBase {
   /// Writing Font Color in [xl/styles.xml] from the Cells of the sheets.
   void _processStylesFile() {
     _innerCellStyle.clear();
-    Map<String, int> innerPatternFillIndex = {};
-    List<String> innerPatternFill = [];
+    Map<ExcelColor, int> innerPatternFillIndex = {};
+    List<ExcelColor> innerPatternFill = [];
     Map<_FontStyle, int> innerFontStyleIndex = {};
     List<_FontStyle> innerFontStyle = [];
     Map<_BorderSet, int> innerBorderSetIndex = {};
@@ -36,17 +36,16 @@ mixin _WriterStylesMixin on _WriterBase {
         fontScheme: cellStyle.fontScheme,
       );
 
-      if (_fontStyleIndex(_excel._fontStyleList, fs) == -1 &&
-          !innerFontStyleIndex.containsKey(fs)) {
+      if (!innerFontStyleIndex.containsKey(fs)) {
         innerFontStyleIndex[fs] = innerFontStyle.length;
         innerFontStyle.add(fs);
       }
 
-      String backgroundColor = cellStyle.backgroundColor.colorHex;
-      if (!_excel._patternFill.contains(backgroundColor) &&
-          !innerPatternFillIndex.containsKey(backgroundColor)) {
-        innerPatternFillIndex[backgroundColor] = innerPatternFill.length;
-        innerPatternFill.add(backgroundColor);
+      final background = cellStyle.backgroundColor;
+      if (!_fillExistsLiterally(background) &&
+          !innerPatternFillIndex.containsKey(background)) {
+        innerPatternFillIndex[background] = innerPatternFill.length;
+        innerPatternFill.add(background);
       }
 
       final bs = _createBorderSetFromCellStyle(cellStyle);
@@ -61,15 +60,19 @@ mixin _WriterStylesMixin on _WriterBase {
         .findAllElements('fonts')
         .first;
 
+    // Offset appended fonts past the actual `<font>` DOM children. (Unlike the
+    // fill/border lists, `_fontStyleList` is deduped from cellXfs and is not 1:1
+    // with the `<fonts>` element, so it cannot be used here.)
+    final int fontIdBase = fonts.children.whereType<XmlElement>().length;
+
     var fontAttribute = fonts.getAttributeNode('count');
     if (fontAttribute != null) {
-      fontAttribute.value =
-          '${_excel._fontStyleList.length + innerFontStyle.length}';
+      fontAttribute.value = '${fontIdBase + innerFontStyle.length}';
     } else {
       fonts.attributes.add(
         XmlAttribute(
           _xmlName('count'),
-          '${_excel._fontStyleList.length + innerFontStyle.length}',
+          '${fontIdBase + innerFontStyle.length}',
         ),
       );
     }
@@ -78,13 +81,8 @@ mixin _WriterStylesMixin on _WriterBase {
       fonts.children.add(
         XmlElement(_xmlName('font'), [], [
           if (fontStyleElement._fontColorHex != null &&
-              fontStyleElement._fontColorHex!.colorHex != "FF000000")
-            XmlElement(_xmlName('color'), [
-              XmlAttribute(
-                _xmlName('rgb'),
-                fontStyleElement._fontColorHex!.colorHex,
-              ),
-            ], []),
+              _shouldEmitFontColor(fontStyleElement._fontColorHex!))
+            _colorXml('color', fontStyleElement._fontColorHex!),
           if (fontStyleElement.isBold) XmlElement(_xmlName('b'), [], []),
           if (fontStyleElement.isItalic) XmlElement(_xmlName('i'), [], []),
           if (fontStyleElement.underline != Underline.None &&
@@ -146,42 +144,8 @@ mixin _WriterStylesMixin on _WriterBase {
       );
     }
 
-    for (var color in innerPatternFill) {
-      if (color.length >= 2) {
-        if (color.substring(0, 2).toUpperCase() == 'FF') {
-          fills.children.add(
-            XmlElement(_xmlName('fill'), [], [
-              XmlElement(
-                _xmlName('patternFill'),
-                [XmlAttribute(_xmlName('patternType'), 'solid')],
-                [
-                  XmlElement(_xmlName('fgColor'), [
-                    XmlAttribute(_xmlName('rgb'), color),
-                  ], []),
-                  XmlElement(_xmlName('bgColor'), [
-                    XmlAttribute(_xmlName('rgb'), color),
-                  ], []),
-                ],
-              ),
-            ]),
-          );
-        } else if (color == "none" ||
-            color == "gray125" ||
-            color == "lightGray") {
-          fills.children.add(
-            XmlElement(_xmlName('fill'), [], [
-              XmlElement(_xmlName('patternFill'), [
-                XmlAttribute(_xmlName('patternType'), color),
-              ], []),
-            ]),
-          );
-        }
-      } else {
-        _damagedExcel(
-          text:
-              "Corrupted Styles Found. Can't process further, Open up issue in github.",
-        );
-      }
+    for (final color in innerPatternFill) {
+      fills.children.add(_buildFillElement(color));
     }
 
     XmlElement borders = _excel._xmlFiles['xl/styles.xml']!
@@ -226,13 +190,9 @@ mixin _WriterStylesMixin on _WriterBase {
         if (style != null) {
           element.attributes.add(XmlAttribute(_xmlName('style'), style.style));
         }
-        final color = borderValue.borderColorHex;
+        final color = borderValue._color;
         if (color != null) {
-          element.children.add(
-            XmlElement(_xmlName('color'), [
-              XmlAttribute(_xmlName('rgb'), color),
-            ]),
-          );
+          element.children.add(_colorXml('color', color));
         }
         borderElement.children.add(element);
       }
@@ -258,8 +218,6 @@ mixin _WriterStylesMixin on _WriterBase {
     }
 
     for (var cellStyle in _innerCellStyle.keys) {
-      String backgroundColor = cellStyle.backgroundColor.colorHex;
-
       _FontStyle fs = _FontStyle(
         bold: cellStyle.isBold,
         italic: cellStyle.isItalic,
@@ -267,6 +225,7 @@ mixin _WriterStylesMixin on _WriterBase {
         underline: cellStyle.underline,
         fontSize: cellStyle.fontSize,
         fontFamily: cellStyle.fontFamily,
+        fontScheme: cellStyle.fontScheme,
       );
 
       HorizontalAlign horizontalAlign = cellStyle.horizontalAlignment;
@@ -274,10 +233,18 @@ mixin _WriterStylesMixin on _WriterBase {
       int rotation = cellStyle.rotation;
       int indent = cellStyle.indent;
       TextWrapping? textWrapping = cellStyle.wrap;
-      int backgroundIndex = innerPatternFillIndex[backgroundColor] ?? -1;
-      int fontIndex = innerFontStyleIndex[fs] ?? -1;
       _BorderSet bs = _createBorderSetFromCellStyle(cellStyle);
-      int borderIndex = innerBorderSetIndex[bs] ?? -1;
+
+      // Resolve each part to a global id, preferring an appended (inner) record,
+      // then an existing parsed one, then the default (0). Falling back to the
+      // existing record is what keeps an authored style that reuses a font/fill/
+      // border already in the file from silently reverting to the default.
+      final int fillId = _fillIdFor(
+        cellStyle.backgroundColor,
+        innerPatternFillIndex,
+      );
+      final int fontId = _fontIdFor(fs, innerFontStyleIndex, fontIdBase);
+      final int borderId = _borderIdFor(bs, innerBorderSetIndex);
 
       final numberFormat = cellStyle.numberFormat;
       final int numFmtId = switch (numberFormat) {
@@ -286,34 +253,15 @@ mixin _WriterStylesMixin on _WriterBase {
       };
 
       var attributes = <XmlAttribute>[
-        XmlAttribute(
-          _xmlName('borderId'),
-          '${borderIndex == -1 ? 0 : borderIndex + _excel._borderSetList.length}',
-        ),
-        XmlAttribute(
-          _xmlName('fillId'),
-          '${backgroundIndex == -1 ? 0 : backgroundIndex + _excel._patternFill.length}',
-        ),
-        XmlAttribute(
-          _xmlName('fontId'),
-          '${fontIndex == -1 ? 0 : fontIndex + _excel._fontStyleList.length}',
-        ),
+        XmlAttribute(_xmlName('borderId'), '$borderId'),
+        XmlAttribute(_xmlName('fillId'), '$fillId'),
+        XmlAttribute(_xmlName('fontId'), '$fontId'),
         XmlAttribute(_xmlName('numFmtId'), numFmtId.toString()),
         XmlAttribute(_xmlName('xfId'), '0'),
+        if (fillId != 0) XmlAttribute(_xmlName('applyFill'), '1'),
+        if (fontId != 0) XmlAttribute(_xmlName('applyFont'), '1'),
+        if (borderId != 0) XmlAttribute(_xmlName('applyBorder'), '1'),
       ];
-
-      if ((_excel._patternFill.contains(backgroundColor) ||
-              innerPatternFillIndex.containsKey(backgroundColor)) &&
-          backgroundColor != "none" &&
-          backgroundColor != "gray125" &&
-          backgroundColor.toLowerCase() != "lightgray") {
-        attributes.add(XmlAttribute(_xmlName('applyFill'), '1'));
-      }
-
-      if (_fontStyleIndex(_excel._fontStyleList, fs) != -1 &&
-          innerFontStyleIndex.containsKey(fs)) {
-        attributes.add(XmlAttribute(_xmlName('applyFont'), '1'));
-      }
 
       var children = <XmlElement>[];
 
@@ -425,5 +373,69 @@ mixin _WriterStylesMixin on _WriterBase {
 
       numFmtsElement.setAttribute('count', count.toString());
     }
+  }
+
+  /// True when [c] is a plain literal fill already present in the parsed
+  /// `<fills>`, so it is reused rather than re-appended. A theme/indexed
+  /// reference is always treated as new so its `theme`/`indexed` attribute is
+  /// written (it must not collapse onto a literal of the same resolved color).
+  bool _fillExistsLiterally(ExcelColor c) =>
+      !c._hasReference && _excel._patternFill.contains(c.colorHex);
+
+  /// Builds a `<fill>` for an authored background: a solid fill for any real
+  /// color (literal or theme/indexed reference), or a bare pattern fill for the
+  /// `none`/`gray125`/`lightGray` pattern types.
+  XmlElement _buildFillElement(ExcelColor c) {
+    final hex = c.colorHex;
+    if (!c._hasReference &&
+        (hex == 'none' || hex == 'gray125' || hex == 'lightGray')) {
+      return XmlElement(_xmlName('fill'), [], [
+        XmlElement(_xmlName('patternFill'), [
+          XmlAttribute(_xmlName('patternType'), hex),
+        ], []),
+      ]);
+    }
+    return XmlElement(_xmlName('fill'), [], [
+      XmlElement(
+        _xmlName('patternFill'),
+        [XmlAttribute(_xmlName('patternType'), 'solid')],
+        [
+          _colorXml('fgColor', c),
+          XmlElement(_xmlName('bgColor'), [
+            XmlAttribute(_xmlName('indexed'), '64'),
+          ], []),
+        ],
+      ),
+    ]);
+  }
+
+  /// Global `fontId` for [fs]: an appended (inner) record offset past the parsed
+  /// fonts, else the index of a matching parsed font, else 0 (default).
+  /// Global `fontId` for [fs]. Authored fonts are always appended (the parsed
+  /// `_fontStyleList` is deduped from cellXfs and is not 1:1 with the `<fonts>`
+  /// DOM, so it cannot be used as an offset), referenced past the [base] count
+  /// of existing `<font>` children.
+  int _fontIdFor(_FontStyle fs, Map<_FontStyle, int> inner, int base) =>
+      base + (inner[fs] ?? 0);
+
+  /// Global `fillId` for background [c]: an appended (inner) record, else a
+  /// matching parsed literal fill, else 0 (the default `none` fill).
+  int _fillIdFor(ExcelColor c, Map<ExcelColor, int> inner) {
+    final i = inner[c];
+    if (i != null) return i + _excel._patternFill.length;
+    if (!c._hasReference) {
+      final existing = _excel._patternFill.indexOf(c.colorHex);
+      if (existing != -1) return existing;
+    }
+    return 0;
+  }
+
+  /// Global `borderId` for [bs]: an appended (inner) record, else a matching
+  /// parsed border, else 0 (default).
+  int _borderIdFor(_BorderSet bs, Map<_BorderSet, int> inner) {
+    final i = inner[bs];
+    if (i != null) return i + _excel._borderSetList.length;
+    final existing = _excel._borderSetList.indexOf(bs);
+    return existing == -1 ? 0 : existing;
   }
 }

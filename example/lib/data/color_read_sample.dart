@@ -3,9 +3,10 @@
 /// It is a real workbook whose font colours are stored the way Excel and Google
 /// Sheets actually store them — as **theme** references (`<color theme="N"
 /// tint="X"/>`, resolved against `xl/theme/theme1.xml`) and legacy **indexed**
-/// palette references (`<color indexed="N"/>`) — not literal RGB. excel_plus's
-/// authoring API only writes literal `rgb`, so demonstrating colour *reading*
-/// needs a file like this one as input.
+/// palette references (`<color indexed="N"/>`) — not literal RGB. excel_plus can
+/// now *author* such references too (`ExcelColor.theme` / `ExcelColor.indexed`),
+/// but this pre-made file is a realistic input for demonstrating colour
+/// *reading* from a workbook produced by another app.
 ///
 /// Cells `A1`–`A9` carry these references, in order:
 ///   1 theme 4            (Accent 1)

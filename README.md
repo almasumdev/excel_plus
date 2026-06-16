@@ -128,7 +128,9 @@ cd ../excel_plus_bench                && dart pub get && dart run bin/benchmark.
   formatting (colour scales, data bars, cellIs/formula), freeze panes, autofilter,
   sheet protection, defined names / named ranges, gridlines & zoom.
 - **Rich text** — read **and** write (per-run bold/italic/colour/size/font).
-- **Theme & indexed colours** resolved to real RGB on read.
+- **Theme & indexed colours** — read (resolved to RGB) and authored
+  (`ExcelColor.theme(ThemeColor.accent1, tint: x)` / `ExcelColor.indexed(n)`),
+  staying linked to the document theme.
 - **Merge & unmerge** cells with custom values.
 - **Rows & columns** — insert, remove, clear, resize.
 - **Column width / row height** with auto-fit.
@@ -146,10 +148,6 @@ prioritised:
   Excel recomputes when the file is opened. excel_plus stores and preserves
   formulas but does not evaluate them itself.
 - **Objects & media** — images, charts, comments / notes, pivot tables.
-- **Theme/indexed colour _authoring_** — theme and indexed colours are **read**
-  and resolved to RGB, but writing colours emits literal RGB (a theme/indexed
-  *reference* writer is planned for 1.1). Author colours with
-  `ExcelColor.fromHexString('FFRRGGBB')` or the named constants.
 - **Split panes** — freeze panes are supported; twip-based split panes are not.
 
 Anything not in this list — reading, creating, editing and styling cells across
@@ -160,8 +158,8 @@ multiple sheets — is supported; see [Key features](#key-features).
 excel_plus is **actively developed** toward broader Excel / Google-Sheets parity.
 **1.0.0** landed the high-impact worksheet feature set (hyperlinks, data
 validation, conditional formatting, freeze panes, autofilter, sheet protection,
-named ranges, rich-text write, error values). Next up (subject to change): images
-and comments, theme/indexed colour authoring, then a formula-evaluation engine.
+named ranges, rich-text write, error values, theme/indexed colour authoring).
+Next up (subject to change): images and comments, then a formula-evaluation engine.
 Shipped changes are tracked in the
 [changelog](https://github.com/almasumdev/excel_plus/blob/main/CHANGELOG.md),
 and the direction is driven by what users request on the

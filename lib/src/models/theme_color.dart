@@ -17,6 +17,33 @@ String? _resolveThemeColor(List<String?> palette, int themeIndex, double tint) {
   return _applyTint(base, tint);
 }
 
+/// The standard Office theme palette, ordered by the `theme="N"` index used in
+/// `styles.xml` (the same light/dark-swapped order as [_resolveThemeColor]'s
+/// `palette`). Used as the resolution fallback when *authoring* a theme color
+/// ([ExcelColor.theme]) so it has a sensible literal value for display; the
+/// written `theme="N"` reference still follows whatever theme the file is
+/// opened with.
+const _defaultThemePalette = <String>[
+  'FFFFFFFF', // 0  background1 (lt1)
+  'FF000000', // 1  text1       (dk1)
+  'FFE7E6E6', // 2  background2 (lt2)
+  'FF44546A', // 3  text2       (dk2)
+  'FF4472C4', // 4  accent1
+  'FFED7D31', // 5  accent2
+  'FFA5A5A5', // 6  accent3
+  'FFFFC000', // 7  accent4
+  'FF5B9BD5', // 8  accent5
+  'FF70AD47', // 9  accent6
+  'FF0563C1', // 10 hyperlink
+  'FF954F72', // 11 followedHyperlink
+];
+
+/// Resolves an authored theme reference (index + tint) against the standard
+/// Office palette, returning an `AARRGGBB` hex. Falls back to black for an
+/// out-of-range index so an authored color always has a literal value.
+String _resolveDefaultThemeColor(int themeIndex, double tint) =>
+    _resolveThemeColor(_defaultThemePalette, themeIndex, tint) ?? 'FF000000';
+
 /// The standard legacy `indexed="N"` color palette (ECMA-376 §18.8.27), used
 /// when a workbook does not supply its own `<indexedColors>` override. Indices
 /// run 0–63; 64 (system foreground) and 65 (system background) are "automatic"

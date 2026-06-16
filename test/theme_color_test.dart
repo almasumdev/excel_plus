@@ -147,6 +147,31 @@ int _sumRgb(String argb) {
 CellStyle _style(Sheet sheet, String ref) =>
     sheet.cell(CellIndex.indexByString(ref)).cellStyle!;
 
+/// Applies [style] to A1 of a one-cell workbook (carrying the standard theme),
+/// encodes it, and returns the resulting `xl/styles.xml` text so authored color
+/// references can be asserted against the written XML.
+String _authoredStyles(CellStyle style) {
+  final excel = Excel.decodeBytes(buildXlsx(_oneCell, theme: _theme));
+  excel['Sheet1'].cell(CellIndex.indexByString('A1')).cellStyle = style;
+  return readPart(excel.encode()!, 'xl/styles.xml');
+}
+
+/// A literal-green solid fill at fill index 2, used by the style-reuse test.
+const _greenFillStyles =
+    '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+<fonts count="1"><font><sz val="11"/><name val="Calibri"/></font></fonts>
+<fills count="3">
+<fill><patternFill patternType="none"/></fill>
+<fill><patternFill patternType="gray125"/></fill>
+<fill><patternFill patternType="solid"><fgColor rgb="FF00FF00"/><bgColor indexed="64"/></patternFill></fill>
+</fills>
+<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>
+<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
+<cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
+<xf numFmtId="0" fontId="0" fillId="2" borderId="0" xfId="0" applyFill="1"/></cellXfs>
+</styleSheet>''';
+
 void main() {
   group('Theme Color Read', () {
     late Sheet sheet;
@@ -290,6 +315,143 @@ void main() {
       expect(_style(s, 'A1').fontColor.colorHex, 'FFFF0000');
       expect(_style(s, 'D1').backgroundColor.colorHex, 'FFFFFF00');
       expect(_style(s, 'D1').leftBorder.borderColorHex, 'FF0000FF');
+    });
+  });
+
+  group('Theme Color Authoring', () {
+    test(
+      'a theme color resolves to the standard Office palette for display',
+      () {
+        expect(ExcelColor.theme(ThemeColor.accent1).colorHex, 'FF4472C4');
+        expect(ExcelColor.theme(ThemeColor.text1).colorHex, 'FF000000');
+        expect(ExcelColor.theme(ThemeColor.background1).colorHex, 'FFFFFFFF');
+      },
+    );
+
+    test('authoring a theme font color writes a theme reference', () {
+      final xml = _authoredStyles(
+        CellStyle(fontColorHex: ExcelColor.theme(ThemeColor.accent1)),
+      );
+      expect(xml, contains('<color theme="4"'));
+      expect(xml, isNot(contains('rgb="FF4472C4"')));
+    });
+
+    test('authoring a tinted theme font color writes theme and tint', () {
+      final xml = _authoredStyles(
+        CellStyle(
+          fontColorHex: ExcelColor.theme(ThemeColor.accent1, tint: -0.2),
+        ),
+      );
+      expect(xml, contains('theme="4"'));
+      expect(xml, contains('tint="-0.2"'));
+    });
+
+    test('authoring a theme fill writes a theme fgColor reference', () {
+      final xml = _authoredStyles(
+        CellStyle(backgroundColorHex: ExcelColor.theme(ThemeColor.accent2)),
+      );
+      expect(xml, contains('<fgColor theme="5"'));
+    });
+
+    test('authoring a theme border color writes a theme reference', () {
+      final xml = _authoredStyles(
+        CellStyle(
+          leftBorder: Border(
+            borderStyle: BorderStyle.Thin,
+            borderColorHex: ExcelColor.theme(ThemeColor.accent6),
+          ),
+        ),
+      );
+      expect(xml, contains('theme="9"'));
+    });
+
+    test('authoring a literal color still writes an rgb value', () {
+      final xml = _authoredStyles(
+        CellStyle(fontColorHex: ExcelColor.fromHexString('FF112233')),
+      );
+      expect(xml, contains('rgb="FF112233"'));
+      expect(xml, isNot(contains('theme=')));
+    });
+  });
+
+  group('Indexed Color Authoring', () {
+    test('an indexed color resolves to the standard palette for display', () {
+      expect(ExcelColor.indexed(2).colorHex, 'FFFF0000'); // 2 = red
+      expect(ExcelColor.indexed(22).colorHex, 'FFC0C0C0'); // 22 = silver
+    });
+
+    test('authoring an indexed font color writes an indexed reference', () {
+      final xml = _authoredStyles(
+        CellStyle(fontColorHex: ExcelColor.indexed(2)),
+      );
+      expect(xml, contains('<color indexed="2"'));
+    });
+  });
+
+  group('Authored Color Dedup', () {
+    test('a theme color and a literal of the same ARGB are distinct', () {
+      expect(
+        ExcelColor.theme(ThemeColor.accent1),
+        isNot(ExcelColor.fromHexString('FF4472C4')),
+      );
+      expect(
+        CellStyle(fontColorHex: ExcelColor.theme(ThemeColor.accent1)),
+        isNot(CellStyle(fontColorHex: ExcelColor.fromHexString('FF4472C4'))),
+      );
+    });
+
+    test('equal theme colors compare equal and share one font record', () {
+      expect(
+        ExcelColor.theme(ThemeColor.accent1),
+        ExcelColor.theme(ThemeColor.accent1),
+      );
+
+      final excel = Excel.decodeBytes(
+        buildXlsx(
+          '<row r="1"><c r="A1"><v>1</v></c><c r="B1"><v>2</v></c></row>',
+          theme: _theme,
+        ),
+      );
+      final sheet = excel['Sheet1'];
+      sheet.cell(CellIndex.indexByString('A1')).cellStyle = CellStyle(
+        fontColorHex: ExcelColor.theme(ThemeColor.accent1),
+      );
+      sheet.cell(CellIndex.indexByString('B1')).cellStyle = CellStyle(
+        fontColorHex: ExcelColor.theme(ThemeColor.accent1),
+      );
+      final xml = readPart(excel.encode()!, 'xl/styles.xml');
+      expect('theme="4"'.allMatches(xml).length, 1);
+    });
+  });
+
+  group('Authored Color Roundtrip', () {
+    test('an authored theme color survives encode and re-decode', () {
+      final excel = Excel.decodeBytes(buildXlsx(_oneCell, theme: _theme));
+      excel['Sheet1'].cell(CellIndex.indexByString('A1')).cellStyle = CellStyle(
+        fontColorHex: ExcelColor.theme(ThemeColor.accent1),
+      );
+      final bytes = excel.encode();
+      saveTestOutput(bytes, 'authored_theme_color');
+
+      // The written reference is a theme link, and re-decoding resolves it
+      // against the (preserved) theme part back to the palette ARGB.
+      expect(readPart(bytes!, 'xl/styles.xml'), contains('theme="4"'));
+      final reread = Excel.decodeBytes(bytes)['Sheet1'];
+      expect(_style(reread, 'A1').fontColor.colorHex, 'FF4472C4');
+    });
+
+    test('an authored style reusing an existing fill keeps that fill', () {
+      // Regression: an authored style whose background matches a fill already in
+      // the file must reference it, not silently fall back to the no-fill 0.
+      final excel = Excel.decodeBytes(
+        buildXlsx(_oneCell, styles: _greenFillStyles),
+      );
+      excel['Sheet1'].cell(CellIndex.indexByString('A1')).cellStyle = CellStyle(
+        backgroundColorHex: ExcelColor.fromHexString('FF00FF00'),
+        horizontalAlign: HorizontalAlign.Center,
+      );
+      final reread = Excel.decodeBytes(excel.encode()!)['Sheet1'];
+      expect(_style(reread, 'A1').backgroundColor.colorHex, 'FF00FF00');
     });
   });
 }

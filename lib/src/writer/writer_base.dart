@@ -187,6 +187,38 @@ abstract class _WriterBase {
 
   static String _escapeXmlValue(String input) => _escapeXml(input);
 
+  /// Builds an OOXML color element (`<color>`, `<fgColor>`, `<bgColor>`, ...) for
+  /// [c], emitting a `theme`+`tint` or `indexed` reference when [c] carries one
+  /// (so authored theme/indexed colors stay linked to the document), otherwise a
+  /// literal `rgb`.
+  XmlElement _colorXml(String tag, ExcelColor c) {
+    if (c._isThemeRef) {
+      return XmlElement(_xmlName(tag), [
+        XmlAttribute(_xmlName('theme'), '${c._themeIndex}'),
+        if (c._tint != 0.0)
+          XmlAttribute(_xmlName('tint'), _formatTint(c._tint)),
+      ]);
+    }
+    if (c._isIndexedRef) {
+      return XmlElement(_xmlName(tag), [
+        XmlAttribute(_xmlName('indexed'), '${c._indexedIndex}'),
+      ]);
+    }
+    return XmlElement(_xmlName(tag), [
+      XmlAttribute(_xmlName('rgb'), _normalizeArgb(c.colorHex)),
+    ]);
+  }
+
+  /// Whether [c] should be written as a font `<color>`: any theme/indexed
+  /// reference, or any literal other than the default black (which Excel applies
+  /// implicitly when the element is omitted).
+  bool _shouldEmitFontColor(ExcelColor c) =>
+      c._hasReference ||
+      (c.colorHex != ExcelColor.black.colorHex && c.colorHex != 'none');
+
+  /// Formats a theme tint as a plain decimal string for the `tint` attribute.
+  static String _formatTint(double tint) => tint.toString();
+
   _BorderSet _createBorderSetFromCellStyle(CellStyle cellStyle) => _BorderSet(
     leftBorder: cellStyle.leftBorder,
     rightBorder: cellStyle.rightBorder,

@@ -5,8 +5,8 @@ part of '../../excel_plus.dart';
 /// {@category Styling}
 // ignore: must_be_immutable
 class CellStyle {
-  String _fontColorHex = ExcelColor.black.colorHex;
-  String _backgroundColorHex = ExcelColor.none.colorHex;
+  ExcelColor _fontColor = ExcelColor.black;
+  ExcelColor _backgroundColor = ExcelColor.none;
   String? _fontFamily;
   FontScheme _fontScheme;
   HorizontalAlign _horizontalAlign = HorizontalAlign.Left;
@@ -60,8 +60,8 @@ class CellStyle {
        _fontScheme = fontScheme ?? FontScheme.Unset,
        _rotation = rotation,
        _indent = indent < 0 ? 0 : indent,
-       _fontColorHex = _isColorAppropriate(fontColorHex.colorHex),
-       _backgroundColorHex = _isColorAppropriate(backgroundColorHex.colorHex),
+       _fontColor = _appropriateColor(fontColorHex),
+       _backgroundColor = _appropriateColor(backgroundColorHex),
        _verticalAlign = verticalAlign,
        _horizontalAlign = horizontalAlign,
        _leftBorder = leftBorder ?? Border(),
@@ -97,9 +97,8 @@ class CellStyle {
     NumFormat? numberFormat,
   }) {
     return CellStyle(
-      fontColorHex: fontColorHexVal ?? _fontColorHex.excelColor,
-      backgroundColorHex:
-          backgroundColorHexVal ?? _backgroundColorHex.excelColor,
+      fontColorHex: fontColorHexVal ?? _fontColor,
+      backgroundColorHex: backgroundColorHexVal ?? _backgroundColor,
       fontFamily: fontFamilyVal ?? _fontFamily,
       fontScheme: fontSchemeVal ?? _fontScheme,
       horizontalAlign: horizontalAlignVal ?? _horizontalAlign,
@@ -123,19 +122,19 @@ class CellStyle {
   }
 
   ExcelColor get fontColor {
-    return _fontColorHex.excelColor;
+    return _fontColor;
   }
 
   set fontColor(ExcelColor fontColorHex) {
-    _fontColorHex = _isColorAppropriate(fontColorHex.colorHex);
+    _fontColor = _appropriateColor(fontColorHex);
   }
 
   ExcelColor get backgroundColor {
-    return _backgroundColorHex.excelColor;
+    return _backgroundColor;
   }
 
   set backgroundColor(ExcelColor backgroundColorHex) {
-    _backgroundColorHex = _isColorAppropriate(backgroundColorHex.colorHex);
+    _backgroundColor = _appropriateColor(backgroundColorHex);
   }
 
   HorizontalAlign get horizontalAlignment {
@@ -308,8 +307,8 @@ class CellStyle {
           other._textWrapping == _textWrapping &&
           other._verticalAlign == _verticalAlign &&
           other._horizontalAlign == _horizontalAlign &&
-          other._fontColorHex == _fontColorHex &&
-          other._backgroundColorHex == _backgroundColorHex &&
+          other._fontColor == _fontColor &&
+          other._backgroundColor == _backgroundColor &&
           other._leftBorder == _leftBorder &&
           other._rightBorder == _rightBorder &&
           other._topBorder == _topBorder &&
@@ -332,8 +331,8 @@ class CellStyle {
     _textWrapping,
     _verticalAlign,
     _horizontalAlign,
-    _fontColorHex,
-    _backgroundColorHex,
+    _fontColor,
+    _backgroundColor,
     _leftBorder,
     _rightBorder,
     _topBorder,

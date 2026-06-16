@@ -4,11 +4,44 @@ part of '../../excel_plus.dart';
 ///
 /// {@category Styling}
 class ExcelColor {
-  const ExcelColor._(this._color, [this._name, this._type]);
+  const ExcelColor._(this._color, [this._name, this._type])
+    : _themeIndex = null,
+      _indexedIndex = null,
+      _tint = 0.0;
+
+  /// Internal constructor for a theme/indexed *reference* color: [_color] is the
+  /// resolved literal (for display/`colorHex`), while [_themeIndex] or
+  /// [_indexedIndex] (plus [_tint]) carry the reference the writer re-emits.
+  const ExcelColor._ref(
+    this._color, {
+    int? themeIndex,
+    int? indexedIndex,
+    double tint = 0.0,
+  }) : _name = null,
+       _type = ColorType.color,
+       _themeIndex = themeIndex,
+       _indexedIndex = indexedIndex,
+       _tint = tint;
 
   final String _color;
   final String? _name;
   final ColorType? _type;
+
+  /// Theme palette index (`theme="N"`) when this is a theme reference, else null.
+  final int? _themeIndex;
+
+  /// Legacy palette index (`indexed="N"`) when this is an indexed reference.
+  final int? _indexedIndex;
+
+  /// Theme tint in `-1.0..1.0`; only meaningful for a theme reference.
+  final double _tint;
+
+  /// True when this color carries a theme or indexed reference (rather than a
+  /// plain literal RGB), so the writer emits `theme`/`indexed` instead of `rgb`.
+  bool get _hasReference => _themeIndex != null || _indexedIndex != null;
+
+  bool get _isThemeRef => _themeIndex != null;
+  bool get _isIndexedRef => _indexedIndex != null;
 
   /// Return 'none' if [_color] is null, [black] if not match for safety
   String get colorHex =>
@@ -31,6 +64,36 @@ class ExcelColor {
   /// Can break your excel file if you do not know what you are doing
   factory ExcelColor.fromHexString(String colorHexValue) =>
       ExcelColor._(colorHexValue);
+
+  /// A **document-theme** color reference (e.g. accent1). Unlike a literal color
+  /// it stays linked to the workbook's theme, so it follows the file's color
+  /// scheme in Excel/Sheets and shifts if the theme changes.
+  ///
+  /// [tint] (clamped to `-1.0..1.0`) lightens (positive) or darkens (negative)
+  /// the base theme color, matching Excel's lighter/darker shade variants.
+  /// `colorHex`/`colorInt` resolve against the standard Office palette so the
+  /// color still has a usable literal value before the file is opened.
+  ///
+  /// Written as `<color theme="N" tint="X"/>`.
+  factory ExcelColor.theme(ThemeColor color, {double tint = 0.0}) {
+    final t = tint.clamp(-1.0, 1.0);
+    return ExcelColor._ref(
+      _resolveDefaultThemeColor(color.index, t),
+      themeIndex: color.index,
+      tint: t,
+    );
+  }
+
+  /// A **legacy indexed-palette** color reference (`<color indexed="N"/>`).
+  ///
+  /// Indices follow the standard 64-color palette (ECMA-376 §18.8.27).
+  /// `colorHex`/`colorInt` resolve against that palette. Prefer [theme] or a
+  /// literal color for new files; this exists mainly for parity with older
+  /// workbooks.
+  factory ExcelColor.indexed(int index) => ExcelColor._ref(
+    _resolveIndexedColor(const [], index) ?? 'FF000000',
+    indexedIndex: index,
+  );
 
   static const none = ExcelColor._('none');
 
@@ -1499,14 +1562,69 @@ class ExcelColor {
           other._name == _name &&
           other._color == _color &&
           other._type == _type &&
+          other._themeIndex == _themeIndex &&
+          other._indexedIndex == _indexedIndex &&
+          other._tint == _tint &&
           other.colorHex == colorHex &&
           other.colorInt == colorInt;
 
   @override
-  int get hashCode => Object.hash(_name, _color, _type, colorHex, colorInt);
+  int get hashCode => Object.hash(
+    _name,
+    _color,
+    _type,
+    _themeIndex,
+    _indexedIndex,
+    _tint,
+    colorHex,
+    colorInt,
+  );
 }
 
 /// Color type category.
 ///
 /// {@category Styling}
 enum ColorType { color, material, materialAccent }
+
+/// The twelve document-theme color slots, in the order Excel indexes them in
+/// `styles.xml` (`theme="N"`). Use with [ExcelColor.theme] to author a color
+/// that follows the workbook's theme.
+///
+/// {@category Styling}
+enum ThemeColor {
+  /// `theme="0"` — the first light/background color (usually white).
+  background1,
+
+  /// `theme="1"` — the first dark/text color (usually black).
+  text1,
+
+  /// `theme="2"` — the second light/background color.
+  background2,
+
+  /// `theme="3"` — the second dark/text color.
+  text2,
+
+  /// `theme="4"` — accent 1.
+  accent1,
+
+  /// `theme="5"` — accent 2.
+  accent2,
+
+  /// `theme="6"` — accent 3.
+  accent3,
+
+  /// `theme="7"` — accent 4.
+  accent4,
+
+  /// `theme="8"` — accent 5.
+  accent5,
+
+  /// `theme="9"` — accent 6.
+  accent6,
+
+  /// `theme="10"` — hyperlink color.
+  hyperlink,
+
+  /// `theme="11"` — followed-hyperlink color.
+  followedHyperlink,
+}

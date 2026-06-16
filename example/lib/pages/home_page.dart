@@ -23,6 +23,7 @@ class HomePage extends StatelessWidget {
     'sizing': Icons.aspect_ratio,
     'sheets': Icons.layers,
     'colors_read': Icons.palette_outlined,
+    'theme_colors': Icons.format_paint_outlined,
     'hyperlinks': Icons.link,
     'data_validation': Icons.checklist_rtl,
     'sheet_view': Icons.splitscreen_outlined,

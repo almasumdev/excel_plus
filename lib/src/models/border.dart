@@ -7,15 +7,19 @@ class Border {
   /// The line style of the border, or `null` for no border.
   final BorderStyle? borderStyle;
 
-  /// The border color as a hex string (e.g. `"FF000000"`), or `null`.
-  final String? borderColorHex;
+  /// The border color (literal, theme, or indexed), or `null` for none. Kept as
+  /// an [ExcelColor] so a theme/indexed reference survives to the writer.
+  final ExcelColor? _color;
 
   /// Creates a [Border] with an optional [borderStyle] and [borderColorHex].
   Border({BorderStyle? borderStyle, ExcelColor? borderColorHex})
     : borderStyle = borderStyle == BorderStyle.None ? null : borderStyle,
-      borderColorHex = borderColorHex != null
-          ? _isColorAppropriate(borderColorHex.colorHex)
+      _color = borderColorHex != null
+          ? _appropriateColor(borderColorHex)
           : null;
+
+  /// The border color resolved to an `AARRGGBB` hex string, or `null`.
+  String? get borderColorHex => _color?.colorHex;
 
   @override
   String toString() {
@@ -27,10 +31,10 @@ class Border {
       identical(this, other) ||
       other is Border &&
           other.borderStyle == borderStyle &&
-          other.borderColorHex == borderColorHex;
+          other._color == _color;
 
   @override
-  int get hashCode => Object.hash(borderStyle, borderColorHex);
+  int get hashCode => Object.hash(borderStyle, _color);
 }
 
 class _BorderSet {
