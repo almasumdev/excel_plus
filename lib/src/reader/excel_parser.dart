@@ -51,6 +51,27 @@ class Parser extends _ParserBase
         _rId.add(rid);
       }
     });
+
+    _parseDefinedNames(document);
+  }
+
+  /// Reads workbook `<definedNames>` into [_excel._definedNames].
+  void _parseDefinedNames(XmlDocument workbook) {
+    final container = workbook.findAllElements('definedNames').firstOrNull;
+    if (container == null) return;
+    for (final node in container.findElements('definedName')) {
+      final name = node.getAttribute('name');
+      if (name == null) continue;
+      _excel._definedNames.add(
+        DefinedName(
+          name: name,
+          refersTo: node.innerText,
+          localSheetId: int.tryParse(node.getAttribute('localSheetId') ?? ''),
+          comment: node.getAttribute('comment'),
+          hidden: node.getAttribute('hidden') == '1',
+        ),
+      );
+    }
   }
 
   /// Parses a single sheet on demand. Called from [Excel._availSheet].

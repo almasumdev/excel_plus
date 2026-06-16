@@ -51,6 +51,7 @@ final featureDemos = <FeatureDemo>[
   _autoFilter,
   _sheetProtection,
   _sheetTabs,
+  _definedNames,
 ];
 
 FeatureDemo? featureById(String id) {
@@ -1756,5 +1757,76 @@ Excel _buildSheetTabs() {
 
   // Reorder: put Q2 directly after Summary.
   excel.moveSheet('Q2', toIndex: 1);
+  return excel;
+}
+
+// ---------------------------------------------------------------------------
+// 18. Defined names (named ranges)
+// ---------------------------------------------------------------------------
+
+final _definedNames = FeatureDemo(
+  id: 'defined_names',
+  title: 'Defined names',
+  description:
+      'Create workbook named ranges and use them in formulas. Open the exported '
+      'file in Excel: the name appears in the Name Box, and the tax formula '
+      'references it by name instead of a cell address.',
+  points: [
+    "excel.setDefinedName('TaxRate', \"'Data'!\\\$B\\\$2\")",
+    'Use the name in any FormulaCellValue',
+    'Scope to one sheet with localSheetId, or leave it global',
+    'excel.definedNames reads them back',
+  ],
+  snippet: '''
+excel.setDefinedName('TaxRate', "'Data'!\\\$B\\\$2");
+sheet.updateCell(cell, FormulaCellValue('Price*TaxRate'));''',
+  fullCode: r'''
+import 'package:excel_plus/excel_plus.dart';
+
+Excel buildDefinedNames() {
+  final excel = Excel.createExcel();
+  final s = excel[excel.getDefaultSheet() ?? 'Sheet1'];
+
+  s.updateCell(CellIndex.indexByString('A1'), TextCellValue('Tax rate'));
+  s.updateCell(CellIndex.indexByString('B1'), DoubleCellValue(0.2));
+  s.updateCell(CellIndex.indexByString('A2'), TextCellValue('Price'));
+  s.updateCell(CellIndex.indexByString('B2'), DoubleCellValue(100));
+
+  // Name B1 "TaxRate", then reference it by name in a formula.
+  excel.setDefinedName('TaxRate', "'Sheet1'!\$B\$1");
+  s.updateCell(CellIndex.indexByString('A3'), TextCellValue('Tax'));
+  s.updateCell(CellIndex.indexByString('B3'), FormulaCellValue('B2*TaxRate'));
+  return excel;
+}
+''',
+  build: _buildDefinedNames,
+);
+
+Excel _buildDefinedNames() {
+  final excel = _book('Named ranges');
+  final s = excel['Named ranges'];
+
+  final header = _box(bold: true, fill: _headerFill, font: ExcelColor.white);
+  _put(s, 0, 0, TextCellValue('Field'), header);
+  _put(s, 1, 0, TextCellValue('Value'), header);
+
+  _put(s, 0, 1, TextCellValue('Tax rate'), _box(bold: true));
+  _put(s, 1, 1, DoubleCellValue(0.2), _box(align: HorizontalAlign.Right));
+  _put(s, 0, 2, TextCellValue('Price'), _box(bold: true));
+  _put(s, 1, 2, DoubleCellValue(100), _box(align: HorizontalAlign.Right));
+  _put(s, 0, 3, TextCellValue('Tax = Price × TaxRate'), _box(bold: true));
+  _put(
+    s,
+    1,
+    3,
+    FormulaCellValue('B3*TaxRate'),
+    _box(align: HorizontalAlign.Right),
+  );
+
+  // "TaxRate" names the tax-rate cell (B2); the formula above uses it by name.
+  excel.setDefinedName('TaxRate', "'Named ranges'!\$B\$2");
+
+  s.setColumnWidth(0, 22);
+  s.setColumnWidth(1, 12);
   return excel;
 }

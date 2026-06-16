@@ -17,6 +17,7 @@ class ExcelWriter extends _WriterBase
     _setSheetElements();
     _applySheetVisibilities();
     _applySheetOrder();
+    _applyDefinedNames();
     if (_excel._defaultSheet != null) {
       _setDefaultSheet(_excel._defaultSheet);
     }
@@ -154,6 +155,63 @@ class ExcelWriter extends _WriterBase
     for (final e in ordered) {
       sheetsEl.children.add(e);
     }
+  }
+
+  /// Writes the workbook `<definedNames>` from the model (only when changed via
+  /// the API), inserted before `<calcPr>` to keep CT_Workbook order valid.
+  void _applyDefinedNames() {
+    if (!_excel._definedNamesChanged) return;
+    final workbook = _excel._xmlFiles['xl/workbook.xml'];
+    if (workbook == null) return;
+    final wb = workbook.findAllElements('workbook').firstOrNull;
+    if (wb == null) return;
+
+    for (final e in wb.findElements('definedNames').toList()) {
+      wb.children.remove(e);
+    }
+    if (_excel._definedNames.isEmpty) return;
+
+    final children = <XmlElement>[
+      for (final d in _excel._definedNames)
+        XmlElement(
+          _xmlName('definedName'),
+          [
+            XmlAttribute(_xmlName('name'), d.name),
+            if (d.localSheetId != null)
+              XmlAttribute(_xmlName('localSheetId'), d.localSheetId.toString()),
+            if (d.hidden) XmlAttribute(_xmlName('hidden'), '1'),
+            if (d.comment != null)
+              XmlAttribute(_xmlName('comment'), d.comment!),
+          ],
+          [XmlText(d.refersTo)],
+        ),
+    ];
+
+    // <definedNames> sits after <sheets> and before <calcPr> et al.
+    const after = {
+      'calcPr',
+      'oleSize',
+      'customWorkbookViews',
+      'pivotCaches',
+      'smartTagPr',
+      'smartTagTypes',
+      'webPublishing',
+      'fileRecoveryPr',
+      'webPublishObjects',
+      'extLst',
+    };
+    var insertAt = wb.children.length;
+    for (var i = 0; i < wb.children.length; i++) {
+      final n = wb.children[i];
+      if (n is XmlElement && after.contains(n.name.local)) {
+        insertAt = i;
+        break;
+      }
+    }
+    wb.children.insert(
+      insertAt,
+      XmlElement(_xmlName('definedNames'), [], children),
+    );
   }
 
   void _setHeaderFooter(String sheetName) {

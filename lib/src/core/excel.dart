@@ -30,6 +30,10 @@ class Excel {
   bool _mergeChanges = false;
   bool _rtlChanges = false;
   bool _sheetOrderChanged = false;
+  bool _definedNamesChanged = false;
+
+  /// Workbook defined names (named ranges/formulas), in document order.
+  final List<DefinedName> _definedNames = [];
 
   Archive _archive;
 
@@ -328,6 +332,48 @@ class Excel {
       ..clear()
       ..addAll(reordered);
     _sheetOrderChanged = true;
+  }
+
+  /// The workbook's defined names (named ranges/formulas).
+  List<DefinedName> get definedNames => List.unmodifiable(_definedNames);
+
+  /// Defines (or replaces) a named range/formula [name] that refers to
+  /// [refersTo] (e.g. `"'Sheet1'!\$A\$1:\$B\$2"`).
+  ///
+  /// Pass [localSheetId] (a 0-based sheet index) to scope the name to one sheet;
+  /// omit it for a workbook-global name. A name is unique per scope.
+  void setDefinedName(
+    String name,
+    String refersTo, {
+    int? localSheetId,
+    String? comment,
+    bool hidden = false,
+  }) {
+    _definedNames.removeWhere(
+      (d) => d.name == name && d.localSheetId == localSheetId,
+    );
+    _definedNames.add(
+      DefinedName(
+        name: name,
+        refersTo: refersTo,
+        localSheetId: localSheetId,
+        comment: comment,
+        hidden: hidden,
+      ),
+    );
+    _definedNamesChanged = true;
+  }
+
+  /// Removes the defined [name] in the given scope ([localSheetId] / global).
+  /// Returns whether a name was removed.
+  bool removeDefinedName(String name, {int? localSheetId}) {
+    final before = _definedNames.length;
+    _definedNames.removeWhere(
+      (d) => d.name == name && d.localSheetId == localSheetId,
+    );
+    final removed = _definedNames.length != before;
+    if (removed) _definedNamesChanged = true;
+    return removed;
   }
 
   /// Encodes the workbook as `.xlsx` bytes.
