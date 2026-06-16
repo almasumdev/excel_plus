@@ -30,6 +30,7 @@ class HomePage extends StatelessWidget {
     'sheet_protection': Icons.lock_outline,
     'sheet_tabs': Icons.tab,
     'defined_names': Icons.label_outline,
+    'rich_text': Icons.format_color_text,
   };
 
   static const _showcaseIcons = <String, IconData>{

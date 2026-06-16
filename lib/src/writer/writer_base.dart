@@ -82,11 +82,17 @@ abstract class _WriterBase {
   ) {
     SharedString? sharedString;
     if (value is TextCellValue) {
-      sharedString = _excel._sharedStrings.tryFind(value.toString());
-      if (sharedString != null) {
-        _excel._sharedStrings.add(sharedString, value.toString());
+      // Build from the span so rich-text runs are preserved (not flattened),
+      // and dedup on a rich-aware key.
+      final built = SharedString._fromSpan(value.value);
+      final key = built._dedupKey;
+      final existing = _excel._sharedStrings.tryFind(key);
+      if (existing != null) {
+        _excel._sharedStrings.add(existing, key);
+        sharedString = existing;
       } else {
-        sharedString = _excel._sharedStrings.addFromString(value.toString());
+        _excel._sharedStrings.add(built, key);
+        sharedString = built;
       }
     }
 

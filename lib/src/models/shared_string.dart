@@ -14,12 +14,6 @@ class _SharedStringsMaintainer {
     return index != null ? _entries[index].node : null;
   }
 
-  SharedString addFromString(String val) {
-    final newSharedString = SharedString._fromText(val);
-    add(newSharedString, val);
-    return newSharedString;
-  }
-
   void add(SharedString val, String key) {
     final existingIndex = _stringIndex[key];
     if (existingIndex != null) {
@@ -31,7 +25,7 @@ class _SharedStringsMaintainer {
   }
 
   int indexOf(SharedString val) {
-    return _stringIndex[val.stringValue] ?? -1;
+    return _stringIndex[val._dedupKey] ?? -1;
   }
 
   SharedString? value(int i) {
@@ -95,6 +89,89 @@ class SharedString {
 
   /// The plain string value of this shared string.
   String get stringValue => _cachedValue;
+
+  /// Key used to deduplicate shared strings while writing: the full XML for rich
+  /// text (so two runs with identical plain text but different styling stay
+  /// distinct), or the plain value otherwise.
+  String get _dedupKey => _isRichText ? toXmlString() : _cachedValue;
+
+  /// Builds a shared string from a [TextSpan], preserving rich-text runs as
+  /// `<r><rPr>…</rPr><t>…</t></r>` rather than flattening them to plain text.
+  static SharedString _fromSpan(TextSpan span) {
+    final runs = <(String, CellStyle?)>[];
+    _collectRuns(span, runs);
+    final rich = runs.any((r) => r.$2 != null && _runHasStyling(r.$2!));
+    if (!rich) {
+      return SharedString._fromText(runs.map((r) => r.$1).join());
+    }
+    return SharedString(
+      node: XmlElement(_xmlName('si'), [], [
+        for (final r in runs) _buildRun(r.$1, r.$2),
+      ]),
+    );
+  }
+
+  /// Flattens a [TextSpan] tree into ordered `(text, style)` runs.
+  static void _collectRuns(TextSpan span, List<(String, CellStyle?)> out) {
+    final text = span.text;
+    if (text != null && text.isNotEmpty) out.add((text, span.style));
+    final children = span.children;
+    if (children != null) {
+      for (final child in children) {
+        _collectRuns(child, out);
+      }
+    }
+  }
+
+  /// Whether [s] carries any run-level styling worth emitting as `<rPr>`.
+  static bool _runHasStyling(CellStyle s) =>
+      s.isBold ||
+      s.isItalic ||
+      s.underline != Underline.None ||
+      s.fontSize != null ||
+      s.fontFamily != null ||
+      s.fontColor.colorHex != ExcelColor.black.colorHex;
+
+  /// Builds one `<r>` run element with optional `<rPr>` properties (in the
+  /// CT_RPrElt order: rFont, b, i, color, sz, u).
+  static XmlElement _buildRun(String text, CellStyle? style) {
+    final children = <XmlElement>[];
+    if (style != null && _runHasStyling(style)) {
+      children.add(
+        XmlElement(_xmlName('rPr'), [], [
+          if (style.fontFamily != null)
+            XmlElement(_xmlName('rFont'), [
+              XmlAttribute(_xmlName('val'), style.fontFamily!),
+            ]),
+          if (style.isBold) XmlElement(_xmlName('b')),
+          if (style.isItalic) XmlElement(_xmlName('i')),
+          if (style.fontColor.colorHex != ExcelColor.black.colorHex)
+            XmlElement(_xmlName('color'), [
+              XmlAttribute(_xmlName('rgb'), style.fontColor.colorHex),
+            ]),
+          if (style.fontSize != null)
+            XmlElement(_xmlName('sz'), [
+              XmlAttribute(_xmlName('val'), style.fontSize.toString()),
+            ]),
+          if (style.underline != Underline.None)
+            XmlElement(
+              _xmlName('u'),
+              style.underline == Underline.Double
+                  ? [XmlAttribute(_xmlName('val'), 'double')]
+                  : const [],
+            ),
+        ]),
+      );
+    }
+    children.add(
+      XmlElement(
+        _xmlName('t'),
+        [XmlAttribute(_xmlName('space', 'xml'), 'preserve')],
+        [XmlText(text)],
+      ),
+    );
+    return XmlElement(_xmlName('r'), [], children);
+  }
 
   /// Produces XML string for this shared string without DOM allocation.
   String toXmlString() {

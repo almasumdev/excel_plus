@@ -52,6 +52,7 @@ final featureDemos = <FeatureDemo>[
   _sheetProtection,
   _sheetTabs,
   _definedNames,
+  _richText,
 ];
 
 FeatureDemo? featureById(String id) {
@@ -1828,5 +1829,114 @@ Excel _buildDefinedNames() {
 
   s.setColumnWidth(0, 22);
   s.setColumnWidth(1, 12);
+  return excel;
+}
+
+// ---------------------------------------------------------------------------
+// 19. Rich text (mixed runs in one cell)
+// ---------------------------------------------------------------------------
+
+final _richText = FeatureDemo(
+  id: 'rich_text',
+  title: 'Rich text',
+  description:
+      'Mix several styles within a single cell using TextCellValue.span and a '
+      'TextSpan tree of runs — bold, italic, colour, size and font per segment. '
+      'Runs are preserved through a read → save round-trip.',
+  points: [
+    'TextCellValue.span(TextSpan(children: [...]))',
+    'Each run carries its own CellStyle',
+    'bold / italic / underline / colour / size / font per run',
+    'Round-trips without flattening to plain text',
+  ],
+  snippet: '''
+sheet.updateCell(
+  CellIndex.indexByString('A1'),
+  TextCellValue.span(TextSpan(children: [
+    TextSpan(text: 'Bold ', style: CellStyle(bold: true)),
+    TextSpan(text: 'and red', style: CellStyle(fontColorHex: ExcelColor.red)),
+  ])),
+);''',
+  fullCode: r'''
+import 'package:excel_plus/excel_plus.dart';
+
+Excel buildRichText() {
+  final excel = Excel.createExcel();
+  final s = excel[excel.getDefaultSheet() ?? 'Sheet1'];
+
+  s.updateCell(
+    CellIndex.indexByString('A1'),
+    TextCellValue.span(TextSpan(children: [
+      TextSpan(text: 'Bold', style: CellStyle(bold: true)),
+      const TextSpan(text: ', '),
+      TextSpan(text: 'italic', style: CellStyle(italic: true)),
+      const TextSpan(text: ', '),
+      TextSpan(text: 'red', style: CellStyle(fontColorHex: ExcelColor.red)),
+      const TextSpan(text: ' all in one cell.'),
+    ])),
+  );
+  return excel;
+}
+''',
+  build: _buildRichText,
+);
+
+Excel _buildRichText() {
+  final excel = _book('Rich text');
+  final s = excel['Rich text'];
+
+  final header = _box(bold: true, fill: _headerFill, font: ExcelColor.white);
+  _put(s, 0, 0, TextCellValue('Example'), header);
+
+  final cells = <TextCellValue>[
+    TextCellValue.span(
+      TextSpan(
+        children: [
+          TextSpan(text: 'Bold', style: CellStyle(bold: true)),
+          const TextSpan(text: ', '),
+          TextSpan(text: 'italic', style: CellStyle(italic: true)),
+          const TextSpan(text: ' and '),
+          TextSpan(
+            text: 'underline',
+            style: CellStyle(underline: Underline.Single),
+          ),
+        ],
+      ),
+    ),
+    TextCellValue.span(
+      TextSpan(
+        children: [
+          TextSpan(
+            text: 'Red',
+            style: CellStyle(fontColorHex: ExcelColor.red),
+          ),
+          const TextSpan(text: ' / '),
+          TextSpan(
+            text: 'Blue',
+            style: CellStyle(fontColorHex: ExcelColor.blue),
+          ),
+          const TextSpan(text: ' / '),
+          TextSpan(
+            text: 'Green',
+            style: CellStyle(fontColorHex: ExcelColor.green),
+          ),
+        ],
+      ),
+    ),
+    TextCellValue.span(
+      TextSpan(
+        children: [
+          const TextSpan(text: 'small '),
+          TextSpan(text: 'BIG', style: CellStyle(fontSize: 18, bold: true)),
+          const TextSpan(text: ' small'),
+        ],
+      ),
+    ),
+  ];
+  for (var i = 0; i < cells.length; i++) {
+    _put(s, 0, i + 1, cells[i], _box());
+  }
+
+  s.setColumnWidth(0, 36);
   return excel;
 }

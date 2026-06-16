@@ -204,7 +204,9 @@ abstract class _ParserBase {
                   richXmlBuf.toString(),
                 ).rootElement;
                 final ss = SharedString(node: siElement);
-                _excel._sharedStrings.add(ss, ss.stringValue);
+                // Key on the full XML so two runs with the same plain text but
+                // different styling remain distinct entries.
+                _excel._sharedStrings.add(ss, ss._dedupKey);
               } else {
                 // Simple string — no DOM needed
                 final val = textBuf.toString();
