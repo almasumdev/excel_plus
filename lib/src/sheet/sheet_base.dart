@@ -43,6 +43,15 @@ class _SheetBase {
   /// `<autoFilter>` (including applied filter criteria) is preserved untouched.
   bool _autoFilterChanged = false;
 
+  /// Sheet protection state (set via [protect] / [unprotect]).
+  bool _protected = false;
+  String? _protectionPassword;
+  Set<SheetProtectionOption> _protectionAllow = {};
+
+  /// Whether protection was changed via the API. When `false`, any existing
+  /// `<sheetProtection>` (including its password hash) is preserved untouched.
+  bool _sheetProtectionChanged = false;
+
   _SheetBase(this._excel, this._sheet);
 
   /// Removes a cell from the specified [rowIndex] and [columnIndex].
@@ -477,6 +486,42 @@ class _SheetBase {
   void removeAutoFilter() {
     _autoFilterRef = null;
     _autoFilterChanged = true;
+  }
+
+  /// Whether this sheet is protected.
+  bool get isProtected => _protected;
+
+  /// The actions permitted while this sheet is protected (read-only view).
+  Set<SheetProtectionOption> get protectionAllowed =>
+      Set.unmodifiable(_protectionAllow);
+
+  /// Protects the sheet, locking every action except selecting cells and any
+  /// listed in [allow].
+  ///
+  /// An optional [password] is stored using Excel's legacy hash — it deters
+  /// edits when the file is opened in Excel but is **not** strong encryption.
+  ///
+  /// ```dart
+  /// sheet.protect(password: 'secret', allow: {SheetProtectionOption.sort});
+  /// ```
+  void protect({
+    String? password,
+    Set<SheetProtectionOption> allow = const {},
+  }) {
+    _protected = true;
+    _protectionPassword = (password == null || password.isEmpty)
+        ? null
+        : password;
+    _protectionAllow = {...allow};
+    _sheetProtectionChanged = true;
+  }
+
+  /// Removes protection from this sheet.
+  void unprotect() {
+    _protected = false;
+    _protectionPassword = null;
+    _protectionAllow = {};
+    _sheetProtectionChanged = true;
   }
 
   /// The default row height, or `null` if not set.

@@ -49,6 +49,7 @@ final featureDemos = <FeatureDemo>[
   _dataValidation,
   _sheetView,
   _autoFilter,
+  _sheetProtection,
 ];
 
 FeatureDemo? featureById(String id) {
@@ -1580,5 +1581,95 @@ Excel _buildAutoFilter() {
   s.setColumnWidth(0, 16);
   s.setColumnWidth(1, 16);
   s.setColumnWidth(2, 12);
+  return excel;
+}
+
+// ---------------------------------------------------------------------------
+// 16. Sheet protection
+// ---------------------------------------------------------------------------
+
+final _sheetProtection = FeatureDemo(
+  id: 'sheet_protection',
+  title: 'Sheet protection',
+  description:
+      'Lock a sheet so its cells cannot be edited, optionally behind a '
+      'password, while still allowing chosen actions like sorting and using '
+      'filters. Open the exported file in Excel and try to edit a cell.',
+  points: [
+    'sheet.protect(password: …, allow: {…})',
+    'SheetProtectionOption controls what stays permitted',
+    'sheet.unprotect() removes it',
+    'Opened files keep their existing password hash on save',
+  ],
+  snippet: '''
+sheet.protect(
+  password: 'demo',
+  allow: {SheetProtectionOption.sort, SheetProtectionOption.autoFilter},
+);''',
+  fullCode: r'''
+import 'package:excel_plus/excel_plus.dart';
+
+Excel buildSheetProtection() {
+  final excel = Excel.createExcel();
+  final s = excel[excel.getDefaultSheet() ?? 'Sheet1'];
+
+  s.updateCell(CellIndex.indexByString('A1'), TextCellValue('Item'));
+  s.updateCell(CellIndex.indexByString('B1'), TextCellValue('Qty'));
+  s.updateCell(CellIndex.indexByString('A2'), TextCellValue('Pens'));
+  s.updateCell(CellIndex.indexByString('B2'), IntCellValue(12));
+
+  // Lock the sheet; allow only sorting and using filters.
+  s.protect(
+    password: 'demo',
+    allow: {SheetProtectionOption.sort, SheetProtectionOption.autoFilter},
+  );
+  return excel;
+}
+''',
+  build: _buildSheetProtection,
+);
+
+Excel _buildSheetProtection() {
+  final excel = _book('Protected');
+  final s = excel['Protected'];
+
+  final header = _box(bold: true, fill: _headerFill, font: ExcelColor.white);
+  _put(s, 0, 0, TextCellValue('Item'), header);
+  _put(s, 1, 0, TextCellValue('Qty'), header);
+
+  final items = <(String, int)>[
+    ('Pens', 12),
+    ('Notebooks', 30),
+    ('Folders', 8),
+  ];
+  for (var i = 0; i < items.length; i++) {
+    _put(s, 0, i + 1, TextCellValue(items[i].$1), _box());
+    _put(
+      s,
+      1,
+      i + 1,
+      IntCellValue(items[i].$2),
+      _box(align: HorizontalAlign.Right),
+    );
+  }
+
+  _put(
+    s,
+    0,
+    items.length + 2,
+    TextCellValue(
+      'Protected with password "demo". Sorting and filters are allowed; '
+      'editing cells is blocked in Excel.',
+    ),
+    _box(font: ExcelColor.fromHexString('FF6B7280')),
+  );
+
+  s.protect(
+    password: 'demo',
+    allow: {SheetProtectionOption.sort, SheetProtectionOption.autoFilter},
+  );
+
+  s.setColumnWidth(0, 16);
+  s.setColumnWidth(1, 10);
   return excel;
 }

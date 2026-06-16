@@ -77,4 +77,30 @@ mixin _ParserWorksheetFeaturesMixin on _ParserBase {
     final filter = doc.findAllElements('autoFilter').firstOrNull;
     if (filter != null) sheet._autoFilterRef = filter.getAttribute('ref');
   }
+
+  /// Reads `<sheetProtection>` into the sheet model (the getters only; the
+  /// element — and its password hash — is left untouched on save unless the API
+  /// changes it).
+  void _parseSheetProtectionForSheet(String sheetName) {
+    final sheet = _excel._sheetMap[sheetName];
+    final partPath = _excel._xmlSheetId[sheetName];
+    if (sheet == null || partPath == null) return;
+    final doc = _excel._xmlFiles[partPath];
+    if (doc == null) return;
+
+    final prot = doc.findAllElements('sheetProtection').firstOrNull;
+    if (prot == null) return;
+
+    sheet._protected = prot.getAttribute('sheet') == '1';
+    final allow = <SheetProtectionOption>{};
+    for (final option in SheetProtectionOption.values) {
+      final value = prot.getAttribute(_sheetProtectionAttr(option));
+      final allowed = _sheetProtectionDefaultsUnlocked(option)
+          ? value !=
+                '1' // objects/scenarios: locked only when ="1"
+          : value == '0'; // others: allowed only when ="0"
+      if (allowed) allow.add(option);
+    }
+    sheet._protectionAllow = allow;
+  }
 }

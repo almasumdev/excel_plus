@@ -57,6 +57,7 @@ class Parser extends _ParserBase
     _parseDataValidationsForSheet(sheetName);
     _parseSheetViewForSheet(sheetName);
     _parseAutoFilterForSheet(sheetName);
+    _parseSheetProtectionForSheet(sheetName);
   }
 
   /// Parses all remaining unparsed sheets.

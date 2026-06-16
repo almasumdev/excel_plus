@@ -170,4 +170,46 @@ mixin _WriterWorksheetFeaturesMixin on _WriterBase {
       XmlElement(_xmlName('autoFilter'), [XmlAttribute(_xmlName('ref'), ref)]),
     );
   }
+
+  /// Writes `<sheetProtection>` for [sheetName] only when the API changed it, so
+  /// an existing element (and its password hash) is otherwise preserved by the
+  /// envelope round-trip.
+  void _applySheetProtectionForSheet(String sheetName) {
+    final sheet = _excel._sheetMap[sheetName];
+    final partPath = _excel._xmlSheetId[sheetName];
+    if (sheet == null || partPath == null) return;
+    if (!sheet._sheetProtectionChanged) return;
+    final doc = _excel._xmlFiles[partPath];
+    if (doc == null) return;
+    final worksheet = doc.findAllElements('worksheet').firstOrNull;
+    if (worksheet == null) return;
+
+    for (final e in worksheet.findElements('sheetProtection').toList()) {
+      worksheet.children.remove(e);
+    }
+    if (!sheet._protected) return;
+
+    final password = sheet._protectionPassword;
+    final attrs = <XmlAttribute>[
+      XmlAttribute(_xmlName('sheet'), '1'),
+      if (password != null)
+        XmlAttribute(_xmlName('password'), _legacyPasswordHash(password)),
+    ];
+    for (final option in SheetProtectionOption.values) {
+      final allowed = sheet._protectionAllow.contains(option);
+      final attr = _sheetProtectionAttr(option);
+      if (_sheetProtectionDefaultsUnlocked(option)) {
+        // objects/scenarios are locked by default; emit ="1" unless allowed.
+        if (!allowed) attrs.add(XmlAttribute(_xmlName(attr), '1'));
+      } else {
+        // the rest are locked while protected; emit ="0" to allow.
+        if (allowed) attrs.add(XmlAttribute(_xmlName(attr), '0'));
+      }
+    }
+
+    _insertWorksheetChildOrdered(
+      worksheet,
+      XmlElement(_xmlName('sheetProtection'), attrs),
+    );
+  }
 }
