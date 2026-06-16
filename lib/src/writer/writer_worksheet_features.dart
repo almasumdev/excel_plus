@@ -68,4 +68,82 @@ mixin _WriterWorksheetFeaturesMixin on _WriterBase {
       ], rules),
     );
   }
+
+  /// Applies the sheet-view model (gridlines, headers, zoom and frozen panes) of
+  /// [sheetName] onto its `<sheetView>`, in place so unrelated attributes (and
+  /// the RTL flag set earlier) are preserved. Runs for every sheet because the
+  /// RTL pass already regenerates `<sheetView>`, dropping these on save.
+  void _applySheetViewForSheet(String sheetName) {
+    final sheet = _excel._sheetMap[sheetName];
+    final partPath = _excel._xmlSheetId[sheetName];
+    if (sheet == null || partPath == null) return;
+    final doc = _excel._xmlFiles[partPath];
+    if (doc == null) return;
+    final worksheet = doc.findAllElements('worksheet').firstOrNull;
+    if (worksheet == null) return;
+
+    // Find or create <sheetViews>/<sheetView>.
+    var views = worksheet.findElements('sheetViews').firstOrNull;
+    if (views == null) {
+      views = XmlElement(_xmlName('sheetViews'), [], []);
+      _insertWorksheetChildOrdered(worksheet, views);
+    }
+    var view = views.findElements('sheetView').firstOrNull;
+    if (view == null) {
+      view = XmlElement(_xmlName('sheetView'), [], []);
+      views.children.add(view);
+    }
+    if (view.getAttribute('workbookViewId') == null) {
+      view.attributes.add(XmlAttribute(_xmlName('workbookViewId'), '0'));
+    }
+
+    // Defaults are "shown"/unset, so only emit the non-default form.
+    _setOrRemoveAttr(view, 'showGridLines', sheet._showGridLines ? null : '0');
+    _setOrRemoveAttr(
+      view,
+      'showRowColHeaders',
+      sheet._showRowColHeaders ? null : '0',
+    );
+    _setOrRemoveAttr(view, 'zoomScale', sheet._zoomScale?.toString());
+
+    // Regenerate the freeze pane (any prior pane/selection is replaced).
+    view.children.removeWhere(
+      (n) =>
+          n is XmlElement &&
+          (n.name.local == 'pane' || n.name.local == 'selection'),
+    );
+    final rows = sheet._frozenRows, cols = sheet._frozenColumns;
+    if (rows > 0 || cols > 0) {
+      final topLeft = getCellId(cols, rows);
+      final activePane = (cols > 0 && rows > 0)
+          ? 'bottomRight'
+          : (cols > 0 ? 'topRight' : 'bottomLeft');
+      // pane first, then selection (CT_SheetView order).
+      view.children.insert(
+        0,
+        XmlElement(_xmlName('selection'), [
+          XmlAttribute(_xmlName('pane'), activePane),
+          XmlAttribute(_xmlName('activeCell'), topLeft),
+          XmlAttribute(_xmlName('sqref'), topLeft),
+        ]),
+      );
+      view.children.insert(
+        0,
+        XmlElement(_xmlName('pane'), [
+          if (cols > 0) XmlAttribute(_xmlName('xSplit'), cols.toString()),
+          if (rows > 0) XmlAttribute(_xmlName('ySplit'), rows.toString()),
+          XmlAttribute(_xmlName('topLeftCell'), topLeft),
+          XmlAttribute(_xmlName('activePane'), activePane),
+          XmlAttribute(_xmlName('state'), 'frozen'),
+        ]),
+      );
+    }
+  }
+
+  /// Sets [name]=[value] on [el], replacing any existing copy; a `null` [value]
+  /// removes the attribute.
+  void _setOrRemoveAttr(XmlElement el, String name, String? value) {
+    el.attributes.removeWhere((a) => a.name.local == name);
+    if (value != null) el.attributes.add(XmlAttribute(_xmlName(name), value));
+  }
 }

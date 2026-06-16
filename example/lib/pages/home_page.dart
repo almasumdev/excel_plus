@@ -25,6 +25,7 @@ class HomePage extends StatelessWidget {
     'colors_read': Icons.palette_outlined,
     'hyperlinks': Icons.link,
     'data_validation': Icons.checklist_rtl,
+    'sheet_view': Icons.splitscreen_outlined,
   };
 
   static const _showcaseIcons = <String, IconData>{

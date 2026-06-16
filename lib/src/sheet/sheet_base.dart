@@ -29,6 +29,13 @@ class _SheetBase {
   /// Data validations keyed by their `sqref` range string (e.g. `"C2:C100"`).
   final Map<String, DataValidation> _dataValidations = {};
 
+  /// Sheet-view settings: gridline/header visibility, zoom and frozen panes.
+  bool _showGridLines = true;
+  bool _showRowColHeaders = true;
+  int? _zoomScale;
+  int _frozenRows = 0;
+  int _frozenColumns = 0;
+
   _SheetBase(this._excel, this._sheet);
 
   /// Removes a cell from the specified [rowIndex] and [columnIndex].
@@ -405,6 +412,44 @@ class _SheetBase {
   /// [start] to [end] (or the single cell [start]).
   DataValidation? removeDataValidation(CellIndex start, {CellIndex? end}) =>
       _dataValidations.remove(_validationRef(start, end));
+
+  /// Whether gridlines are shown in this sheet (default `true`).
+  bool get showGridLines => _showGridLines;
+  set showGridLines(bool value) => _showGridLines = value;
+
+  /// Whether row and column headers are shown in this sheet (default `true`).
+  bool get showRowColHeaders => _showRowColHeaders;
+  set showRowColHeaders(bool value) => _showRowColHeaders = value;
+
+  /// The zoom level as a percentage (Excel supports 10–400), or `null` for the
+  /// default. Non-positive values are treated as unset.
+  int? get zoom => _zoomScale;
+  set zoom(int? value) =>
+      _zoomScale = (value == null || value <= 0) ? null : value;
+
+  /// The number of leading rows currently frozen (`0` if none).
+  int get frozenRows => _frozenRows;
+
+  /// The number of leading columns currently frozen (`0` if none).
+  int get frozenColumns => _frozenColumns;
+
+  /// Freezes the top [rows] rows and left [columns] columns so they stay in
+  /// view while scrolling. Pass both as `0` (or call [unfreezePanes]) to clear.
+  ///
+  /// ```dart
+  /// sheet.freezePanes(rows: 1);              // freeze the header row
+  /// sheet.freezePanes(rows: 1, columns: 2);  // freeze a header row + 2 columns
+  /// ```
+  void freezePanes({int rows = 0, int columns = 0}) {
+    _frozenRows = rows < 0 ? 0 : rows;
+    _frozenColumns = columns < 0 ? 0 : columns;
+  }
+
+  /// Removes any frozen panes from this sheet.
+  void unfreezePanes() {
+    _frozenRows = 0;
+    _frozenColumns = 0;
+  }
 
   /// The default row height, or `null` if not set.
   double? get defaultRowHeight => _defaultRowHeight;

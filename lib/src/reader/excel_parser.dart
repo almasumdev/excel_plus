@@ -55,6 +55,7 @@ class Parser extends _ParserBase
     _parseWorksheetRels(sheetName);
     _parseHyperlinksForSheet(sheetName);
     _parseDataValidationsForSheet(sheetName);
+    _parseSheetViewForSheet(sheetName);
   }
 
   /// Parses all remaining unparsed sheets.

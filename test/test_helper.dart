@@ -78,6 +78,7 @@ List<int> buildXlsx(
   String sheetDataInner, {
   String? styles,
   String? sharedStrings,
+  String beforeSheetData = '',
   String afterSheetData = '',
   String? theme,
   String? sheetRels,
@@ -123,7 +124,7 @@ List<int> buildXlsx(
     'xl/worksheets/sheet1.xml':
         '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
-<sheetData>$sheetDataInner</sheetData>$afterSheetData
+$beforeSheetData<sheetData>$sheetDataInner</sheetData>$afterSheetData
 </worksheet>''',
   };
 

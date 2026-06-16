@@ -361,6 +361,10 @@ class ExcelWriter extends _WriterBase
         _applyRTLForSheet(sheetName);
       }
 
+      // Apply sheet-view settings (gridlines, zoom, frozen panes). Runs after
+      // RTL (which regenerates <sheetView>) and for every sheet.
+      _applySheetViewForSheet(sheetName);
+
       // Emit hyperlinks (+ their worksheet rels) into the DOM.
       _applyHyperlinksForSheet(sheetName);
 

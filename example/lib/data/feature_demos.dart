@@ -47,6 +47,7 @@ final featureDemos = <FeatureDemo>[
   _colorsRead,
   _hyperlinks,
   _dataValidation,
+  _sheetView,
 ];
 
 FeatureDemo? featureById(String id) {
@@ -1381,5 +1382,105 @@ Excel _buildDataValidation() {
   s.setColumnWidth(0, 14);
   s.setColumnWidth(1, 16);
   s.setColumnWidth(2, 26);
+  return excel;
+}
+
+// ---------------------------------------------------------------------------
+// 14. Sheet view (freeze panes, gridlines, zoom)
+// ---------------------------------------------------------------------------
+
+final _sheetView = FeatureDemo(
+  id: 'sheet_view',
+  title: 'Sheet view',
+  description:
+      'Control how a sheet is presented: freeze header rows/columns so they '
+      'stay visible while scrolling, hide gridlines, and set a default zoom. '
+      'Open the exported file in Excel and scroll to see the frozen header.',
+  points: [
+    'sheet.freezePanes(rows: 1, columns: 1)',
+    'sheet.showGridLines = false',
+    'sheet.zoom = 120 (percent)',
+    'All survive a read → save round-trip',
+  ],
+  snippet: '''
+sheet.freezePanes(rows: 1, columns: 1); // keep header row + first column
+sheet.showGridLines = false;
+sheet.zoom = 120;''',
+  fullCode: r'''
+import 'package:excel_plus/excel_plus.dart';
+
+Excel buildSheetView() {
+  final excel = Excel.createExcel();
+  final s = excel[excel.getDefaultSheet() ?? 'Sheet1'];
+
+  s.updateCell(CellIndex.indexByString('A1'), TextCellValue('Month'));
+  s.updateCell(CellIndex.indexByString('B1'), TextCellValue('Revenue'));
+  for (var i = 0; i < 12; i++) {
+    s.updateCell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: i + 1),
+        TextCellValue('Month ${i + 1}'));
+    s.updateCell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: i + 1),
+        DoubleCellValue(1000 + i * 125));
+  }
+
+  s.freezePanes(rows: 1, columns: 1); // header row + month column stay put
+  s.showGridLines = false;
+  s.zoom = 120;
+  return excel;
+}
+''',
+  build: _buildSheetView,
+);
+
+Excel _buildSheetView() {
+  final excel = _book('Sheet view');
+  final s = excel['Sheet view'];
+
+  final header = _box(bold: true, fill: _headerFill, font: ExcelColor.white);
+  const cols = ['Month', 'Revenue', 'Cost', 'Profit'];
+  for (var c = 0; c < cols.length; c++) {
+    _put(s, c, 0, TextCellValue(cols[c]), header);
+  }
+
+  const months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', //
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+  for (var i = 0; i < months.length; i++) {
+    final r = i + 1;
+    final revenue = 1000 + i * 125;
+    final cost = 600 + i * 70;
+    _put(s, 0, r, TextCellValue(months[i]), _box(bold: true));
+    _put(
+      s,
+      1,
+      r,
+      DoubleCellValue(revenue.toDouble()),
+      _box(align: HorizontalAlign.Right),
+    );
+    _put(
+      s,
+      2,
+      r,
+      DoubleCellValue(cost.toDouble()),
+      _box(align: HorizontalAlign.Right),
+    );
+    _put(
+      s,
+      3,
+      r,
+      FormulaCellValue('B${r + 1}-C${r + 1}'),
+      _box(align: HorizontalAlign.Right),
+    );
+  }
+
+  // Freeze the header row and the month column; hide gridlines; zoom in a bit.
+  s.freezePanes(rows: 1, columns: 1);
+  s.showGridLines = false;
+  s.zoom = 120;
+
+  s.setColumnWidth(0, 10);
+  s.setColumnWidth(1, 12);
+  s.setColumnWidth(2, 12);
+  s.setColumnWidth(3, 12);
   return excel;
 }

@@ -38,4 +38,30 @@ mixin _ParserWorksheetFeaturesMixin on _ParserBase {
       );
     }
   }
+
+  /// Reads `<sheetView>` (gridlines, headers, zoom) and any frozen `<pane>` into
+  /// the sheet model so the getters reflect the file and the values round-trip.
+  void _parseSheetViewForSheet(String sheetName) {
+    final sheet = _excel._sheetMap[sheetName];
+    final partPath = _excel._xmlSheetId[sheetName];
+    if (sheet == null || partPath == null) return;
+    final doc = _excel._xmlFiles[partPath];
+    if (doc == null) return;
+
+    final view = doc.findAllElements('sheetView').firstOrNull;
+    if (view == null) return;
+
+    sheet._showGridLines = view.getAttribute('showGridLines') != '0';
+    sheet._showRowColHeaders = view.getAttribute('showRowColHeaders') != '0';
+    final zoom = int.tryParse(view.getAttribute('zoomScale') ?? '');
+    if (zoom != null && zoom > 0) sheet._zoomScale = zoom;
+
+    final pane = view.findElements('pane').firstOrNull;
+    final state = pane?.getAttribute('state');
+    if (state == 'frozen' || state == 'frozenSplit') {
+      sheet._frozenColumns =
+          int.tryParse(pane!.getAttribute('xSplit') ?? '') ?? 0;
+      sheet._frozenRows = int.tryParse(pane.getAttribute('ySplit') ?? '') ?? 0;
+    }
+  }
 }
