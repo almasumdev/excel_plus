@@ -12,6 +12,9 @@ const _relationshipsSharedStrings =
 const _relationshipsTheme =
     "http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme";
 
+const _relationshipsHyperlink =
+    "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink";
+
 const _relationships =
     'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
 

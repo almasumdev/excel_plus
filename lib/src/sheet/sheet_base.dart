@@ -19,6 +19,13 @@ class _SheetBase {
   Map<int, Map<int, Data>> _sheetData = {};
   HeaderFooter? _headerFooter;
 
+  /// Hyperlinks keyed by their cell/range reference (e.g. `"A1"`).
+  final Map<String, Hyperlink> _hyperlinks = {};
+
+  /// Worksheet relationships parsed from `_rels/sheetN.xml.rels` (used to
+  /// resolve external hyperlink targets and to preserve foreign relations).
+  List<_Relationship> _worksheetRels = const [];
+
   _SheetBase(this._excel, this._sheet);
 
   /// Removes a cell from the specified [rowIndex] and [columnIndex].
@@ -340,6 +347,24 @@ class _SheetBase {
   set headerFooter(HeaderFooter? headerFooter) {
     _headerFooter = headerFooter;
   }
+
+  /// All hyperlinks on this sheet, keyed by their cell/range reference
+  /// (e.g. `"A1"`). Read-only; use [setHyperlink] / [removeHyperlink] to edit.
+  Map<String, Hyperlink> get hyperlinks => Map.unmodifiable(_hyperlinks);
+
+  /// Attaches [link] to the cell at [cellIndex].
+  void setHyperlink(CellIndex cellIndex, Hyperlink link) {
+    _hyperlinks[getCellId(cellIndex.columnIndex, cellIndex.rowIndex)] = link;
+  }
+
+  /// Returns the hyperlink on the cell at [cellIndex], or `null` if there is
+  /// none keyed to that exact reference.
+  Hyperlink? getHyperlink(CellIndex cellIndex) =>
+      _hyperlinks[getCellId(cellIndex.columnIndex, cellIndex.rowIndex)];
+
+  /// Removes and returns any hyperlink on the cell at [cellIndex].
+  Hyperlink? removeHyperlink(CellIndex cellIndex) =>
+      _hyperlinks.remove(getCellId(cellIndex.columnIndex, cellIndex.rowIndex));
 
   /// The default row height, or `null` if not set.
   double? get defaultRowHeight => _defaultRowHeight;

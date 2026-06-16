@@ -80,6 +80,7 @@ List<int> buildXlsx(
   String? sharedStrings,
   String afterSheetData = '',
   String? theme,
+  String? sheetRels,
 }) {
   final themeOverride = theme == null
       ? ''
@@ -118,6 +119,7 @@ List<int> buildXlsx(
     'xl/styles.xml': styles ?? _defaultStyles,
     'xl/sharedStrings.xml': sharedStrings ?? _emptySharedStrings,
     'xl/theme/theme1.xml': ?theme,
+    'xl/worksheets/_rels/sheet1.xml.rels': ?sheetRels,
     'xl/worksheets/sheet1.xml':
         '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">

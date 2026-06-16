@@ -83,6 +83,18 @@ class Data {
     _cellStyle = style;
   }
 
+  /// The hyperlink attached to this cell, or `null` if there is none.
+  Hyperlink? get hyperlink => _sheet.getHyperlink(cellIndex);
+
+  /// Attaches a hyperlink to this cell, or removes it when set to `null`.
+  set hyperlink(Hyperlink? link) {
+    if (link == null) {
+      _sheet.removeHyperlink(cellIndex);
+    } else {
+      _sheet.setHyperlink(cellIndex, link);
+    }
+  }
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||

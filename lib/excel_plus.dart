@@ -25,6 +25,7 @@ part 'src/models/border.dart';
 part 'src/models/header_footer.dart';
 part 'src/models/color.dart';
 part 'src/models/theme_color.dart';
+part 'src/models/hyperlink.dart';
 part 'src/models/enums.dart';
 part 'src/models/span.dart';
 part 'src/models/shared_string.dart';
@@ -40,12 +41,14 @@ part 'src/sheet/sheet.dart';
 /// Reader
 part 'src/reader/parser_base.dart';
 part 'src/reader/parser_theme.dart';
+part 'src/reader/parser_relations.dart';
 part 'src/reader/parser_styles.dart';
 part 'src/reader/excel_parser.dart';
 
 /// Writer
 part 'src/writer/writer_base.dart';
 part 'src/writer/writer_styles.dart';
+part 'src/writer/writer_relations.dart';
 part 'src/writer/excel_writer.dart';
 part 'src/writer/span_corrector.dart';
 
