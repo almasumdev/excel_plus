@@ -37,6 +37,13 @@ class Parser extends _ParserBase
         if (_excel._sheetMap[name] == null) {
           _excel._sheetMap[name] = Sheet._(_excel, name);
         }
+        // Tab visibility lives on the workbook <sheet> entry, not the worksheet.
+        final state = node.getAttribute('state');
+        _excel._sheetMap[name]!._visibility = switch (state) {
+          'hidden' => SheetVisibility.hidden,
+          'veryHidden' => SheetVisibility.veryHidden,
+          _ => SheetVisibility.visible,
+        };
         // Store node for deferred parsing
         _excel._pendingSheetNodes[name] = node;
       }
@@ -58,6 +65,7 @@ class Parser extends _ParserBase
     _parseSheetViewForSheet(sheetName);
     _parseAutoFilterForSheet(sheetName);
     _parseSheetProtectionForSheet(sheetName);
+    _parseTabColorForSheet(sheetName);
   }
 
   /// Parses all remaining unparsed sheets.

@@ -15,6 +15,7 @@ class ExcelWriter extends _WriterBase
     }
 
     _setSheetElements();
+    _applySheetVisibilities();
     if (_excel._defaultSheet != null) {
       _setDefaultSheet(_excel._defaultSheet);
     }
@@ -376,6 +377,9 @@ class ExcelWriter extends _WriterBase
 
       // Emit sheet protection into the DOM (only when changed via the API).
       _applySheetProtectionForSheet(sheetName);
+
+      // Emit the tab colour into the DOM (only when changed via the API).
+      _applyTabColorForSheet(sheetName);
 
       // Build cell data as XML string (no DOM node allocation)
       String cellDataXml = _buildSheetDataXml(sheetName, sheetObject);

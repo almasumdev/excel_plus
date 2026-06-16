@@ -50,6 +50,7 @@ final featureDemos = <FeatureDemo>[
   _sheetView,
   _autoFilter,
   _sheetProtection,
+  _sheetTabs,
 ];
 
 FeatureDemo? featureById(String id) {
@@ -1671,5 +1672,84 @@ Excel _buildSheetProtection() {
 
   s.setColumnWidth(0, 16);
   s.setColumnWidth(1, 10);
+  return excel;
+}
+
+// ---------------------------------------------------------------------------
+// 17. Sheet tabs (colour & visibility)
+// ---------------------------------------------------------------------------
+
+final _sheetTabs = FeatureDemo(
+  id: 'sheet_tabs',
+  title: 'Sheet tabs',
+  description:
+      'Give each worksheet tab a colour and control whether it is visible or '
+      'hidden. Open the exported file in Excel to see the coloured tabs at the '
+      'bottom (and unhide "Notes" via the tab context menu).',
+  points: [
+    'sheet.tabColor = ExcelColor.blue',
+    'sheet.visibility = SheetVisibility.hidden',
+    'veryHidden tabs can only be unhidden in code',
+    'Set tabColor = null to clear it',
+  ],
+  snippet: '''
+excel['Q1'].tabColor = ExcelColor.blue;
+excel['Notes'].visibility = SheetVisibility.hidden;''',
+  fullCode: r'''
+import 'package:excel_plus/excel_plus.dart';
+
+Excel buildSheetTabs() {
+  final excel = Excel.createExcel();
+  excel.rename(excel.getDefaultSheet() ?? 'Sheet1', 'Summary');
+
+  excel['Summary'].tabColor = ExcelColor.fromHexString('FF15683F');
+  excel['Q1'].tabColor = ExcelColor.blue;
+  excel['Q2'].tabColor = ExcelColor.amber;
+
+  // A hidden helper sheet (still readable/writable in code).
+  excel['Notes'].visibility = SheetVisibility.hidden;
+  return excel;
+}
+''',
+  build: _buildSheetTabs,
+);
+
+Excel _buildSheetTabs() {
+  final excel = _book('Summary');
+
+  final summary = excel['Summary'];
+  summary.tabColor = ExcelColor.fromHexString('FF15683F');
+  final header = _box(bold: true, fill: _headerFill, font: ExcelColor.white);
+  _put(summary, 0, 0, TextCellValue('Tab'), header);
+  _put(summary, 1, 0, TextCellValue('Colour / state'), header);
+
+  final rows = <(String, String)>[
+    ('Summary', 'Green'),
+    ('Q1', 'Blue'),
+    ('Q2', 'Amber'),
+    ('Notes', 'Hidden'),
+  ];
+  for (var i = 0; i < rows.length; i++) {
+    _put(summary, 0, i + 1, TextCellValue(rows[i].$1), _box(bold: true));
+    _put(summary, 1, i + 1, TextCellValue(rows[i].$2), _box());
+  }
+  summary.setColumnWidth(0, 14);
+  summary.setColumnWidth(1, 16);
+
+  final q1 = excel['Q1'];
+  q1.tabColor = ExcelColor.blue;
+  _put(q1, 0, 0, TextCellValue('Q1 revenue'), _box(bold: true));
+  _put(q1, 1, 0, DoubleCellValue(125000), _box(align: HorizontalAlign.Right));
+
+  final q2 = excel['Q2'];
+  q2.tabColor = ExcelColor.amber;
+  _put(q2, 0, 0, TextCellValue('Q2 revenue'), _box(bold: true));
+  _put(q2, 1, 0, DoubleCellValue(148500), _box(align: HorizontalAlign.Right));
+
+  // A hidden helper sheet — present in the file but not shown as a tab.
+  final notes = excel['Notes'];
+  notes.visibility = SheetVisibility.hidden;
+  _put(notes, 0, 0, TextCellValue('Internal notes (hidden tab)'), _box());
+
   return excel;
 }

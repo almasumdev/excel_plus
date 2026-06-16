@@ -52,6 +52,17 @@ class _SheetBase {
   /// `<sheetProtection>` (including its password hash) is preserved untouched.
   bool _sheetProtectionChanged = false;
 
+  /// Tab colour (`<sheetPr><tabColor>`), or `null` when none is set.
+  ExcelColor? _tabColor;
+
+  /// Whether the tab colour was changed via the API. When `false`, an existing
+  /// `<tabColor>` (including a theme/indexed reference) is preserved untouched.
+  bool _tabColorChanged = false;
+
+  /// Tab visibility, stored in the workbook `<sheet state>` entry.
+  SheetVisibility _visibility = SheetVisibility.visible;
+  bool _visibilityChanged = false;
+
   _SheetBase(this._excel, this._sheet);
 
   /// Removes a cell from the specified [rowIndex] and [columnIndex].
@@ -522,6 +533,25 @@ class _SheetBase {
     _protectionPassword = null;
     _protectionAllow = {};
     _sheetProtectionChanged = true;
+  }
+
+  /// The colour of this sheet's tab, or `null` if none is set.
+  ExcelColor? get tabColor => _tabColor;
+
+  /// Sets (or clears, when `null`) the colour of this sheet's tab.
+  set tabColor(ExcelColor? color) {
+    _tabColor = color;
+    _tabColorChanged = true;
+  }
+
+  /// Whether this sheet's tab is visible, hidden, or very hidden.
+  SheetVisibility get visibility => _visibility;
+
+  /// Sets the tab visibility. Hiding every sheet (or the active one) produces a
+  /// file Excel will refuse to open, so always leave at least one visible sheet.
+  set visibility(SheetVisibility value) {
+    _visibility = value;
+    _visibilityChanged = true;
   }
 
   /// The default row height, or `null` if not set.

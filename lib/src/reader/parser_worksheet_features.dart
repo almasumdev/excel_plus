@@ -103,4 +103,47 @@ mixin _ParserWorksheetFeaturesMixin on _ParserBase {
     }
     sheet._protectionAllow = allow;
   }
+
+  /// Reads `<sheetPr><tabColor>` into the sheet model, resolving rgb / theme /
+  /// indexed references to ARGB. The element is left untouched on save unless
+  /// the API changes it (so a theme reference round-trips as-is).
+  void _parseTabColorForSheet(String sheetName) {
+    final sheet = _excel._sheetMap[sheetName];
+    final partPath = _excel._xmlSheetId[sheetName];
+    if (sheet == null || partPath == null) return;
+    final doc = _excel._xmlFiles[partPath];
+    if (doc == null) return;
+
+    final sheetPr = doc.findAllElements('sheetPr').firstOrNull;
+    final tabColor = sheetPr?.findElements('tabColor').firstOrNull;
+    if (tabColor == null) return;
+
+    final hex = _readTabColorHex(tabColor);
+    if (hex != null) sheet._tabColor = ExcelColor.fromHexString(hex);
+  }
+
+  /// Resolves a `<tabColor>` element to an ARGB hex string (rgb wins, then a
+  /// theme reference + tint, then an indexed palette entry).
+  String? _readTabColorHex(XmlElement el) {
+    final rgb = el.getAttribute('rgb');
+    if (rgb != null && rgb.isNotEmpty) return _normalizeArgb(rgb);
+
+    final theme = el.getAttribute('theme');
+    if (theme != null) {
+      final index = int.tryParse(theme);
+      final tint = double.tryParse(el.getAttribute('tint') ?? '') ?? 0.0;
+      if (index != null) {
+        return _resolveThemeColor(_excel._themeColors, index, tint);
+      }
+    }
+
+    final indexed = el.getAttribute('indexed');
+    if (indexed != null) {
+      final index = int.tryParse(indexed);
+      if (index != null) {
+        return _resolveIndexedColor(_excel._indexedColors, index);
+      }
+    }
+    return null;
+  }
 }

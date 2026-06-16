@@ -212,4 +212,68 @@ mixin _WriterWorksheetFeaturesMixin on _WriterBase {
       XmlElement(_xmlName('sheetProtection'), attrs),
     );
   }
+
+  /// Writes the tab colour into `<sheetPr><tabColor rgb>` (in place, so other
+  /// `sheetPr` content is kept). Only runs when the API changed it, so an
+  /// existing theme/indexed `<tabColor>` round-trips untouched.
+  void _applyTabColorForSheet(String sheetName) {
+    final sheet = _excel._sheetMap[sheetName];
+    final partPath = _excel._xmlSheetId[sheetName];
+    if (sheet == null || partPath == null) return;
+    if (!sheet._tabColorChanged) return;
+    final doc = _excel._xmlFiles[partPath];
+    if (doc == null) return;
+    final worksheet = doc.findAllElements('worksheet').firstOrNull;
+    if (worksheet == null) return;
+
+    var sheetPr = worksheet.findElements('sheetPr').firstOrNull;
+    final color = sheet._tabColor;
+
+    if (color == null) {
+      if (sheetPr != null) {
+        sheetPr.children.removeWhere(
+          (n) => n is XmlElement && n.name.local == 'tabColor',
+        );
+        if (sheetPr.children.isEmpty && sheetPr.attributes.isEmpty) {
+          worksheet.children.remove(sheetPr);
+        }
+      }
+      return;
+    }
+
+    if (sheetPr == null) {
+      sheetPr = XmlElement(_xmlName('sheetPr'), [], []);
+      _insertWorksheetChildOrdered(worksheet, sheetPr);
+    }
+    // tabColor must be the first child of <sheetPr> (CT_SheetPr order).
+    sheetPr.children.removeWhere(
+      (n) => n is XmlElement && n.name.local == 'tabColor',
+    );
+    sheetPr.children.insert(
+      0,
+      XmlElement(_xmlName('tabColor'), [
+        XmlAttribute(_xmlName('rgb'), _normalizeArgb(color.colorHex)),
+      ]),
+    );
+  }
+
+  /// Applies changed tab visibilities onto their workbook `<sheet state>`
+  /// entries. Called once after the per-sheet pass, when every entry exists.
+  void _applySheetVisibilities() {
+    final workbook = _excel._xmlFiles['xl/workbook.xml'];
+    if (workbook == null) return;
+    final entries = workbook.findAllElements('sheet').toList();
+    _excel._sheetMap.forEach((name, sheet) {
+      if (!sheet._visibilityChanged) return;
+      for (final entry in entries) {
+        if (entry.getAttribute('name') != name) continue;
+        _setOrRemoveAttr(entry, 'state', switch (sheet._visibility) {
+          SheetVisibility.visible => null,
+          SheetVisibility.hidden => 'hidden',
+          SheetVisibility.veryHidden => 'veryHidden',
+        });
+        break;
+      }
+    });
+  }
 }
