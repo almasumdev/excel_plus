@@ -3,6 +3,7 @@
 Theme-color reading plus a styling addition and correctness/robustness fixes (all backward compatible):
 
 - Added: theme color reading — `<color theme="N" tint="X"/>` references in font, fill, and border colors now resolve to real ARGB values from `xl/theme/theme1.xml` (with Excel's light/dark index swap and HSL tint), instead of falling back to black. The theme part round-trips on save.
+- Added: indexed (palette) color reading — legacy `<color indexed="N"/>` references resolve via the standard 64-color palette, honoring a workbook's `<indexedColors>` override when present; the automatic system indices (64/65) fall back to the default color.
 - Added: `CellStyle.indent` — alignment-side cell padding (OOXML `<alignment indent="N">`), with full read/write round-trip; negative values clamp to zero.
 - Fixed: illegal XML 1.0 control characters in cell text are now stripped on save, so files no longer open as "corrupt" in Excel.
 - Fixed: `Excel.findAndReplace` now returns the actual replacement count and accepts non-`String` targets without throwing.

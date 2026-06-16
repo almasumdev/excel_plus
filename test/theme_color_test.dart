@@ -83,6 +83,60 @@ String _oneFontStyles(String fontXml) =>
 
 const _oneCell = '<row r="1"><c r="A1" s="1"><v>1</v></c></row>';
 
+/// Styles exercising legacy `indexed="N"` references. No theme part is needed —
+/// the standard built-in palette resolves these.
+const _indexedStyles =
+    '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+<fonts count="4">
+<font><sz val="11"/><name val="Calibri"/></font>
+<font><color indexed="2"/><sz val="11"/><name val="Calibri"/></font>
+<font><color indexed="22"/><sz val="11"/><name val="Calibri"/></font>
+<font><color indexed="64"/><sz val="11"/><name val="Calibri"/></font>
+</fonts>
+<fills count="3">
+<fill><patternFill patternType="none"/></fill>
+<fill><patternFill patternType="gray125"/></fill>
+<fill><patternFill patternType="solid"><fgColor indexed="5"/><bgColor indexed="64"/></patternFill></fill>
+</fills>
+<borders count="2">
+<border><left/><right/><top/><bottom/><diagonal/></border>
+<border><left style="thin"><color indexed="4"/></left><right/><top/><bottom/><diagonal/></border>
+</borders>
+<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
+<cellXfs count="5">
+<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
+<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>
+<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/>
+<xf numFmtId="0" fontId="3" fillId="0" borderId="0" xfId="0" applyFont="1"/>
+<xf numFmtId="0" fontId="0" fillId="2" borderId="1" xfId="0" applyFill="1" applyBorder="1"/>
+</cellXfs>
+</styleSheet>''';
+
+const _indexedSheet =
+    '<row r="1">'
+    '<c r="A1" s="1"><v>1</v></c>'
+    '<c r="B1" s="2"><v>2</v></c>'
+    '<c r="C1" s="3"><v>3</v></c>'
+    '<c r="D1" s="4"><v>4</v></c>'
+    '</row>';
+
+/// Styles whose `<colors><indexedColors>` override remaps palette index 2.
+const _overrideStyles =
+    '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+<fonts count="2"><font><sz val="11"/><name val="Calibri"/></font>
+<font><color indexed="2"/><sz val="11"/><name val="Calibri"/></font></fonts>
+<fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills>
+<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>
+<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
+<cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
+<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs>
+<colors><indexedColors>
+<rgbColor rgb="00000000"/><rgbColor rgb="00FFFFFF"/><rgbColor rgb="00123456"/>
+</indexedColors></colors>
+</styleSheet>''';
+
 int _sumRgb(String argb) {
   final hex = argb.substring(argb.length - 6);
   return int.parse(hex.substring(0, 2), radix: 16) +
@@ -187,6 +241,55 @@ void main() {
       expect(_style(s, 'A1').fontColor.colorHex, 'FF4472C4');
       expect(_style(s, 'F1').backgroundColor.colorHex, 'FFED7D31');
       expect(_style(s, 'F1').leftBorder.borderColorHex, 'FF70AD47');
+    });
+  });
+
+  group('Indexed Color Read', () {
+    late Sheet sheet;
+
+    setUp(() {
+      sheet = Excel.decodeBytes(
+        buildXlsx(_indexedSheet, styles: _indexedStyles),
+      )['Sheet1'];
+    });
+
+    test('resolves font colors from the standard indexed palette', () {
+      expect(_style(sheet, 'A1').fontColor.colorHex, 'FFFF0000'); // 2 = red
+      expect(_style(sheet, 'B1').fontColor.colorHex, 'FFC0C0C0'); // 22 = silver
+    });
+
+    test('treats the automatic system index 64 as the default color', () {
+      expect(_style(sheet, 'C1').fontColor.colorHex, 'FF000000'); // fallback
+    });
+
+    test('resolves indexed fill and border colors', () {
+      expect(_style(sheet, 'D1').backgroundColor.colorHex, 'FFFFFF00'); // 5
+      expect(_style(sheet, 'D1').leftBorder.borderColorHex, 'FF0000FF'); // 4
+    });
+  });
+
+  group('Indexed Color Override', () {
+    test('a custom <indexedColors> palette overrides the default', () {
+      final sheet = Excel.decodeBytes(
+        buildXlsx(_oneCell, styles: _overrideStyles),
+      )['Sheet1'];
+      // Index 2 is remapped from the default red to 00123456 -> FF123456.
+      expect(_style(sheet, 'A1').fontColor.colorHex, 'FF123456');
+    });
+  });
+
+  group('Indexed Color Roundtrip', () {
+    test('indexed-colored styles survive encode and re-decode', () {
+      final source = Excel.decodeBytes(
+        buildXlsx(_indexedSheet, styles: _indexedStyles),
+      );
+      final bytes = source.encode();
+      saveTestOutput(bytes, 'indexed_colors');
+
+      final s = Excel.decodeBytes(bytes!)['Sheet1'];
+      expect(_style(s, 'A1').fontColor.colorHex, 'FFFF0000');
+      expect(_style(s, 'D1').backgroundColor.colorHex, 'FFFFFF00');
+      expect(_style(s, 'D1').leftBorder.borderColorHex, 'FF0000FF');
     });
   });
 }

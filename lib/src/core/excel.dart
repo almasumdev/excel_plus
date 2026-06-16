@@ -63,6 +63,11 @@ class Excel {
   /// theme part. See [_ParserThemeMixin].
   List<String?> _themeColors = const [];
 
+  /// Custom legacy `indexed="N"` palette from the `<indexedColors>` override in
+  /// `styles.xml`. Empty when the workbook uses the standard built-in palette
+  /// ([_defaultIndexedPalette]).
+  List<String?> _indexedColors = const [];
+
   final _SharedStringsMaintainer _sharedStrings = _SharedStringsMaintainer._();
 
   String _stylesTarget = '';

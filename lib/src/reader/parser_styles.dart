@@ -2,11 +2,11 @@ part of '../../excel_plus.dart';
 
 /// Mixin providing style parsing from xlsx files for [Parser].
 mixin _ParserStylesMixin on _ParserBase {
-  /// Reads an OOXML `<color>` element into an [ExcelColor], resolving a `theme`
-  /// reference (with optional `tint`) against the workbook palette. A literal
-  /// `rgb` takes precedence. Returns `null` when the element carries no usable
-  /// color (e.g. `auto="1"`, or an unknown `indexed`) so the caller keeps its
-  /// default.
+  /// Reads an OOXML `<color>` element into an [ExcelColor], resolving `theme`
+  /// (with optional `tint`) and legacy `indexed` references against the workbook
+  /// palettes. A literal `rgb` takes precedence. Returns `null` when the element
+  /// carries no usable color (e.g. `auto="1"`, or the automatic `indexed` 64/65)
+  /// so the caller keeps its default.
   ExcelColor? _readColorElement(XmlElement color) {
     final rgb = color.getAttribute('rgb');
     if (rgb != null && rgb.isNotEmpty) return rgb.excelColor;
@@ -21,6 +21,15 @@ mixin _ParserStylesMixin on _ParserBase {
           themeIndex,
           tint,
         );
+        if (resolved != null) return resolved.excelColor;
+      }
+    }
+
+    final indexedAttr = color.getAttribute('indexed');
+    if (indexedAttr != null) {
+      final index = int.tryParse(indexedAttr.trim());
+      if (index != null) {
+        final resolved = _resolveIndexedColor(_excel._indexedColors, index);
         if (resolved != null) return resolved.excelColor;
       }
     }
@@ -39,6 +48,18 @@ mixin _ParserStylesMixin on _ParserBase {
       _excel._cellStyleList = <CellStyle>[];
       _excel._cellStyleIndex = null; // invalidate reverse lookup
       _excel._borderSetList = <_BorderSet>[];
+
+      // Custom indexed palette override (rare; mostly older files). Parsed
+      // before fonts/fills/borders so their `indexed` color refs resolve to it.
+      final indexedColorsEl = document
+          .findAllElements('indexedColors')
+          .firstOrNull;
+      _excel._indexedColors = indexedColorsEl == null
+          ? const []
+          : [
+              for (final c in indexedColorsEl.findElements('rgbColor'))
+                c.getAttribute('rgb'),
+            ];
 
       Iterable<XmlElement> fontList = document.findAllElements('font');
 
