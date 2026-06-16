@@ -1,46 +1,140 @@
 ## 1.0.0
 
-First major release. A broad set of worksheet features on top of the
+First major release. A broad set of worksheet features built on the
 performance-focused engine (SAX streaming, lazy per-sheet loading, byte-for-byte
-archive reuse), plus the one intended breaking change. Still a drop-in for the
-`excel` package for existing usage.
+archive reuse), with a single, contained breaking change. excel_plus remains a
+source-compatible drop-in for the `excel` package.
 
-**Breaking**
+### Breaking changes
 
-- `CellValue` is `sealed` and now includes `CellErrorValue`. If your code does an
-  exhaustive `switch` over a `CellValue`, add a `CellErrorValue` case — or use
-  `value.isError` / `value.asError` to avoid exhaustive switches entirely. No
-  other public API changed; cell reading/writing, styling and layout are
-  source-compatible.
+- `CellValue` is now `sealed` and gains a `CellErrorValue` member. The only code
+  affected is an *exhaustive* `switch` over a `CellValue` (it must now handle
+  `CellErrorValue`). No other public type, method, or signature changed.
 
-**Added & fixed**
+### Migration
 
-- Added: theme color reading — `<color theme="N" tint="X"/>` references in font, fill, and border colors now resolve to real ARGB values from `xl/theme/theme1.xml` (with Excel's light/dark index swap and HSL tint), instead of falling back to black. The theme part round-trips on save.
-- Added: indexed (palette) color reading — legacy `<color indexed="N"/>` references resolve via the standard 64-color palette, honoring a workbook's `<indexedColors>` override when present; the automatic system indices (64/65) fall back to the default color.
-- Added: theme & indexed color **authoring** — `ExcelColor.theme(ThemeColor.accentN, tint: x)` and `ExcelColor.indexed(n)` write real `<color theme="N" tint="X"/>` / `<color indexed="N"/>` references (for font, fill, and border colors) instead of baking in literal RGB, so authored colors stay linked to the document theme. They resolve against the standard Office palette for display (`colorHex`), dedupe distinctly from a literal of the same ARGB, and round-trip.
-- Fixed: an authored style that reuses a font/fill/border already present in an opened file no longer reverts to the default (the appended `<xf>` now resolves to the correct existing record), and `applyFont`/`applyFill`/`applyBorder` are emitted when the corresponding part is non-default.
-- Added: hyperlinks (read + write) — external URLs / `mailto:` (`Hyperlink.url`, `Hyperlink.email`) and internal `'Sheet'!A1` jumps (`Hyperlink.location`), each with optional display text and tooltip. Set via `sheet.setHyperlink(cell, link)` or `cell.hyperlink = …`. External links manage the worksheet `_rels` automatically (allocating rIds and preserving any existing relationships).
-- Added: data validation (read + write) — dropdown lists (`DataValidation.list` / `.listFromRange`), numeric and length bounds (`DataValidation.wholeNumber`, `.decimal`, `.textLength` with an operator), and custom-formula rules (`DataValidation.custom`), each with an optional input prompt and error message. Apply to a cell or range via `sheet.setDataValidation(start, rule, end: rangeEnd)` or `cell.dataValidation = …`.
-- Added: sheet-view settings (read + write) — freeze panes (`sheet.freezePanes(rows:, columns:)` / `unfreezePanes`), gridline and row/column-header visibility (`sheet.showGridLines`, `sheet.showRowColHeaders`), and zoom (`sheet.zoom`). These now also survive a round-trip instead of being dropped by the save path.
-- Added: autofilter (read + write) — `sheet.setAutoFilter(from, to)` adds header filter dropdowns over a range, `sheet.removeAutoFilter()` clears it, and `sheet.autoFilter` reads the range. Files opened with applied filter criteria keep them on save.
-- Added: sheet protection (read + write) — `sheet.protect(password:, allow:)` locks editing while permitting the actions you list (`SheetProtectionOption`), `sheet.unprotect()` removes it, and `sheet.isProtected` / `sheet.protectionAllowed` read the state. Passwords use Excel's legacy hash (deters edits, not strong encryption); an opened file's existing hash is preserved on save.
-- Added: sheet tab colour and visibility (read + write) — `sheet.tabColor` (an `ExcelColor`, resolving rgb/theme/indexed on read) and `sheet.visibility` (`SheetVisibility.visible` / `hidden` / `veryHidden`). An untouched theme/indexed tab colour round-trips as a reference rather than being down-converted.
-- Added: sheet reordering — `excel.moveSheet(name, toIndex:)` reorders the worksheet tabs, and `excel.sheetOrder` reads the current order.
-- Added: defined names / named ranges (read + write) — `excel.setDefinedName(name, refersTo, localSheetId:)` (global or sheet-scoped), `excel.removeDefinedName(...)`, and `excel.definedNames`. Names can be used by `FormulaCellValue`.
-- Fixed: rich-text **write** preservation — multi-run cells built with `TextCellValue.span` (bold/italic/underline/colour/size/font per run) are now written as `<r>` runs instead of being flattened to plain text, so in-cell formatting survives a read → save round-trip. Two runs with identical plain text but different styling also stay distinct.
-- Added: conditional formatting (authoring) — `sheet.addConditionalFormat(start, end, rule)` with `ConditionalFormat.greaterThan` / `.lessThan` / `.equalTo` / `.between` / `.formula` (each applying a `CellStyle` via an auto-managed `<dxf>`), plus `.colorScale` (2/3-colour) and `.dataBar`. Rules already present in an opened file are preserved on save.
-- Added: `CellErrorValue` — error cells (`#DIV/0!`, `#N/A`, `#REF!`, `#VALUE!`, `#NAME?`, `#NUM!`, `#NULL!`) read from `t="e"` cells as a typed value and written back, instead of being coerced to text. Detect with `CellValue.isError` / `CellValue.asError`. **Breaking:** `CellValue` is `sealed`, so an exhaustive `switch` over it must add a `CellErrorValue` case — prefer `isError`/`asError` to avoid that.
-- Added: `FormulaCellValue.cachedValue` — a formula's last cached result (`<v>`) is preserved on read and re-emitted on save (fixing the previously empty `<v>`), so formula cells keep a value until the app recalculates. Equality still compares the formula only.
-- Added: `CellStyle.indent` — alignment-side cell padding (OOXML `<alignment indent="N">`), with full read/write round-trip; negative values clamp to zero.
-- Fixed: illegal XML 1.0 control characters in cell text are now stripped on save, so files no longer open as "corrupt" in Excel.
-- Fixed: `Excel.findAndReplace` now returns the actual replacement count and accepts non-`String` targets without throwing.
-- Fixed: on the web, `save()` now triggers the browser download under wasm builds (`flutter build web --wasm`), not only the JS compiler — the conditional import now uses `dart.library.js_interop`, and the download `Blob` is constructed correctly for `dart:js_interop`.
-- Fixed: underline styles read `single` vs `double` correctly, and `bold`/`italic` now honour `val="0"` (explicitly-off) instead of always reading as enabled.
-- Fixed: the parser no longer crashes on out-of-range shared-string or style indexes, ISO-8601 (`t="d"`) date cells, or namespace-prefixed worksheet XML (`x:row`, `x:c`).
-- Fixed: cells without an explicit `r` reference are positioned by column order, and inline strings made of multiple runs keep all of their text.
-- Fixed: `getColumnWidth` / `getRowHeight` return Excel's defaults instead of throwing when a sheet defines no defaults.
-- Fixed: `headerFooter` is written in the schema-correct position (before `drawing`), so Excel no longer prompts to repair the file.
-- Improved: more robust style parsing — malformed `numFmt`/border entries degrade gracefully instead of failing.
+- **Most projects need no changes.** Cell read/write, styling, number formats,
+  layout, and every existing colour API are source-compatible — recompile and go.
+- **If you `switch` exhaustively over a `CellValue`**, add a `CellErrorValue`
+  case, or replace the switch with `value.isError` / `value.asError`. Error cells
+  that previously surfaced as text are now this typed value.
+- **Colour authoring is additive.** Existing literal colours
+  (`ExcelColor.fromHexString`, named constants, `fromInt`) behave exactly as
+  before; theme/indexed authoring is opt-in via the new `ExcelColor.theme` /
+  `ExcelColor.indexed`. `CellStyle` and `Border` now hold an `ExcelColor`
+  internally rather than a hex string, but their constructors, getters, and
+  setters are unchanged.
+- **Generated `styles.xml` is now more canonical** for styled workbooks (theme/
+  indexed references where you author them, plus `applyFont`/`applyFill`/
+  `applyBorder` flags). Files open identically in Excel/Sheets; only update
+  byte-exact snapshots of the output if you keep any.
+
+### Added
+
+- **Theme colour reading** — `<color theme="N" tint="X"/>` references in font,
+  fill, and border colours resolve to real ARGB from `xl/theme/theme1.xml` (with
+  Excel's light/dark index swap and HSL tint) instead of falling back to black.
+  The theme part round-trips on save.
+- **Indexed (palette) colour reading** — legacy `<color indexed="N"/>` references
+  resolve via the standard 64-colour palette, honouring a workbook's
+  `<indexedColors>` override when present; the automatic system indices (64/65)
+  fall back to the default colour.
+- **Theme & indexed colour authoring** — `ExcelColor.theme(ThemeColor.accentN,
+  tint: x)` and `ExcelColor.indexed(n)` write real `<color theme="N" tint="X"/>`
+  / `<color indexed="N"/>` references for font, fill, and border colours, so
+  authored colours stay linked to the document theme instead of baking in literal
+  RGB. They resolve against the standard Office palette for display (`colorHex`),
+  compare distinctly from a literal of the same ARGB, and round-trip.
+- **Hyperlinks (read + write)** — external URLs / `mailto:` (`Hyperlink.url`,
+  `Hyperlink.email`) and internal `'Sheet'!A1` jumps (`Hyperlink.location`), each
+  with optional display text and tooltip. Set via `sheet.setHyperlink(cell, link)`
+  or `cell.hyperlink = …`. External links manage the worksheet `_rels`
+  automatically (allocating rIds and preserving any existing relationships).
+- **Data validation (read + write)** — dropdown lists (`DataValidation.list` /
+  `.listFromRange`), numeric and length bounds (`DataValidation.wholeNumber`,
+  `.decimal`, `.textLength` with an operator), and custom-formula rules
+  (`DataValidation.custom`), each with an optional input prompt and error message.
+  Apply to a cell or range via `sheet.setDataValidation(start, rule, end:)` or
+  `cell.dataValidation = …`.
+- **Sheet-view settings (read + write)** — freeze panes
+  (`sheet.freezePanes(rows:, columns:)` / `unfreezePanes`), gridline and
+  row/column-header visibility (`sheet.showGridLines`, `sheet.showRowColHeaders`),
+  and zoom (`sheet.zoom`). These now also survive a round-trip instead of being
+  dropped on save.
+- **Autofilter (read + write)** — `sheet.setAutoFilter(from, to)` adds header
+  filter dropdowns over a range, `sheet.removeAutoFilter()` clears it, and
+  `sheet.autoFilter` reads the range. Files opened with applied filter criteria
+  keep them on save.
+- **Sheet protection (read + write)** — `sheet.protect(password:, allow:)` locks
+  editing while permitting the actions you list (`SheetProtectionOption`),
+  `sheet.unprotect()` removes it, and `sheet.isProtected` /
+  `sheet.protectionAllowed` read the state. Passwords use Excel's legacy hash
+  (deters edits, not strong encryption); an opened file's existing hash is
+  preserved on save.
+- **Sheet tab colour and visibility (read + write)** — `sheet.tabColor` (an
+  `ExcelColor`, resolving rgb/theme/indexed on read) and `sheet.visibility`
+  (`SheetVisibility.visible` / `hidden` / `veryHidden`). An untouched
+  theme/indexed tab colour round-trips as a reference rather than being
+  down-converted.
+- **Sheet reordering** — `excel.moveSheet(name, toIndex:)` reorders the worksheet
+  tabs, and `excel.sheetOrder` reads the current order.
+- **Defined names / named ranges (read + write)** —
+  `excel.setDefinedName(name, refersTo, localSheetId:)` (global or sheet-scoped),
+  `excel.removeDefinedName(...)`, and `excel.definedNames`. Names can be used by
+  `FormulaCellValue`.
+- **Conditional formatting (authoring)** —
+  `sheet.addConditionalFormat(start, end, rule)` with
+  `ConditionalFormat.greaterThan` / `.lessThan` / `.equalTo` / `.between` /
+  `.formula` (each applying a `CellStyle` via an auto-managed `<dxf>`), plus
+  `.colorScale` (2/3-colour) and `.dataBar`. Rules already present in an opened
+  file are preserved on save.
+- **`CellErrorValue`** — error cells (`#DIV/0!`, `#N/A`, `#REF!`, `#VALUE!`,
+  `#NAME?`, `#NUM!`, `#NULL!`) read from `t="e"` cells as a typed value and
+  written back, instead of being coerced to text. Detect with `CellValue.isError`
+  / `CellValue.asError`. (This is the source of the breaking change above.)
+- **`FormulaCellValue.cachedValue`** — a formula's last cached result (`<v>`) is
+  preserved on read and re-emitted on save (fixing the previously empty `<v>`), so
+  formula cells keep a value until the app recalculates. Equality still compares
+  the formula only.
+- **`CellStyle.indent`** — alignment-side cell padding (OOXML
+  `<alignment indent="N">`), with full read/write round-trip; negative values
+  clamp to zero.
+
+### Fixed
+
+- **Rich-text write preservation** — multi-run cells built with
+  `TextCellValue.span` (bold/italic/underline/colour/size/font per run) are now
+  written as `<r>` runs instead of being flattened to plain text, so in-cell
+  formatting survives a read → save round-trip. Two runs with identical plain text
+  but different styling also stay distinct.
+- **Authored styles that reuse an existing record** — an authored style whose
+  font/fill/border already exists in the opened file no longer reverts to the
+  default (the appended `<xf>` resolves to the correct record), and
+  `applyFont`/`applyFill`/`applyBorder` are emitted when the part is non-default.
+- Illegal XML 1.0 control characters in cell text are stripped on save, so files
+  no longer open as "corrupt" in Excel.
+- `Excel.findAndReplace` returns the actual replacement count and accepts
+  non-`String` targets without throwing.
+- On the web, `save()` triggers the browser download under wasm builds
+  (`flutter build web --wasm`), not only the JS compiler — the conditional import
+  uses `dart.library.js_interop`, and the download `Blob` is constructed correctly
+  for `dart:js_interop`.
+- Underline styles read `single` vs `double` correctly, and `bold`/`italic`
+  honour `val="0"` (explicitly-off) instead of always reading as enabled.
+- The parser no longer crashes on out-of-range shared-string or style indexes,
+  ISO-8601 (`t="d"`) date cells, or namespace-prefixed worksheet XML (`x:row`,
+  `x:c`).
+- Cells without an explicit `r` reference are positioned by column order, and
+  inline strings made of multiple runs keep all of their text.
+- `getColumnWidth` / `getRowHeight` return Excel's defaults instead of throwing
+  when a sheet defines no defaults.
+- `headerFooter` is written in the schema-correct position (before `drawing`), so
+  Excel no longer prompts to repair the file.
+
+### Improved
+
+- More robust style parsing — malformed `numFmt`/border entries degrade
+  gracefully instead of failing.
 
 ## 0.0.4
 
