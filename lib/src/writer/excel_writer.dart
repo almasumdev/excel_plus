@@ -5,7 +5,8 @@ class ExcelWriter extends _WriterBase
     with
         _WriterStylesMixin,
         _WriterRelationsMixin,
-        _WriterWorksheetFeaturesMixin {
+        _WriterWorksheetFeaturesMixin,
+        _WriterConditionalFormatMixin {
   ExcelWriter._(super.excel, super.parser);
 
   List<int>? _save() {
@@ -377,6 +378,10 @@ class ExcelWriter extends _WriterBase
       _selfCorrectSpanMap(_excel);
     }
 
+    // Allocate dxf ids for conditional-formatting styles before the per-sheet
+    // pass so each rule can reference its dxfId.
+    _prepareConditionalFormatDxfs();
+
     _excel._sheetMap.forEach((sheetName, sheetObject) {
       ///
       /// Create the sheet's xml file if it does not exist.
@@ -467,6 +472,9 @@ class ExcelWriter extends _WriterBase
 
       // Emit the tab colour into the DOM (only when changed via the API).
       _applyTabColorForSheet(sheetName);
+
+      // Append conditional-formatting rules into the DOM.
+      _applyConditionalFormatsForSheet(sheetName);
 
       // Build cell data as XML string (no DOM node allocation)
       String cellDataXml = _buildSheetDataXml(sheetName, sheetObject);

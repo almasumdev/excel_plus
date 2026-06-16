@@ -63,6 +63,10 @@ class _SheetBase {
   SheetVisibility _visibility = SheetVisibility.visible;
   bool _visibilityChanged = false;
 
+  /// Conditional-formatting rules added via the API, as `(sqref, rule)` pairs.
+  /// Appended on save; any rules already in an opened file are preserved as-is.
+  final List<(String, ConditionalFormat)> _conditionalFormats = [];
+
   _SheetBase(this._excel, this._sheet);
 
   /// Removes a cell from the specified [rowIndex] and [columnIndex].
@@ -525,6 +529,29 @@ class _SheetBase {
         : password;
     _protectionAllow = {...allow};
     _sheetProtectionChanged = true;
+  }
+
+  /// The conditional-formatting rules added to this sheet via the API.
+  ///
+  /// Rules already present in an opened file are preserved on save but are not
+  /// parsed into this list.
+  List<ConditionalFormat> get conditionalFormats =>
+      List.unmodifiable(_conditionalFormats.map((e) => e.$2));
+
+  /// Adds a conditional-formatting [format] over the range from [start] to
+  /// [end]. Multiple rules may target the same or overlapping ranges.
+  void addConditionalFormat(
+    CellIndex start,
+    CellIndex end,
+    ConditionalFormat format,
+  ) {
+    final sqref = getSpanCellId(
+      start.columnIndex,
+      start.rowIndex,
+      end.columnIndex,
+      end.rowIndex,
+    );
+    _conditionalFormats.add((sqref, format));
   }
 
   /// Removes protection from this sheet.

@@ -29,6 +29,7 @@ part 'src/models/hyperlink.dart';
 part 'src/models/data_validation.dart';
 part 'src/models/sheet_protection.dart';
 part 'src/models/defined_name.dart';
+part 'src/models/conditional_format.dart';
 part 'src/models/enums.dart';
 part 'src/models/span.dart';
 part 'src/models/shared_string.dart';
@@ -54,6 +55,7 @@ part 'src/writer/writer_base.dart';
 part 'src/writer/writer_styles.dart';
 part 'src/writer/writer_relations.dart';
 part 'src/writer/writer_worksheet_features.dart';
+part 'src/writer/writer_conditional_format.dart';
 part 'src/writer/excel_writer.dart';
 part 'src/writer/span_corrector.dart';
 

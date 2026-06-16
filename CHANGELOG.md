@@ -13,6 +13,7 @@ Theme-color reading plus a styling addition and correctness/robustness fixes (al
 - Added: sheet reordering — `excel.moveSheet(name, toIndex:)` reorders the worksheet tabs, and `excel.sheetOrder` reads the current order.
 - Added: defined names / named ranges (read + write) — `excel.setDefinedName(name, refersTo, localSheetId:)` (global or sheet-scoped), `excel.removeDefinedName(...)`, and `excel.definedNames`. Names can be used by `FormulaCellValue`.
 - Fixed: rich-text **write** preservation — multi-run cells built with `TextCellValue.span` (bold/italic/underline/colour/size/font per run) are now written as `<r>` runs instead of being flattened to plain text, so in-cell formatting survives a read → save round-trip. Two runs with identical plain text but different styling also stay distinct.
+- Added: conditional formatting (authoring) — `sheet.addConditionalFormat(start, end, rule)` with `ConditionalFormat.greaterThan` / `.lessThan` / `.equalTo` / `.between` / `.formula` (each applying a `CellStyle` via an auto-managed `<dxf>`), plus `.colorScale` (2/3-colour) and `.dataBar`. Rules already present in an opened file are preserved on save.
 - Added: `CellStyle.indent` — alignment-side cell padding (OOXML `<alignment indent="N">`), with full read/write round-trip; negative values clamp to zero.
 - Fixed: illegal XML 1.0 control characters in cell text are now stripped on save, so files no longer open as "corrupt" in Excel.
 - Fixed: `Excel.findAndReplace` now returns the actual replacement count and accepts non-`String` targets without throwing.

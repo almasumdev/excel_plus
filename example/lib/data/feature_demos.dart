@@ -53,6 +53,7 @@ final featureDemos = <FeatureDemo>[
   _sheetTabs,
   _definedNames,
   _richText,
+  _conditionalFormat,
 ];
 
 FeatureDemo? featureById(String id) {
@@ -1938,5 +1939,110 @@ Excel _buildRichText() {
   }
 
   s.setColumnWidth(0, 36);
+  return excel;
+}
+
+// ---------------------------------------------------------------------------
+// 20. Conditional formatting
+// ---------------------------------------------------------------------------
+
+final _conditionalFormat = FeatureDemo(
+  id: 'conditional_format',
+  title: 'Conditional formatting',
+  description:
+      'Format cells based on their values: colour scales (heat maps), data '
+      'bars, and cellIs/formula rules that apply a style when a condition is '
+      'met. Open the exported file in Excel to see the rules render live.',
+  points: [
+    'ConditionalFormat.colorScale(min:, mid:, max:)',
+    'ConditionalFormat.dataBar(color)',
+    'ConditionalFormat.greaterThan / lessThan / between (with a style)',
+    'ConditionalFormat.formula(expr, style:)',
+  ],
+  snippet: '''
+sheet.addConditionalFormat(
+  CellIndex.indexByString('A2'),
+  CellIndex.indexByString('A9'),
+  ConditionalFormat.colorScale(
+    min: ExcelColor.red, mid: ExcelColor.yellow, max: ExcelColor.green),
+);''',
+  fullCode: r'''
+import 'package:excel_plus/excel_plus.dart';
+
+Excel buildConditionalFormat() {
+  final excel = Excel.createExcel();
+  final s = excel[excel.getDefaultSheet() ?? 'Sheet1'];
+
+  const scores = [82, 45, 91, 63, 30, 77, 100, 12];
+  for (var i = 0; i < scores.length; i++) {
+    s.updateCell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: i + 1),
+        IntCellValue(scores[i]));
+  }
+
+  // Heat-map colour scale over the scores.
+  s.addConditionalFormat(
+    CellIndex.indexByString('A2'),
+    CellIndex.indexByString('A9'),
+    ConditionalFormat.colorScale(
+        min: ExcelColor.red, mid: ExcelColor.yellow, max: ExcelColor.green),
+  );
+  // Highlight top scores (> 89) in bold green.
+  s.addConditionalFormat(
+    CellIndex.indexByString('A2'),
+    CellIndex.indexByString('A9'),
+    ConditionalFormat.greaterThan(89,
+        style: CellStyle(bold: true, fontColorHex: ExcelColor.green)),
+  );
+  return excel;
+}
+''',
+  build: _buildConditionalFormat,
+);
+
+Excel _buildConditionalFormat() {
+  final excel = _book('Conditional');
+  final s = excel['Conditional'];
+
+  final header = _box(bold: true, fill: _headerFill, font: ExcelColor.white);
+  _put(s, 0, 0, TextCellValue('Score'), header);
+  _put(s, 1, 0, TextCellValue('Bar'), header);
+
+  const scores = [82, 45, 91, 63, 30, 77, 100, 12];
+  for (var i = 0; i < scores.length; i++) {
+    final r = i + 1;
+    _put(s, 0, r, IntCellValue(scores[i]), _box(align: HorizontalAlign.Right));
+    _put(s, 1, r, IntCellValue(scores[i]), _box(align: HorizontalAlign.Right));
+  }
+
+  CellIndex at(String ref) => CellIndex.indexByString(ref);
+
+  // Colour-scale heat map on the Score column.
+  s.addConditionalFormat(
+    at('A2'),
+    at('A9'),
+    ConditionalFormat.colorScale(
+      min: ExcelColor.red,
+      mid: ExcelColor.yellow,
+      max: ExcelColor.green,
+    ),
+  );
+  // Highlight top scores in bold green.
+  s.addConditionalFormat(
+    at('A2'),
+    at('A9'),
+    ConditionalFormat.greaterThan(
+      89,
+      style: CellStyle(bold: true, fontColorHex: ExcelColor.green),
+    ),
+  );
+  // Data bars on the Bar column.
+  s.addConditionalFormat(
+    at('B2'),
+    at('B9'),
+    ConditionalFormat.dataBar(ExcelColor.blue),
+  );
+
+  s.setColumnWidth(0, 10);
+  s.setColumnWidth(1, 18);
   return excel;
 }
