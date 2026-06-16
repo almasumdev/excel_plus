@@ -367,13 +367,16 @@ class Parser extends _ParserBase
         value = ss != null ? TextCellValue.span(ss.textSpan) : null;
       case 'b': // boolean
         value = formula != null
-            ? FormulaCellValue(formula)
+            ? FormulaCellValue(formula, cachedValue: _cachedOrNull(rawValue))
             : BoolCellValue(rawValue == '1');
       case 'e': // error value (e.g. #DIV/0!, #N/A)
+        value = formula != null
+            ? FormulaCellValue(formula, cachedValue: _cachedOrNull(rawValue))
+            : CellErrorValue(rawValue);
       case 'str': // formula string result
         // The cached value (rawValue) is the formula's result, not the formula.
         value = formula != null
-            ? FormulaCellValue(formula)
+            ? FormulaCellValue(formula, cachedValue: _cachedOrNull(rawValue))
             : TextCellValue(rawValue);
       case 'd': // ISO-8601 date string (ST_CellType "d")
         value = _readIsoDateCell(rawValue, formula);
@@ -382,7 +385,10 @@ class Parser extends _ParserBase
       case 'n': // number (explicit)
       default: // number (default)
         if (formula != null) {
-          value = FormulaCellValue(formula);
+          value = FormulaCellValue(
+            formula,
+            cachedValue: _cachedOrNull(rawValue),
+          );
         } else if (rawValue.isEmpty) {
           value = null;
         } else if (styleIndex > 0) {
@@ -407,11 +413,16 @@ class Parser extends _ParserBase
     );
   }
 
+  /// The cached formula result (`<v>`) or `null` when empty.
+  static String? _cachedOrNull(String raw) => raw.isEmpty ? null : raw;
+
   /// Reads a `t="d"` ISO-8601 date cell. Returns a [DateCellValue] for a pure
   /// date or a [DateTimeCellValue] when a time component is present. Falls back
   /// to text if the value is not parseable instead of throwing.
   CellValue? _readIsoDateCell(String rawValue, String? formula) {
-    if (formula != null) return FormulaCellValue(formula);
+    if (formula != null) {
+      return FormulaCellValue(formula, cachedValue: _cachedOrNull(rawValue));
+    }
     final dt = DateTime.tryParse(rawValue);
     if (dt == null) {
       return rawValue.isEmpty ? null : TextCellValue(rawValue);

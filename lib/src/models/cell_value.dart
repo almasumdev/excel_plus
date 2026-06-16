@@ -7,6 +7,13 @@ part of '../../excel_plus.dart';
 /// {@category Cell Values}
 sealed class CellValue {
   const CellValue();
+
+  /// Whether this value is a cell error (e.g. `#DIV/0!`, `#N/A`).
+  bool get isError => this is CellErrorValue;
+
+  /// This value as a [CellErrorValue], or `null` if it is not an error.
+  CellErrorValue? get asError =>
+      this is CellErrorValue ? this as CellErrorValue : null;
 }
 
 /// A cell value containing a formula expression.
@@ -16,8 +23,16 @@ class FormulaCellValue extends CellValue {
   /// The formula string (e.g. `SUM(A1:A10)`).
   final String formula;
 
-  /// Creates a formula cell value from the given [formula] string.
-  const FormulaCellValue(this.formula);
+  /// The result Excel last cached for this formula (the cell's `<v>`), if any.
+  ///
+  /// Preserved on read and re-emitted on save so a formula cell keeps a value
+  /// until the spreadsheet app recalculates. It is intentionally **not** part of
+  /// equality or [hashCode], so formula cells dedup by formula alone.
+  final String? cachedValue;
+
+  /// Creates a formula cell value from the given [formula] string, with an
+  /// optional [cachedValue] result.
+  const FormulaCellValue(this.formula, {this.cachedValue});
 
   @override
   String toString() {
@@ -393,4 +408,49 @@ class DateTimeCellValue extends CellValue {
         other.millisecond == millisecond &&
         other.microsecond == microsecond;
   }
+}
+
+/// A cell value containing an Excel error literal, such as `#DIV/0!` or `#N/A`.
+///
+/// Read from cells stored as `t="e"`. Check for one with [CellValue.isError] /
+/// [CellValue.asError] rather than an exhaustive `switch`, so adding this type
+/// doesn't force changes at every call site.
+///
+/// {@category Cell Values}
+class CellErrorValue extends CellValue {
+  /// The error text exactly as Excel stores it (e.g. `#REF!`).
+  final String value;
+
+  /// Creates a cell error value from its literal [value] (e.g. `'#VALUE!'`).
+  const CellErrorValue(this.value);
+
+  /// `#DIV/0!` — division by zero.
+  static const divisionByZero = CellErrorValue('#DIV/0!');
+
+  /// `#N/A` — value not available.
+  static const notAvailable = CellErrorValue('#N/A');
+
+  /// `#NAME?` — unrecognised name.
+  static const name = CellErrorValue('#NAME?');
+
+  /// `#NULL!` — empty intersection of two ranges.
+  static const nullError = CellErrorValue('#NULL!');
+
+  /// `#NUM!` — invalid numeric value.
+  static const number = CellErrorValue('#NUM!');
+
+  /// `#REF!` — invalid cell reference.
+  static const reference = CellErrorValue('#REF!');
+
+  /// `#VALUE!` — wrong type of argument.
+  static const valueError = CellErrorValue('#VALUE!');
+
+  @override
+  String toString() => value;
+
+  @override
+  int get hashCode => Object.hash(runtimeType, value);
+
+  @override
+  operator ==(Object other) => other is CellErrorValue && other.value == value;
 }

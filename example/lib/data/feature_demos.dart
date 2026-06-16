@@ -54,6 +54,7 @@ final featureDemos = <FeatureDemo>[
   _definedNames,
   _richText,
   _conditionalFormat,
+  _cellErrors,
 ];
 
 FeatureDemo? featureById(String id) {
@@ -2044,5 +2045,75 @@ Excel _buildConditionalFormat() {
 
   s.setColumnWidth(0, 10);
   s.setColumnWidth(1, 18);
+  return excel;
+}
+
+// ---------------------------------------------------------------------------
+// 21. Error values
+// ---------------------------------------------------------------------------
+
+final _cellErrors = FeatureDemo(
+  id: 'cell_errors',
+  title: 'Error values',
+  description:
+      'Read and write Excel error literals (#DIV/0!, #N/A, #REF! …) as typed '
+      'CellErrorValue cells. Cells stored as t="e" round-trip, and you can test '
+      'any value with cell.value?.isError.',
+  points: [
+    'CellErrorValue.divisionByZero / notAvailable / reference / …',
+    'cell.value.isError and .asError to detect errors',
+    'Formula cells keep a cached <v> result (FormulaCellValue.cachedValue)',
+    'Round-trips read → save',
+  ],
+  snippet: '''
+sheet.updateCell(
+  CellIndex.indexByString('A1'), CellErrorValue.notAvailable);
+
+final v = sheet.cell(CellIndex.indexByString('A1')).value;
+if (v != null && v.isError) print(v.asError!.value); // #N/A''',
+  fullCode: r'''
+import 'package:excel_plus/excel_plus.dart';
+
+Excel buildErrors() {
+  final excel = Excel.createExcel();
+  final s = excel[excel.getDefaultSheet() ?? 'Sheet1'];
+
+  s.updateCell(CellIndex.indexByString('A1'), CellErrorValue.divisionByZero);
+  s.updateCell(CellIndex.indexByString('A2'), CellErrorValue.notAvailable);
+
+  // A formula cell can carry a cached result until Excel recalculates.
+  s.updateCell(CellIndex.indexByString('A3'),
+      const FormulaCellValue('1/0', cachedValue: '#DIV/0!'));
+  return excel;
+}
+''',
+  build: _buildCellErrors,
+);
+
+Excel _buildCellErrors() {
+  final excel = _book('Errors');
+  final s = excel['Errors'];
+
+  final header = _box(bold: true, fill: _headerFill, font: ExcelColor.white);
+  _put(s, 0, 0, TextCellValue('Error'), header);
+  _put(s, 1, 0, TextCellValue('Meaning'), header);
+
+  final rows = <(CellErrorValue, String)>[
+    (CellErrorValue.divisionByZero, 'Division by zero'),
+    (CellErrorValue.notAvailable, 'Value not available'),
+    (CellErrorValue.reference, 'Invalid cell reference'),
+    (CellErrorValue.name, 'Unrecognised name'),
+    (CellErrorValue.valueError, 'Wrong type of argument'),
+    (CellErrorValue.number, 'Invalid numeric value'),
+    (CellErrorValue.nullError, 'Empty range intersection'),
+  ];
+  for (var i = 0; i < rows.length; i++) {
+    final r = i + 1;
+    _put(s, 0, r, rows[i].$1, _box(align: HorizontalAlign.Center));
+    _put(s, 1, r, TextCellValue(rows[i].$2), _box());
+  }
+
+  s.setColumnWidth(0, 12);
+  s.setColumnWidth(1, 24);
   return excel;
 }

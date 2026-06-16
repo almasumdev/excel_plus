@@ -121,6 +121,7 @@ abstract class _WriterBase {
     // Type attribute
     if (value is TextCellValue) buf.write(' t="s"');
     if (value is BoolCellValue) buf.write(' t="b"');
+    if (value is CellErrorValue) buf.write(' t="e"');
 
     buf.write('>');
 
@@ -129,7 +130,11 @@ abstract class _WriterBase {
       case null:
         break;
       case FormulaCellValue():
-        buf.write('<f>${_escapeXmlValue(value.formula)}</f><v></v>');
+        final cached = value.cachedValue;
+        buf.write(
+          '<f>${_escapeXmlValue(value.formula)}</f>'
+          '<v>${cached != null ? _escapeXmlValue(cached) : ''}</v>',
+        );
       case IntCellValue():
         final v = switch (numberFormat) {
           NumericNumFormat() => numberFormat.writeInt(value),
@@ -174,6 +179,8 @@ abstract class _WriterBase {
         buf.write('<v>${_excel._sharedStrings.indexOf(sharedString!)}</v>');
       case BoolCellValue():
         buf.write('<v>${value.value ? '1' : '0'}</v>');
+      case CellErrorValue():
+        buf.write('<v>${_escapeXmlValue(value.value)}</v>');
     }
     buf.write('</c>');
   }

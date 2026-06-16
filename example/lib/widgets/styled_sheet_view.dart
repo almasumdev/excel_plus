@@ -269,6 +269,7 @@ String _formatValue(xls.CellValue? value, xls.NumFormat? format) {
       '${value.year}-${_two(value.month)}-${_two(value.day)} '
           '${_two(value.hour)}:${_two(value.minute)}',
     xls.TimeCellValue() => '${_two(value.hour)}:${_two(value.minute)}',
+    xls.CellErrorValue() => value.value,
   };
 }
 

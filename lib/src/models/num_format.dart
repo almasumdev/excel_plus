@@ -221,7 +221,10 @@ sealed class NumFormat {
   bool accepts(CellValue? value);
 
   static NumFormat defaultFor(CellValue? value) => switch (value) {
-    null || FormulaCellValue() || TextCellValue() => NumFormat.standard_0,
+    null ||
+    FormulaCellValue() ||
+    TextCellValue() ||
+    CellErrorValue() => NumFormat.standard_0,
     IntCellValue() => NumFormat.defaultNumeric,
     DoubleCellValue() => NumFormat.defaultFloat,
     DateCellValue() => NumFormat.defaultDate,
@@ -378,6 +381,7 @@ class StandardNumericNumFormat extends NumericNumFormat
     TextCellValue() => numFmtId == 0,
     BoolCellValue() => true,
     DoubleCellValue() => true,
+    CellErrorValue() => true,
     DateCellValue() => false,
     TimeCellValue() => false,
     DateTimeCellValue() => false,
@@ -404,6 +408,7 @@ class CustomNumericNumFormat extends NumericNumFormat
     TextCellValue() => false,
     BoolCellValue() => true,
     DoubleCellValue() => true,
+    CellErrorValue() => true,
     DateCellValue() => false,
     TimeCellValue() => false,
     DateTimeCellValue() => false,
