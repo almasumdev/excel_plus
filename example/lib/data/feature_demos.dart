@@ -45,6 +45,8 @@ final featureDemos = <FeatureDemo>[
   _sizing,
   _multiSheet,
   _colorsRead,
+  _hyperlinks,
+  _dataValidation,
 ];
 
 FeatureDemo? featureById(String id) {
@@ -1130,5 +1132,254 @@ Excel _buildColorsRead() {
   s.setColumnWidth(0, 26);
   s.setColumnWidth(1, 10);
   s.setColumnWidth(2, 16);
+  return excel;
+}
+
+// ---------------------------------------------------------------------------
+// 12. Hyperlinks
+// ---------------------------------------------------------------------------
+
+final _hyperlinks = FeatureDemo(
+  id: 'hyperlinks',
+  title: 'Hyperlinks',
+  description:
+      'Attach clickable links to cells: external web / mailto URLs and internal '
+      'jumps to another cell or sheet. Each can carry display text and a hover '
+      'tooltip, and they survive a read → save round-trip.',
+  points: [
+    'Hyperlink.url(…) for web and file links',
+    'Hyperlink.email(address, subject: …) for mailto links',
+    "Hyperlink.location(\"'Sheet'!A1\") for internal jumps",
+    'sheet.setHyperlink(cell, link) or cell.hyperlink = link',
+  ],
+  snippet: '''
+sheet.setHyperlink(
+  CellIndex.indexByString('A1'),
+  Hyperlink.url('https://pub.dev/packages/excel_plus', tooltip: 'Open'),
+);
+sheet.cell(CellIndex.indexByString('A3')).hyperlink =
+    Hyperlink.location("'Data'!A1", display: 'Go to data');''',
+  fullCode: r'''
+import 'package:excel_plus/excel_plus.dart';
+
+Excel buildHyperlinks() {
+  final excel = Excel.createExcel();
+  final s = excel[excel.getDefaultSheet() ?? 'Sheet1'];
+
+  // External web link, with a hover tooltip.
+  s.updateCell(CellIndex.indexByString('A1'),
+      TextCellValue('excel_plus on pub.dev'));
+  s.setHyperlink(
+    CellIndex.indexByString('A1'),
+    Hyperlink.url('https://pub.dev/packages/excel_plus', tooltip: 'Open'),
+  );
+
+  // mailto: link with a pre-filled subject.
+  s.updateCell(CellIndex.indexByString('A2'), TextCellValue('Email support'));
+  s.cell(CellIndex.indexByString('A2')).hyperlink =
+      Hyperlink.email('hello@example.com', subject: 'excel_plus');
+
+  // Internal jump to another cell in the same workbook.
+  s.updateCell(CellIndex.indexByString('A3'), TextCellValue('Back to top'));
+  s.cell(CellIndex.indexByString('A3')).hyperlink =
+      Hyperlink.location("'Sheet1'!A1", display: 'Back to top');
+
+  // Read a link back: external links expose .target, internal ones .location.
+  final link = s.getHyperlink(CellIndex.indexByString('A1'));
+  print(link?.target); // https://pub.dev/packages/excel_plus
+  return excel;
+}
+''',
+  build: _buildHyperlinks,
+);
+
+Excel _buildHyperlinks() {
+  final excel = _book('Hyperlinks');
+  final s = excel['Hyperlinks'];
+
+  final header = _box(bold: true, fill: _headerFill, font: ExcelColor.white);
+  _put(s, 0, 0, TextCellValue('Link'), header);
+  _put(s, 1, 0, TextCellValue('Kind'), header);
+  _put(s, 2, 0, TextCellValue('Resolves to'), header);
+
+  final linkStyle = CellStyle(
+    fontColorHex: ExcelColor.fromHexString('FF1A56DB'),
+    underline: Underline.Single,
+    verticalAlign: VerticalAlign.Center,
+    leftBorder: _edge(),
+    rightBorder: _edge(),
+    topBorder: _edge(),
+    bottomBorder: _edge(),
+  );
+
+  // (display text, kind label, the link itself)
+  final rows = <(String, String, Hyperlink)>[
+    (
+      'excel_plus on pub.dev',
+      'External URL',
+      Hyperlink.url(
+        'https://pub.dev/packages/excel_plus',
+        tooltip: 'Open in browser',
+      ),
+    ),
+    (
+      'Email support',
+      'Email (mailto)',
+      Hyperlink.email('hello@example.com', subject: 'excel_plus'),
+    ),
+    (
+      'Back to top',
+      'Internal jump',
+      Hyperlink.location("'Hyperlinks'!A1", display: 'Back to top'),
+    ),
+  ];
+
+  for (var i = 0; i < rows.length; i++) {
+    final (label, kind, link) = rows[i];
+    final r = i + 1;
+    _put(s, 0, r, TextCellValue(label), linkStyle);
+    s.setHyperlink(
+      CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: r),
+      link,
+    );
+    _put(s, 1, r, TextCellValue(kind), _box());
+    // External links carry a .target URL; internal links a .location.
+    _put(s, 2, r, TextCellValue(link.target ?? link.location ?? ''), _box());
+  }
+
+  s.setColumnWidth(0, 24);
+  s.setColumnWidth(1, 16);
+  s.setColumnWidth(2, 34);
+  return excel;
+}
+
+// ---------------------------------------------------------------------------
+// 13. Data validation
+// ---------------------------------------------------------------------------
+
+final _dataValidation = FeatureDemo(
+  id: 'data_validation',
+  title: 'Data validation',
+  description:
+      'Constrain what a cell accepts: dropdown lists, whole-number and decimal '
+      'ranges, text length and custom formulas — each with an optional input '
+      'prompt and error message. Open the exported file in Excel to use the '
+      'dropdowns and see the rules enforced.',
+  points: [
+    "DataValidation.list(['Low','Medium','High']) for dropdowns",
+    'DataValidation.wholeNumber / .decimal with min, max and an operator',
+    'DataValidation.textLength and DataValidation.custom(formula)',
+    'sheet.setDataValidation(cell, rule, end: rangeEnd)',
+  ],
+  snippet: '''
+sheet.setDataValidation(
+  CellIndex.indexByString('B1'),
+  DataValidation.list(['Low', 'Medium', 'High'], prompt: 'Pick one'),
+);
+sheet.setDataValidation(
+  CellIndex.indexByString('B2'),
+  DataValidation.wholeNumber(
+    min: 1, operator: DataValidationOperator.greaterThanOrEqual),
+);''',
+  fullCode: r'''
+import 'package:excel_plus/excel_plus.dart';
+
+Excel buildDataValidation() {
+  final excel = Excel.createExcel();
+  final s = excel[excel.getDefaultSheet() ?? 'Sheet1'];
+
+  // A dropdown list applied down a whole column.
+  s.setDataValidation(
+    CellIndex.indexByString('B1'),
+    DataValidation.list(['Low', 'Medium', 'High'], prompt: 'Pick a priority'),
+    end: CellIndex.indexByString('B100'),
+  );
+
+  // A whole number of 1 or more, with a custom error message.
+  s.setDataValidation(
+    CellIndex.indexByString('B2'),
+    DataValidation.wholeNumber(
+      min: 1,
+      operator: DataValidationOperator.greaterThanOrEqual,
+      error: 'Enter 1 or more',
+    ),
+  );
+
+  // A decimal between 0 and 1 (e.g. a discount fraction).
+  s.cell(CellIndex.indexByString('B3')).dataValidation =
+      DataValidation.decimal(min: 0, max: 1);
+  return excel;
+}
+''',
+  build: _buildDataValidation,
+);
+
+Excel _buildDataValidation() {
+  final excel = _book('Data validation');
+  final s = excel['Data validation'];
+
+  final header = _box(bold: true, fill: _headerFill, font: ExcelColor.white);
+  _put(s, 0, 0, TextCellValue('Field'), header);
+  _put(s, 1, 0, TextCellValue('Entry'), header);
+  _put(s, 2, 0, TextCellValue('Rule'), header);
+
+  final entry = _box(fill: ExcelColor.fromHexString('FFFFFDF5'));
+
+  // (field label, sample valid value, rule description, the validation)
+  final rows = <(String, CellValue, String, DataValidation)>[
+    (
+      'Priority',
+      TextCellValue('Medium'),
+      'List: Low / Medium / High',
+      DataValidation.list(['Low', 'Medium', 'High'], prompt: 'Pick a priority'),
+    ),
+    (
+      'Quantity',
+      IntCellValue(1),
+      'Whole number ≥ 1',
+      DataValidation.wholeNumber(
+        min: 1,
+        operator: DataValidationOperator.greaterThanOrEqual,
+        error: 'Enter 1 or more',
+      ),
+    ),
+    (
+      'Discount',
+      DoubleCellValue(0.1),
+      'Decimal between 0 and 1',
+      DataValidation.decimal(min: 0, max: 1, error: 'Use a fraction 0–1'),
+    ),
+    (
+      'Code',
+      TextCellValue('AB12'),
+      'Text length ≤ 5',
+      DataValidation.textLength(
+        max: 5,
+        operator: DataValidationOperator.lessThanOrEqual,
+      ),
+    ),
+    (
+      'Approved',
+      TextCellValue('Yes'),
+      'List: Yes / No',
+      DataValidation.list(['Yes', 'No']),
+    ),
+  ];
+
+  for (var i = 0; i < rows.length; i++) {
+    final (field, value, rule, dv) = rows[i];
+    final r = i + 1;
+    _put(s, 0, r, TextCellValue(field), _box(bold: true));
+    _put(s, 1, r, value, entry);
+    s.setDataValidation(
+      CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: r),
+      dv,
+    );
+    _put(s, 2, r, TextCellValue(rule), _box());
+  }
+
+  s.setColumnWidth(0, 14);
+  s.setColumnWidth(1, 16);
+  s.setColumnWidth(2, 26);
   return excel;
 }

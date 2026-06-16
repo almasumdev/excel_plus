@@ -23,6 +23,8 @@ class HomePage extends StatelessWidget {
     'sizing': Icons.aspect_ratio,
     'sheets': Icons.layers,
     'colors_read': Icons.palette_outlined,
+    'hyperlinks': Icons.link,
+    'data_validation': Icons.checklist_rtl,
   };
 
   static const _showcaseIcons = <String, IconData>{

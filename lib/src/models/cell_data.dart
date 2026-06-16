@@ -95,6 +95,21 @@ class Data {
     }
   }
 
+  /// The data validation keyed to this single cell, or `null` if there is none.
+  ///
+  /// Only matches a rule whose `sqref` is exactly this cell; rules covering a
+  /// wider range are found via [Sheet.dataValidations].
+  DataValidation? get dataValidation => _sheet.getDataValidation(cellIndex);
+
+  /// Applies a single-cell data validation, or removes it when set to `null`.
+  set dataValidation(DataValidation? validation) {
+    if (validation == null) {
+      _sheet.removeDataValidation(cellIndex);
+    } else {
+      _sheet.setDataValidation(cellIndex, validation);
+    }
+  }
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||

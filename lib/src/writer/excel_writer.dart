@@ -2,7 +2,10 @@ part of '../../excel_plus.dart';
 
 /// @nodoc
 class ExcelWriter extends _WriterBase
-    with _WriterStylesMixin, _WriterRelationsMixin {
+    with
+        _WriterStylesMixin,
+        _WriterRelationsMixin,
+        _WriterWorksheetFeaturesMixin {
   ExcelWriter._(super.excel, super.parser);
 
   List<int>? _save() {
@@ -360,6 +363,9 @@ class ExcelWriter extends _WriterBase
 
       // Emit hyperlinks (+ their worksheet rels) into the DOM.
       _applyHyperlinksForSheet(sheetName);
+
+      // Emit data validations into the DOM.
+      _applyDataValidationsForSheet(sheetName);
 
       // Build cell data as XML string (no DOM node allocation)
       String cellDataXml = _buildSheetDataXml(sheetName, sheetObject);

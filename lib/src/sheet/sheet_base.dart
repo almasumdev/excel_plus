@@ -26,6 +26,9 @@ class _SheetBase {
   /// resolve external hyperlink targets and to preserve foreign relations).
   List<_Relationship> _worksheetRels = const [];
 
+  /// Data validations keyed by their `sqref` range string (e.g. `"C2:C100"`).
+  final Map<String, DataValidation> _dataValidations = {};
+
   _SheetBase(this._excel, this._sheet);
 
   /// Removes a cell from the specified [rowIndex] and [columnIndex].
@@ -365,6 +368,43 @@ class _SheetBase {
   /// Removes and returns any hyperlink on the cell at [cellIndex].
   Hyperlink? removeHyperlink(CellIndex cellIndex) =>
       _hyperlinks.remove(getCellId(cellIndex.columnIndex, cellIndex.rowIndex));
+
+  /// The `sqref` range string for [start] (and optional [end]), e.g. `"C2"` or
+  /// `"C2:C100"`.
+  String _validationRef(CellIndex start, CellIndex? end) => end == null
+      ? getCellId(start.columnIndex, start.rowIndex)
+      : getSpanCellId(
+          start.columnIndex,
+          start.rowIndex,
+          end.columnIndex,
+          end.rowIndex,
+        );
+
+  /// All data validations on this sheet, keyed by their `sqref` range string
+  /// (e.g. `"C2:C100"`). Read-only; edit via [setDataValidation] /
+  /// [removeDataValidation].
+  Map<String, DataValidation> get dataValidations =>
+      Map.unmodifiable(_dataValidations);
+
+  /// Applies [validation] to the range from [start] to [end] (or just the single
+  /// cell [start] when [end] is omitted).
+  void setDataValidation(
+    CellIndex start,
+    DataValidation validation, {
+    CellIndex? end,
+  }) {
+    _dataValidations[_validationRef(start, end)] = validation;
+  }
+
+  /// Returns the data validation keyed to exactly the range from [start] to
+  /// [end] (or the single cell [start]), or `null` if there is none.
+  DataValidation? getDataValidation(CellIndex start, {CellIndex? end}) =>
+      _dataValidations[_validationRef(start, end)];
+
+  /// Removes and returns the data validation keyed to exactly the range from
+  /// [start] to [end] (or the single cell [start]).
+  DataValidation? removeDataValidation(CellIndex start, {CellIndex? end}) =>
+      _dataValidations.remove(_validationRef(start, end));
 
   /// The default row height, or `null` if not set.
   double? get defaultRowHeight => _defaultRowHeight;

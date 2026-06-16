@@ -2,7 +2,11 @@ part of '../../excel_plus.dart';
 
 /// @nodoc
 class Parser extends _ParserBase
-    with _ParserThemeMixin, _ParserStylesMixin, _ParserRelationsMixin {
+    with
+        _ParserThemeMixin,
+        _ParserStylesMixin,
+        _ParserRelationsMixin,
+        _ParserWorksheetFeaturesMixin {
   Parser._(super.excel);
 
   void _startParsing() {
@@ -50,6 +54,7 @@ class Parser extends _ParserBase
     _parseMergedCellsForSheet(sheetName);
     _parseWorksheetRels(sheetName);
     _parseHyperlinksForSheet(sheetName);
+    _parseDataValidationsForSheet(sheetName);
   }
 
   /// Parses all remaining unparsed sheets.
