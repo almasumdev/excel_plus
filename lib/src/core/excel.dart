@@ -29,6 +29,7 @@ class Excel {
   bool _styleChanges = false;
   bool _mergeChanges = false;
   bool _rtlChanges = false;
+  bool _sheetOrderChanged = false;
 
   Archive _archive;
 
@@ -295,6 +296,38 @@ class Excel {
     if (_cellStyleReferenced[sheet] != null) {
       _cellStyleReferenced.remove(sheet);
     }
+  }
+
+  /// The sheet names in their current tab order.
+  List<String> get sheetOrder {
+    parser._ensureAllSheetsParsed();
+    return _sheetMap.keys.toList();
+  }
+
+  /// Moves [sheetName] to position [toIndex] in the tab order (0 = first).
+  ///
+  /// [toIndex] is clamped to the valid range. No-op if the sheet doesn't exist
+  /// or is already at that position.
+  void moveSheet(String sheetName, {required int toIndex}) {
+    parser._ensureAllSheetsParsed();
+    if (_sheetMap[sheetName] == null) return;
+
+    final keys = _sheetMap.keys.toList();
+    final from = keys.indexOf(sheetName);
+    var target = toIndex < 0
+        ? 0
+        : (toIndex >= keys.length ? keys.length - 1 : toIndex);
+    if (from == target) return;
+
+    keys.removeAt(from);
+    keys.insert(target, sheetName);
+
+    // Rebuild the (insertion-ordered) map in the new order.
+    final reordered = {for (final k in keys) k: _sheetMap[k]!};
+    _sheetMap
+      ..clear()
+      ..addAll(reordered);
+    _sheetOrderChanged = true;
   }
 
   /// Encodes the workbook as `.xlsx` bytes.

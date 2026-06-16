@@ -10,6 +10,7 @@ Theme-color reading plus a styling addition and correctness/robustness fixes (al
 - Added: autofilter (read + write) — `sheet.setAutoFilter(from, to)` adds header filter dropdowns over a range, `sheet.removeAutoFilter()` clears it, and `sheet.autoFilter` reads the range. Files opened with applied filter criteria keep them on save.
 - Added: sheet protection (read + write) — `sheet.protect(password:, allow:)` locks editing while permitting the actions you list (`SheetProtectionOption`), `sheet.unprotect()` removes it, and `sheet.isProtected` / `sheet.protectionAllowed` read the state. Passwords use Excel's legacy hash (deters edits, not strong encryption); an opened file's existing hash is preserved on save.
 - Added: sheet tab colour and visibility (read + write) — `sheet.tabColor` (an `ExcelColor`, resolving rgb/theme/indexed on read) and `sheet.visibility` (`SheetVisibility.visible` / `hidden` / `veryHidden`). An untouched theme/indexed tab colour round-trips as a reference rather than being down-converted.
+- Added: sheet reordering — `excel.moveSheet(name, toIndex:)` reorders the worksheet tabs, and `excel.sheetOrder` reads the current order.
 - Added: `CellStyle.indent` — alignment-side cell padding (OOXML `<alignment indent="N">`), with full read/write round-trip; negative values clamp to zero.
 - Fixed: illegal XML 1.0 control characters in cell text are now stripped on save, so files no longer open as "corrupt" in Excel.
 - Fixed: `Excel.findAndReplace` now returns the actual replacement count and accepts non-`String` targets without throwing.

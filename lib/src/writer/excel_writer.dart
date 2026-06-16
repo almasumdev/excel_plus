@@ -16,6 +16,7 @@ class ExcelWriter extends _WriterBase
 
     _setSheetElements();
     _applySheetVisibilities();
+    _applySheetOrder();
     if (_excel._defaultSheet != null) {
       _setDefaultSheet(_excel._defaultSheet);
     }
@@ -125,6 +126,34 @@ class ExcelWriter extends _WriterBase
     String? expectedSheet = _excel._getDefaultSheet();
 
     return expectedSheet == sheetName;
+  }
+
+  /// Reorders the workbook `<sheets>` entries to match the in-memory sheet order
+  /// (set via [Excel.moveSheet]). Only runs when the order was changed.
+  void _applySheetOrder() {
+    if (!_excel._sheetOrderChanged) return;
+    final workbook = _excel._xmlFiles['xl/workbook.xml'];
+    if (workbook == null) return;
+    final sheetsEl = workbook.findAllElements('sheets').firstOrNull;
+    if (sheetsEl == null) return;
+
+    final byName = <String, XmlElement>{};
+    for (final e in sheetsEl.findElements('sheet')) {
+      final name = e.getAttribute('name');
+      if (name != null) byName[name] = e;
+    }
+
+    final ordered = <XmlElement>[];
+    for (final name in _excel._sheetMap.keys) {
+      final e = byName.remove(name);
+      if (e != null) ordered.add(e);
+    }
+    ordered.addAll(byName.values); // any not in the map (shouldn't happen)
+
+    sheetsEl.children.clear();
+    for (final e in ordered) {
+      sheetsEl.children.add(e);
+    }
   }
 
   void _setHeaderFooter(String sheetName) {

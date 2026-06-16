@@ -1683,18 +1683,19 @@ final _sheetTabs = FeatureDemo(
   id: 'sheet_tabs',
   title: 'Sheet tabs',
   description:
-      'Give each worksheet tab a colour and control whether it is visible or '
-      'hidden. Open the exported file in Excel to see the coloured tabs at the '
-      'bottom (and unhide "Notes" via the tab context menu).',
+      'Give each worksheet tab a colour, control whether it is visible or '
+      'hidden, and reorder the tabs. Open the exported file in Excel to see the '
+      'coloured tabs at the bottom (and unhide "Notes" via the tab menu).',
   points: [
     'sheet.tabColor = ExcelColor.blue',
     'sheet.visibility = SheetVisibility.hidden',
+    'excel.moveSheet(name, toIndex: 0) reorders tabs',
     'veryHidden tabs can only be unhidden in code',
-    'Set tabColor = null to clear it',
   ],
   snippet: '''
 excel['Q1'].tabColor = ExcelColor.blue;
-excel['Notes'].visibility = SheetVisibility.hidden;''',
+excel['Notes'].visibility = SheetVisibility.hidden;
+excel.moveSheet('Q2', toIndex: 1);''',
   fullCode: r'''
 import 'package:excel_plus/excel_plus.dart';
 
@@ -1708,6 +1709,8 @@ Excel buildSheetTabs() {
 
   // A hidden helper sheet (still readable/writable in code).
   excel['Notes'].visibility = SheetVisibility.hidden;
+
+  excel.moveSheet('Q2', toIndex: 1); // Q2 right after Summary
   return excel;
 }
 ''',
@@ -1751,5 +1754,7 @@ Excel _buildSheetTabs() {
   notes.visibility = SheetVisibility.hidden;
   _put(notes, 0, 0, TextCellValue('Internal notes (hidden tab)'), _box());
 
+  // Reorder: put Q2 directly after Summary.
+  excel.moveSheet('Q2', toIndex: 1);
   return excel;
 }
