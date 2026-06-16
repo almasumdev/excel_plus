@@ -1,6 +1,19 @@
-## 0.0.5
+## 1.0.0
 
-Theme-color reading plus a styling addition and correctness/robustness fixes (all backward compatible):
+First major release. A broad set of worksheet features on top of the
+performance-focused engine (SAX streaming, lazy per-sheet loading, byte-for-byte
+archive reuse), plus the one intended breaking change. Still a drop-in for the
+`excel` package for existing usage.
+
+**Breaking**
+
+- `CellValue` is `sealed` and now includes `CellErrorValue`. If your code does an
+  exhaustive `switch` over a `CellValue`, add a `CellErrorValue` case — or use
+  `value.isError` / `value.asError` to avoid exhaustive switches entirely. No
+  other public API changed; cell reading/writing, styling and layout are
+  source-compatible.
+
+**Added & fixed**
 
 - Added: theme color reading — `<color theme="N" tint="X"/>` references in font, fill, and border colors now resolve to real ARGB values from `xl/theme/theme1.xml` (with Excel's light/dark index swap and HSL tint), instead of falling back to black. The theme part round-trips on save.
 - Added: indexed (palette) color reading — legacy `<color indexed="N"/>` references resolve via the standard 64-color palette, honoring a workbook's `<indexedColors>` override when present; the automatic system indices (64/65) fall back to the default color.

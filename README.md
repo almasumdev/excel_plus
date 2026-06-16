@@ -119,15 +119,20 @@ cd ../excel_plus_bench                && dart pub get && dart run bin/benchmark.
 
 - **Read & write** `.xlsx` files from bytes.
 - **Create** new Excel workbooks from scratch.
-- **Multiple sheets** — create, copy, rename, delete, reorder.
-- **All cell types** — text, int, double, bool, date, time, date-time, formula.
-- **Cell styling** — fonts, colors, fills, borders, alignment, rotation.
+- **Multiple sheets** — create, copy, rename, delete, reorder, tab colour, hide.
+- **All cell types** — text, int, double, bool, date, time, date-time, formula,
+  and typed error values (`#DIV/0!`, `#N/A`, …).
+- **Cell styling** — fonts, colors, fills, borders, alignment, rotation, indent.
 - **Number formats** — built-in and custom format codes.
+- **Worksheet features** — hyperlinks, data validation / dropdowns, conditional
+  formatting (colour scales, data bars, cellIs/formula), freeze panes, autofilter,
+  sheet protection, defined names / named ranges, gridlines & zoom.
+- **Rich text** — read **and** write (per-run bold/italic/colour/size/font).
+- **Theme & indexed colours** resolved to real RGB on read.
 - **Merge & unmerge** cells with custom values.
 - **Rows & columns** — insert, remove, clear, resize.
 - **Column width / row height** with auto-fit.
 - **Find and replace** across cells and sheets.
-- **Rich text** read support.
 - **Cross-platform** — VM, Web (JS & WASM), Android, iOS, Windows, macOS, Linux.
 - **Source-compatible** drop-in for the `excel` package.
 
@@ -137,14 +142,15 @@ excel_plus focuses on fast, correct **cell data and styling** I/O. The following
 are **not supported yet** — if you need one, please open an issue so it can be
 prioritised:
 
-- **Formula evaluation** — formula cells round-trip as text (e.g. `SUM(A1:A2)`);
-  Excel computes the result when the file is opened. excel_plus stores and
-  preserves formulas but does not evaluate them itself.
-- **Worksheet features** — hyperlinks, data validation / dropdowns, conditional
-  formatting, freeze / split panes, autofilter, sheet protection, named ranges.
+- **Formula evaluation** — formula cells round-trip with their cached result;
+  Excel recomputes when the file is opened. excel_plus stores and preserves
+  formulas but does not evaluate them itself.
 - **Objects & media** — images, charts, comments / notes, pivot tables.
-- **Styling** — rich text is **read-only** (writing flattens runs); theme and
-  indexed (palette) colors are not yet resolved to RGB.
+- **Theme/indexed colour _authoring_** — theme and indexed colours are **read**
+  and resolved to RGB, but writing colours emits literal RGB (a theme/indexed
+  *reference* writer is planned for 1.1). Author colours with
+  `ExcelColor.fromHexString('FFRRGGBB')` or the named constants.
+- **Split panes** — freeze panes are supported; twip-based split panes are not.
 
 Anything not in this list — reading, creating, editing and styling cells across
 multiple sheets — is supported; see [Key features](#key-features).
@@ -152,10 +158,12 @@ multiple sheets — is supported; see [Key features](#key-features).
 ## Roadmap
 
 excel_plus is **actively developed** toward broader Excel / Google-Sheets parity.
-Near-term focus (subject to change): hyperlinks, data validation, conditional
-formatting, freeze panes and autofilter, plus theme-color resolution; after that,
-images and comments, then a formula-evaluation engine. Shipped changes are tracked
-in the [changelog](https://github.com/almasumdev/excel_plus/blob/main/CHANGELOG.md),
+**1.0.0** landed the high-impact worksheet feature set (hyperlinks, data
+validation, conditional formatting, freeze panes, autofilter, sheet protection,
+named ranges, rich-text write, error values). Next up (subject to change): images
+and comments, theme/indexed colour authoring, then a formula-evaluation engine.
+Shipped changes are tracked in the
+[changelog](https://github.com/almasumdev/excel_plus/blob/main/CHANGELOG.md),
 and the direction is driven by what users request on the
 [issue tracker](https://github.com/almasumdev/excel_plus/issues).
 
