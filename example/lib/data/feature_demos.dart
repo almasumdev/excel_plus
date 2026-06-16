@@ -48,6 +48,7 @@ final featureDemos = <FeatureDemo>[
   _hyperlinks,
   _dataValidation,
   _sheetView,
+  _autoFilter,
 ];
 
 FeatureDemo? featureById(String id) {
@@ -1482,5 +1483,102 @@ Excel _buildSheetView() {
   s.setColumnWidth(1, 12);
   s.setColumnWidth(2, 12);
   s.setColumnWidth(3, 12);
+  return excel;
+}
+
+// ---------------------------------------------------------------------------
+// 15. Autofilter
+// ---------------------------------------------------------------------------
+
+final _autoFilter = FeatureDemo(
+  id: 'auto_filter',
+  title: 'Autofilter',
+  description:
+      'Add filter dropdowns across a header row so the data below can be '
+      'sorted and filtered. Open the exported file in Excel and use the arrows '
+      'on the header to filter by category or price.',
+  points: [
+    'sheet.setAutoFilter(from, to) over the table range',
+    'Dropdown arrows appear on the header row',
+    'sheet.removeAutoFilter() clears it',
+    'Applied filter criteria in opened files are preserved on save',
+  ],
+  snippet: '''
+sheet.setAutoFilter(
+  CellIndex.indexByString('A1'),
+  CellIndex.indexByString('C7'),
+); // filter dropdowns across the header row''',
+  fullCode: r'''
+import 'package:excel_plus/excel_plus.dart';
+
+Excel buildAutoFilter() {
+  final excel = Excel.createExcel();
+  final s = excel[excel.getDefaultSheet() ?? 'Sheet1'];
+
+  s.updateCell(CellIndex.indexByString('A1'), TextCellValue('Product'));
+  s.updateCell(CellIndex.indexByString('B1'), TextCellValue('Category'));
+  s.updateCell(CellIndex.indexByString('C1'), TextCellValue('Price'));
+
+  final rows = <(String, String, double)>[
+    ('Keyboard', 'Peripherals', 49.99),
+    ('Monitor', 'Displays', 199.0),
+    ('Laptop', 'Computers', 1299.0),
+  ];
+  for (var i = 0; i < rows.length; i++) {
+    final r = i + 1;
+    s.updateCell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: r),
+        TextCellValue(rows[i].$1));
+    s.updateCell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: r),
+        TextCellValue(rows[i].$2));
+    s.updateCell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: r),
+        DoubleCellValue(rows[i].$3));
+  }
+
+  // Filter dropdowns across the header, spanning the data rows.
+  s.setAutoFilter(
+    CellIndex.indexByString('A1'),
+    CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: rows.length),
+  );
+  return excel;
+}
+''',
+  build: _buildAutoFilter,
+);
+
+Excel _buildAutoFilter() {
+  final excel = _book('Autofilter');
+  final s = excel['Autofilter'];
+
+  final header = _box(bold: true, fill: _headerFill, font: ExcelColor.white);
+  const cols = ['Product', 'Category', 'Price'];
+  for (var c = 0; c < cols.length; c++) {
+    _put(s, c, 0, TextCellValue(cols[c]), header);
+  }
+
+  final data = <(String, String, double)>[
+    ('Keyboard', 'Peripherals', 49.99),
+    ('Monitor', 'Displays', 199.0),
+    ('Mouse', 'Peripherals', 24.5),
+    ('Laptop', 'Computers', 1299.0),
+    ('Webcam', 'Peripherals', 79.0),
+    ('Dock', 'Accessories', 159.0),
+  ];
+  for (var i = 0; i < data.length; i++) {
+    final (name, category, price) = data[i];
+    final r = i + 1;
+    _put(s, 0, r, TextCellValue(name), _box());
+    _put(s, 1, r, TextCellValue(category), _box());
+    _put(s, 2, r, DoubleCellValue(price), _box(align: HorizontalAlign.Right));
+  }
+
+  // Dropdowns on the header row, spanning all data rows.
+  s.setAutoFilter(
+    CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0),
+    CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: data.length),
+  );
+
+  s.setColumnWidth(0, 16);
+  s.setColumnWidth(1, 16);
+  s.setColumnWidth(2, 12);
   return excel;
 }

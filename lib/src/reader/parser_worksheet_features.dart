@@ -64,4 +64,17 @@ mixin _ParserWorksheetFeaturesMixin on _ParserBase {
       sheet._frozenRows = int.tryParse(pane.getAttribute('ySplit') ?? '') ?? 0;
     }
   }
+
+  /// Reads the `<autoFilter ref>` range into the sheet model (the getter only;
+  /// the element is left untouched on save unless the API changes it).
+  void _parseAutoFilterForSheet(String sheetName) {
+    final sheet = _excel._sheetMap[sheetName];
+    final partPath = _excel._xmlSheetId[sheetName];
+    if (sheet == null || partPath == null) return;
+    final doc = _excel._xmlFiles[partPath];
+    if (doc == null) return;
+
+    final filter = doc.findAllElements('autoFilter').firstOrNull;
+    if (filter != null) sheet._autoFilterRef = filter.getAttribute('ref');
+  }
 }

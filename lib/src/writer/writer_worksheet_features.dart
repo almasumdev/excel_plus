@@ -146,4 +146,28 @@ mixin _WriterWorksheetFeaturesMixin on _WriterBase {
     el.attributes.removeWhere((a) => a.name.local == name);
     if (value != null) el.attributes.add(XmlAttribute(_xmlName(name), value));
   }
+
+  /// Writes `<autoFilter>` for [sheetName] only when the API changed it, so any
+  /// existing element (including applied `<filterColumn>` criteria we don't
+  /// model) is otherwise preserved by the envelope round-trip.
+  void _applyAutoFilterForSheet(String sheetName) {
+    final sheet = _excel._sheetMap[sheetName];
+    final partPath = _excel._xmlSheetId[sheetName];
+    if (sheet == null || partPath == null) return;
+    if (!sheet._autoFilterChanged) return;
+    final doc = _excel._xmlFiles[partPath];
+    if (doc == null) return;
+    final worksheet = doc.findAllElements('worksheet').firstOrNull;
+    if (worksheet == null) return;
+
+    for (final e in worksheet.findElements('autoFilter').toList()) {
+      worksheet.children.remove(e);
+    }
+    final ref = sheet._autoFilterRef;
+    if (ref == null) return;
+    _insertWorksheetChildOrdered(
+      worksheet,
+      XmlElement(_xmlName('autoFilter'), [XmlAttribute(_xmlName('ref'), ref)]),
+    );
+  }
 }

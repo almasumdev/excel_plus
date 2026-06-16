@@ -371,6 +371,9 @@ class ExcelWriter extends _WriterBase
       // Emit data validations into the DOM.
       _applyDataValidationsForSheet(sheetName);
 
+      // Emit the autofilter range into the DOM (only when changed via the API).
+      _applyAutoFilterForSheet(sheetName);
+
       // Build cell data as XML string (no DOM node allocation)
       String cellDataXml = _buildSheetDataXml(sheetName, sheetObject);
 

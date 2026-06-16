@@ -36,6 +36,13 @@ class _SheetBase {
   int _frozenRows = 0;
   int _frozenColumns = 0;
 
+  /// Autofilter range (`<autoFilter ref>`), or `null` when there is none.
+  String? _autoFilterRef;
+
+  /// Whether the autofilter was changed via the API. When `false`, any existing
+  /// `<autoFilter>` (including applied filter criteria) is preserved untouched.
+  bool _autoFilterChanged = false;
+
   _SheetBase(this._excel, this._sheet);
 
   /// Removes a cell from the specified [rowIndex] and [columnIndex].
@@ -449,6 +456,27 @@ class _SheetBase {
   void unfreezePanes() {
     _frozenRows = 0;
     _frozenColumns = 0;
+  }
+
+  /// The autofilter range as an `A1:D1`-style string, or `null` if none is set.
+  String? get autoFilter => _autoFilterRef;
+
+  /// Adds filter dropdowns over the header range from [from] to [to]
+  /// (e.g. the header row of a table). Replaces any existing autofilter.
+  void setAutoFilter(CellIndex from, CellIndex to) {
+    _autoFilterRef = getSpanCellId(
+      from.columnIndex,
+      from.rowIndex,
+      to.columnIndex,
+      to.rowIndex,
+    );
+    _autoFilterChanged = true;
+  }
+
+  /// Removes the autofilter from this sheet.
+  void removeAutoFilter() {
+    _autoFilterRef = null;
+    _autoFilterChanged = true;
   }
 
   /// The default row height, or `null` if not set.
