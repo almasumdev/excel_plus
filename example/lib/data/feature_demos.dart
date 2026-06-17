@@ -2349,9 +2349,9 @@ sheet.pageSetup = const PageSetup(
 );
 
 sheet.setPrintArea(
-    CellIndex.indexByString('A1'), CellIndex.indexByString('D40'));
+    CellIndex.indexByString('A1'), CellIndex.indexByString('D41'));
 sheet.setPrintTitleRows(0, 0);   // repeat row 1 on every printed page
-sheet.insertRowPageBreak(20);    // start a new page above row 21''',
+sheet.insertRowPageBreak(21);    // row 22 onward prints on the next page''',
   fullCode: r'''
 import 'package:excel_plus/excel_plus.dart';
 
@@ -2371,11 +2371,11 @@ Excel buildPageSetup() {
 
   // Restrict printing to a range and repeat the header row on every page.
   s.setPrintArea(
-      CellIndex.indexByString('A1'), CellIndex.indexByString('D40'));
+      CellIndex.indexByString('A1'), CellIndex.indexByString('D41'));
   s.setPrintTitleRows(0, 0);
 
-  // Force a page break so rows 21+ print on a second page.
-  s.insertRowPageBreak(20);
+  // Force a page break so row 22 onward prints on a second page.
+  s.insertRowPageBreak(21);
 
   return excel;
 }
