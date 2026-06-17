@@ -31,6 +31,14 @@
   page setup, print area, titles, and breaks byte-for-byte unless you change
   them through the API (and editing `pageSetup` preserves `<pageSetup>`
   attributes the model does not cover, such as a printer-settings `r:id`).
+- **Row & column grouping / outline (read + write)** — make rows or columns
+  collapsible with `sheet.groupRows(from, to, collapsed:)` /
+  `sheet.groupColumns(from, to, collapsed:)` and `ungroupRows` / `ungroupColumns`
+  (each call nests one outline level deeper). Read levels with
+  `rowOutlineLevel` / `columnOutlineLevel`, and show/hide rows or columns
+  directly via `setRowHidden` / `setColumnHidden` / `isRowHidden` /
+  `isColumnHidden`. Outline levels, hidden state, and collapsed summary markers
+  round-trip on `<row>` / `<col>`.
 
 ### Fixed
 

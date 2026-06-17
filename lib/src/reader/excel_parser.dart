@@ -264,6 +264,19 @@ class Parser extends _ParserBase
                 if (height != null && currentRow >= 0) {
                   sheetObject._rowHeights[currentRow] = height;
                 }
+              } else if (attr.localName == 'outlineLevel') {
+                final level = int.tryParse(attr.value);
+                if (level != null && level > 0 && currentRow >= 0) {
+                  sheetObject._rowOutlineLevel[currentRow] = level;
+                }
+              } else if (attr.localName == 'hidden') {
+                if (attr.value == '1' && currentRow >= 0) {
+                  sheetObject._rowHidden.add(currentRow);
+                }
+              } else if (attr.localName == 'collapsed') {
+                if (attr.value == '1' && currentRow >= 0) {
+                  sheetObject._rowCollapsed.add(currentRow);
+                }
               }
             }
           case 'c':
@@ -625,18 +638,30 @@ class Parser extends _ParserBase
     results = worksheet.findAllElements("col");
     if (results.isNotEmpty) {
       for (var element in results) {
-        String? colAttribute = element.getAttribute(
-          "min",
-        ); // i think min refers to the column
-        String? widthAttribute = element.getAttribute("width");
-        if (colAttribute != null && widthAttribute != null) {
-          int? col = int.tryParse(colAttribute);
-          double? width = double.tryParse(widthAttribute);
-          if (col != null && width != null) {
-            col -= 1; // first col in _columnWidths is index 0
-            if (col >= 0) {
-              sheetObject._columnWidths[col] = width;
+        final minAttr = int.tryParse(element.getAttribute("min") ?? '');
+        if (minAttr == null) continue;
+        final maxAttr =
+            int.tryParse(element.getAttribute("max") ?? '') ?? minAttr;
+
+        // Width is applied to the range's first column (existing behaviour).
+        final width = double.tryParse(element.getAttribute("width") ?? '');
+        if (width != null && minAttr - 1 >= 0) {
+          sheetObject._columnWidths[minAttr - 1] = width;
+        }
+
+        // Grouping/visibility applies across the whole min..max range.
+        final level = int.tryParse(element.getAttribute("outlineLevel") ?? '');
+        final isHidden = element.getAttribute("hidden") == '1';
+        final isCollapsed = element.getAttribute("collapsed") == '1';
+        if ((level != null && level > 0) || isHidden || isCollapsed) {
+          for (var c = minAttr; c <= maxAttr; c++) {
+            final idx = c - 1; // first column is index 0
+            if (idx < 0) continue;
+            if (level != null && level > 0) {
+              sheetObject._columnOutlineLevel[idx] = level;
             }
+            if (isHidden) sheetObject._columnHidden.add(idx);
+            if (isCollapsed) sheetObject._columnCollapsed.add(idx);
           }
         }
       }

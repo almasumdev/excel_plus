@@ -59,6 +59,7 @@ final featureDemos = <FeatureDemo>[
   _cellErrors,
   _images,
   _pageSetup,
+  _grouping,
 ];
 
 FeatureDemo? featureById(String id) {
@@ -2422,5 +2423,101 @@ Excel _buildPageSetup() {
   for (var c = 0; c < 4; c++) {
     s.setColumnWidth(c, 16);
   }
+  return excel;
+}
+
+// ---------------------------------------------------------------------------
+// Row & column grouping / outline
+// ---------------------------------------------------------------------------
+
+final _grouping = FeatureDemo(
+  id: 'grouping',
+  title: 'Grouping & outline',
+  description:
+      'Make rows or columns collapsible with outline levels, and hide them '
+      'outright. Nested groups deepen the outline. Open the exported file to '
+      'see the +/- outline controls in the margin.',
+  points: [
+    'sheet.groupRows(from, to, collapsed: true)',
+    'sheet.groupColumns(from, to)',
+    'nested calls add deeper outline levels',
+    'sheet.setRowHidden / setColumnHidden to show or hide',
+  ],
+  snippet: '''
+// Collapsible detail rows under a subtotal, starting collapsed:
+sheet.groupRows(1, 4, collapsed: true);
+
+// Nest a deeper level inside another group:
+sheet.groupRows(1, 8);
+sheet.groupRows(2, 5);   // rows 3–6 become outline level 2
+
+// Group columns, or just hide one:
+sheet.groupColumns(1, 3);
+sheet.setColumnHidden(5, true);''',
+  fullCode: r'''
+import 'package:excel_plus/excel_plus.dart';
+
+Excel buildGrouping() {
+  final excel = Excel.createExcel();
+  final s = excel[excel.getDefaultSheet() ?? 'Sheet1'];
+
+  for (var r = 0; r < 9; r++) {
+    s.updateCell(
+      CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: r),
+      TextCellValue('Row ${r + 1}'),
+    );
+  }
+
+  // Outer group over the detail rows, with a nested inner group.
+  s.groupRows(1, 7);
+  s.groupRows(2, 5);
+
+  // A second group, collapsed so its rows start hidden.
+  s.groupColumns(1, 3, collapsed: true);
+
+  return excel;
+}
+''',
+  build: _buildGrouping,
+);
+
+Excel _buildGrouping() {
+  final excel = _book('Grouping');
+  final s = excel['Grouping'];
+
+  final header = _box(bold: true, fill: _headerFill, font: ExcelColor.white);
+  _put(s, 0, 0, TextCellValue('Account'), header);
+  _put(s, 1, 0, TextCellValue('Q1'), header);
+  _put(s, 2, 0, TextCellValue('Q2'), header);
+  _put(s, 3, 0, TextCellValue('Q3'), header);
+  _put(s, 4, 0, TextCellValue('Q4'), header);
+
+  const accounts = [
+    'Revenue',
+    '  Product',
+    '  Services',
+    '  Licensing',
+    'Total revenue',
+    'Expenses',
+    '  Salaries',
+    '  Marketing',
+    'Net',
+  ];
+  for (var i = 0; i < accounts.length; i++) {
+    _put(s, 0, i + 1, TextCellValue(accounts[i]), _box());
+    for (var c = 1; c <= 4; c++) {
+      _put(s, c, i + 1, IntCellValue((i + 1) * 100 + c * 10), _box());
+    }
+  }
+
+  // Group the three revenue detail rows under "Revenue" (collapsed),
+  // and the two expense detail rows under "Expenses".
+  s.groupRows(2, 4, collapsed: true); // Product / Services / Licensing
+  s.groupRows(7, 8); // Salaries / Marketing
+
+  // Group the four quarter columns so they can be collapsed to just totals.
+  s.groupColumns(1, 4);
+
+  s.setColumnWidth(0, 22);
   return excel;
 }

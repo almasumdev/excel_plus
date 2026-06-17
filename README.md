@@ -132,6 +132,8 @@ cd ../excel_plus_bench                && dart pub get && dart run bin/benchmark.
 - **Page & print setup** — orientation, scaling / fit-to-page, margins, print
   area, repeating print titles, and manual page breaks (`sheet.pageSetup`,
   `sheet.setPrintArea`, `sheet.setPrintTitleRows`, `sheet.insertRowPageBreak`, …).
+- **Grouping & outline** — collapsible row/column groups with outline levels,
+  plus show/hide (`sheet.groupRows`, `sheet.groupColumns`, `sheet.setRowHidden`).
 - **Rich text** — read **and** write (per-run bold/italic/colour/size/font).
 - **Theme & indexed colours** — read (resolved to RGB) and authored
   (`ExcelColor.theme(ThemeColor.accent1, tint: x)` / `ExcelColor.indexed(n)`),

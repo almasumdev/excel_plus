@@ -36,6 +36,7 @@ class HomePage extends StatelessWidget {
     'cell_errors': Icons.error_outline,
     'images': Icons.image_outlined,
     'page_setup': Icons.print_outlined,
+    'grouping': Icons.account_tree_outlined,
   };
 
   static const _showcaseIcons = <String, IconData>{

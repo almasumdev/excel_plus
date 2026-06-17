@@ -11,7 +11,15 @@ abstract class _WriterBase {
 
   _WriterBase(this._excel, this.parser);
 
-  void _addNewColumn(XmlElement columns, int min, int max, double width) {
+  void _addNewColumn(
+    XmlElement columns,
+    int min,
+    int max,
+    double width, {
+    int? outlineLevel,
+    bool hidden = false,
+    bool collapsed = false,
+  }) {
     columns.children.add(
       XmlElement(_xmlName('col'), [
         XmlAttribute(_xmlName('min'), (min + 1).toString()),
@@ -19,6 +27,10 @@ abstract class _WriterBase {
         XmlAttribute(_xmlName('width'), width.toStringAsFixed(2)),
         XmlAttribute(_xmlName('bestFit'), "1"),
         XmlAttribute(_xmlName('customWidth'), "1"),
+        if (outlineLevel != null && outlineLevel > 0)
+          XmlAttribute(_xmlName('outlineLevel'), outlineLevel.toString()),
+        if (hidden) XmlAttribute(_xmlName('hidden'), '1'),
+        if (collapsed) XmlAttribute(_xmlName('collapsed'), '1'),
       ], []),
     );
   }
@@ -43,28 +55,62 @@ abstract class _WriterBase {
   String _buildSheetDataXml(String sheetName, Sheet sheetObject) {
     final buf = StringBuffer();
     final customHeights = sheetObject.getRowHeights;
+    final outline = sheetObject._rowOutlineLevel;
+    final hiddenRows = sheetObject._rowHidden;
+    final collapsedRows = sheetObject._rowCollapsed;
 
-    for (var rowIndex = 0; rowIndex < sheetObject._maxRows; rowIndex++) {
-      if (sheetObject._sheetData[rowIndex] == null) continue;
+    // Most rows are emitted because they hold data, but a row can also exist
+    // purely for a grouping attribute (e.g. a hidden or collapsed summary row),
+    // so extend the range past _maxRows to cover those.
+    var lastRow = sheetObject._maxRows - 1;
+    for (final k in customHeights.keys) {
+      if (k > lastRow) lastRow = k;
+    }
+    for (final k in outline.keys) {
+      if (k > lastRow) lastRow = k;
+    }
+    for (final k in hiddenRows) {
+      if (k > lastRow) lastRow = k;
+    }
+    for (final k in collapsedRows) {
+      if (k > lastRow) lastRow = k;
+    }
 
-      double? height = customHeights[rowIndex];
+    for (var rowIndex = 0; rowIndex <= lastRow; rowIndex++) {
+      final rowData = sheetObject._sheetData[rowIndex];
+      final height = customHeights[rowIndex];
+      final level = outline[rowIndex];
+      final isHidden = hiddenRows.contains(rowIndex);
+      final isCollapsed = collapsedRows.contains(rowIndex);
+      final hasAttrs =
+          height != null ||
+          (level != null && level > 0) ||
+          isHidden ||
+          isCollapsed;
+      if (rowData == null && !hasAttrs) continue;
+
       buf.write('<row r="${rowIndex + 1}"');
       if (height != null) {
         buf.write(' ht="${height.toStringAsFixed(2)}" customHeight="1"');
       }
+      if (level != null && level > 0) buf.write(' outlineLevel="$level"');
+      if (isHidden) buf.write(' hidden="1"');
+      if (isCollapsed) buf.write(' collapsed="1"');
       buf.write('>');
 
-      for (var colIndex = 0; colIndex < sheetObject._maxColumns; colIndex++) {
-        var data = sheetObject._sheetData[rowIndex]![colIndex];
-        if (data == null) continue;
-        _writeCellXml(
-          buf,
-          sheetName,
-          colIndex,
-          rowIndex,
-          data.value,
-          data.cellStyle?.numberFormat,
-        );
+      if (rowData != null) {
+        for (var colIndex = 0; colIndex < sheetObject._maxColumns; colIndex++) {
+          var data = rowData[colIndex];
+          if (data == null) continue;
+          _writeCellXml(
+            buf,
+            sheetName,
+            colIndex,
+            rowIndex,
+            data.value,
+            data.cellStyle?.numberFormat,
+          );
+        }
       }
       buf.write('</row>');
     }

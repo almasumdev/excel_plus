@@ -102,6 +102,24 @@ class _SheetBase {
   /// Whether page breaks were changed via the API (gates rewriting them).
   bool _pageBreaksChanged = false;
 
+  /// Outline (grouping) level per row index (1–7); absent means level 0.
+  final Map<int, int> _rowOutlineLevel = {};
+
+  /// Row indices that are hidden (collapsed groups or [setRowHidden]).
+  final Set<int> _rowHidden = {};
+
+  /// Summary-row indices marked collapsed (the `<row collapsed="1">` flag).
+  final Set<int> _rowCollapsed = {};
+
+  /// Outline (grouping) level per column index (1–7); absent means level 0.
+  final Map<int, int> _columnOutlineLevel = {};
+
+  /// Column indices that are hidden (collapsed groups or [setColumnHidden]).
+  final Set<int> _columnHidden = {};
+
+  /// Summary-column indices marked collapsed (the `<col collapsed="1">` flag).
+  final Set<int> _columnCollapsed = {};
+
   _SheetBase(this._excel, this._sheet);
 
   /// Removes a cell from the specified [rowIndex] and [columnIndex].
@@ -741,6 +759,103 @@ class _SheetBase {
     '_xlnm.Print_Titles',
     localSheetId: _localSheetId,
   );
+
+  /// The outline (grouping) level of [rowIndex] — `0` when not grouped, up to 7.
+  int rowOutlineLevel(int rowIndex) => _rowOutlineLevel[rowIndex] ?? 0;
+
+  /// The outline (grouping) level of [columnIndex] — `0` when not grouped.
+  int columnOutlineLevel(int columnIndex) =>
+      _columnOutlineLevel[columnIndex] ?? 0;
+
+  /// Whether [rowIndex] is hidden.
+  bool isRowHidden(int rowIndex) => _rowHidden.contains(rowIndex);
+
+  /// Whether [columnIndex] is hidden.
+  bool isColumnHidden(int columnIndex) => _columnHidden.contains(columnIndex);
+
+  /// Shows or hides [rowIndex].
+  void setRowHidden(int rowIndex, bool hidden) {
+    if (rowIndex < 0) return;
+    if (hidden) {
+      _rowHidden.add(rowIndex);
+    } else {
+      _rowHidden.remove(rowIndex);
+    }
+  }
+
+  /// Shows or hides [columnIndex].
+  void setColumnHidden(int columnIndex, bool hidden) {
+    if (columnIndex < 0) return;
+    if (hidden) {
+      _columnHidden.add(columnIndex);
+    } else {
+      _columnHidden.remove(columnIndex);
+    }
+  }
+
+  /// Groups rows [fromRow]–[toRow] (0-based, inclusive) into a collapsible
+  /// outline. Each call nests one level deeper (Excel's "Group", max 7). When
+  /// [collapsed] is true the rows are hidden and the summary row just below the
+  /// group is flagged collapsed (Excel's default "summary below" layout).
+  ///
+  /// ```dart
+  /// sheet.groupRows(1, 4);                 // collapsible detail rows 2–5
+  /// sheet.groupRows(1, 4, collapsed: true); // …starting collapsed
+  /// ```
+  void groupRows(int fromRow, int toRow, {bool collapsed = false}) {
+    if (fromRow < 0 || toRow < fromRow) return;
+    for (var r = fromRow; r <= toRow; r++) {
+      final next = (_rowOutlineLevel[r] ?? 0) + 1;
+      _rowOutlineLevel[r] = next > 7 ? 7 : next;
+      if (collapsed) _rowHidden.add(r);
+    }
+    if (collapsed) _rowCollapsed.add(toRow + 1);
+  }
+
+  /// Removes one outline level from rows [fromRow]–[toRow] and un-hides them.
+  void ungroupRows(int fromRow, int toRow) {
+    if (fromRow < 0 || toRow < fromRow) return;
+    for (var r = fromRow; r <= toRow; r++) {
+      final cur = _rowOutlineLevel[r] ?? 0;
+      if (cur <= 1) {
+        _rowOutlineLevel.remove(r);
+      } else {
+        _rowOutlineLevel[r] = cur - 1;
+      }
+      _rowHidden.remove(r);
+    }
+    _rowCollapsed.remove(toRow + 1);
+  }
+
+  /// Groups columns [fromColumn]–[toColumn] (0-based, inclusive) into a
+  /// collapsible outline. Each call nests one level deeper (max 7). When
+  /// [collapsed] is true the columns are hidden and the summary column just to
+  /// the right is flagged collapsed.
+  void groupColumns(int fromColumn, int toColumn, {bool collapsed = false}) {
+    if (fromColumn < 0 || toColumn < fromColumn) return;
+    for (var c = fromColumn; c <= toColumn; c++) {
+      final next = (_columnOutlineLevel[c] ?? 0) + 1;
+      _columnOutlineLevel[c] = next > 7 ? 7 : next;
+      if (collapsed) _columnHidden.add(c);
+    }
+    if (collapsed) _columnCollapsed.add(toColumn + 1);
+  }
+
+  /// Removes one outline level from columns [fromColumn]–[toColumn] and
+  /// un-hides them.
+  void ungroupColumns(int fromColumn, int toColumn) {
+    if (fromColumn < 0 || toColumn < fromColumn) return;
+    for (var c = fromColumn; c <= toColumn; c++) {
+      final cur = _columnOutlineLevel[c] ?? 0;
+      if (cur <= 1) {
+        _columnOutlineLevel.remove(c);
+      } else {
+        _columnOutlineLevel[c] = cur - 1;
+      }
+      _columnHidden.remove(c);
+    }
+    _columnCollapsed.remove(toColumn + 1);
+  }
 
   /// 0-based index of this sheet in the workbook tab order (its `localSheetId`).
   int get _localSheetId => _excel._sheetMap.keys.toList().indexOf(_sheet);

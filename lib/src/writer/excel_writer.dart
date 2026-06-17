@@ -35,10 +35,17 @@ class ExcelWriter extends _WriterBase
   }
 
   void _setColumns(Sheet sheetObject, XmlDocument xmlFile) {
+    final autoFits = sheetObject.getColumnAutoFits;
+    final customWidths = sheetObject.getColumnWidths;
+    final outline = sheetObject._columnOutlineLevel;
+    final hiddenCols = sheetObject._columnHidden;
+    final collapsedCols = sheetObject._columnCollapsed;
+    final hasGrouping =
+        outline.isNotEmpty || hiddenCols.isNotEmpty || collapsedCols.isNotEmpty;
+
     final columnElements = xmlFile.findAllElements('cols');
 
-    if (sheetObject.getColumnWidths.isEmpty &&
-        sheetObject.getColumnAutoFits.isEmpty) {
+    if (customWidths.isEmpty && autoFits.isEmpty && !hasGrouping) {
       if (columnElements.isEmpty) {
         return;
       }
@@ -57,24 +64,25 @@ class ExcelWriter extends _WriterBase
       worksheet.children.insert(index, XmlElement(_xmlName('cols'), [], []));
     }
 
-    var columns = columnElements.first;
+    var columns = xmlFile.findAllElements('cols').first;
 
     if (columns.children.isNotEmpty) {
       columns.children.clear();
     }
 
-    final autoFits = sheetObject.getColumnAutoFits;
-    final customWidths = sheetObject.getColumnWidths;
-
-    final columnCount = max(
-      autoFits.isEmpty ? 0 : autoFits.keys.reduce(max) + 1,
-      customWidths.isEmpty ? 0 : customWidths.keys.reduce(max) + 1,
-    );
-
-    List<double> columnWidths = <double>[];
-
     double defaultColumnWidth =
         sheetObject.defaultColumnWidth ?? _excelDefaultColumnWidth;
+
+    int maxOf(Iterable<int> keys) => keys.isEmpty ? -1 : keys.reduce(max);
+    final columnCount =
+        [
+          maxOf(autoFits.keys),
+          maxOf(customWidths.keys),
+          maxOf(outline.keys),
+          maxOf(hiddenCols),
+          maxOf(collapsedCols),
+        ].reduce(max) +
+        1;
 
     for (var index = 0; index < columnCount; index++) {
       double width = defaultColumnWidth;
@@ -87,9 +95,15 @@ class ExcelWriter extends _WriterBase
         }
       }
 
-      columnWidths.add(width);
-
-      _addNewColumn(columns, index, index, width);
+      _addNewColumn(
+        columns,
+        index,
+        index,
+        width,
+        outlineLevel: outline[index],
+        hidden: hiddenCols.contains(index),
+        collapsed: collapsedCols.contains(index),
+      );
     }
   }
 
