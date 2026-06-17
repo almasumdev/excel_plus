@@ -15,8 +15,32 @@ const _relationshipsTheme =
 const _relationshipsHyperlink =
     "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink";
 
+const _relationshipsDrawing =
+    "http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing";
+
+const _relationshipsImage =
+    "http://schemas.openxmlformats.org/officeDocument/2006/relationships/image";
+
 const _relationships =
     'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+
+/// Content type for a SpreadsheetML drawing part (`xl/drawings/drawingN.xml`).
+const _contentTypeDrawing =
+    'application/vnd.openxmlformats-officedocument.drawing+xml';
+
+/// Namespaces used in a worksheet drawing part.
+const _drawingSpreadsheetNS =
+    'http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing';
+const _drawingMainNS = 'http://schemas.openxmlformats.org/drawingml/2006/main';
+
+/// `<Default>` content types for the image formats images can be inserted as,
+/// keyed by lower-case file extension.
+const _imageContentTypes = <String, String>{
+  'png': 'image/png',
+  'jpeg': 'image/jpeg',
+  'jpg': 'image/jpeg',
+  'gif': 'image/gif',
+};
 
 const _spreadsheetXlsx = 'xlsx';
 

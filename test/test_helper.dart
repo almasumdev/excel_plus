@@ -143,3 +143,16 @@ String readPart(List<int> xlsxBytes, String partName) {
   file.decompress();
   return utf8.decode(file.content as List<int>);
 }
+
+/// Decodes [xlsxBytes] and returns the raw (decompressed) bytes of the named
+/// zip part — for binary parts such as `xl/media/*` that aren't UTF-8.
+List<int> readPartBytes(List<int> xlsxBytes, String partName) {
+  final archive = ZipDecoder().decodeBytes(xlsxBytes);
+  final file = archive.findFile(partName)!;
+  file.decompress();
+  return file.content as List<int>;
+}
+
+/// Whether [partName] exists in [xlsxBytes].
+bool partExists(List<int> xlsxBytes, String partName) =>
+    ZipDecoder().decodeBytes(xlsxBytes).findFile(partName) != null;

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:excel_plus/excel_plus.dart';
 
 import 'color_read_sample.dart';
+import 'image_sample.dart';
 
 /// One self-contained feature demonstration: a description, a few talking
 /// points, a short snippet shown on screen, the full copyable source, and a
@@ -56,6 +57,7 @@ final featureDemos = <FeatureDemo>[
   _richText,
   _conditionalFormat,
   _cellErrors,
+  _images,
 ];
 
 FeatureDemo? featureById(String id) {
@@ -2235,5 +2237,87 @@ Excel _buildCellErrors() {
 
   s.setColumnWidth(0, 12);
   s.setColumnWidth(1, 24);
+  return excel;
+}
+
+// ---------------------------------------------------------------------------
+// 21. Images
+// ---------------------------------------------------------------------------
+
+final _images = FeatureDemo(
+  id: 'images',
+  title: 'Images',
+  description:
+      'Embed pictures (PNG/JPEG/GIF) anchored to a cell. The format and pixel '
+      'size are detected from the bytes; the size can be overridden. Images read '
+      'back via sheet.images, and any already in an opened file are preserved. '
+      'Open the exported file in Excel/Sheets to see the pictures.',
+  points: [
+    'sheet.insertImage(bytes, anchor: CellIndex…)',
+    'width / height override the intrinsic pixel size',
+    'sheet.images reads pictures back (bytes + anchor + size)',
+    'PNG, JPEG and GIF supported',
+  ],
+  snippet: '''
+final png = base64.decode(logoBase64);
+sheet.insertImage(png, anchor: CellIndex.indexByString('B2'));
+
+// Override the rendered size (pixels):
+sheet.insertImage(png,
+    anchor: CellIndex.indexByString('B10'), width: 80, height: 30);
+
+// Read images back:
+for (final img in sheet.images) {
+  print('\${img.extension} \${img.width}x\${img.height} @ \${img.anchor}');
+}''',
+  fullCode: r'''
+import 'dart:convert';
+import 'package:excel_plus/excel_plus.dart';
+
+Excel buildImages(String logoBase64) {
+  final excel = Excel.createExcel();
+  final s = excel[excel.getDefaultSheet() ?? 'Sheet1'];
+  final png = base64.decode(logoBase64);
+
+  // Anchor a picture's top-left at a cell; size comes from the image.
+  s.insertImage(png, anchor: CellIndex.indexByString('B2'));
+
+  // Insert the same image at a fixed rendered size (in pixels).
+  s.insertImage(png,
+      anchor: CellIndex.indexByString('B12'), width: 80, height: 30);
+
+  return excel;
+}
+''',
+  build: _buildImages,
+);
+
+Excel _buildImages() {
+  final png = base64.decode(sampleImageBase64);
+  final excel = _book('Images');
+  final s = excel['Images'];
+
+  final header = _box(bold: true, fill: _headerFill, font: ExcelColor.white);
+  _put(s, 0, 0, TextCellValue('Pictures are anchored to a cell'), header);
+  _put(
+    s,
+    0,
+    1,
+    TextCellValue('Open this file in Excel or Sheets to see the images.'),
+    _box(),
+  );
+
+  // Intrinsic size, anchored at A3.
+  s.insertImage(png, anchor: CellIndex.indexByString('A3'));
+  // A smaller, explicitly-sized copy further down.
+  _put(s, 0, 9, TextCellValue('Same image, resized to 80×30 px'), _box());
+  s.insertImage(
+    png,
+    anchor: CellIndex.indexByString('A11'),
+    width: 80,
+    height: 30,
+  );
+
+  s.setColumnWidth(0, 40);
   return excel;
 }

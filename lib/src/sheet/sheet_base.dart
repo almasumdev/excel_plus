@@ -67,6 +67,23 @@ class _SheetBase {
   /// Appended on save; any rules already in an opened file are preserved as-is.
   final List<(String, ConditionalFormat)> _conditionalFormats = [];
 
+  /// Images on this sheet: those parsed from the drawing part plus any inserted
+  /// via [insertImage]. Lazily populated when the sheet is parsed.
+  final List<ExcelImage> _images = [];
+
+  /// Whether an image was inserted via the API. When `false`, an existing
+  /// drawing round-trips untouched; when `true`, inserted pictures are appended
+  /// to it on save.
+  bool _imagesChanged = false;
+
+  /// Package path of this sheet's drawing part (e.g.
+  /// `xl/drawings/drawing1.xml`), or `null` when the sheet has no drawing.
+  String? _drawingPath;
+
+  /// Whether the worksheet relationships changed (e.g. a freshly added drawing
+  /// relationship) and must be (re)written even if hyperlinks did not change.
+  bool _worksheetRelsChanged = false;
+
   _SheetBase(this._excel, this._sheet);
 
   /// Removes a cell from the specified [rowIndex] and [columnIndex].
@@ -406,6 +423,28 @@ class _SheetBase {
   /// Removes and returns any hyperlink on the cell at [cellIndex].
   Hyperlink? removeHyperlink(CellIndex cellIndex) =>
       _hyperlinks.remove(getCellId(cellIndex.columnIndex, cellIndex.rowIndex));
+
+  /// All images on this sheet, in document order (those read from the file plus
+  /// any inserted via [insertImage]). Read-only.
+  List<ExcelImage> get images => List.unmodifiable(_images);
+
+  /// Inserts [bytes] as a picture with its top-left corner anchored at [anchor].
+  ///
+  /// The format (PNG, JPEG or GIF) and intrinsic pixel size are detected from
+  /// the bytes; pass [width]/[height] (in pixels) to override the rendered size.
+  /// Throws [ArgumentError] for an unsupported image format. The picture is
+  /// written into the sheet's drawing on save, alongside any existing images.
+  void insertImage(
+    List<int> bytes, {
+    required CellIndex anchor,
+    int? width,
+    int? height,
+  }) {
+    _images.add(
+      ExcelImage._insert(bytes, anchor, width: width, height: height),
+    );
+    _imagesChanged = true;
+  }
 
   /// The `sqref` range string for [start] (and optional [end]), e.g. `"C2"` or
   /// `"C2:C100"`.

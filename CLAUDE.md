@@ -49,8 +49,11 @@ Keep layers separate: the reader must not depend on writer logic and vice versa.
   worksheet-level elements (hyperlinks, data validation, panes, etc.) live in the
   envelope so they round-trip for free.**
 - O(1) reverse indexes exist for styles and shared strings.
-- `_cloneArchive` reuses untouched zip parts byte-for-byte — preserves unmodeled
-  parts (images, theme, printerSettings) across a save.
+- `_cloneArchive` carries untouched zip parts across a save **by value**
+  (decompress + re-add so the encoder re-deflates cleanly) — preserves unmodeled
+  parts (images, printerSettings, …). Do **not** "optimize" this back to reusing
+  the decoded `ArchiveFile` directly: the `archive` encoder re-writes such reused
+  entries with a mismatched compression flag and corrupts them.
 
 ## Adding new worksheet features
 

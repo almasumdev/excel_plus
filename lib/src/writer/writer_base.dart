@@ -187,6 +187,54 @@ abstract class _WriterBase {
 
   static String _escapeXmlValue(String input) => _escapeXml(input);
 
+  /// Highest numeric `rId` suffix among [rels], or 0 when there are none.
+  int _maxRelId(List<_Relationship> rels) {
+    var maxId = 0;
+    for (final r in rels) {
+      final m = RegExp(r'\d+$').firstMatch(r.id);
+      final n = m == null ? 0 : (int.tryParse(m.group(0)!) ?? 0);
+      if (n > maxId) maxId = n;
+    }
+    return maxId;
+  }
+
+  /// Serializes [rels] to the `_rels` part for [partPath] (overwriting it).
+  /// Works for any part (worksheet, drawing, …); the path is derived via
+  /// [_relsPathFor].
+  void _writeWorksheetRels(String partPath, List<_Relationship> rels) {
+    final root = XmlElement(
+      _xmlName('Relationships'),
+      [
+        XmlAttribute(
+          _xmlName('xmlns'),
+          'http://schemas.openxmlformats.org/package/2006/relationships',
+        ),
+      ],
+      [
+        for (final r in rels)
+          XmlElement(_xmlName('Relationship'), [
+            XmlAttribute(_xmlName('Id'), r.id),
+            XmlAttribute(_xmlName('Type'), r.type),
+            XmlAttribute(_xmlName('Target'), r.target),
+            if (r.targetMode != null)
+              XmlAttribute(_xmlName('TargetMode'), r.targetMode!),
+          ]),
+      ],
+    );
+    final xml =
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '${root.toXmlString()}';
+    final relsPath = _relsPathFor(partPath);
+    final bytes = utf8.encode(xml);
+    final archiveFile = ArchiveFile(relsPath, bytes.length, bytes);
+    _archiveFiles[relsPath] = archiveFile;
+    // _cloneArchive only iterates parts already in the archive, so register a
+    // brand-new rels part (created workbook, or a sheet that had none before).
+    if (_excel._archive.findFile(relsPath) == null) {
+      _excel._archive.addFile(archiveFile);
+    }
+  }
+
   /// Builds an OOXML color element (`<color>`, `<fgColor>`, `<bgColor>`, ...) for
   /// [c], emitting a `theme`+`tint` or `indexed` reference when [c] carries one
   /// (so authored theme/indexed colors stay linked to the document), otherwise a

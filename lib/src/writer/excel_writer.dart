@@ -5,6 +5,7 @@ class ExcelWriter extends _WriterBase
     with
         _WriterStylesMixin,
         _WriterRelationsMixin,
+        _WriterDrawingsMixin,
         _WriterWorksheetFeaturesMixin,
         _WriterConditionalFormatMixin {
   ExcelWriter._(super.excel, super.parser);
@@ -457,6 +458,12 @@ class ExcelWriter extends _WriterBase
       // Apply sheet-view settings (gridlines, zoom, frozen panes). Runs after
       // RTL (which regenerates <sheetView>) and for every sheet.
       _applySheetViewForSheet(sheetName);
+
+      // Emit inserted images: media, drawing part + rels, and (for a sheet that
+      // had none) the worksheet <drawing> and its relationship. Runs before
+      // hyperlinks so a freshly added drawing rel is included when the worksheet
+      // relationships are (re)written.
+      _applyDrawingsForSheet(sheetName);
 
       // Emit hyperlinks (+ their worksheet rels) into the DOM.
       _applyHyperlinksForSheet(sheetName);

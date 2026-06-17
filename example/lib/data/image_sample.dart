@@ -1,0 +1,5 @@
+/// A small base64-encoded PNG (a 160×60 gradient) used by the "Images" demo as
+/// a self-contained, cross-platform image to insert (no asset loading needed,
+/// so the demo's synchronous `build` works on web too).
+const sampleImageBase64 =
+    'iVBORw0KGgoAAAANSUhEUgAAAKAAAAA8CAIAAABuCSZCAAABiElEQVR4nO3RBVICQBiAUS4hNjY2KjY6g4IBFhaKcQBb7MIu7MJuvaiz8++ewm/m3eBZ4sbc2rjbKiYarBMN8ZPGVGOCmFYSZzzarCdJhL1JYW/ynDHflCIWlNTFZm2p2SaWW2zLLWkrxmprulhTMtZ92oYvU0T8mRF/1qax1ZYttpWcnXZtt90u9jrsex25+8ZBZ544VPKPurTjrgIRDRREA4Unxml3kThTis97tIseh7jsdVz2ll4Z132l4kYpu+3X7vqdIhZ0xoLl98bDQIV4VCqfBrXnwSrxEqp6CVW/Gm9DNeJdqf0Y1j6HXeJrxPU1Uvdt/IzWi1/FQjDBBBNMMMEEE0wwwQQTTDDBBBNMMMEEE0wwwQQTTDDBBBNMMMEEE0wwwQQTTDDBBBNMMMEEE0wwwQQTTDDBBBNMMMEEE0wwwQQTTDDBBBNMMMEEE0wwwQQTTDDBBBNMMMEEE0wwwQQTTDDBBBNMMMEEE0wwwQQTTDDBBBNMMMEEE0wwwQQTTPB/D/4D6qXSVUbyJVkAAAAASUVORK5CYII=';

@@ -15,8 +15,13 @@ Archive _cloneArchive(
       if (archiveFiles.containsKey(file.name)) {
         clone.addFile(archiveFiles[file.name]!);
       } else {
-        // Reuse original ArchiveFile reference — no copy needed
-        clone.addFile(file);
+        // Carry the original part across. Decompress first so the encoder
+        // re-deflates clean raw bytes: reusing a decoded (still-compressed)
+        // ArchiveFile leaves the entry mis-flagged and corrupts it on save.
+        file.decompress();
+        clone.addFile(
+          ArchiveFile(file.name, file.content.length, file.content),
+        );
       }
     }
   }

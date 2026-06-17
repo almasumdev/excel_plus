@@ -1,3 +1,26 @@
+## 1.1.0
+
+### Added
+
+- **Images (read + write)** — embed pictures with
+  `sheet.insertImage(bytes, anchor: CellIndex, width:, height:)` and read them
+  back via `sheet.images` (each an `ExcelImage` with `bytes`, `extension`,
+  `anchor`, and pixel `width`/`height`). PNG, JPEG and GIF are supported; the
+  format and intrinsic size are detected from the bytes (override the rendered
+  size with `width`/`height`). A picture is anchored with its top-left corner at
+  the given cell. Inserted images are written into the worksheet's drawing
+  (creating the drawing part, its relationships, the media part, and the
+  content-types entries as needed); images already present in an opened file are
+  preserved, and new pictures are appended alongside them.
+
+### Fixed
+
+- **Unmodeled parts now survive a save.** `_cloneArchive` reused decoded zip
+  entries directly, which the `archive` encoder re-wrote with a mismatched
+  compression flag — corrupting any untouched part (worksheet `_rels`, embedded
+  media, `printerSettings`, …) that was later re-read. Such parts are now carried
+  across by value and re-compressed cleanly, so they round-trip intact.
+
 ## 1.0.0
 
 First major release. A broad set of worksheet features built on the
