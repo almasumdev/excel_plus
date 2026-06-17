@@ -45,6 +45,8 @@ mixin _ParserStylesMixin on _ParserBase {
 
       _excel._fontStyleList = <_FontStyle>[];
       _excel._patternFill = <String>[];
+      _excel._fillPatternTypes = <String>[];
+      _excel._fillBgColors = <String?>[];
       _excel._cellStyleList = <CellStyle>[];
       _excel._cellStyleIndex = null; // invalidate reverse lookup
       _excel._borderSetList = <_BorderSet>[];
@@ -72,6 +74,13 @@ mixin _ParserStylesMixin on _ParserBase {
         } else {
           _excel._patternFill.add(patternType);
         }
+        // Parallel detail (index-aligned) so non-solid patterns + bgColor are
+        // preserved without changing the legacy _patternFill above.
+        _excel._fillPatternTypes.add(patternType);
+        final bgColor = node.findElements('bgColor').firstOrNull;
+        _excel._fillBgColors.add(
+          bgColor == null ? null : _readColorElement(bgColor)?.colorHex,
+        );
       });
 
       document.findAllElements('border').forEach((node) {
@@ -149,6 +158,8 @@ mixin _ParserStylesMixin on _ParserBase {
 
           String fontColor = ExcelColor.black.colorHex,
               backgroundColor = ExcelColor.none.colorHex;
+          FillPatternType? fillPattern;
+          ExcelColor fillBackgroundColor = ExcelColor.none;
           String? fontFamily;
           FontScheme fontScheme = FontScheme.Unset;
           _BorderSet? borderSet;
@@ -221,6 +232,21 @@ mixin _ParserStylesMixin on _ParserBase {
           if (fillId < _excel._patternFill.length) {
             backgroundColor = _excel._patternFill[fillId];
           }
+          // Non-solid pattern detail (additive): set fillPattern + bgColor, and
+          // clear backgroundColor when it only held the patternType keyword
+          // (a pattern with no fgColor), so it isn't mistaken for a colour.
+          if (fillId >= 0 && fillId < _excel._fillPatternTypes.length) {
+            final pt = _excel._fillPatternTypes[fillId];
+            final parsed = _fillPatternFromXml(pt);
+            if (parsed != null) {
+              fillPattern = parsed;
+              if (backgroundColor == pt) backgroundColor = '';
+              final bgHex = fillId < _excel._fillBgColors.length
+                  ? _excel._fillBgColors[fillId]
+                  : null;
+              if (bgHex != null) fillBackgroundColor = bgHex.excelColor;
+            }
+          }
 
           int borderId = _getFontIndex(node, 'borderId');
           if (borderId < _excel._borderSetList.length) {
@@ -282,6 +308,8 @@ mixin _ParserStylesMixin on _ParserBase {
                 backgroundColor == 'none' || backgroundColor.isEmpty
                 ? ExcelColor.none
                 : backgroundColor.excelColor,
+            fillPattern: fillPattern,
+            fillBackgroundColorHex: fillBackgroundColor,
             horizontalAlign: horizontalAlign,
             verticalAlign: verticalAlign,
             textWrapping: textWrapping,

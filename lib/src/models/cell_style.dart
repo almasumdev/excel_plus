@@ -7,6 +7,8 @@ part of '../../excel_plus.dart';
 class CellStyle {
   ExcelColor _fontColor = ExcelColor.black;
   ExcelColor _backgroundColor = ExcelColor.none;
+  FillPatternType? _fillPattern;
+  ExcelColor _fillBackgroundColor = ExcelColor.none;
   String? _fontFamily;
   FontScheme _fontScheme;
   HorizontalAlign _horizontalAlign = HorizontalAlign.Left;
@@ -32,6 +34,8 @@ class CellStyle {
   CellStyle({
     ExcelColor fontColorHex = ExcelColor.black,
     ExcelColor backgroundColorHex = ExcelColor.none,
+    FillPatternType? fillPattern,
+    ExcelColor fillBackgroundColorHex = ExcelColor.none,
     int? fontSize,
     String? fontFamily,
     FontScheme? fontScheme,
@@ -62,6 +66,8 @@ class CellStyle {
        _indent = indent < 0 ? 0 : indent,
        _fontColor = _appropriateColor(fontColorHex),
        _backgroundColor = _appropriateColor(backgroundColorHex),
+       _fillPattern = fillPattern,
+       _fillBackgroundColor = _appropriateColor(fillBackgroundColorHex),
        _verticalAlign = verticalAlign,
        _horizontalAlign = horizontalAlign,
        _leftBorder = leftBorder ?? Border(),
@@ -76,6 +82,8 @@ class CellStyle {
   CellStyle copyWith({
     ExcelColor? fontColorHexVal,
     ExcelColor? backgroundColorHexVal,
+    FillPatternType? fillPatternVal,
+    ExcelColor? fillBackgroundColorHexVal,
     String? fontFamilyVal,
     FontScheme? fontSchemeVal,
     HorizontalAlign? horizontalAlignVal,
@@ -99,6 +107,8 @@ class CellStyle {
     return CellStyle(
       fontColorHex: fontColorHexVal ?? _fontColor,
       backgroundColorHex: backgroundColorHexVal ?? _backgroundColor,
+      fillPattern: fillPatternVal ?? _fillPattern,
+      fillBackgroundColorHex: fillBackgroundColorHexVal ?? _fillBackgroundColor,
       fontFamily: fontFamilyVal ?? _fontFamily,
       fontScheme: fontSchemeVal ?? _fontScheme,
       horizontalAlign: horizontalAlignVal ?? _horizontalAlign,
@@ -135,6 +145,27 @@ class CellStyle {
 
   set backgroundColor(ExcelColor backgroundColorHex) {
     _backgroundColor = _appropriateColor(backgroundColorHex);
+  }
+
+  /// The fill pattern. `null` (or [FillPatternType.solid]) means a plain solid
+  /// fill of [backgroundColor]; a hatch/shade pattern draws using
+  /// [backgroundColor] as the pattern colour over [fillBackgroundColor].
+  FillPatternType? get fillPattern {
+    return _fillPattern;
+  }
+
+  set fillPattern(FillPatternType? pattern) {
+    _fillPattern = pattern;
+  }
+
+  /// The pattern's background colour (the `bgColor`), used only when
+  /// [fillPattern] is a non-solid pattern. Defaults to [ExcelColor.none].
+  ExcelColor get fillBackgroundColor {
+    return _fillBackgroundColor;
+  }
+
+  set fillBackgroundColor(ExcelColor color) {
+    _fillBackgroundColor = _appropriateColor(color);
   }
 
   HorizontalAlign get horizontalAlignment {
@@ -309,6 +340,8 @@ class CellStyle {
           other._horizontalAlign == _horizontalAlign &&
           other._fontColor == _fontColor &&
           other._backgroundColor == _backgroundColor &&
+          other._fillPattern == _fillPattern &&
+          other._fillBackgroundColor == _fillBackgroundColor &&
           other._leftBorder == _leftBorder &&
           other._rightBorder == _rightBorder &&
           other._topBorder == _topBorder &&
@@ -333,6 +366,8 @@ class CellStyle {
     _horizontalAlign,
     _fontColor,
     _backgroundColor,
+    _fillPattern,
+    _fillBackgroundColor,
     _leftBorder,
     _rightBorder,
     _topBorder,

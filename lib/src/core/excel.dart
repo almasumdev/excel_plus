@@ -63,6 +63,13 @@ class Excel {
   }
 
   List<String> _patternFill = [];
+
+  /// Per-fill `patternType` and `bgColor` (hex), index-aligned with
+  /// [_patternFill] — read-side pattern-fill detail layered on top of the
+  /// legacy single-colour [_patternFill] without changing it.
+  List<String> _fillPatternTypes = [];
+  List<String?> _fillBgColors = [];
+
   final List<String> _mergeChangeLook = [];
   final List<String> _rtlChangeLook = [];
   List<_FontStyle> _fontStyleList = [];

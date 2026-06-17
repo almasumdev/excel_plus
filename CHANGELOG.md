@@ -51,6 +51,11 @@
   / `excel.unprotectWorkbook()`, and read the state via `isWorkbookProtected` /
   `workbookStructureLocked` / `workbookWindowsLocked`. The optional password
   uses Excel's legacy hash.
+- **Pattern fills (read + write)** — `CellStyle.fillPattern` (a `FillPatternType`
+  such as `gray125`, `darkGrid`, `lightUp`, …) draws a hatch/shade using
+  `backgroundColor` as the pattern colour over an optional `fillBackgroundColor`.
+  Non-solid patterns and their `bgColor` now also survive a read round-trip.
+  Plain solid fills are unchanged.
 
 ### Fixed
 

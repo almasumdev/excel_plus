@@ -62,6 +62,7 @@ final featureDemos = <FeatureDemo>[
   _grouping,
   _comments,
   _workbookProtection,
+  _patternFills,
 ];
 
 FeatureDemo? featureById(String id) {
@@ -2688,5 +2689,97 @@ Excel _buildWorkbookProtection() {
   excel.protectWorkbook(password: 'secret');
 
   s.setColumnWidth(0, 52);
+  return excel;
+}
+
+// ---------------------------------------------------------------------------
+// Pattern fills
+// ---------------------------------------------------------------------------
+
+final _patternFills = FeatureDemo(
+  id: 'pattern_fills',
+  title: 'Pattern fills',
+  description:
+      'Beyond solid fills, cells can use a hatch/shade pattern. backgroundColor '
+      'is the pattern colour, drawn over an optional fillBackgroundColor. Unlike '
+      'workbook protection, fills render everywhere — Excel, Google Sheets, and '
+      'LibreOffice.',
+  points: [
+    'CellStyle(fillPattern: FillPatternType.darkGrid, …)',
+    'backgroundColor = the pattern (foreground) colour',
+    'fillBackgroundColor = the colour behind the pattern',
+    'FillPatternType.solid (or null) = a plain solid fill',
+  ],
+  snippet: '''
+sheet.cell(CellIndex.indexByString('A1')).cellStyle = CellStyle(
+  fillPattern: FillPatternType.darkGrid,
+  backgroundColorHex: ExcelColor.fromHexString('FF1F6F43'), // pattern colour
+  fillBackgroundColorHex: ExcelColor.white,                 // behind it
+);
+
+// gray125 / lightUp / darkTrellis … all supported; solid is the default.''',
+  fullCode: r'''
+import 'package:excel_plus/excel_plus.dart';
+
+Excel buildPatternFills() {
+  final excel = Excel.createExcel();
+  final s = excel[excel.getDefaultSheet() ?? 'Sheet1'];
+
+  const patterns = [
+    FillPatternType.gray125,
+    FillPatternType.darkGrid,
+    FillPatternType.lightUp,
+    FillPatternType.darkTrellis,
+  ];
+  for (var i = 0; i < patterns.length; i++) {
+    s.updateCell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: i),
+        TextCellValue(patterns[i].name));
+    s.cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: i)).cellStyle =
+        CellStyle(
+          fillPattern: patterns[i],
+          backgroundColorHex: ExcelColor.fromHexString('FF1F6F43'),
+          fillBackgroundColorHex: ExcelColor.white,
+        );
+  }
+  return excel;
+}
+''',
+  build: _buildPatternFills,
+);
+
+Excel _buildPatternFills() {
+  final excel = _book('Pattern fills');
+  final s = excel['Pattern fills'];
+
+  final header = _box(bold: true, fill: _headerFill, font: ExcelColor.white);
+  _put(s, 0, 0, TextCellValue('Pattern'), header);
+  _put(s, 1, 0, TextCellValue('Preview'), header);
+
+  const patterns = [
+    FillPatternType.gray125,
+    FillPatternType.lightGray,
+    FillPatternType.darkGrid,
+    FillPatternType.lightUp,
+    FillPatternType.darkTrellis,
+    FillPatternType.darkHorizontal,
+  ];
+  final patternColor = ExcelColor.fromHexString('FF1F6F43');
+  for (var i = 0; i < patterns.length; i++) {
+    _put(s, 0, i + 1, TextCellValue(patterns[i].name), _box());
+    _put(
+      s,
+      1,
+      i + 1,
+      TextCellValue(''),
+      CellStyle(
+        fillPattern: patterns[i],
+        backgroundColorHex: patternColor,
+        fillBackgroundColorHex: ExcelColor.white,
+      ),
+    );
+  }
+
+  s.setColumnWidth(0, 18);
+  s.setColumnWidth(1, 18);
   return excel;
 }

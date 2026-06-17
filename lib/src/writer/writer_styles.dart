@@ -7,6 +7,8 @@ mixin _WriterStylesMixin on _WriterBase {
     _innerCellStyle.clear();
     Map<ExcelColor, int> innerPatternFillIndex = {};
     List<ExcelColor> innerPatternFill = [];
+    Map<_FillStyle, int> innerFillStyleIndex = {};
+    List<_FillStyle> innerFillStyle = [];
     Map<_FontStyle, int> innerFontStyleIndex = {};
     List<_FontStyle> innerFontStyle = [];
     Map<_BorderSet, int> innerBorderSetIndex = {};
@@ -41,11 +43,26 @@ mixin _WriterStylesMixin on _WriterBase {
         innerFontStyle.add(fs);
       }
 
-      final background = cellStyle.backgroundColor;
-      if (!_fillExistsLiterally(background) &&
-          !innerPatternFillIndex.containsKey(background)) {
-        innerPatternFillIndex[background] = innerPatternFill.length;
-        innerPatternFill.add(background);
+      // Real (non-solid) patterns take a separate lane keyed by the full fill
+      // descriptor; solid/none fills keep the existing single-colour lane so
+      // their dedup and ids are unchanged.
+      if (_isRealPattern(cellStyle.fillPattern)) {
+        final fs = _FillStyle(
+          cellStyle.fillPattern!,
+          cellStyle.backgroundColor,
+          cellStyle.fillBackgroundColor,
+        );
+        if (!innerFillStyleIndex.containsKey(fs)) {
+          innerFillStyleIndex[fs] = innerFillStyle.length;
+          innerFillStyle.add(fs);
+        }
+      } else {
+        final background = cellStyle.backgroundColor;
+        if (!_fillExistsLiterally(background) &&
+            !innerPatternFillIndex.containsKey(background)) {
+          innerPatternFillIndex[background] = innerPatternFill.length;
+          innerPatternFill.add(background);
+        }
       }
 
       final bs = _createBorderSetFromCellStyle(cellStyle);
@@ -132,20 +149,23 @@ mixin _WriterStylesMixin on _WriterBase {
 
     var fillAttribute = fills.getAttributeNode('count');
 
+    final totalFills =
+        _excel._patternFill.length +
+        innerPatternFill.length +
+        innerFillStyle.length;
     if (fillAttribute != null) {
-      fillAttribute.value =
-          '${_excel._patternFill.length + innerPatternFill.length}';
+      fillAttribute.value = '$totalFills';
     } else {
-      fills.attributes.add(
-        XmlAttribute(
-          _xmlName('count'),
-          '${_excel._patternFill.length + innerPatternFill.length}',
-        ),
-      );
+      fills.attributes.add(XmlAttribute(_xmlName('count'), '$totalFills'));
     }
 
+    // Append the single-colour fills first, then the patterned fills, matching
+    // the id offsets used in `_fillIdFor`/the pattern lane below.
     for (final color in innerPatternFill) {
       fills.children.add(_buildFillElement(color));
+    }
+    for (final fs in innerFillStyle) {
+      fills.children.add(_buildPatternFillElement(fs));
     }
 
     XmlElement borders = _excel._xmlFiles['xl/styles.xml']!
@@ -239,10 +259,20 @@ mixin _WriterStylesMixin on _WriterBase {
       // then an existing parsed one, then the default (0). Falling back to the
       // existing record is what keeps an authored style that reuses a font/fill/
       // border already in the file from silently reverting to the default.
-      final int fillId = _fillIdFor(
-        cellStyle.backgroundColor,
-        innerPatternFillIndex,
-      );
+      final int fillId;
+      if (_isRealPattern(cellStyle.fillPattern)) {
+        final fs = _FillStyle(
+          cellStyle.fillPattern!,
+          cellStyle.backgroundColor,
+          cellStyle.fillBackgroundColor,
+        );
+        fillId =
+            _excel._patternFill.length +
+            innerPatternFill.length +
+            innerFillStyleIndex[fs]!;
+      } else {
+        fillId = _fillIdFor(cellStyle.backgroundColor, innerPatternFillIndex);
+      }
       final int fontId = _fontIdFor(fs, innerFontStyleIndex, fontIdBase);
       final int borderId = _borderIdFor(bs, innerBorderSetIndex);
 
@@ -409,6 +439,29 @@ mixin _WriterStylesMixin on _WriterBase {
     ]);
   }
 
+  /// Whether [p] is a real hatch/shade pattern (not solid, none, or unset) that
+  /// needs the patterned-fill lane.
+  bool _isRealPattern(FillPatternType? p) =>
+      p != null && p != FillPatternType.solid && p != FillPatternType.none;
+
+  /// Whether [c] is an actual colour worth emitting (not the `none` sentinel).
+  bool _isRealFillColor(ExcelColor c) =>
+      c._hasReference || (c.colorHex != 'none' && c.colorHex.isNotEmpty);
+
+  /// Builds a `<fill>` for a non-solid pattern: the `patternType` plus a
+  /// `<fgColor>` (the pattern colour) and `<bgColor>` only when they are set.
+  XmlElement _buildPatternFillElement(_FillStyle fs) {
+    final children = <XmlElement>[
+      if (_isRealFillColor(fs.fgColor)) _colorXml('fgColor', fs.fgColor),
+      if (_isRealFillColor(fs.bgColor)) _colorXml('bgColor', fs.bgColor),
+    ];
+    return XmlElement(_xmlName('fill'), [], [
+      XmlElement(_xmlName('patternFill'), [
+        XmlAttribute(_xmlName('patternType'), fs.patternType.name),
+      ], children),
+    ]);
+  }
+
   /// Global `fontId` for [fs]: an appended (inner) record offset past the parsed
   /// fonts, else the index of a matching parsed font, else 0 (default).
   /// Global `fontId` for [fs]. Authored fonts are always appended (the parsed
@@ -438,4 +491,26 @@ mixin _WriterStylesMixin on _WriterBase {
     final existing = _excel._borderSetList.indexOf(bs);
     return existing == -1 ? 0 : existing;
   }
+}
+
+/// Internal value type identifying a non-solid pattern fill — used as a dedup
+/// key when appending patterned `<fill>` records (mirrors `_FontStyle` /
+/// `_BorderSet`).
+class _FillStyle {
+  const _FillStyle(this.patternType, this.fgColor, this.bgColor);
+
+  final FillPatternType patternType;
+  final ExcelColor fgColor;
+  final ExcelColor bgColor;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is _FillStyle &&
+          other.patternType == patternType &&
+          other.fgColor == fgColor &&
+          other.bgColor == bgColor;
+
+  @override
+  int get hashCode => Object.hash(patternType, fgColor, bgColor);
 }

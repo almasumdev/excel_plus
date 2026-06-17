@@ -122,7 +122,8 @@ cd ../excel_plus_bench                && dart pub get && dart run bin/benchmark.
 - **Multiple sheets** — create, copy, rename, delete, reorder, tab colour, hide.
 - **All cell types** — text, int, double, bool, date, time, date-time, formula,
   and typed error values (`#DIV/0!`, `#N/A`, …).
-- **Cell styling** — fonts, colors, fills, borders, alignment, rotation, indent.
+- **Cell styling** — fonts, colors, solid & pattern fills, borders, alignment,
+  rotation, indent.
 - **Number formats** — built-in and custom format codes.
 - **Worksheet features** — hyperlinks, data validation / dropdowns, conditional
   formatting (colour scales, data bars, cellIs/formula), freeze panes, autofilter,
