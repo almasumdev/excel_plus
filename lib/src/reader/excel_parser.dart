@@ -55,6 +55,17 @@ class Parser extends _ParserBase
     });
 
     _parseDefinedNames(document);
+    _parseWorkbookProtection(document);
+  }
+
+  /// Reads `<workbookProtection>` flags into the workbook model. The element
+  /// itself round-trips via the workbook DOM unless changed through the API.
+  void _parseWorkbookProtection(XmlDocument workbook) {
+    final el = workbook.findAllElements('workbookProtection').firstOrNull;
+    if (el == null) return;
+    _excel._workbookProtected = true;
+    _excel._workbookLockStructure = el.getAttribute('lockStructure') == '1';
+    _excel._workbookLockWindows = el.getAttribute('lockWindows') == '1';
   }
 
   /// Reads workbook `<definedNames>` into [_excel._definedNames].

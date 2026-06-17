@@ -32,6 +32,13 @@ class Excel {
   bool _sheetOrderChanged = false;
   bool _definedNamesChanged = false;
 
+  /// Workbook protection (`<workbookProtection>` in `xl/workbook.xml`).
+  bool _workbookProtected = false;
+  bool _workbookLockStructure = true;
+  bool _workbookLockWindows = false;
+  String? _workbookPassword;
+  bool _workbookProtectionChanged = false;
+
   /// Workbook defined names (named ranges/formulas), in document order.
   final List<DefinedName> _definedNames = [];
 
@@ -374,6 +381,47 @@ class Excel {
     final removed = _definedNames.length != before;
     if (removed) _definedNamesChanged = true;
     return removed;
+  }
+
+  /// Whether the workbook is protected (its structure and/or windows locked).
+  bool get isWorkbookProtected => _workbookProtected;
+
+  /// Whether the workbook **structure** is locked — sheets cannot be added,
+  /// deleted, renamed, moved, hidden, or unhidden in Excel.
+  bool get workbookStructureLocked =>
+      _workbookProtected && _workbookLockStructure;
+
+  /// Whether the workbook **windows** are locked to their size and position.
+  bool get workbookWindowsLocked => _workbookProtected && _workbookLockWindows;
+
+  /// Protects the workbook, locking its [lockStructure] (sheet add/delete/
+  /// rename/move/hide) and/or [lockWindows] (window size & position).
+  ///
+  /// An optional [password] is stored using Excel's legacy hash — it deters
+  /// changes when the file is opened in Excel but is **not** strong encryption.
+  ///
+  /// ```dart
+  /// excel.protectWorkbook(password: 'secret'); // lock structure
+  /// ```
+  void protectWorkbook({
+    String? password,
+    bool lockStructure = true,
+    bool lockWindows = false,
+  }) {
+    _workbookProtected = true;
+    _workbookLockStructure = lockStructure;
+    _workbookLockWindows = lockWindows;
+    _workbookPassword = (password == null || password.isEmpty)
+        ? null
+        : password;
+    _workbookProtectionChanged = true;
+  }
+
+  /// Removes workbook protection.
+  void unprotectWorkbook() {
+    _workbookProtected = false;
+    _workbookPassword = null;
+    _workbookProtectionChanged = true;
   }
 
   /// Encodes the workbook as `.xlsx` bytes.

@@ -21,6 +21,7 @@ class ExcelWriter extends _WriterBase
     _applySheetVisibilities();
     _applySheetOrder();
     _applyDefinedNames();
+    _applyWorkbookProtection();
     if (_excel._defaultSheet != null) {
       _setDefaultSheet(_excel._defaultSheet);
     }
@@ -228,6 +229,65 @@ class ExcelWriter extends _WriterBase
     wb.children.insert(
       insertAt,
       XmlElement(_xmlName('definedNames'), [], children),
+    );
+  }
+
+  /// Writes `<workbookProtection>` from the model (only when changed via the
+  /// API), inserted before `<bookViews>`/`<sheets>` to keep CT_Workbook order
+  /// valid. Removing protection drops the element.
+  void _applyWorkbookProtection() {
+    if (!_excel._workbookProtectionChanged) return;
+    final workbook = _excel._xmlFiles['xl/workbook.xml'];
+    final wb = workbook?.findAllElements('workbook').firstOrNull;
+    if (wb == null) return;
+
+    for (final e in wb.findElements('workbookProtection').toList()) {
+      wb.children.remove(e);
+    }
+    if (!_excel._workbookProtected) return;
+
+    final attrs = <XmlAttribute>[
+      if (_excel._workbookPassword != null)
+        XmlAttribute(
+          _xmlName('workbookPassword'),
+          _legacyPasswordHash(_excel._workbookPassword!),
+        ),
+      if (_excel._workbookLockStructure)
+        XmlAttribute(_xmlName('lockStructure'), '1'),
+      if (_excel._workbookLockWindows)
+        XmlAttribute(_xmlName('lockWindows'), '1'),
+    ];
+
+    // <workbookProtection> sits after <workbookPr> and before everything from
+    // <bookViews>/<sheets> onward.
+    const after = {
+      'bookViews',
+      'sheets',
+      'functionGroups',
+      'externalReferences',
+      'definedNames',
+      'calcPr',
+      'oleSize',
+      'customWorkbookViews',
+      'pivotCaches',
+      'smartTagPr',
+      'smartTagTypes',
+      'webPublishing',
+      'fileRecoveryPr',
+      'webPublishObjects',
+      'extLst',
+    };
+    var insertAt = wb.children.length;
+    for (var i = 0; i < wb.children.length; i++) {
+      final n = wb.children[i];
+      if (n is XmlElement && after.contains(n.name.local)) {
+        insertAt = i;
+        break;
+      }
+    }
+    wb.children.insert(
+      insertAt,
+      XmlElement(_xmlName('workbookProtection'), attrs),
     );
   }
 

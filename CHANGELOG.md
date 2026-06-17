@@ -46,6 +46,11 @@
   legacy VML note shapes, the worksheet relationships, the `<legacyDrawing>`
   element, and the content-types entries; comments already in an opened file are
   read into the model and preserved on save.
+- **Workbook protection (read + write)** — lock the workbook structure and/or
+  windows with `excel.protectWorkbook(password:, lockStructure:, lockWindows:)`
+  / `excel.unprotectWorkbook()`, and read the state via `isWorkbookProtected` /
+  `workbookStructureLocked` / `workbookWindowsLocked`. The optional password
+  uses Excel's legacy hash.
 
 ### Fixed
 

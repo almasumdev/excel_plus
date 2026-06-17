@@ -126,7 +126,7 @@ cd ../excel_plus_bench                && dart pub get && dart run bin/benchmark.
 - **Number formats** — built-in and custom format codes.
 - **Worksheet features** — hyperlinks, data validation / dropdowns, conditional
   formatting (colour scales, data bars, cellIs/formula), freeze panes, autofilter,
-  sheet protection, defined names / named ranges, gridlines & zoom.
+  sheet & workbook protection, defined names / named ranges, gridlines & zoom.
 - **Images** — insert PNG/JPEG/GIF anchored to a cell (`sheet.insertImage`) and
   read them back (`sheet.images`); existing pictures are preserved on save.
 - **Page & print setup** — orientation, scaling / fit-to-page, margins, print

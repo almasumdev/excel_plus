@@ -61,6 +61,7 @@ final featureDemos = <FeatureDemo>[
   _pageSetup,
   _grouping,
   _comments,
+  _workbookProtection,
 ];
 
 FeatureDemo? featureById(String id) {
@@ -2606,5 +2607,86 @@ Excel _buildComments() {
 
   s.setColumnWidth(0, 22);
   s.setColumnWidth(1, 14);
+  return excel;
+}
+
+// ---------------------------------------------------------------------------
+// Workbook protection
+// ---------------------------------------------------------------------------
+
+final _workbookProtection = FeatureDemo(
+  id: 'workbook_protection',
+  title: 'Workbook protection',
+  description:
+      'Lock the workbook structure so sheets cannot be added, deleted, renamed, '
+      'moved, or hidden in Excel. An optional password (legacy hash) is required '
+      'to unprotect. This protects the workbook, not individual cells.',
+  points: [
+    'excel.protectWorkbook(password: "…")',
+    'lockStructure: locks add/delete/rename/move sheets',
+    'lockWindows: locks window size & position',
+    'excel.unprotectWorkbook() to clear',
+  ],
+  snippet: '''
+// Lock the workbook structure (the default), with a password:
+excel.protectWorkbook(password: 'secret');
+
+// Or lock the windows too:
+excel.protectWorkbook(lockStructure: true, lockWindows: true);
+
+if (excel.isWorkbookProtected) {
+  // excel.workbookStructureLocked == true
+}''',
+  fullCode: r'''
+import 'package:excel_plus/excel_plus.dart';
+
+Excel buildWorkbookProtection() {
+  final excel = Excel.createExcel();
+  final s = excel[excel.getDefaultSheet() ?? 'Sheet1'];
+  s.updateCell(CellIndex.indexByString('A1'),
+      TextCellValue('This workbook is structure-protected'));
+
+  // Sheets can no longer be added/removed/renamed in Excel without the password.
+  excel.protectWorkbook(password: 'secret');
+
+  return excel;
+}
+''',
+  build: _buildWorkbookProtection,
+);
+
+Excel _buildWorkbookProtection() {
+  final excel = _book('Protected');
+  final s = excel['Protected'];
+
+  final header = _box(bold: true, fill: _headerFill, font: ExcelColor.white);
+  _put(s, 0, 0, TextCellValue('Workbook protection'), header);
+  _put(
+    s,
+    0,
+    1,
+    TextCellValue('The structure of this workbook is locked.'),
+    _box(),
+  );
+  _put(
+    s,
+    0,
+    2,
+    TextCellValue('In Excel, sheets cannot be added, deleted, or renamed.'),
+    _box(),
+  );
+  _put(
+    s,
+    0,
+    3,
+    TextCellValue(
+      'Unprotect with the password "secret" to edit the structure.',
+    ),
+    _box(),
+  );
+
+  excel.protectWorkbook(password: 'secret');
+
+  s.setColumnWidth(0, 52);
   return excel;
 }
