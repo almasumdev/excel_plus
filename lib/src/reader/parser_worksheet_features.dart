@@ -146,4 +146,71 @@ mixin _ParserWorksheetFeaturesMixin on _ParserBase {
     }
     return null;
   }
+
+  /// Reads `<pageSetup>`, `<printOptions>`, `<pageMargins>` and the
+  /// `<sheetPr><pageSetUpPr fitToPage>` flag into the sheet's [PageSetup]. The
+  /// elements are left untouched on save unless the API changes the model.
+  void _parsePageSetupForSheet(String sheetName) {
+    final sheet = _excel._sheetMap[sheetName];
+    final partPath = _excel._xmlSheetId[sheetName];
+    if (sheet == null || partPath == null) return;
+    final doc = _excel._xmlFiles[partPath];
+    if (doc == null) return;
+
+    final setup = doc.findAllElements('pageSetup').firstOrNull;
+    final options = doc.findAllElements('printOptions').firstOrNull;
+    final margins = doc.findAllElements('pageMargins').firstOrNull;
+    if (setup == null && options == null && margins == null) return;
+
+    double margin(String name, double fallback) =>
+        double.tryParse(margins?.getAttribute(name) ?? '') ?? fallback;
+
+    sheet._pageSetup = PageSetup(
+      orientation: switch (setup?.getAttribute('orientation')) {
+        'landscape' => PageOrientation.landscape,
+        'portrait' => PageOrientation.portrait,
+        _ => null,
+      },
+      paperSize: int.tryParse(setup?.getAttribute('paperSize') ?? ''),
+      scale: int.tryParse(setup?.getAttribute('scale') ?? ''),
+      fitToWidth: int.tryParse(setup?.getAttribute('fitToWidth') ?? ''),
+      fitToHeight: int.tryParse(setup?.getAttribute('fitToHeight') ?? ''),
+      horizontalCentered: options?.getAttribute('horizontalCentered') == '1',
+      verticalCentered: options?.getAttribute('verticalCentered') == '1',
+      printGridLines: options?.getAttribute('gridLines') == '1',
+      printHeadings: options?.getAttribute('headings') == '1',
+      margins: margins == null
+          ? null
+          : PageMargins(
+              left: margin('left', 0.7),
+              right: margin('right', 0.7),
+              top: margin('top', 0.75),
+              bottom: margin('bottom', 0.75),
+              header: margin('header', 0.3),
+              footer: margin('footer', 0.3),
+            ),
+    );
+  }
+
+  /// Reads `<rowBreaks>`/`<colBreaks>` `<brk id>` entries into the sheet's
+  /// manual page-break sets. Left untouched on save unless the API changes them.
+  void _parsePageBreaksForSheet(String sheetName) {
+    final sheet = _excel._sheetMap[sheetName];
+    final partPath = _excel._xmlSheetId[sheetName];
+    if (sheet == null || partPath == null) return;
+    final doc = _excel._xmlFiles[partPath];
+    if (doc == null) return;
+
+    void read(String container, Set<int> into) {
+      final el = doc.findAllElements(container).firstOrNull;
+      if (el == null) return;
+      for (final brk in el.findElements('brk')) {
+        final id = int.tryParse(brk.getAttribute('id') ?? '');
+        if (id != null && id > 0) into.add(id);
+      }
+    }
+
+    read('rowBreaks', sheet._rowBreaks);
+    read('colBreaks', sheet._colBreaks);
+  }
 }

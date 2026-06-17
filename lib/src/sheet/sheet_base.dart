@@ -84,6 +84,24 @@ class _SheetBase {
   /// relationship) and must be (re)written even if hyperlinks did not change.
   bool _worksheetRelsChanged = false;
 
+  /// Page/print setup (`<pageSetup>`/`<printOptions>`/`<pageMargins>`), or
+  /// `null` when none is set. Populated lazily on parse.
+  PageSetup? _pageSetup;
+
+  /// Whether page setup was changed via the API. When `false`, any existing
+  /// page-setup elements are preserved untouched by the envelope round-trip.
+  bool _pageSetupChanged = false;
+
+  /// Manual page breaks: 0-based row indices that start a new printed page (the
+  /// break sits immediately above them).
+  final Set<int> _rowBreaks = {};
+
+  /// Manual page breaks: 0-based column indices that start a new printed page.
+  final Set<int> _colBreaks = {};
+
+  /// Whether page breaks were changed via the API (gates rewriting them).
+  bool _pageBreaksChanged = false;
+
   _SheetBase(this._excel, this._sheet);
 
   /// Removes a cell from the specified [rowIndex] and [columnIndex].
@@ -618,6 +636,190 @@ class _SheetBase {
   set visibility(SheetVisibility value) {
     _visibility = value;
     _visibilityChanged = true;
+  }
+
+  /// The page/print setup for this sheet (orientation, scaling, centering, what
+  /// to print, and margins), or `null` if none is set.
+  PageSetup? get pageSetup => _pageSetup;
+
+  /// Sets (or clears, when `null`) the page/print setup. See [PageSetup].
+  ///
+  /// ```dart
+  /// sheet.pageSetup = const PageSetup(
+  ///   orientation: PageOrientation.landscape,
+  ///   fitToWidth: 1,
+  ///   margins: PageMargins.narrow(),
+  /// );
+  /// ```
+  set pageSetup(PageSetup? value) {
+    _pageSetup = value;
+    _pageSetupChanged = true;
+  }
+
+  /// The manual row page breaks: 0-based indices of rows that start a new
+  /// printed page, sorted ascending.
+  List<int> get rowPageBreaks => _rowBreaks.toList()..sort();
+
+  /// The manual column page breaks: 0-based indices of columns that start a new
+  /// printed page, sorted ascending.
+  List<int> get columnPageBreaks => _colBreaks.toList()..sort();
+
+  /// Inserts a manual page break above [rowIndex] (0-based) so that row begins a
+  /// new printed page. Indices `<= 0` are ignored — there is no page above the
+  /// first row.
+  void insertRowPageBreak(int rowIndex) {
+    if (rowIndex <= 0) return;
+    if (_rowBreaks.add(rowIndex)) _pageBreaksChanged = true;
+  }
+
+  /// Inserts a manual page break to the left of [columnIndex] (0-based) so that
+  /// column begins a new printed page. Indices `<= 0` are ignored.
+  void insertColumnPageBreak(int columnIndex) {
+    if (columnIndex <= 0) return;
+    if (_colBreaks.add(columnIndex)) _pageBreaksChanged = true;
+  }
+
+  /// Removes a previously inserted row page break (no-op if absent).
+  void removeRowPageBreak(int rowIndex) {
+    if (_rowBreaks.remove(rowIndex)) _pageBreaksChanged = true;
+  }
+
+  /// Removes a previously inserted column page break (no-op if absent).
+  void removeColumnPageBreak(int columnIndex) {
+    if (_colBreaks.remove(columnIndex)) _pageBreaksChanged = true;
+  }
+
+  /// Removes all manual page breaks from this sheet.
+  void clearPageBreaks() {
+    if (_rowBreaks.isEmpty && _colBreaks.isEmpty) return;
+    _rowBreaks.clear();
+    _colBreaks.clear();
+    _pageBreaksChanged = true;
+  }
+
+  /// The print area as a cleaned `A1:D10`-style range (sheet qualifier and `$`
+  /// markers stripped; multiple areas comma-separated), or `null` if unset.
+  String? get printArea =>
+      _cleanDefinedNameRange(_printDefinedName('_xlnm.Print_Area'));
+
+  /// Restricts printing to the rectangle from [from] to [to]. Stored as the
+  /// built-in `_xlnm.Print_Area` defined name scoped to this sheet.
+  void setPrintArea(CellIndex from, CellIndex to) {
+    _excel.setDefinedName(
+      '_xlnm.Print_Area',
+      '$_quotedSheetName!${_absRef(from)}:${_absRef(to)}',
+      localSheetId: _localSheetId,
+    );
+  }
+
+  /// Removes the print area (no-op if none is set).
+  void removePrintArea() =>
+      _excel.removeDefinedName('_xlnm.Print_Area', localSheetId: _localSheetId);
+
+  /// The repeating title rows as a cleaned `1:1`-style range, or `null`.
+  String? get printTitleRows => _printTitlesHalf(rows: true);
+
+  /// The repeating title columns as a cleaned `A:A`-style range, or `null`.
+  String? get printTitleColumns => _printTitlesHalf(rows: false);
+
+  /// Repeats rows [fromRow]–[toRow] (0-based, inclusive) at the top of every
+  /// printed page. Preserves any repeating columns already set.
+  void setPrintTitleRows(int fromRow, int toRow) => _setPrintTitles(
+    rowsRef: '$_quotedSheetName!\$${fromRow + 1}:\$${toRow + 1}',
+  );
+
+  /// Repeats columns [fromColumn]–[toColumn] (0-based, inclusive) at the left of
+  /// every printed page. Preserves any repeating rows already set.
+  void setPrintTitleColumns(int fromColumn, int toColumn) => _setPrintTitles(
+    colsRef:
+        '$_quotedSheetName!\$${_numericToLetters(fromColumn + 1)}:'
+        '\$${_numericToLetters(toColumn + 1)}',
+  );
+
+  /// Removes the repeating print titles (no-op if none are set).
+  void removePrintTitles() => _excel.removeDefinedName(
+    '_xlnm.Print_Titles',
+    localSheetId: _localSheetId,
+  );
+
+  /// 0-based index of this sheet in the workbook tab order (its `localSheetId`).
+  int get _localSheetId => _excel._sheetMap.keys.toList().indexOf(_sheet);
+
+  /// This sheet's name quoted for a defined-name reference, embedded apostrophes
+  /// doubled (e.g. `Bob's` -> `'Bob''s'`).
+  String get _quotedSheetName => "'${_sheet.replaceAll("'", "''")}'";
+
+  /// Builds an absolute single-cell reference (`$A$1`) from a [CellIndex].
+  String _absRef(CellIndex c) =>
+      '\$${_numericToLetters(c.columnIndex + 1)}\$${c.rowIndex + 1}';
+
+  /// The `refersTo` of the sheet-scoped built-in defined [name], or `null`.
+  String? _printDefinedName(String name) {
+    final id = _localSheetId;
+    for (final d in _excel._definedNames) {
+      if (d.name == name && d.localSheetId == id) return d.refersTo;
+    }
+    return null;
+  }
+
+  /// Strips sheet qualifiers (`'Sheet'!`) and `$` markers from a defined-name
+  /// reference so a single range reads like `A1:D10`. `null` in -> `null` out.
+  String? _cleanDefinedNameRange(String? refersTo) {
+    if (refersTo == null) return null;
+    return refersTo
+        .split(',')
+        .map((p) {
+          final bang = p.lastIndexOf('!');
+          return (bang == -1 ? p : p.substring(bang + 1)).replaceAll('\$', '');
+        })
+        .join(',');
+  }
+
+  /// Reads one half (rows or columns) of `_xlnm.Print_Titles`, cleaned to a bare
+  /// range (`1:1` / `A:A`), or `null` when that half is unset.
+  String? _printTitlesHalf({required bool rows}) {
+    final refersTo = _printDefinedName('_xlnm.Print_Titles');
+    if (refersTo == null) return null;
+    for (final segment in refersTo.split(',')) {
+      if (_isRowTitleSegment(segment) == rows) {
+        return _cleanDefinedNameRange(segment);
+      }
+    }
+    return null;
+  }
+
+  /// Whether a Print_Titles segment is a row range (`$1:$2`) rather than a
+  /// column range (`$A:$B`), classified by the first character after the `$`.
+  bool _isRowTitleSegment(String segment) {
+    final bang = segment.lastIndexOf('!');
+    final body = bang == -1 ? segment : segment.substring(bang + 1);
+    final stripped = body.replaceAll('\$', '');
+    return stripped.isNotEmpty && int.tryParse(stripped[0]) != null;
+  }
+
+  /// Upserts `_xlnm.Print_Titles`, replacing the given half and preserving the
+  /// other. Excel writes columns before rows.
+  void _setPrintTitles({String? rowsRef, String? colsRef}) {
+    final existing = _printDefinedName('_xlnm.Print_Titles');
+    String? curRows, curCols;
+    if (existing != null) {
+      for (final segment in existing.split(',')) {
+        if (_isRowTitleSegment(segment)) {
+          curRows = segment;
+        } else {
+          curCols = segment;
+        }
+      }
+    }
+    final newCols = colsRef ?? curCols;
+    final newRows = rowsRef ?? curRows;
+    final ref = [?newCols, ?newRows].join(',');
+    if (ref.isEmpty) return;
+    _excel.setDefinedName(
+      '_xlnm.Print_Titles',
+      ref,
+      localSheetId: _localSheetId,
+    );
   }
 
   /// The default row height, or `null` if not set.

@@ -276,4 +276,176 @@ mixin _WriterWorksheetFeaturesMixin on _WriterBase {
       }
     });
   }
+
+  /// Writes the page/print setup (`<printOptions>`, `<pageMargins>`,
+  /// `<pageSetup>` and the `<sheetPr><pageSetUpPr fitToPage>` flag) for
+  /// [sheetName], only when the API changed it — so an untouched file keeps its
+  /// original page-setup elements (including any `<pageSetup r:id>` printer
+  /// settings) via the envelope round-trip.
+  void _applyPageSetupForSheet(String sheetName) {
+    final sheet = _excel._sheetMap[sheetName];
+    final partPath = _excel._xmlSheetId[sheetName];
+    if (sheet == null || partPath == null) return;
+    if (!sheet._pageSetupChanged) return;
+    final doc = _excel._xmlFiles[partPath];
+    if (doc == null) return;
+    final worksheet = doc.findAllElements('worksheet').firstOrNull;
+    if (worksheet == null) return;
+
+    final ps = sheet._pageSetup;
+
+    // printOptions: regenerated from the model (fixed, fully-modeled attr set).
+    for (final e in worksheet.findElements('printOptions').toList()) {
+      worksheet.children.remove(e);
+    }
+    if (ps != null && ps._hasPrintOptions) {
+      _insertWorksheetChildOrdered(
+        worksheet,
+        XmlElement(_xmlName('printOptions'), [
+          if (ps.horizontalCentered)
+            XmlAttribute(_xmlName('horizontalCentered'), '1'),
+          if (ps.verticalCentered)
+            XmlAttribute(_xmlName('verticalCentered'), '1'),
+          if (ps.printGridLines) XmlAttribute(_xmlName('gridLines'), '1'),
+          if (ps.printHeadings) XmlAttribute(_xmlName('headings'), '1'),
+        ]),
+      );
+    }
+
+    // pageMargins: regenerated (six fixed attributes).
+    for (final e in worksheet.findElements('pageMargins').toList()) {
+      worksheet.children.remove(e);
+    }
+    final m = ps?.margins;
+    if (m != null) {
+      _insertWorksheetChildOrdered(
+        worksheet,
+        XmlElement(_xmlName('pageMargins'), [
+          XmlAttribute(_xmlName('left'), _fmtMargin(m.left)),
+          XmlAttribute(_xmlName('right'), _fmtMargin(m.right)),
+          XmlAttribute(_xmlName('top'), _fmtMargin(m.top)),
+          XmlAttribute(_xmlName('bottom'), _fmtMargin(m.bottom)),
+          XmlAttribute(_xmlName('header'), _fmtMargin(m.header)),
+          XmlAttribute(_xmlName('footer'), _fmtMargin(m.footer)),
+        ]),
+      );
+    }
+
+    // pageSetup: edited in place so an existing r:id (printer settings) and any
+    // attributes we don't model survive.
+    final existing = worksheet.findElements('pageSetup').firstOrNull;
+    if (ps == null || !ps._hasPageSetupAttrs) {
+      if (existing != null) worksheet.children.remove(existing);
+    } else {
+      final XmlElement setup;
+      if (existing != null) {
+        setup = existing;
+      } else {
+        setup = XmlElement(_xmlName('pageSetup'), [], []);
+        _insertWorksheetChildOrdered(worksheet, setup);
+      }
+      _setOrRemoveAttr(
+        setup,
+        'orientation',
+        ps.orientation == null
+            ? null
+            : (ps.orientation == PageOrientation.landscape
+                  ? 'landscape'
+                  : 'portrait'),
+      );
+      _setOrRemoveAttr(setup, 'paperSize', ps.paperSize?.toString());
+      _setOrRemoveAttr(setup, 'scale', ps.scale?.toString());
+      _setOrRemoveAttr(setup, 'fitToWidth', ps.fitToWidth?.toString());
+      _setOrRemoveAttr(setup, 'fitToHeight', ps.fitToHeight?.toString());
+    }
+
+    _applyFitToPage(worksheet, ps?._usesFitToPage ?? false);
+  }
+
+  /// Toggles `<sheetPr><pageSetUpPr fitToPage="1"/>` on [worksheet]. Creates
+  /// `<sheetPr>` when enabling and removes it again if it is left empty.
+  void _applyFitToPage(XmlElement worksheet, bool on) {
+    var sheetPr = worksheet.findElements('sheetPr').firstOrNull;
+    if (sheetPr == null) {
+      if (!on) return;
+      sheetPr = XmlElement(_xmlName('sheetPr'), [], []);
+      _insertWorksheetChildOrdered(worksheet, sheetPr);
+    }
+    // Regenerate pageSetUpPr (CT_SheetPr order: tabColor, outlinePr,
+    // pageSetUpPr) — placed last among them, before any extLst tail.
+    sheetPr.children.removeWhere(
+      (n) => n is XmlElement && n.name.local == 'pageSetUpPr',
+    );
+    if (on) {
+      final node = XmlElement(_xmlName('pageSetUpPr'), [
+        XmlAttribute(_xmlName('fitToPage'), '1'),
+      ]);
+      final extIdx = sheetPr.children.indexWhere(
+        (n) => n is XmlElement && n.name.local == 'extLst',
+      );
+      if (extIdx == -1) {
+        sheetPr.children.add(node);
+      } else {
+        sheetPr.children.insert(extIdx, node);
+      }
+    } else if (sheetPr.children.isEmpty && sheetPr.attributes.isEmpty) {
+      worksheet.children.remove(sheetPr);
+    }
+  }
+
+  /// Writes `<rowBreaks>`/`<colBreaks>` for [sheetName] from the model, only
+  /// when the API changed them (so existing breaks otherwise round-trip).
+  void _applyPageBreaksForSheet(String sheetName) {
+    final sheet = _excel._sheetMap[sheetName];
+    final partPath = _excel._xmlSheetId[sheetName];
+    if (sheet == null || partPath == null) return;
+    if (!sheet._pageBreaksChanged) return;
+    final doc = _excel._xmlFiles[partPath];
+    if (doc == null) return;
+    final worksheet = doc.findAllElements('worksheet').firstOrNull;
+    if (worksheet == null) return;
+
+    for (final tag in const ['rowBreaks', 'colBreaks']) {
+      for (final e in worksheet.findElements(tag).toList()) {
+        worksheet.children.remove(e);
+      }
+    }
+
+    final rows = sheet._rowBreaks.toList()..sort();
+    final cols = sheet._colBreaks.toList()..sort();
+    // max spans the full opposite axis: last column (16383) / last row (1048575).
+    if (rows.isNotEmpty) {
+      _insertWorksheetChildOrdered(
+        worksheet,
+        _buildBreaks('rowBreaks', rows, 16383),
+      );
+    }
+    if (cols.isNotEmpty) {
+      _insertWorksheetChildOrdered(
+        worksheet,
+        _buildBreaks('colBreaks', cols, 1048575),
+      );
+    }
+  }
+
+  /// Builds a `<rowBreaks>`/`<colBreaks>` element holding a manual `<brk>` per id.
+  XmlElement _buildBreaks(String tag, List<int> ids, int max) => XmlElement(
+    _xmlName(tag),
+    [
+      XmlAttribute(_xmlName('count'), ids.length.toString()),
+      XmlAttribute(_xmlName('manualBreakCount'), ids.length.toString()),
+    ],
+    [
+      for (final id in ids)
+        XmlElement(_xmlName('brk'), [
+          XmlAttribute(_xmlName('id'), id.toString()),
+          XmlAttribute(_xmlName('max'), max.toString()),
+          XmlAttribute(_xmlName('man'), '1'),
+        ]),
+    ],
+  );
+
+  /// Formats an inch margin compactly (e.g. `1.0` -> `1`, `0.75` -> `0.75`).
+  String _fmtMargin(double v) =>
+      v == v.truncateToDouble() ? v.toStringAsFixed(0) : v.toString();
 }

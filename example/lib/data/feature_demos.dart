@@ -58,6 +58,7 @@ final featureDemos = <FeatureDemo>[
   _conditionalFormat,
   _cellErrors,
   _images,
+  _pageSetup,
 ];
 
 FeatureDemo? featureById(String id) {
@@ -2319,5 +2320,107 @@ Excel _buildImages() {
   );
 
   s.setColumnWidth(0, 40);
+  return excel;
+}
+
+// ---------------------------------------------------------------------------
+// Page & print setup
+// ---------------------------------------------------------------------------
+
+final _pageSetup = FeatureDemo(
+  id: 'page_setup',
+  title: 'Page setup',
+  description:
+      'Control how a sheet prints: orientation, scaling / fit-to-page, margins, '
+      'print area, repeating print titles, and manual page breaks. Open the '
+      'exported file and use Print Preview to see the layout.',
+  points: [
+    'sheet.pageSetup = PageSetup(orientation, fitToWidth, margins…)',
+    'sheet.setPrintArea(from, to)',
+    'sheet.setPrintTitleRows(0, 0) repeats the header on every page',
+    'sheet.insertRowPageBreak(row) / insertColumnPageBreak(col)',
+  ],
+  snippet: '''
+sheet.pageSetup = const PageSetup(
+  orientation: PageOrientation.landscape,
+  fitToWidth: 1,                 // all columns on one page wide
+  printGridLines: true,
+  margins: PageMargins.narrow(),
+);
+
+sheet.setPrintArea(
+    CellIndex.indexByString('A1'), CellIndex.indexByString('D40'));
+sheet.setPrintTitleRows(0, 0);   // repeat row 1 on every printed page
+sheet.insertRowPageBreak(20);    // start a new page above row 21''',
+  fullCode: r'''
+import 'package:excel_plus/excel_plus.dart';
+
+Excel buildPageSetup() {
+  final excel = Excel.createExcel();
+  final s = excel[excel.getDefaultSheet() ?? 'Sheet1'];
+
+  // How the sheet prints.
+  s.pageSetup = const PageSetup(
+    orientation: PageOrientation.landscape,
+    fitToWidth: 1,
+    fitToHeight: 0,
+    horizontalCentered: true,
+    printGridLines: true,
+    margins: PageMargins.narrow(),
+  );
+
+  // Restrict printing to a range and repeat the header row on every page.
+  s.setPrintArea(
+      CellIndex.indexByString('A1'), CellIndex.indexByString('D40'));
+  s.setPrintTitleRows(0, 0);
+
+  // Force a page break so rows 21+ print on a second page.
+  s.insertRowPageBreak(20);
+
+  return excel;
+}
+''',
+  build: _buildPageSetup,
+);
+
+Excel _buildPageSetup() {
+  final excel = _book('Page setup');
+  final s = excel['Page setup'];
+
+  final header = _box(bold: true, fill: _headerFill, font: ExcelColor.white);
+  _put(s, 0, 0, TextCellValue('Region'), header);
+  _put(s, 1, 0, TextCellValue('Quarter'), header);
+  _put(s, 2, 0, TextCellValue('Units'), header);
+  _put(s, 3, 0, TextCellValue('Revenue'), header);
+
+  // A long table so the print settings actually matter.
+  const regions = ['North', 'South', 'East', 'West'];
+  for (var i = 0; i < 40; i++) {
+    _put(s, 0, i + 1, TextCellValue(regions[i % regions.length]), _box());
+    _put(s, 1, i + 1, TextCellValue('Q${(i % 4) + 1}'), _box());
+    _put(s, 2, i + 1, IntCellValue(100 + i * 7), _box());
+    _put(s, 3, i + 1, DoubleCellValue((100 + i * 7) * 9.99), _box());
+  }
+
+  // Landscape, fit all columns to one page wide, narrow margins, gridlines.
+  s.pageSetup = const PageSetup(
+    orientation: PageOrientation.landscape,
+    fitToWidth: 1,
+    fitToHeight: 0,
+    horizontalCentered: true,
+    printGridLines: true,
+    margins: PageMargins.narrow(),
+  );
+
+  // Print only the table; repeat the header row on every printed page.
+  s.setPrintArea(CellIndex.indexByString('A1'), CellIndex.indexByString('D41'));
+  s.setPrintTitleRows(0, 0);
+
+  // Split the print job after row 21.
+  s.insertRowPageBreak(21);
+
+  for (var c = 0; c < 4; c++) {
+    s.setColumnWidth(c, 16);
+  }
   return excel;
 }

@@ -129,6 +129,9 @@ cd ../excel_plus_bench                && dart pub get && dart run bin/benchmark.
   sheet protection, defined names / named ranges, gridlines & zoom.
 - **Images** — insert PNG/JPEG/GIF anchored to a cell (`sheet.insertImage`) and
   read them back (`sheet.images`); existing pictures are preserved on save.
+- **Page & print setup** — orientation, scaling / fit-to-page, margins, print
+  area, repeating print titles, and manual page breaks (`sheet.pageSetup`,
+  `sheet.setPrintArea`, `sheet.setPrintTitleRows`, `sheet.insertRowPageBreak`, …).
 - **Rich text** — read **and** write (per-run bold/italic/colour/size/font).
 - **Theme & indexed colours** — read (resolved to RGB) and authored
   (`ExcelColor.theme(ThemeColor.accent1, tint: x)` / `ExcelColor.indexed(n)`),
@@ -162,8 +165,8 @@ excel_plus is **actively developed** toward broader Excel / Google-Sheets parity
 **1.0.0** landed the high-impact worksheet feature set (hyperlinks, data
 validation, conditional formatting, freeze panes, autofilter, sheet protection,
 named ranges, rich-text write, error values, theme/indexed colour authoring).
-**1.1.0** adds image insert/extract. Next up (subject to change): comments /
-notes, then a formula-evaluation engine.
+**1.1.0** adds image insert/extract and page & print setup. Next up (subject to
+change): comments / notes, then a formula-evaluation engine.
 Shipped changes are tracked in the
 [changelog](https://github.com/almasumdev/excel_plus/blob/main/CHANGELOG.md),
 and the direction is driven by what users request on the

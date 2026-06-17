@@ -89,6 +89,8 @@ class Parser extends _ParserBase
     _parseAutoFilterForSheet(sheetName);
     _parseSheetProtectionForSheet(sheetName);
     _parseTabColorForSheet(sheetName);
+    _parsePageSetupForSheet(sheetName);
+    _parsePageBreaksForSheet(sheetName);
   }
 
   /// Parses all remaining unparsed sheets.

@@ -480,6 +480,11 @@ class ExcelWriter extends _WriterBase
       // Emit the tab colour into the DOM (only when changed via the API).
       _applyTabColorForSheet(sheetName);
 
+      // Emit page/print setup and manual page breaks (only when changed). Runs
+      // after the tab colour so a shared <sheetPr> is built in CT order.
+      _applyPageSetupForSheet(sheetName);
+      _applyPageBreaksForSheet(sheetName);
+
       // Append conditional-formatting rules into the DOM.
       _applyConditionalFormatsForSheet(sheetName);
 

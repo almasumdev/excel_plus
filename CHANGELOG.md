@@ -12,6 +12,25 @@
   (creating the drawing part, its relationships, the media part, and the
   content-types entries as needed); images already present in an opened file are
   preserved, and new pictures are appended alongside them.
+- **Page & print setup (read + write)** — control how a sheet prints via
+  `sheet.pageSetup = PageSetup(...)` (orientation, paper size, scale,
+  fit-to-page width/height, horizontal/vertical centering, print gridlines &
+  headings, and `PageMargins` with `normal`/`wide`/`narrow` presets); read it
+  back from `sheet.pageSetup`.
+- **Print area** — `sheet.setPrintArea(from, to)` / `sheet.printArea` /
+  `sheet.removePrintArea()` (stored as the built-in `_xlnm.Print_Area` name).
+- **Print titles** — `sheet.setPrintTitleRows(from, to)` /
+  `setPrintTitleColumns(from, to)` to repeat header rows/columns on every
+  printed page, with `printTitleRows` / `printTitleColumns` getters and
+  `removePrintTitles()`.
+- **Manual page breaks** — `sheet.insertRowPageBreak(row)` /
+  `insertColumnPageBreak(column)`, `rowPageBreaks` / `columnPageBreaks`,
+  `removeRowPageBreak` / `removeColumnPageBreak`, and `clearPageBreaks()`.
+
+  The page-setup features are change-gated: a file you open keeps its existing
+  page setup, print area, titles, and breaks byte-for-byte unless you change
+  them through the API (and editing `pageSetup` preserves `<pageSetup>`
+  attributes the model does not cover, such as a printer-settings `r:id`).
 
 ### Fixed
 
