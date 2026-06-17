@@ -170,8 +170,9 @@ excel_plus is **actively developed** toward broader Excel / Google-Sheets parity
 **1.0.0** landed the high-impact worksheet feature set (hyperlinks, data
 validation, conditional formatting, freeze panes, autofilter, sheet protection,
 named ranges, rich-text write, error values, theme/indexed colour authoring).
-**1.1.0** adds images, page & print setup, row/column grouping, and cell
-comments. Next up (subject to change): a formula-evaluation engine.
+**1.1.0** adds images, page & print setup, row/column grouping, cell comments,
+workbook protection, and pattern fills. Next up (subject to change): a
+formula-evaluation engine.
 Shipped changes are tracked in the
 [changelog](https://github.com/almasumdev/excel_plus/blob/main/CHANGELOG.md),
 and the direction is driven by what users request on the
