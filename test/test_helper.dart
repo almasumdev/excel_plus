@@ -82,6 +82,7 @@ List<int> buildXlsx(
   String afterSheetData = '',
   String? theme,
   String? sheetRels,
+  Map<String, String>? extraParts,
 }) {
   final themeOverride = theme == null
       ? ''
@@ -127,6 +128,9 @@ List<int> buildXlsx(
 $beforeSheetData<sheetData>$sheetDataInner</sheetData>$afterSheetData
 </worksheet>''',
   };
+
+  // Arbitrary additional parts (e.g. an xl/commentsN.xml to test the reader).
+  if (extraParts != null) parts.addAll(extraParts);
 
   final archive = Archive();
   parts.forEach((name, content) {

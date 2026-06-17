@@ -37,6 +37,7 @@ class HomePage extends StatelessWidget {
     'images': Icons.image_outlined,
     'page_setup': Icons.print_outlined,
     'grouping': Icons.account_tree_outlined,
+    'comments': Icons.comment_outlined,
   };
 
   static const _showcaseIcons = <String, IconData>{

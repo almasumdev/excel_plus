@@ -21,12 +21,27 @@ const _relationshipsDrawing =
 const _relationshipsImage =
     "http://schemas.openxmlformats.org/officeDocument/2006/relationships/image";
 
+const _relationshipsComments =
+    "http://schemas.openxmlformats.org/officeDocument/2006/relationships/comments";
+
+const _relationshipsVmlDrawing =
+    "http://schemas.openxmlformats.org/officeDocument/2006/relationships/vmlDrawing";
+
 const _relationships =
     'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
 
 /// Content type for a SpreadsheetML drawing part (`xl/drawings/drawingN.xml`).
 const _contentTypeDrawing =
     'application/vnd.openxmlformats-officedocument.drawing+xml';
+
+/// Content type for a comments part (`xl/commentsN.xml`).
+const _contentTypeComments =
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.comments+xml';
+
+/// `<Default>` content type for the legacy VML drawing parts that carry the
+/// comment note boxes (`xl/drawings/vmlDrawingN.vml`).
+const _contentTypeVml =
+    'application/vnd.openxmlformats-officedocument.vmlDrawing';
 
 /// Namespaces used in a worksheet drawing part.
 const _drawingSpreadsheetNS =

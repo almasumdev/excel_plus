@@ -6,6 +6,7 @@ class ExcelWriter extends _WriterBase
         _WriterStylesMixin,
         _WriterRelationsMixin,
         _WriterDrawingsMixin,
+        _WriterCommentsMixin,
         _WriterWorksheetFeaturesMixin,
         _WriterConditionalFormatMixin {
   ExcelWriter._(super.excel, super.parser);
@@ -478,6 +479,11 @@ class ExcelWriter extends _WriterBase
       // hyperlinks so a freshly added drawing rel is included when the worksheet
       // relationships are (re)written.
       _applyDrawingsForSheet(sheetName);
+
+      // Emit cell comments (comments + VML parts, rels, <legacyDrawing>) before
+      // hyperlinks so the comment relationships are included when the worksheet
+      // relationships are (re)written.
+      _applyCommentsForSheet(sheetName);
 
       // Emit hyperlinks (+ their worksheet rels) into the DOM.
       _applyHyperlinksForSheet(sheetName);

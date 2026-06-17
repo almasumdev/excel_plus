@@ -87,7 +87,8 @@ mixin _WriterDrawingsMixin on _WriterBase {
 
     // Ensure a <Default> content type for each image extension used.
     for (final ext in usedExtensions) {
-      _ensureDefaultContentType(ext);
+      final type = _imageContentTypes[ext];
+      if (type != null) _ensureDefaultContentType(ext, type);
     }
   }
 
@@ -255,27 +256,6 @@ mixin _WriterDrawingsMixin on _WriterBase {
     return 'xl/media/image${maxIndex + 1}.$ext';
   }
 
-  /// Registers a binary part (e.g. media) into the archive so `_cloneArchive`
-  /// carries it through to the saved file.
-  void _registerBinaryPart(String path, List<int> bytes) {
-    final file = ArchiveFile(path, bytes.length, bytes);
-    _archiveFiles[path] = file;
-    if (_excel._archive.findFile(path) == null) {
-      _excel._archive.addFile(file);
-    }
-  }
-
-  /// Registers a generated XML part (drawing). [isNew] parts must also be added
-  /// to the source archive so `_cloneArchive` emits them.
-  void _registerXmlPart(String path, String xml, {required bool isNew}) {
-    final bytes = utf8.encode(xml);
-    final file = ArchiveFile(path, bytes.length, bytes);
-    _archiveFiles[path] = file;
-    if (isNew && _excel._archive.findFile(path) == null) {
-      _excel._archive.addFile(file);
-    }
-  }
-
   /// Picks the next free `xl/drawings/drawingN.xml` path.
   String _nextDrawingPath() {
     var maxIndex = 0;
@@ -288,47 +268,5 @@ mixin _WriterDrawingsMixin on _WriterBase {
       }
     }
     return 'xl/drawings/drawing${maxIndex + 1}.xml';
-  }
-
-  /// Ensures `[Content_Types].xml` has a `<Default Extension=.. ContentType=..>`
-  /// for the image [ext].
-  void _ensureDefaultContentType(String ext) {
-    final type = _imageContentTypes[ext];
-    if (type == null) return;
-    final types = _excel._xmlFiles['[Content_Types].xml']
-        ?.findAllElements('Types')
-        .firstOrNull;
-    if (types == null) return;
-    final exists = types.childElements.any(
-      (e) =>
-          e.name.local == 'Default' &&
-          (e.getAttribute('Extension')?.toLowerCase() == ext),
-    );
-    if (exists) return;
-    types.children.add(
-      XmlElement(_xmlName('Default'), [
-        XmlAttribute(_xmlName('Extension'), ext),
-        XmlAttribute(_xmlName('ContentType'), type),
-      ]),
-    );
-  }
-
-  /// Ensures `[Content_Types].xml` has an `<Override PartName=.. ContentType=..>`.
-  void _ensureOverrideContentType(String partName, String contentType) {
-    final types = _excel._xmlFiles['[Content_Types].xml']
-        ?.findAllElements('Types')
-        .firstOrNull;
-    if (types == null) return;
-    final exists = types.childElements.any(
-      (e) =>
-          e.name.local == 'Override' && e.getAttribute('PartName') == partName,
-    );
-    if (exists) return;
-    types.children.add(
-      XmlElement(_xmlName('Override'), [
-        XmlAttribute(_xmlName('PartName'), partName),
-        XmlAttribute(_xmlName('ContentType'), contentType),
-      ]),
-    );
   }
 }

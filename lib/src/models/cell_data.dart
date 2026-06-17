@@ -95,6 +95,18 @@ class Data {
     }
   }
 
+  /// The comment (note) attached to this cell, or `null` if there is none.
+  Comment? get comment => _sheet.getComment(cellIndex);
+
+  /// Attaches a comment to this cell, or removes it when set to `null`.
+  set comment(Comment? value) {
+    if (value == null) {
+      _sheet.removeComment(cellIndex);
+    } else {
+      _sheet.setComment(cellIndex, value);
+    }
+  }
+
   /// The data validation keyed to this single cell, or `null` if there is none.
   ///
   /// Only matches a rule whose `sqref` is exactly this cell; rules covering a

@@ -134,6 +134,8 @@ cd ../excel_plus_bench                && dart pub get && dart run bin/benchmark.
   `sheet.setPrintArea`, `sheet.setPrintTitleRows`, `sheet.insertRowPageBreak`, …).
 - **Grouping & outline** — collapsible row/column groups with outline levels,
   plus show/hide (`sheet.groupRows`, `sheet.groupColumns`, `sheet.setRowHidden`).
+- **Comments / notes** — attach and read classic cell comments with author
+  (`sheet.setComment`, `cell.comment`, `sheet.comments`).
 - **Rich text** — read **and** write (per-run bold/italic/colour/size/font).
 - **Theme & indexed colours** — read (resolved to RGB) and authored
   (`ExcelColor.theme(ThemeColor.accent1, tint: x)` / `ExcelColor.indexed(n)`),
@@ -154,7 +156,7 @@ prioritised:
 - **Formula evaluation** — formula cells round-trip with their cached result;
   Excel recomputes when the file is opened. excel_plus stores and preserves
   formulas but does not evaluate them itself.
-- **Objects & media** — charts, comments / notes, pivot tables (images **are**
+- **Objects & media** — charts and pivot tables (images and comments **are**
   supported; see [Key features](#key-features)).
 - **Split panes** — freeze panes are supported; twip-based split panes are not.
 
@@ -167,8 +169,8 @@ excel_plus is **actively developed** toward broader Excel / Google-Sheets parity
 **1.0.0** landed the high-impact worksheet feature set (hyperlinks, data
 validation, conditional formatting, freeze panes, autofilter, sheet protection,
 named ranges, rich-text write, error values, theme/indexed colour authoring).
-**1.1.0** adds image insert/extract and page & print setup. Next up (subject to
-change): comments / notes, then a formula-evaluation engine.
+**1.1.0** adds images, page & print setup, row/column grouping, and cell
+comments. Next up (subject to change): a formula-evaluation engine.
 Shipped changes are tracked in the
 [changelog](https://github.com/almasumdev/excel_plus/blob/main/CHANGELOG.md),
 and the direction is driven by what users request on the

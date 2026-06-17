@@ -39,6 +39,13 @@
   directly via `setRowHidden` / `setColumnHidden` / `isRowHidden` /
   `isColumnHidden`. Outline levels, hidden state, and collapsed summary markers
   round-trip on `<row>` / `<col>`.
+- **Cell comments / notes (read + write)** — attach classic comments with
+  `sheet.setComment(index, Comment('text', author: '…'))` or
+  `cell.comment = Comment(...)`, and read them back via `sheet.getComment` /
+  `cell.comment` / `sheet.comments`. Authoring writes the comments part, the
+  legacy VML note shapes, the worksheet relationships, the `<legacyDrawing>`
+  element, and the content-types entries; comments already in an opened file are
+  read into the model and preserved on save.
 
 ### Fixed
 

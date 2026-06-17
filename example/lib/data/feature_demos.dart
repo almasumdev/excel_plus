@@ -60,6 +60,7 @@ final featureDemos = <FeatureDemo>[
   _images,
   _pageSetup,
   _grouping,
+  _comments,
 ];
 
 FeatureDemo? featureById(String id) {
@@ -2519,5 +2520,91 @@ Excel _buildGrouping() {
   s.groupColumns(1, 4);
 
   s.setColumnWidth(0, 22);
+  return excel;
+}
+
+// ---------------------------------------------------------------------------
+// Cell comments / notes
+// ---------------------------------------------------------------------------
+
+final _comments = FeatureDemo(
+  id: 'comments',
+  title: 'Comments',
+  description:
+      'Attach classic cell comments (notes), each with an optional author. '
+      'Hover the little red triangle in Excel/Sheets to read the note. Comments '
+      'already in an opened file are read back and preserved on save.',
+  points: [
+    "sheet.setComment(index, Comment('text', author: '…'))",
+    'cell.comment = Comment(...)',
+    'sheet.getComment(index) / sheet.comments to read',
+    'sheet.removeComment(index) to clear',
+  ],
+  snippet: '''
+sheet.setComment(
+  CellIndex.indexByString('B2'),
+  Comment('Double-check this figure', author: 'Reviewer'),
+);
+
+// Or via the cell:
+sheet.cell(CellIndex.indexByString('C5')).comment =
+    Comment('Estimate only', author: 'Finance');
+
+// Read it back:
+final note = sheet.getComment(CellIndex.indexByString('B2'));
+print('\${note?.author}: \${note?.text}');''',
+  fullCode: r'''
+import 'package:excel_plus/excel_plus.dart';
+
+Excel buildComments() {
+  final excel = Excel.createExcel();
+  final s = excel[excel.getDefaultSheet() ?? 'Sheet1'];
+
+  s.updateCell(CellIndex.indexByString('B2'), TextCellValue('Revenue'));
+  s.setComment(
+    CellIndex.indexByString('B2'),
+    Comment('Double-check this figure', author: 'Reviewer'),
+  );
+
+  s.updateCell(CellIndex.indexByString('B3'), TextCellValue('Forecast'));
+  s.cell(CellIndex.indexByString('B3')).comment =
+      Comment('Estimate only', author: 'Finance');
+
+  return excel;
+}
+''',
+  build: _buildComments,
+);
+
+Excel _buildComments() {
+  final excel = _book('Comments');
+  final s = excel['Comments'];
+
+  final header = _box(bold: true, fill: _headerFill, font: ExcelColor.white);
+  _put(s, 0, 0, TextCellValue('Item'), header);
+  _put(s, 1, 0, TextCellValue('Amount'), header);
+
+  _put(s, 0, 1, TextCellValue('Revenue'), _box());
+  _put(s, 1, 1, IntCellValue(125000), _box());
+  s.setComment(
+    CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: 1),
+    Comment('Double-check this figure against the ledger', author: 'Reviewer'),
+  );
+
+  _put(s, 0, 2, TextCellValue('Forecast'), _box());
+  _put(s, 1, 2, IntCellValue(140000), _box());
+  s.cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: 2)).comment =
+      Comment('Estimate only — revise after Q1', author: 'Finance');
+
+  _put(
+    s,
+    0,
+    4,
+    TextCellValue('Hover the red triangles to read each note.'),
+    _box(),
+  );
+
+  s.setColumnWidth(0, 22);
+  s.setColumnWidth(1, 14);
   return excel;
 }

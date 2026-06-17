@@ -120,6 +120,15 @@ class _SheetBase {
   /// Summary-column indices marked collapsed (the `<col collapsed="1">` flag).
   final Set<int> _columnCollapsed = {};
 
+  /// Cell comments (notes), keyed by cell reference (e.g. `"B2"`). Lazily
+  /// populated when the sheet is parsed.
+  final Map<String, Comment> _comments = {};
+
+  /// Whether comments were changed via the API. When `false`, an existing
+  /// comments part (and its VML) round-trips untouched; when `true`, the comment
+  /// parts are regenerated from the model on save.
+  bool _commentsChanged = false;
+
   _SheetBase(this._excel, this._sheet);
 
   /// Removes a cell from the specified [rowIndex] and [columnIndex].
@@ -855,6 +864,32 @@ class _SheetBase {
       _columnHidden.remove(c);
     }
     _columnCollapsed.remove(toColumn + 1);
+  }
+
+  /// The cell comments (notes) on this sheet, keyed by cell reference (`"B2"`).
+  Map<String, Comment> get comments => Map.unmodifiable(_comments);
+
+  /// The comment on the cell at [index], or `null` if there is none.
+  Comment? getComment(CellIndex index) =>
+      _comments[getCellId(index.columnIndex, index.rowIndex)];
+
+  /// Attaches [comment] to the cell at [index], replacing any existing one.
+  ///
+  /// ```dart
+  /// sheet.setComment(CellIndex.indexByString('B2'),
+  ///     Comment('Check this', author: 'QA'));
+  /// ```
+  void setComment(CellIndex index, Comment comment) {
+    _comments[getCellId(index.columnIndex, index.rowIndex)] = comment;
+    _commentsChanged = true;
+  }
+
+  /// Removes the comment from the cell at [index] (no-op if there is none).
+  void removeComment(CellIndex index) {
+    if (_comments.remove(getCellId(index.columnIndex, index.rowIndex)) !=
+        null) {
+      _commentsChanged = true;
+    }
   }
 
   /// 0-based index of this sheet in the workbook tab order (its `localSheetId`).
