@@ -192,7 +192,11 @@ List<_Tok> _tokenizeFormula(String input) {
       continue;
     }
 
-    throw FormatException('Unexpected character "$c" in formula', input, i);
+    throw FormulaParseException(
+      'Unexpected character "$c" in formula',
+      input,
+      i,
+    );
   }
 
   return tokens;

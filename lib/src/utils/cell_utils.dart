@@ -145,11 +145,28 @@ String _normalizeNewLine(String text) {
 }
 
 ///
-///Throw error at situation where further processing is not possible
-///It is also called when important parts of excel files are missing as corrupted excel file is used
+/// Thrown when the archive is a valid ZIP but its XML content is malformed or
+/// internally inconsistent and further processing is impossible.
 ///
-void _damagedExcel({String text = ''}) {
-  throw ArgumentError('\nDamaged Excel file: $text\n');
+void _damagedExcel({String text = '', String? part}) {
+  throw ExcelFormatException(
+    text.isEmpty ? 'Damaged or corrupt worksheet content.' : text,
+    part: part,
+  );
+}
+
+///
+/// Thrown when the bytes are not a readable `.xlsx` container — not a valid ZIP
+/// archive, or missing a required package part.
+///
+void _corruptArchive({String text = '', String? part, Object? cause}) {
+  throw ExcelArchiveException(
+    text.isEmpty
+        ? 'Not a valid .xlsx package (missing or unreadable required part).'
+        : text,
+    part: part,
+    cause: cause,
+  );
 }
 
 ///

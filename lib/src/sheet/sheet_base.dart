@@ -187,9 +187,11 @@ class _SheetBase {
     _checkMaxColumn(cellIndex.columnIndex);
     _checkMaxRow(cellIndex.rowIndex);
     if (cellIndex.columnIndex < 0 || cellIndex.rowIndex < 0) {
-      _damagedExcel(
-        text:
-            '${cellIndex.columnIndex < 0 ? "Column" : "Row"} Index: ${cellIndex.columnIndex < 0 ? cellIndex.columnIndex : cellIndex.rowIndex} Negative index does not exist.',
+      final negative = cellIndex.columnIndex < 0;
+      throw ArgumentError.value(
+        negative ? cellIndex.columnIndex : cellIndex.rowIndex,
+        negative ? 'columnIndex' : 'rowIndex',
+        'must not be negative',
       );
     }
 

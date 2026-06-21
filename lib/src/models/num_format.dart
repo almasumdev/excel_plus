@@ -18,11 +18,13 @@ class NumFormatMaintainer {
 
   void add(int numFmtId, CustomNumFormat format) {
     if (_map.containsKey(numFmtId)) {
-      throw Exception('numFmtId $numFmtId already exists');
+      throw ArgumentError.value(numFmtId, 'numFmtId', 'already exists');
     }
     if (numFmtId < _firstCustomFmtId) {
-      throw Exception(
-        'invalid numFmtId $numFmtId, custom numFmtId must be $_firstCustomFmtId or greater',
+      throw ArgumentError.value(
+        numFmtId,
+        'numFmtId',
+        'custom numFmtId must be $_firstCustomFmtId or greater',
       );
     }
     _map[numFmtId] = format;

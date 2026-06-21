@@ -26,7 +26,7 @@ class Parser extends _ParserBase
   void _parseContent({bool run = true}) {
     var workbook = _excel._archive.findFile('xl/workbook.xml');
     if (workbook == null) {
-      _damagedExcel();
+      _corruptArchive(part: 'xl/workbook.xml');
     }
     workbook!.decompress();
     var document = XmlDocument.parse(utf8.decode(workbook.content));

@@ -16,6 +16,7 @@ part 'src/core/excel.dart';
 part 'src/core/config.dart';
 
 /// Models
+part 'src/models/exceptions.dart';
 part 'src/models/cell_value.dart';
 part 'src/models/cell_data.dart';
 part 'src/models/cell_index.dart';

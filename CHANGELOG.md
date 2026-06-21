@@ -1,3 +1,52 @@
+## 2.0.0
+
+### Breaking
+
+- **Typed exception hierarchy.** Failures now throw a sealed
+  [`ExcelException`](https://pub.dev/documentation/excel_plus/latest/) instead of
+  the generic `Error`/`Exception` types used before. Catch the base type to
+  handle any excel_plus failure, or narrow to a specific kind:
+  - `ExcelArchiveException` — the bytes are not a readable `.xlsx` container (not
+    a valid ZIP, or missing a required part such as `xl/workbook.xml` or
+    `[Content_Types].xml`). **Replaces the old `UnsupportedError`/`ArgumentError`
+    thrown for unreadable files.**
+  - `ExcelFormatException` — the archive is a valid ZIP but its XML is malformed
+    or inconsistent (e.g. a worksheet missing `</sheetData>`, a corrupt styles
+    part). **Replaces the old `ArgumentError`.**
+  - `ExcelEncodeException` — a workbook could not be encoded back to `.xlsx` on
+    `save()`/`encode()`.
+  - `FormulaParseException` — raised internally by the formula parser; it
+    `implements FormatException`, so existing `on FormatException` handlers keep
+    working. (Through the public API a bad formula still surfaces as an
+    `#ERROR!` cell value, never thrown.)
+
+  Each carries a human-readable `message`, an optional `part` (the package part
+  involved), and an optional `cause` (the wrapped underlying error), with a
+  descriptive `toString()`.
+
+  **Why it is breaking:** corrupt-file failures were previously subclasses of
+  `Error` (`ArgumentError`, `UnsupportedError`) — Dart's signal for *programming
+  bugs you should not catch*. Bad input is an expected runtime condition, so it
+  now throws an `Exception` you are meant to catch. Genuine argument validation
+  (a negative cell index, an empty table/pivot name, an out-of-range row) is
+  unchanged: those still throw `ArgumentError`.
+
+  **Migration:** if you caught corrupt-file errors, update the handler — replace
+  `on ArgumentError` / `on UnsupportedError` / `on Error` around
+  `Excel.decodeBytes` / `decodeBuffer` with `on ExcelException` (or a specific
+  subtype). Argument-validation `catch`es need no change.
+
+  ```dart
+  try {
+    final excel = Excel.decodeBytes(bytes);
+    // ...
+  } on ExcelArchiveException catch (e) {
+    print('Not a usable .xlsx: ${e.message}');
+  } on ExcelException catch (e) {
+    print('Could not process workbook: ${e.message}');
+  }
+  ```
+
 ## 1.1.0
 
 ### Added

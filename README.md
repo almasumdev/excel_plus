@@ -144,6 +144,7 @@ cd ../excel_plus_bench                && dart pub get && dart run bin/benchmark.
 - ✅ Rows & columns
 - ✅ Column width / row height
 - ✅ Find & replace
+- ✅ Typed exceptions
 - ✅ Cross-platform
 - ✅ Source-compatible drop-in
 
@@ -166,6 +167,7 @@ cd ../excel_plus_bench                && dart pub get && dart run bin/benchmark.
 - ✅ Charts (7 types) — 1.1.0
 - ✅ Array-formula spilling (recalculate) — 1.1.0
 - ✅ Pivot tables (row / column / page / nested fields + measures) — 1.1.0
+- ✅ Typed exception hierarchy (`ExcelException` + subtypes) — 2.0.0
 
 See the
 [**formula functions reference**](https://github.com/almasumdev/excel_plus/blob/main/doc/functions.md)
@@ -175,6 +177,36 @@ Shipped changes are tracked in the
 [changelog](https://github.com/almasumdev/excel_plus/blob/main/CHANGELOG.md), and
 the direction is driven by what users request on the
 [issue tracker](https://github.com/almasumdev/excel_plus/issues).
+
+## Error handling
+
+Opening or saving a file throws a typed, catchable
+[`ExcelException`](https://pub.dev/documentation/excel_plus/latest/). Catch the
+base type for any failure, or narrow to a specific kind — each carries a
+`message`, an optional `part` (the package part involved), and an optional
+`cause`:
+
+```dart
+try {
+  final excel = Excel.decodeBytes(bytes);
+  // ... edit ...
+  excel.save();
+} on ExcelArchiveException catch (e) {
+  // Not a readable .xlsx (bad ZIP, or a required part is missing).
+  print('Not a usable file: ${e.message}');
+} on ExcelFormatException catch (e) {
+  // A valid ZIP, but its XML is malformed/inconsistent.
+  print('Corrupt content in ${e.part}: ${e.message}');
+} on ExcelException catch (e) {
+  // Any other excel_plus failure (e.g. ExcelEncodeException on save).
+  print('Workbook error: ${e.message}');
+}
+```
+
+Invalid *arguments* you pass to the API (a negative cell index, an empty table
+name, an out-of-range row) throw `ArgumentError`, the standard Dart type for
+programming errors — they are not `ExcelException`s. A malformed formula is not
+thrown either: it evaluates to an `#ERROR!` cell value.
 
 ## Example
 

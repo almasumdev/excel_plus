@@ -23,7 +23,7 @@ abstract class _ParserBase {
     var file = _excel._archive.findFile("[Content_Types].xml");
 
     if (file == null) {
-      _damagedExcel();
+      _corruptArchive(part: '[Content_Types].xml');
     }
     file!.decompress();
     _excel._xmlFiles["[Content_Types].xml"] = XmlDocument.parse(
@@ -59,7 +59,7 @@ abstract class _ParserBase {
         }
       });
     } else {
-      _damagedExcel();
+      _corruptArchive(part: 'xl/_rels/workbook.xml.rels');
     }
   }
 

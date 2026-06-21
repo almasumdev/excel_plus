@@ -99,8 +99,6 @@ const _imageContentTypes = <String, String>{
   'gif': 'image/gif',
 };
 
-const _spreadsheetXlsx = 'xlsx';
-
 // reference: https://support.microsoft.com/en-gb/office/change-the-column-width-and-row-height-72f5e3cc-994d-43e8-ae58-9774a0905f46
 const _excelDefaultColumnWidth = 8.43;
 const _excelDefaultRowHeight = 15.0;

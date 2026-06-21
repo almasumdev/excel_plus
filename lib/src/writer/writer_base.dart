@@ -190,7 +190,7 @@ abstract class _WriterBase {
       case IntCellValue():
         final v = switch (numberFormat) {
           NumericNumFormat() => numberFormat.writeInt(value),
-          _ => throw Exception(
+          _ => throw ExcelEncodeException(
             '$numberFormat does not work for ${value.runtimeType}',
           ),
         };
@@ -198,7 +198,7 @@ abstract class _WriterBase {
       case DoubleCellValue():
         final v = switch (numberFormat) {
           NumericNumFormat() => numberFormat.writeDouble(value),
-          _ => throw Exception(
+          _ => throw ExcelEncodeException(
             '$numberFormat does not work for ${value.runtimeType}',
           ),
         };
@@ -206,7 +206,7 @@ abstract class _WriterBase {
       case DateTimeCellValue():
         final v = switch (numberFormat) {
           DateTimeNumFormat() => numberFormat.writeDateTime(value),
-          _ => throw Exception(
+          _ => throw ExcelEncodeException(
             '$numberFormat does not work for ${value.runtimeType}',
           ),
         };
@@ -214,7 +214,7 @@ abstract class _WriterBase {
       case DateCellValue():
         final v = switch (numberFormat) {
           DateTimeNumFormat() => numberFormat.writeDate(value),
-          _ => throw Exception(
+          _ => throw ExcelEncodeException(
             '$numberFormat does not work for ${value.runtimeType}',
           ),
         };
@@ -222,7 +222,7 @@ abstract class _WriterBase {
       case TimeCellValue():
         final v = switch (numberFormat) {
           TimeNumFormat() => numberFormat.writeTime(value),
-          _ => throw Exception(
+          _ => throw ExcelEncodeException(
             '$numberFormat does not work for ${value.runtimeType}',
           ),
         };

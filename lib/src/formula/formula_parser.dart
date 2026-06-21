@@ -84,7 +84,7 @@ class _FormulaParser {
   _FNode parse() {
     final node = _parseExpr(1);
     if (_pos != _toks.length) {
-      throw const FormatException('Unexpected trailing tokens in formula');
+      throw const FormulaParseException('Unexpected trailing tokens in formula');
     }
     return node;
   }
@@ -158,7 +158,7 @@ class _FormulaParser {
 
   _FNode _parseAtom() {
     final t = _peek;
-    if (t == null) throw const FormatException('Unexpected end of formula');
+    if (t == null) throw const FormulaParseException('Unexpected end of formula');
     switch (t.kind) {
       case _TokKind.number:
         _consume();
@@ -187,7 +187,7 @@ class _FormulaParser {
         _expect(_TokKind.bang);
         return _withSheet(_parseAtom(), t.text);
       default:
-        throw FormatException('Unexpected token "${t.text}"');
+        throw FormulaParseException('Unexpected token "${t.text}"');
     }
   }
 
@@ -217,7 +217,7 @@ class _FormulaParser {
 
   void _expect(_TokKind kind) {
     if (_peek?.kind != kind) {
-      throw FormatException('Expected ${kind.name} in formula');
+      throw FormulaParseException('Expected ${kind.name} in formula');
     }
     _consume();
   }
@@ -267,7 +267,7 @@ class _FormulaParser {
       );
     }
     if (node is _NameNode) return _NameNode(node.name, sheet: sheet);
-    throw const FormatException('Invalid sheet-qualified reference');
+    throw const FormulaParseException('Invalid sheet-qualified reference');
   }
 
   _RangeNode _makeRange(_FNode left, _FNode right) =>
@@ -286,6 +286,6 @@ class _FormulaParser {
         sheet: node.sheet,
       );
     }
-    throw const FormatException('Invalid range endpoint');
+    throw const FormulaParseException('Invalid range endpoint');
   }
 }

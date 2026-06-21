@@ -1,25 +1,17 @@
 part of '../../excel_plus.dart';
 
 Excel _newExcel(Archive archive) {
-  // Lookup at file format
-  String? format;
-
-  var mimetype = archive.findFile('mimetype');
-  if (mimetype == null) {
-    var xl = archive.findFile('xl/workbook.xml');
-    if (xl != null) {
-      format = _spreadsheetXlsx;
-    }
+  // A valid `.xlsx` is a ZIP with no OpenDocument `mimetype` part and a
+  // `xl/workbook.xml`. Anything else is an unreadable container.
+  final mimetype = archive.findFile('mimetype');
+  if (mimetype == null && archive.findFile('xl/workbook.xml') != null) {
+    return Excel._(archive);
   }
-
-  switch (format) {
-    case _spreadsheetXlsx:
-      return Excel._(archive);
-    default:
-      throw UnsupportedError(
-        'Excel format unsupported. Only .xlsx files are supported',
-      );
-  }
+  throw ExcelArchiveException(
+    'Not a valid .xlsx file: no readable workbook (xl/workbook.xml) was found. '
+    'Only Office Open XML (.xlsx) spreadsheets are supported.',
+    part: 'xl/workbook.xml',
+  );
 }
 
 /// The main class for reading, creating, and editing Excel `.xlsx` files.
@@ -122,8 +114,9 @@ class Excel {
     try {
       archive = ZipDecoder().decodeBytes(data);
     } catch (e) {
-      throw UnsupportedError(
-        'Excel format unsupported. Only .xlsx files are supported',
+      throw ExcelArchiveException(
+        'Not a valid .xlsx file: the data could not be read as a ZIP archive.',
+        cause: e,
       );
     }
     return _newExcel(archive);
@@ -131,7 +124,16 @@ class Excel {
 
   /// Decodes an `.xlsx` file from an [InputStream].
   factory Excel.decodeBuffer(InputStream input) {
-    return _newExcel(ZipDecoder().decodeStream(input));
+    final Archive archive;
+    try {
+      archive = ZipDecoder().decodeStream(input);
+    } catch (e) {
+      throw ExcelArchiveException(
+        'Not a valid .xlsx file: the data could not be read as a ZIP archive.',
+        cause: e,
+      );
+    }
+    return _newExcel(archive);
   }
 
   /// Returns all sheets as a map of sheet names to [Sheet] objects.

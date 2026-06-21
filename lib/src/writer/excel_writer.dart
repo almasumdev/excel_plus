@@ -341,16 +341,20 @@ class ExcelWriter extends _WriterBase
     } else {
       var worksheetElements = xmlFile.findAllElements('worksheet');
       if (worksheetElements.isEmpty) {
-        _damagedExcel();
-        return;
+        throw ExcelEncodeException(
+          'Worksheet element is missing; cannot write merged cells.',
+          part: sheetName,
+        );
       }
       var worksheet = worksheetElements.first;
       int index = worksheet.children.indexOf(
         xmlFile.findAllElements('sheetData').first,
       );
       if (index == -1) {
-        _damagedExcel();
-        return;
+        throw ExcelEncodeException(
+          'sheetData element is missing; cannot write merged cells.',
+          part: sheetName,
+        );
       }
       worksheet.children.insert(
         index + 1,

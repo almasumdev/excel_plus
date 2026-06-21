@@ -49,7 +49,11 @@ int _hexadecimalToDecimal(String hexString) {
   for (int i = 0; i < hexString.length; i++) {
     if (int.tryParse(hexString[i]) == null &&
         _hexTableReverse.containsKey(hexString[i]) == false) {
-      throw Exception('Non-hex value was passed to the function');
+      throw ArgumentError.value(
+        hexString,
+        'hexString',
+        'contains a non-hexadecimal character',
+      );
     } else {
       decimalVal +=
           (pow(16, hexString.length - i - 1) *

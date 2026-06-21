@@ -329,7 +329,10 @@ mixin _ParserStylesMixin on _ParserBase {
         });
       });
     } else {
-      _damagedExcel(text: 'styles');
+      _damagedExcel(
+        text: 'Corrupt or unreadable styles part.',
+        part: 'xl/styles.xml',
+      );
     }
   }
 }
