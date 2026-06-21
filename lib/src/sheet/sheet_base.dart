@@ -558,6 +558,13 @@ class _SheetBase {
   /// ));
   /// ```
   void addChart(Chart chart) {
+    if (chart.series.isEmpty) {
+      throw ArgumentError.value(
+        chart.series,
+        'chart.series',
+        'a chart needs at least one data series',
+      );
+    }
     _charts.add(chart);
     _chartsChanged = true;
   }
@@ -585,7 +592,8 @@ class _SheetBase {
   /// ));
   /// ```
   ///
-  /// Throws [ArgumentError] if the name is empty or there are no data fields.
+  /// Throws [ArgumentError] if the name is empty, there are no data fields, or
+  /// any field index falls outside the source range's columns.
   void addPivotTable(PivotTable pivot) {
     if (pivot.name.trim().isEmpty) {
       throw ArgumentError.value(pivot.name, 'pivot.name', 'must not be empty');
@@ -601,6 +609,31 @@ class _SheetBase {
       throw ArgumentError(
         'a pivot with a columnField supports exactly one data field',
       );
+    }
+    final srcCols =
+        (pivot.sourceTo.columnIndex - pivot.sourceFrom.columnIndex).abs() + 1;
+    void checkField(int col, String label) {
+      if (col < 0 || col >= srcCols) {
+        throw ArgumentError.value(
+          col,
+          label,
+          'must be within the source range (0..${srcCols - 1})',
+        );
+      }
+    }
+
+    checkField(pivot.rowField, 'pivot.rowField');
+    for (final c in pivot.subRowFields) {
+      checkField(c, 'pivot.subRowFields');
+    }
+    if (pivot.columnField != null) {
+      checkField(pivot.columnField!, 'pivot.columnField');
+    }
+    for (final c in pivot.pageFields) {
+      checkField(c, 'pivot.pageFields');
+    }
+    for (final d in pivot.dataFields) {
+      checkField(d.column, 'pivot.dataFields.column');
     }
     _pivotTables.add(pivot);
     _pivotTablesChanged = true;

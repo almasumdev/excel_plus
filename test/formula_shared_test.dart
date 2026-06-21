@@ -58,5 +58,15 @@ void main() {
       expect(_formula(s, 'C2'), 'SUM(A2:B2)');
       expect(_num(s.evaluate(CellIndex.indexByString('C2'))), 22); // 2 + 20
     });
+
+    test('a shared formula with an embedded quoted string round-trips', () {
+      // The text a"b is written "a""b". Expanding a dependent re-serializes the
+      // AST, which must re-double the embedded quote or the result fails to
+      // re-parse (→ #ERROR!).
+      final s = sharedSheet('IF(A1>1,"a""b","z")')['Sheet1'];
+      final c2 = s.evaluate(CellIndex.indexByString('C2')); // A2=2 → a"b
+      expect(c2, isA<TextCellValue>());
+      expect((c2 as TextCellValue).value.toString(), 'a"b');
+    });
   });
 }

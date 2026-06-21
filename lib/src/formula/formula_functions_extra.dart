@@ -44,7 +44,8 @@ bool _matchesCriteria(_EvalValue cell, String criteria) {
   final tt = rest.toUpperCase();
   switch (op) {
     case '<>':
-      return ct != tt;
+      final re = _excelWildcard(tt);
+      return re != null ? !re.hasMatch(ct) : ct != tt;
     case '>':
       return ct.compareTo(tt) > 0;
     case '<':
@@ -54,8 +55,37 @@ bool _matchesCriteria(_EvalValue cell, String criteria) {
     case '<=':
       return ct.compareTo(tt) <= 0;
     default:
-      return ct == tt;
+      final re = _excelWildcard(tt);
+      return re != null ? re.hasMatch(ct) : ct == tt;
   }
+}
+
+/// Builds an anchored [RegExp] from an Excel text criterion containing `*`
+/// (any run) or `?` (single char) wildcards, with `~` escaping a literal
+/// `*`/`?`/`~`. Returns `null` when [pattern] has no unescaped wildcard, so
+/// callers fall back to plain equality.
+RegExp? _excelWildcard(String pattern) {
+  var special = false;
+  final sb = StringBuffer('^');
+  for (var i = 0; i < pattern.length; i++) {
+    final c = pattern[i];
+    if (c == '~' && i + 1 < pattern.length) {
+      // A tilde escape (~*, ~?, ~~) must go through the regex path so the
+      // tilde itself is consumed rather than compared literally.
+      special = true;
+      sb.write(RegExp.escape(pattern[++i]));
+    } else if (c == '*') {
+      special = true;
+      sb.write('.*');
+    } else if (c == '?') {
+      special = true;
+      sb.write('.');
+    } else {
+      sb.write(RegExp.escape(c));
+    }
+  }
+  sb.write(r'$');
+  return special ? RegExp(sb.toString(), dotAll: true) : null;
 }
 
 /// ROUNDUP (away from zero) / ROUNDDOWN (toward zero) at [digits] places.

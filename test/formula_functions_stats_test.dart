@@ -167,4 +167,37 @@ void main() {
       expect(_num(s.evaluate(at)), closeTo(26.6667, 1e-3)); // (10+30+40)/3
     });
   });
+
+  group('Wildcard Criteria', () {
+    CellValue? evalText(String formula, List<String> colA) {
+      final excel = Excel.createExcel();
+      final s = excel['Sheet1'];
+      for (var i = 0; i < colA.length; i++) {
+        s.updateCell(
+          CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: i),
+          TextCellValue(colA[i]),
+        );
+      }
+      final at = CellIndex.indexByString('Z1');
+      s.updateCell(at, FormulaCellValue(formula));
+      return s.evaluate(at);
+    }
+
+    test('COUNTIF matches * (any run) and ? (single char) wildcards', () {
+      const data = ['apple', 'apricot', 'banana', 'cherry'];
+      expect(_num(evalText('COUNTIF(A1:A4,"a*")', data)), 2); // apple, apricot
+      expect(_num(evalText('COUNTIF(A1:A4,"?a*")', data)), 1); // banana
+      expect(_num(evalText('COUNTIF(A1:A4,"*")', data)), 4); // all text
+    });
+
+    test('a tilde escapes a literal wildcard character', () {
+      const data = ['a*b', 'axb', 'a?b'];
+      expect(_num(evalText('COUNTIF(A1:A3,"a~*b")', data)), 1); // only a*b
+    });
+
+    test('the <> operator negates a wildcard match', () {
+      const data = ['apple', 'apricot', 'banana'];
+      expect(_num(evalText('COUNTIF(A1:A3,"<>a*")', data)), 1); // only banana
+    });
+  });
 }

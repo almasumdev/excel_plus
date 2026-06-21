@@ -26,7 +26,16 @@ class _StrNode extends _FNode {
   const _StrNode(this.value);
 
   @override
-  String toString() => '"$value"';
+  String toString() => '"${value.replaceAll('"', '""')}"';
+}
+
+/// Quotes a sheet name for use in a serialized reference when it is not a bare
+/// identifier (e.g. it contains spaces or other characters). Excel wraps such
+/// names in single quotes, doubling any embedded `'`.
+String _sheetRefPrefix(String name) {
+  final bare = RegExp(r"^[A-Za-z_][A-Za-z0-9_.]*$");
+  if (bare.hasMatch(name)) return name;
+  return "'${name.replaceAll("'", "''")}'";
 }
 
 /// A boolean literal (`TRUE` / `FALSE`).
@@ -67,7 +76,7 @@ class _RefNode extends _FNode {
 
   @override
   String toString() {
-    final s = sheet == null ? '' : '$sheet!';
+    final s = sheet == null ? '' : '${_sheetRefPrefix(sheet!)}!';
     final cPart = col == null
         ? ''
         : '${colAbs ? '\$' : ''}${getColumnAlphabet(col!)}';
@@ -93,7 +102,7 @@ class _NameNode extends _FNode {
   const _NameNode(this.name, {this.sheet});
 
   @override
-  String toString() => sheet == null ? name : '$sheet!$name';
+  String toString() => sheet == null ? name : '${_sheetRefPrefix(sheet!)}!$name';
 }
 
 /// A prefix (`-`, `+`) or postfix (`%`) unary operation.

@@ -16,6 +16,30 @@ String _part(Archive a, String name) {
   return utf8.decode(f.content);
 }
 
+/// Returns [xlsx] with a `<customWorkbookViews>` element injected into
+/// `xl/workbook.xml` (after `</sheets>`), so the pivot writer's workbook-order
+/// handling can be exercised against an element that must precede `<pivotCaches>`.
+List<int> _withCustomWorkbookViews(List<int> xlsx) {
+  final a = ZipDecoder().decodeBytes(xlsx);
+  final out = Archive();
+  for (final f in a.files) {
+    f.decompress();
+    if (f.name == 'xl/workbook.xml') {
+      final wb = utf8.decode(f.content).replaceFirst(
+        '</sheets>',
+        '</sheets><customWorkbookViews>'
+            '<customWorkbookView name="v" guid="{00000000-0000-0000-0000-000000000001}"/>'
+            '</customWorkbookViews>',
+      );
+      final b = utf8.encode(wb);
+      out.addFile(ArchiveFile(f.name, b.length, b));
+    } else {
+      out.addFile(ArchiveFile(f.name, f.content.length, f.content));
+    }
+  }
+  return ZipEncoder().encode(out);
+}
+
 /// Seeds A1:C6 (Region, Product, Sales) and returns the sheet.
 Sheet _seed(Excel excel) {
   final s = _firstSheet(excel);
@@ -415,6 +439,58 @@ void main() {
         reason: 'cache ids must be unique',
       );
       expect(ids.length, 2);
+    });
+
+    test('addPivotTable rejects a field index outside the source range', () {
+      final excel = Excel.createExcel();
+      final s = _seed(excel); // source A1:C6 → valid columns 0..2
+      expect(
+        () => s.addPivotTable(
+          PivotTable(
+            name: 'Bad',
+            anchor: CellIndex.indexByString('E1'),
+            sourceFrom: CellIndex.indexByString('A1'),
+            sourceTo: CellIndex.indexByString('C6'),
+            rowField: 9, // out of range
+            dataFields: const [PivotDataField(2)],
+          ),
+        ),
+        throwsArgumentError,
+      );
+      expect(
+        () => s.addPivotTable(
+          PivotTable(
+            name: 'Bad2',
+            anchor: CellIndex.indexByString('E1'),
+            sourceFrom: CellIndex.indexByString('A1'),
+            sourceTo: CellIndex.indexByString('C6'),
+            rowField: 0,
+            dataFields: const [PivotDataField(7)], // out of range measure
+          ),
+        ),
+        throwsArgumentError,
+      );
+    });
+
+    test('pivotCaches is ordered after customWorkbookViews in the workbook', () {
+      // Seed a workbook, inject <customWorkbookViews>, then add a pivot. Per
+      // CT_Workbook order <pivotCaches> must come AFTER <customWorkbookViews>.
+      final seeded = Excel.createExcel();
+      _seed(seeded);
+      final withViews = _withCustomWorkbookViews(seeded.encode()!);
+
+      final excel = Excel.decodeBytes(withViews);
+      _firstSheet(excel).addPivotTable(_byRegion());
+
+      final wb = XmlDocument.parse(_part(_encode(excel), 'xl/workbook.xml'))
+          .rootElement;
+      final order = wb.childElements.map((e) => e.name.local).toList();
+      expect(order, contains('pivotCaches'));
+      expect(order, contains('customWorkbookViews'));
+      expect(
+        order.indexOf('pivotCaches'),
+        greaterThan(order.indexOf('customWorkbookViews')),
+      );
     });
   });
 }

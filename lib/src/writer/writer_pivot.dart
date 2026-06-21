@@ -595,9 +595,10 @@ mixin _WriterPivotMixin on _WriterBase {
     var caches = wb.findElements('pivotCaches').firstOrNull;
     if (caches == null) {
       caches = _p('pivotCaches');
+      // CT_Workbook order: <pivotCaches> sits AFTER <oleSize> and
+      // <customWorkbookViews>, before <smartTagPr> (matches the canonical order
+      // used for <definedNames> in excel_writer.dart).
       const after = {
-        'oleSize',
-        'customWorkbookViews',
         'smartTagPr',
         'smartTagTypes',
         'webPublishing',

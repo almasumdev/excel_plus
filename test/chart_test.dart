@@ -220,4 +220,21 @@ void main() {
       expect(rels, contains('media/'));
     });
   });
+
+  group('Chart Validation', () {
+    test('addChart rejects a chart with no data series', () {
+      final excel = Excel.createExcel();
+      final s = _seed(excel);
+      expect(
+        () => s.addChart(
+          Chart(
+            type: ChartType.column,
+            anchor: CellIndex.indexByString('D2'),
+            series: const [],
+          ),
+        ),
+        throwsArgumentError,
+      );
+    });
+  });
 }
