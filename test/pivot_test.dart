@@ -222,6 +222,102 @@ void main() {
     });
   });
 
+  group('Pivot Column And Page Fields', () {
+    test('a column field produces a row×column matrix', () {
+      final excel = Excel.createExcel();
+      _seed(excel).addPivotTable(
+        PivotTable(
+          name: 'Matrix',
+          anchor: CellIndex.indexByString('E1'),
+          sourceFrom: CellIndex.indexByString('A1'),
+          sourceTo: CellIndex.indexByString('C6'),
+          rowField: 0,
+          columnField: 1,
+          dataFields: const [PivotDataField(2)],
+        ),
+      );
+      final table = XmlDocument.parse(
+        _part(_encode(excel), 'xl/pivotTables/pivotTable1.xml'),
+      );
+      // Row field 0, column field 1, both with axis assignments.
+      final axes = table
+          .findAllElements('pivotField')
+          .map((e) => e.getAttribute('axis'))
+          .toList();
+      expect(axes, containsAll(['axisRow', 'axisCol']));
+      // colFields references the column field (not the -2 values axis).
+      expect(
+        table
+            .findAllElements('colFields')
+            .first
+            .findAllElements('field')
+            .first
+            .getAttribute('x'),
+        '1',
+      );
+      // colItems list the column values plus a grand total.
+      expect(
+        table
+            .findAllElements('colItems')
+            .first
+            .childElements
+            .last
+            .getAttribute('t'),
+        'grand',
+      );
+    });
+
+    test('a page field is emitted as a report filter', () {
+      final excel = Excel.createExcel();
+      _seed(excel).addPivotTable(
+        PivotTable(
+          name: 'Filtered',
+          anchor: CellIndex.indexByString('E1'),
+          sourceFrom: CellIndex.indexByString('A1'),
+          sourceTo: CellIndex.indexByString('C6'),
+          rowField: 0,
+          pageFields: const [1],
+          dataFields: const [PivotDataField(2)],
+        ),
+      );
+      final table = XmlDocument.parse(
+        _part(_encode(excel), 'xl/pivotTables/pivotTable1.xml'),
+      );
+      final pageFields = table.findAllElements('pageFields').first;
+      expect(pageFields.getAttribute('count'), '1');
+      expect(
+        pageFields.findAllElements('pageField').first.getAttribute('fld'),
+        '1',
+      );
+      // The page field column also carries an axisPage assignment.
+      expect(
+        table
+            .findAllElements('pivotField')
+            .any((e) => e.getAttribute('axis') == 'axisPage'),
+        isTrue,
+      );
+    });
+
+    test('a column field with multiple data fields is rejected', () {
+      final excel = Excel.createExcel();
+      final s = _seed(excel);
+      expect(
+        () => s.addPivotTable(
+          PivotTable(
+            name: 'Bad',
+            anchor: CellIndex.indexByString('E1'),
+            sourceFrom: CellIndex.indexByString('A1'),
+            sourceTo: CellIndex.indexByString('C6'),
+            rowField: 0,
+            columnField: 1,
+            dataFields: const [PivotDataField(2), PivotDataField(2)],
+          ),
+        ),
+        throwsArgumentError,
+      );
+    });
+  });
+
   group('Pivot Validation And Preservation', () {
     test('addPivotTable rejects an empty name or no data fields', () {
       final excel = Excel.createExcel();

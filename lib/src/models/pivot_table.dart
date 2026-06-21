@@ -64,6 +64,13 @@ class PivotTable {
   /// 0-based source column used as the row (grouping) field.
   final int rowField;
 
+  /// Optional 0-based source column used as the column field (produces a
+  /// row×column matrix). When set, exactly one data field is supported.
+  final int? columnField;
+
+  /// Optional 0-based source columns used as page (report-filter) fields.
+  final List<int> pageFields;
+
   /// The aggregated value fields (at least one).
   final List<PivotDataField> dataFields;
 
@@ -78,6 +85,8 @@ class PivotTable {
     required this.sourceTo,
     required this.rowField,
     required this.dataFields,
+    this.columnField,
+    this.pageFields = const [],
     this.sourceSheet,
   });
 

@@ -120,6 +120,11 @@ mixin _WriterPivotMixin on _WriterBase {
 
     final colCount = c1 - c0 + 1;
     final dataCols = pivot.dataFields.map((d) => d.column).toSet();
+    final dimensionCols = <int>{
+      pivot.rowField,
+      if (pivot.columnField != null) pivot.columnField!,
+      ...pivot.pageFields,
+    };
 
     CellValue? cellAt(int row, int col) => src?._sheetData[row]?[col]?.value;
 
@@ -132,7 +137,7 @@ mixin _WriterPivotMixin on _WriterBase {
         for (var r = r0 + 1; r <= r1; r++) cellAt(r, col),
       ];
 
-      if (j == pivot.rowField) {
+      if (dimensionCols.contains(j)) {
         // String field with a shared-item list (records reference it by index).
         final items = <String>[];
         final indexOf = <String, int>{};
@@ -287,32 +292,53 @@ mixin _WriterPivotMixin on _WriterBase {
     return _xmlDoc(root);
   }
 
+  /// A dimension `<pivotField>` (row/col/page) with its item list.
+  XmlElement _dimensionField(String axis, int itemCount) => _p(
+    'pivotField',
+    [_att('axis', axis), _att('showAll', '0')],
+    [
+      _p(
+        'items',
+        [_att('count', '${itemCount + 1}')],
+        [
+          for (var i = 0; i < itemCount; i++) _p('item', [_att('x', '$i')]),
+          _p('item', [_att('t', 'default')]),
+        ],
+      ),
+    ],
+  );
+
+  /// Items for an axis: each distinct value (by index) plus a grand total.
+  List<XmlElement> _axisItems(int itemCount) => [
+    _p('i', [], [_p('x')]),
+    for (var i = 1; i < itemCount; i++)
+      _p('i', [], [
+        _p('x', [_att('v', '$i')]),
+      ]),
+    _p('i', [_att('t', 'grand')], [_p('x')]),
+  ];
+
   String _buildPivotTableXml(PivotTable pivot, _PivotModel model) {
     final rowField = model.fields[pivot.rowField];
     final itemCount = rowField.items.length;
     final dataCount = pivot.dataFields.length;
     final dataCols = pivot.dataFields.map((d) => d.column).toSet();
+    final colField = pivot.columnField;
+    final colItemCount = colField != null
+        ? model.fields[colField].items.length
+        : 0;
+    final pageFields = pivot.pageFields;
 
     // pivotFields — one per source column.
     final pivotFields = <XmlElement>[];
     for (var j = 0; j < model.fields.length; j++) {
       if (j == pivot.rowField) {
+        pivotFields.add(_dimensionField('axisRow', itemCount));
+      } else if (j == colField) {
+        pivotFields.add(_dimensionField('axisCol', colItemCount));
+      } else if (pageFields.contains(j)) {
         pivotFields.add(
-          _p(
-            'pivotField',
-            [_att('axis', 'axisRow'), _att('showAll', '0')],
-            [
-              _p(
-                'items',
-                [_att('count', '${itemCount + 1}')],
-                [
-                  for (var i = 0; i < itemCount; i++)
-                    _p('item', [_att('x', '$i')]),
-                  _p('item', [_att('t', 'default')]),
-                ],
-              ),
-            ],
-          ),
+          _dimensionField('axisPage', model.fields[j].items.length),
         );
       } else if (dataCols.contains(j)) {
         pivotFields.add(
@@ -324,16 +350,8 @@ mixin _WriterPivotMixin on _WriterBase {
     }
 
     // rowItems: each distinct value plus a grand total.
-    final rowItems = <XmlElement>[
-      _p('i', [], [_p('x')]),
-      for (var i = 1; i < itemCount; i++)
-        _p('i', [], [
-          _p('x', [_att('v', '$i')]),
-        ]),
-      _p('i', [_att('t', 'grand')], [_p('x')]),
-    ];
+    final rowItems = _axisItems(itemCount);
 
-    // colItems / colFields: the "values" axis when there's more than one measure.
     final children = <XmlElement>[
       _p('location', [
         _att(
@@ -358,7 +376,16 @@ mixin _WriterPivotMixin on _WriterBase {
         ],
       ),
       _p('rowItems', [_att('count', '${itemCount + 1}')], rowItems),
-      if (dataCount > 1)
+      // Column axis: a real column field, else a "values" axis for >1 measure.
+      if (colField != null)
+        _p(
+          'colFields',
+          [_att('count', '1')],
+          [
+            _p('field', [_att('x', '$colField')]),
+          ],
+        )
+      else if (dataCount > 1)
         _p(
           'colFields',
           [_att('count', '1')],
@@ -366,24 +393,38 @@ mixin _WriterPivotMixin on _WriterBase {
             _p('field', [_att('x', '-2')]),
           ],
         ),
-      _p(
-        'colItems',
-        [_att('count', '${dataCount > 1 ? dataCount : 1}')],
-        [
-          if (dataCount > 1) ...[
-            _p('i', [], [_p('x')]),
-            for (var d = 1; d < dataCount; d++)
-              _p(
-                'i',
-                [_att('i', '$d')],
-                [
-                  _p('x', [_att('v', '$d')]),
-                ],
-              ),
-          ] else
-            _p('i'),
-        ],
-      ),
+      if (colField != null)
+        _p('colItems', [
+          _att('count', '${colItemCount + 1}'),
+        ], _axisItems(colItemCount))
+      else
+        _p(
+          'colItems',
+          [_att('count', '${dataCount > 1 ? dataCount : 1}')],
+          [
+            if (dataCount > 1) ...[
+              _p('i', [], [_p('x')]),
+              for (var d = 1; d < dataCount; d++)
+                _p(
+                  'i',
+                  [_att('i', '$d')],
+                  [
+                    _p('x', [_att('v', '$d')]),
+                  ],
+                ),
+            ] else
+              _p('i'),
+          ],
+        ),
+      if (pageFields.isNotEmpty)
+        _p(
+          'pageFields',
+          [_att('count', '${pageFields.length}')],
+          [
+            for (final pf in pageFields)
+              _p('pageField', [_att('fld', '$pf'), _att('hier', '-1')]),
+          ],
+        ),
       _p(
         'dataFields',
         [_att('count', '$dataCount')],

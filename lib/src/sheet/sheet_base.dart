@@ -595,6 +595,11 @@ class _SheetBase {
         'a pivot needs at least one data field',
       );
     }
+    if (pivot.columnField != null && pivot.dataFields.length != 1) {
+      throw ArgumentError(
+        'a pivot with a columnField supports exactly one data field',
+      );
+    }
     _pivotTables.add(pivot);
     _pivotTablesChanged = true;
   }
