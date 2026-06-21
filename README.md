@@ -117,75 +117,60 @@ cd ../excel_plus_bench                && dart pub get && dart run bin/benchmark.
 
 ## Key features
 
-- **Read & write** `.xlsx` files from bytes.
-- **Create** new Excel workbooks from scratch.
-- **Multiple sheets** — create, copy, rename, delete, reorder, tab colour, hide.
-- **All cell types** — text, int, double, bool, date, time, date-time, formula,
-  and typed error values (`#DIV/0!`, `#N/A`, …).
-- **Formula evaluation** — compute results with `sheet.evaluate(cell)` and
-  recompute a whole workbook with `excel.recalculate()`; ~85 built-in functions
-  (math, stats, logical, text, lookup, date/time) plus custom functions via
-  `excel.formula.registerFunction`.
-- **Cell styling** — fonts, colors, solid & pattern fills, borders, alignment,
-  rotation, indent.
-- **Number formats** — built-in and custom format codes.
-- **Worksheet features** — hyperlinks, data validation / dropdowns, conditional
-  formatting (colour scales, data bars, cellIs/formula), freeze panes, autofilter,
-  sheet & workbook protection, defined names / named ranges, gridlines & zoom.
-- **Images** — insert PNG/JPEG/GIF anchored to a cell (`sheet.insertImage`) and
-  read them back (`sheet.images`); existing pictures are preserved on save.
-- **Page & print setup** — orientation, scaling / fit-to-page, margins, print
-  area, repeating print titles, and manual page breaks (`sheet.pageSetup`,
-  `sheet.setPrintArea`, `sheet.setPrintTitleRows`, `sheet.insertRowPageBreak`, …).
-- **Grouping & outline** — collapsible row/column groups with outline levels,
-  plus show/hide (`sheet.groupRows`, `sheet.groupColumns`, `sheet.setRowHidden`).
-- **Comments / notes** — attach and read classic cell comments with author
-  (`sheet.setComment`, `cell.comment`, `sheet.comments`).
-- **Rich text** — read **and** write (per-run bold/italic/colour/size/font).
-- **Theme & indexed colours** — read (resolved to RGB) and authored
-  (`ExcelColor.theme(ThemeColor.accent1, tint: x)` / `ExcelColor.indexed(n)`),
-  staying linked to the document theme.
-- **Merge & unmerge** cells with custom values.
-- **Rows & columns** — insert, remove, clear, resize.
-- **Column width / row height** with auto-fit.
-- **Find and replace** across cells and sheets.
-- **Cross-platform** — VM, Web (JS & WASM), Android, iOS, Windows, macOS, Linux.
-- **Source-compatible** drop-in for the `excel` package.
+- ✅ Read & write `.xlsx`
+- ✅ Create workbooks
+- ✅ Multiple sheets
+- ✅ All cell types
+- ✅ Formula evaluation
+- ✅ Cell styling
+- ✅ Number formats
+- ✅ Hyperlinks
+- ✅ Data validation
+- ✅ Conditional formatting
+- ✅ Freeze panes
+- ✅ Autofilter
+- ✅ Sheet & workbook protection
+- ✅ Defined names
+- ✅ Images
+- ✅ Page & print setup
+- ✅ Grouping & outline
+- ✅ Comments / notes
+- ✅ Rich text (read & write)
+- ✅ Theme & indexed colours
+- ✅ Merge & unmerge
+- ✅ Rows & columns
+- ✅ Column width / row height
+- ✅ Find & replace
+- ✅ Cross-platform
+- ✅ Source-compatible drop-in
 
 ## Limitations
 
-excel_plus focuses on fast, correct **cell data and styling** I/O. The following
-are **not supported yet** — if you need one, please open an issue so it can be
-prioritised:
-
-- **Array-formula spilling** — a dynamic-array formula evaluates to its top-left
-  result rather than spilling across a range. (Shared formulas, normal formulas,
-  and `evaluate`/`recalculate` are fully supported — see
-  [Key features](#key-features).)
-- **Some specialized functions** — the built-in library covers ~85 common
-  functions; financial functions and the long tail of statistical/engineering
-  functions are not built in yet (add your own with
-  `excel.formula.registerFunction`).
-- **Objects & media** — charts and pivot tables (images and comments **are**
-  supported; see [Key features](#key-features)).
-- **Split panes** — freeze panes are supported; twip-based split panes are not.
-
-Anything not in this list — reading, creating, editing and styling cells across
-multiple sheets — is supported; see [Key features](#key-features).
+- ❌ Array-formula spilling
+- ❌ Long-tail / engineering formula functions
+- ❌ Split panes
+- ❌ Charts
+- ❌ Pivot tables
 
 ## Roadmap
 
-excel_plus is **actively developed** toward broader Excel / Google-Sheets parity.
-**1.0.0** landed the high-impact worksheet feature set (hyperlinks, data
-validation, conditional formatting, freeze panes, autofilter, sheet protection,
-named ranges, rich-text write, error values, theme/indexed colour authoring).
-**1.1.0** adds images, page & print setup, row/column grouping, cell comments,
-workbook protection, pattern fills, and a **formula-evaluation engine**
-(`evaluate` / `recalculate`, ~85 functions, custom functions, shared-formula
-expansion). Next up (subject to change): charts and Excel tables.
+- ✅ Worksheet features (hyperlinks, validation, conditional formatting, panes,
+  autofilter, protection, named ranges) — 1.0.0
+- ✅ Theme & indexed colours, rich-text write, error values — 1.0.0
+- ✅ Images, comments, page & print setup, grouping — 1.1.0
+- ✅ Formula-evaluation engine (~130 functions) — 1.1.0
+- ⬜ Array-formula spilling
+- ⬜ Charts
+- ⬜ Excel tables / ListObjects
+- ⬜ Pivot-table authoring
+
+See the
+[**formula functions reference**](https://github.com/almasumdev/excel_plus/blob/main/doc/functions.md)
+for the full list of supported and planned functions.
+
 Shipped changes are tracked in the
-[changelog](https://github.com/almasumdev/excel_plus/blob/main/CHANGELOG.md),
-and the direction is driven by what users request on the
+[changelog](https://github.com/almasumdev/excel_plus/blob/main/CHANGELOG.md), and
+the direction is driven by what users request on the
 [issue tracker](https://github.com/almasumdev/excel_plus/issues).
 
 ## Example
@@ -258,7 +243,9 @@ sheet.updateCell(
 Formulas are stored and round-tripped as text, and excel_plus can also evaluate
 them: `sheet.evaluate(cell)` returns the computed value, and `excel.recalculate()`
 writes each formula's result into its cached value (so a saved file shows
-results). See [Key features](#key-features) for the function coverage.
+results). See the
+[formula functions reference](https://github.com/almasumdev/excel_plus/blob/main/doc/functions.md)
+for the ~130 built-in functions.
 
 ```dart
 sheet.updateCell(CellIndex.indexByString('A1'), IntCellValue(10));

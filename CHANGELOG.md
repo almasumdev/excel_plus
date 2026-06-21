@@ -62,14 +62,19 @@
   its cached `<v>` (with the correct cell type) so a saved file shows results.
   Includes a tokenizer → precedence-climbing parser (AST-cached) and a
   tree-walking evaluator with lazy, memoised, cycle-detecting (`#CIRC`)
-  resolution of cell/range/cross-sheet/defined-name references. ~85 built-in
-  functions across math, statistics, criteria (SUMIF/COUNTIF/AVERAGEIF), logical
-  & information, text, lookup (VLOOKUP/HLOOKUP/INDEX/MATCH/XLOOKUP/CHOOSE/LOOKUP),
-  and date/time. Register your own with
-  `excel.formula.registerFunction(name, fn)`. Shared formulas (`<f t="shared">`)
-  are expanded on read by shifting relative references. Nothing here runs during
-  normal read/write, so plain workbooks pay no cost. Array-formula spilling and
-  financial functions are not yet included.
+  resolution of cell/range/cross-sheet/defined-name references, plus element-wise
+  array broadcasting in operators (so `A1:A5>2` yields an array). ~130 built-in
+  functions across math, statistics (STDEV/VAR/PERCENTILE/QUARTILE/CORREL/MODE/
+  LARGE/SMALL/RANK), criteria (SUMIF(S)/COUNTIF(S)/AVERAGEIF(S)/COUNTBLANK),
+  logical & information (incl. SWITCH), text (incl. TEXT formatting), lookup &
+  reference (VLOOKUP/HLOOKUP/INDEX/MATCH/XLOOKUP/CHOOSE/LOOKUP/OFFSET/INDIRECT/
+  ROW/COLUMN/ROWS/COLUMNS), financial (PMT/FV/PV/NPER/NPV/IRR/RATE), date/time,
+  and dynamic arrays (FILTER/SORT/UNIQUE/SEQUENCE — usable inside other
+  functions). Register your own with `excel.formula.registerFunction(name, fn)`.
+  Shared formulas (`<f t="shared">`) are expanded on read by shifting relative
+  references. Nothing here runs during normal read/write, so plain workbooks pay
+  no cost. Dynamic-array formulas do not yet *spill* across the grid (a top-level
+  dynamic-array formula evaluates to its first cell).
 
 ### Fixed
 

@@ -264,6 +264,17 @@ void _registerExtraFunctions(Map<String, _FormulaFn> r) {
     }
     return const _ErrVal(CellErrorValue.notAvailable);
   });
+  r['SWITCH'] = _guard((a) {
+    if (a.length < 3) return const _ErrVal(CellErrorValue.valueError);
+    final subject = a.evalScalar(0);
+    var i = 1;
+    for (; i + 1 < a.length; i += 2) {
+      if (_compare(a.evalScalar(i), subject) == 0) return a.eval(i + 1);
+    }
+    // A trailing odd argument is the default.
+    if (i < a.length) return a.eval(i);
+    return const _ErrVal(CellErrorValue.notAvailable);
+  });
 
   // --- text ---
   r['PROPER'] = _guard((a) => _TextVal(_proper(_coerceText(a.evalScalar(0)))));
