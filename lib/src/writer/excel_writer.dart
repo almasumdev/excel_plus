@@ -7,6 +7,7 @@ class ExcelWriter extends _WriterBase
         _WriterRelationsMixin,
         _WriterDrawingsMixin,
         _WriterCommentsMixin,
+        _WriterTablesMixin,
         _WriterWorksheetFeaturesMixin,
         _WriterConditionalFormatMixin {
   ExcelWriter._(super.excel, super.parser);
@@ -544,6 +545,10 @@ class ExcelWriter extends _WriterBase
       // hyperlinks so the comment relationships are included when the worksheet
       // relationships are (re)written.
       _applyCommentsForSheet(sheetName);
+
+      // Emit Excel tables (table parts + rels + <tableParts>) before hyperlinks
+      // so the table relationships are included when the rels are (re)written.
+      _applyTablesForSheet(sheetName);
 
       // Emit hyperlinks (+ their worksheet rels) into the DOM.
       _applyHyperlinksForSheet(sheetName);

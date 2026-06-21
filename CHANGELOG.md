@@ -75,6 +75,16 @@
   references. Nothing here runs during normal read/write, so plain workbooks pay
   no cost. Dynamic-array formulas do not yet *spill* across the grid (a top-level
   dynamic-array formula evaluates to its first cell).
+- **Excel tables / ListObjects (read + write)** — turn a range into a named
+  table with `sheet.addTable(ExcelTable(name:, from:, to:, style:))`; read them
+  via `sheet.tables` / `getTable`, and remove with `removeTable`. Writes the
+  table part (`xl/tables/tableN.xml`), its worksheet relationship, the
+  `<tableParts>` element, and the content-type, with a workbook-unique table id.
+  Column names come from the header row (empty header cells are filled in so the
+  file opens cleanly) or from an explicit `columns:` list, de-duplicated as Excel
+  requires; the header row gets an autofilter. Built-in styles via `TableStyle`
+  (e.g. `TableStyleMedium9`). Existing tables round-trip untouched unless changed
+  through the API.
 
 ### Fixed
 

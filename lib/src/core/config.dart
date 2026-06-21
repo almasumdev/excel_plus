@@ -27,6 +27,9 @@ const _relationshipsComments =
 const _relationshipsVmlDrawing =
     "http://schemas.openxmlformats.org/officeDocument/2006/relationships/vmlDrawing";
 
+const _relationshipsTable =
+    "http://schemas.openxmlformats.org/officeDocument/2006/relationships/table";
+
 const _relationships =
     'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
 
@@ -42,6 +45,10 @@ const _contentTypeComments =
 /// comment note boxes (`xl/drawings/vmlDrawingN.vml`).
 const _contentTypeVml =
     'application/vnd.openxmlformats-officedocument.vmlDrawing';
+
+/// Content type for a table (ListObject) part (`xl/tables/tableN.xml`).
+const _contentTypeTable =
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.table+xml';
 
 /// Namespaces used in a worksheet drawing part.
 const _drawingSpreadsheetNS =

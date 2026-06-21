@@ -100,36 +100,6 @@ mixin _WriterCommentsMixin on _WriterBase {
     }
   }
 
-  /// Relative target from a worksheet (`xl/worksheets/sheetN.xml`) to [partPath]
-  /// under `xl/` — i.e. one directory up.
-  String _worksheetRelTarget(String partPath) =>
-      partPath.startsWith('xl/') ? '../${partPath.substring(3)}' : partPath;
-
-  /// Allocates the next free `<prefix>N.<ext>` path across the archive and the
-  /// parts written so far this save.
-  String _nextNumberedPart(String prefix, String ext) {
-    var maxIndex = 0;
-    final re = RegExp(
-      '${RegExp.escape(prefix)}(\\d+)\\.${RegExp.escape(ext)}\$',
-      caseSensitive: false,
-    );
-    void scan(String name) {
-      final m = re.firstMatch(name);
-      if (m != null) {
-        final n = int.parse(m.group(1)!);
-        if (n > maxIndex) maxIndex = n;
-      }
-    }
-
-    for (final f in _excel._archive.files) {
-      scan(f.name);
-    }
-    for (final name in _archiveFiles.keys) {
-      scan(name);
-    }
-    return '$prefix${maxIndex + 1}.$ext';
-  }
-
   /// Inserts (or re-points) the worksheet `<legacyDrawing r:id>` element.
   void _ensureLegacyDrawing(XmlElement worksheet, String rId) {
     for (final e in worksheet.findElements('legacyDrawing').toList()) {

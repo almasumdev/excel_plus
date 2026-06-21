@@ -129,6 +129,14 @@ class _SheetBase {
   /// parts are regenerated from the model on save.
   bool _commentsChanged = false;
 
+  /// Excel tables (ListObjects) on this sheet: those parsed from the file plus
+  /// any added via [addTable]. Lazily populated when the sheet is parsed.
+  final List<ExcelTable> _tables = [];
+
+  /// Whether tables were changed via the API. When `false`, existing table parts
+  /// round-trip untouched; when `true`, the sheet's table parts are regenerated.
+  bool _tablesChanged = false;
+
   _SheetBase(this._excel, this._sheet);
 
   /// Removes a cell from the specified [rowIndex] and [columnIndex].
@@ -917,6 +925,65 @@ class _SheetBase {
         null) {
       _commentsChanged = true;
     }
+  }
+
+  /// The Excel tables (ListObjects) on this sheet (read from the file plus any
+  /// added via [addTable]). Read-only; edit via [addTable] / [removeTable].
+  List<ExcelTable> get tables => List.unmodifiable(_tables);
+
+  /// Returns the table named [name] (case-insensitive), or `null` if there is
+  /// none.
+  ExcelTable? getTable(String name) {
+    final lower = name.toLowerCase();
+    for (final t in _tables) {
+      if (t.name.toLowerCase() == lower) return t;
+    }
+    return null;
+  }
+
+  /// Adds an Excel table (ListObject) over a cell range.
+  ///
+  /// On save the table is written as a `xl/tables/tableN.xml` part referenced
+  /// from the worksheet. When [ExcelTable.headerRow] is set (the default), any
+  /// empty header cell is filled with the resolved column name so the file opens
+  /// without a repair prompt.
+  ///
+  /// ```dart
+  /// sheet.addTable(ExcelTable(
+  ///   name: 'Sales',
+  ///   from: CellIndex.indexByString('A1'),
+  ///   to: CellIndex.indexByString('C10'),
+  ///   style: TableStyle.medium9,
+  /// ));
+  /// ```
+  ///
+  /// Throws [ArgumentError] if the name is empty or already used on this sheet.
+  void addTable(ExcelTable table) {
+    if (table.name.trim().isEmpty) {
+      throw ArgumentError.value(table.name, 'table.name', 'must not be empty');
+    }
+    if (getTable(table.name) != null) {
+      throw ArgumentError.value(
+        table.name,
+        'table.name',
+        'a table with this name already exists on the sheet',
+      );
+    }
+    _tables.add(table);
+    _tablesChanged = true;
+  }
+
+  /// Removes the table named [name] (case-insensitive). Returns `true` if a
+  /// table was removed.
+  bool removeTable(String name) {
+    final before = _tables.length;
+    final lower = name.toLowerCase();
+    _tables.removeWhere((t) => t.name.toLowerCase() == lower);
+    if (_tables.length != before) {
+      _tablesChanged = true;
+      return true;
+    }
+    return false;
   }
 
   /// 0-based index of this sheet in the workbook tab order (its `localSheetId`).

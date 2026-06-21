@@ -135,6 +135,7 @@ cd ../excel_plus_bench                && dart pub get && dart run bin/benchmark.
 - ✅ Page & print setup
 - ✅ Grouping & outline
 - ✅ Comments / notes
+- ✅ Excel tables (ListObjects)
 - ✅ Rich text (read & write)
 - ✅ Theme & indexed colours
 - ✅ Merge & unmerge
@@ -159,9 +160,9 @@ cd ../excel_plus_bench                && dart pub get && dart run bin/benchmark.
 - ✅ Theme & indexed colours, rich-text write, error values — 1.0.0
 - ✅ Images, comments, page & print setup, grouping — 1.1.0
 - ✅ Formula-evaluation engine (~130 functions) — 1.1.0
+- ✅ Excel tables / ListObjects — 1.1.0
 - ⬜ Array-formula spilling
 - ⬜ Charts
-- ⬜ Excel tables / ListObjects
 - ⬜ Pivot-table authoring
 
 See the

@@ -64,6 +64,7 @@ final featureDemos = <FeatureDemo>[
   _comments,
   _workbookProtection,
   _patternFills,
+  _tables,
 ];
 
 FeatureDemo? featureById(String id) {
@@ -2970,5 +2971,112 @@ Excel _buildPatternFills() {
 
   s.setColumnWidth(0, 18);
   s.setColumnWidth(1, 18);
+  return excel;
+}
+
+// ---------------------------------------------------------------------------
+// 28. Excel tables (ListObjects)
+// ---------------------------------------------------------------------------
+
+final _tables = FeatureDemo(
+  id: 'tables',
+  title: 'Excel tables',
+  description:
+      'Turn a range into a real Excel table (ListObject): a named region with a '
+      'header row, banded styling and a built-in filter. Empty header cells are '
+      'filled with the column names so the file opens cleanly.',
+  points: [
+    'sheet.addTable(ExcelTable(name:, from:, to:, style:))',
+    'Built-in styles via TableStyle (e.g. TableStyleMedium9)',
+    'sheet.tables / getTable / removeTable',
+    'Header row + autofilter written automatically',
+  ],
+  snippet: '''
+sheet.addTable(ExcelTable(
+  name: 'Sales',
+  from: CellIndex.indexByString('A1'),
+  to: CellIndex.indexByString('C5'),
+  style: TableStyle.medium9,
+));''',
+  fullCode: r'''
+import 'package:excel_plus/excel_plus.dart';
+
+Excel buildTables() {
+  final excel = Excel.createExcel();
+  final s = excel[excel.getDefaultSheet() ?? 'Sheet1'];
+
+  const headers = ['Region', 'Q1', 'Q2'];
+  const rows = [
+    ['East', 120, 240],
+    ['West', 45, 96],
+    ['North', 18, 60],
+    ['South', 96, 130],
+  ];
+  for (var c = 0; c < headers.length; c++) {
+    s.updateCell(CellIndex.indexByColumnRow(columnIndex: c, rowIndex: 0),
+        TextCellValue(headers[c]));
+  }
+  for (var r = 0; r < rows.length; r++) {
+    for (var c = 0; c < headers.length; c++) {
+      final v = rows[r][c];
+      s.updateCell(
+        CellIndex.indexByColumnRow(columnIndex: c, rowIndex: r + 1),
+        v is int ? IntCellValue(v) : TextCellValue(v as String),
+      );
+    }
+  }
+
+  s.addTable(ExcelTable(
+    name: 'Sales',
+    from: CellIndex.indexByString('A1'),
+    to: CellIndex.indexByString('C5'),
+    style: TableStyle.medium9,
+  ));
+  return excel;
+}
+''',
+  build: _buildTables,
+);
+
+Excel _buildTables() {
+  final excel = _book('Tables');
+  final s = excel['Tables'];
+
+  final header = _box(bold: true, fill: _headerFill, font: ExcelColor.white);
+  const headers = ['Region', 'Q1', 'Q2'];
+  for (var c = 0; c < headers.length; c++) {
+    _put(s, c, 0, TextCellValue(headers[c]), header);
+  }
+  const rows = [
+    ['East', 120, 240],
+    ['West', 45, 96],
+    ['North', 18, 60],
+    ['South', 96, 130],
+  ];
+  for (var r = 0; r < rows.length; r++) {
+    for (var c = 0; c < headers.length; c++) {
+      final v = rows[r][c];
+      _put(
+        s,
+        c,
+        r + 1,
+        v is int ? IntCellValue(v) : TextCellValue(v as String),
+        _box(align: c == 0 ? HorizontalAlign.Left : HorizontalAlign.Right),
+      );
+    }
+  }
+
+  s.addTable(
+    ExcelTable(
+      name: 'Sales',
+      from: CellIndex.indexByString('A1'),
+      to: CellIndex.indexByString('C5'),
+      style: TableStyle.medium9,
+    ),
+  );
+
+  s.setColumnWidth(0, 14);
+  s.setColumnWidth(1, 10);
+  s.setColumnWidth(2, 10);
   return excel;
 }
