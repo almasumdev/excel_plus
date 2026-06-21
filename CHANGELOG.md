@@ -56,6 +56,20 @@
   `backgroundColor` as the pattern colour over an optional `fillBackgroundColor`.
   Non-solid patterns and their `bgColor` now also survive a read round-trip.
   Plain solid fills are unchanged.
+- **Formula evaluation engine (opt-in)** — compute formula results without a
+  spreadsheet app. `sheet.evaluate(cell)` returns the computed `CellValue`;
+  `excel.recalculate()` recomputes every formula cell and stores each result as
+  its cached `<v>` (with the correct cell type) so a saved file shows results.
+  Includes a tokenizer → precedence-climbing parser (AST-cached) and a
+  tree-walking evaluator with lazy, memoised, cycle-detecting (`#CIRC`)
+  resolution of cell/range/cross-sheet/defined-name references. ~85 built-in
+  functions across math, statistics, criteria (SUMIF/COUNTIF/AVERAGEIF), logical
+  & information, text, lookup (VLOOKUP/HLOOKUP/INDEX/MATCH/XLOOKUP/CHOOSE/LOOKUP),
+  and date/time. Register your own with
+  `excel.formula.registerFunction(name, fn)`. Shared formulas (`<f t="shared">`)
+  are expanded on read by shifting relative references. Nothing here runs during
+  normal read/write, so plain workbooks pay no cost. Array-formula spilling and
+  financial functions are not yet included.
 
 ### Fixed
 
