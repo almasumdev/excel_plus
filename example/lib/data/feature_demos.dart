@@ -905,17 +905,59 @@ Excel buildFormulas() {
 // 8b. Formula evaluation
 // ---------------------------------------------------------------------------
 
+/// The (category, formula) rows shown by the formula-evaluation demo. Column A
+/// holds the numbers [120, 45, 18, 240, 96] in A2:A6; the rest are self-contained
+/// so each row demonstrates a different function family.
+const _formulaShowcaseRows = <(String, String)>[
+  // Math
+  ('Sum', 'SUM(A2:A6)'),
+  ('Average', 'ROUND(AVERAGE(A2:A6),1)'),
+  ('Max / Min', 'MAX(A2:A6)-MIN(A2:A6)'),
+  ('Sqrt of max', 'ROUND(SQRT(MAX(A2:A6)),2)'),
+  // Statistics
+  ('Std dev', 'ROUND(STDEV(A2:A6),2)'),
+  ('Median', 'MEDIAN(A2:A6)'),
+  ('2nd largest', 'LARGE(A2:A6,2)'),
+  ('Rank of 120', 'RANK(120,A2:A6)'),
+  ('90th percentile', 'PERCENTILE(A2:A6,0.9)'),
+  // Criteria
+  ('Count > 100', 'COUNTIF(A2:A6,">100")'),
+  ('Sum > 100', 'SUMIF(A2:A6,">100")'),
+  // Logical
+  ('If high/low', 'IF(AVERAGE(A2:A6)>100,"High","Low")'),
+  ('Switch grade', 'SWITCH(TRUE,MAX(A2:A6)>200,"A",MAX(A2:A6)>100,"B","C")'),
+  // Text
+  ('Format money', 'TEXT(SUM(A2:A6),"\$#,##0.00")'),
+  ('Format percent', 'TEXT(COUNTIF(A2:A6,">100")/5,"0%")'),
+  ('Concatenate', 'CONCAT("Total: ",SUM(A2:A6))'),
+  // Lookup & reference
+  ('Match 240', 'MATCH(240,A2:A6,0)'),
+  ('Index 3rd', 'INDEX(A2:A6,3)'),
+  ('Offset sum', 'SUM(OFFSET(A2,0,0,3,1))'),
+  // Financial
+  ('Loan payment', 'ROUND(PMT(0.05/12,12,1000),2)'),
+  ('Future value', 'ROUND(FV(0.05/12,12,-100),2)'),
+  // Date & time
+  ('Date text', 'TEXT(DATE(2024,3,9),"yyyy-mm-dd")'),
+  // Dynamic arrays
+  ('Unique count', 'COUNTA(UNIQUE(A2:A6))'),
+  ('Sum sequence', 'SUM(SEQUENCE(5))'),
+  ('Sum filtered', 'SUM(FILTER(A2:A6,A2:A6>100))'),
+  // Custom
+  ('Span (custom)', 'SPAN(A2:A6)'),
+];
+
 final _formulaEval = FeatureDemo(
   id: 'formula_eval',
   title: 'Formula evaluation',
   description:
       'Compute formula results in pure Dart — no spreadsheet app needed. '
       'evaluate() returns a single cell\'s value; recalculate() fills every '
-      'formula\'s cached result. ~85 built-in functions plus your own.',
+      'formula\'s cached result. ~130 built-in functions plus your own.',
   points: [
     'sheet.evaluate(cell) computes a result on demand',
     'excel.recalculate() recomputes every formula cell',
-    '~85 functions: SUM, AVERAGE, IF, VLOOKUP, COUNTIF, …',
+    '~130 functions: math, stats, lookup, text, financial, date, arrays',
     'Register custom functions with excel.formula.registerFunction',
   ],
   snippet: '''
@@ -951,11 +993,27 @@ Excel buildFormulaEval() {
     return DoubleCellValue(ns.last - ns.first);
   });
 
+  // A few of the ~130 built-in functions across families.
   final measures = [
     'SUM(A2:A6)',
-    'AVERAGE(A2:A6)',
-    'MAX(A2:A6)',
+    'ROUND(AVERAGE(A2:A6),1)',
+    'MAX(A2:A6)-MIN(A2:A6)',
+    'STDEV(A2:A6)',
+    'LARGE(A2:A6,2)',
+    'RANK(120,A2:A6)',
     'COUNTIF(A2:A6,">100")',
+    'SUMIF(A2:A6,">100")',
+    'IF(AVERAGE(A2:A6)>100,"High","Low")',
+    'TEXT(SUM(A2:A6),"\$#,##0.00")',
+    'CONCAT("Total: ",SUM(A2:A6))',
+    'MATCH(240,A2:A6,0)',
+    'INDEX(A2:A6,3)',
+    'SUM(OFFSET(A2,0,0,3,1))',
+    'PMT(0.05/12,12,1000)',
+    'TEXT(DATE(2024,3,9),"yyyy-mm-dd")',
+    'COUNTA(UNIQUE(A2:A6))',
+    'SUM(SEQUENCE(5))',
+    'SUM(FILTER(A2:A6,A2:A6>100))',
     'SPAN(A2:A6)',
   ];
   for (var i = 0; i < measures.length; i++) {
@@ -1002,16 +1060,10 @@ Excel buildFormulaEval() {
       return DoubleCellValue(ns.last - ns.first);
     });
 
-    _put(s, 2, 0, TextCellValue('Measure'), hdr());
+    _put(s, 2, 0, TextCellValue('Category'), hdr());
     _put(s, 3, 0, TextCellValue('Formula'), hdr());
     _put(s, 4, 0, TextCellValue('Result'), hdr());
-    final rows = <(String, String)>[
-      ('Sum', 'SUM(A2:A6)'),
-      ('Average', 'AVERAGE(A2:A6)'),
-      ('Max', 'MAX(A2:A6)'),
-      ('Count > 100', 'COUNTIF(A2:A6,">100")'),
-      ('Span (custom)', 'SPAN(A2:A6)'),
-    ];
+    final rows = _formulaShowcaseRows;
     for (var i = 0; i < rows.length; i++) {
       final r = i + 1;
       _put(s, 2, r, TextCellValue(rows[i].$1), _box(bold: true));
@@ -1031,8 +1083,8 @@ Excel buildFormulaEval() {
     s.setColumnWidth(0, 10);
     s.setColumnWidth(1, 3);
     s.setColumnWidth(2, 16);
-    s.setColumnWidth(3, 20);
-    s.setColumnWidth(4, 10);
+    s.setColumnWidth(3, 30);
+    s.setColumnWidth(4, 16);
     return excel;
   },
 );
