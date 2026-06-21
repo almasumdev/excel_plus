@@ -6,9 +6,7 @@ Archive _cloneArchive(
   String? excludedFile,
   Set<String> excludedFiles = const {},
 }) {
-  final excludedLower = {
-    for (final p in excludedFiles) p.toLowerCase(),
-  };
+  final excludedLower = {for (final p in excludedFiles) p.toLowerCase()};
   var clone = Archive();
   for (var file in archive.files) {
     if (file.isFile) {

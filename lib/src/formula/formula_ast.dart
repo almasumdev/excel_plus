@@ -102,7 +102,8 @@ class _NameNode extends _FNode {
   const _NameNode(this.name, {this.sheet});
 
   @override
-  String toString() => sheet == null ? name : '${_sheetRefPrefix(sheet!)}!$name';
+  String toString() =>
+      sheet == null ? name : '${_sheetRefPrefix(sheet!)}!$name';
 }
 
 /// A prefix (`-`, `+`) or postfix (`%`) unary operation.

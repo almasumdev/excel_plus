@@ -25,12 +25,14 @@ List<int> _withCustomWorkbookViews(List<int> xlsx) {
   for (final f in a.files) {
     f.decompress();
     if (f.name == 'xl/workbook.xml') {
-      final wb = utf8.decode(f.content).replaceFirst(
-        '</sheets>',
-        '</sheets><customWorkbookViews>'
-            '<customWorkbookView name="v" guid="{00000000-0000-0000-0000-000000000001}"/>'
-            '</customWorkbookViews>',
-      );
+      final wb = utf8
+          .decode(f.content)
+          .replaceFirst(
+            '</sheets>',
+            '</sheets><customWorkbookViews>'
+                '<customWorkbookView name="v" guid="{00000000-0000-0000-0000-000000000001}"/>'
+                '</customWorkbookViews>',
+          );
       final b = utf8.encode(wb);
       out.addFile(ArchiveFile(f.name, b.length, b));
     } else {
@@ -514,8 +516,9 @@ void main() {
       final excel = Excel.decodeBytes(withViews);
       _firstSheet(excel).addPivotTable(_byRegion());
 
-      final wb = XmlDocument.parse(_part(_encode(excel), 'xl/workbook.xml'))
-          .rootElement;
+      final wb = XmlDocument.parse(
+        _part(_encode(excel), 'xl/workbook.xml'),
+      ).rootElement;
       final order = wb.childElements.map((e) => e.name.local).toList();
       expect(order, contains('pivotCaches'));
       expect(order, contains('customWorkbookViews'));

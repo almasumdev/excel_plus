@@ -190,7 +190,8 @@ _EvalValue _evalUnary(_UnaryNode n, _FormulaContext ctx, String sheet) {
   // binary-operator behaviour.
   if (v is _ArrayVal) {
     return _ArrayVal([
-      for (final row in v.rows) [for (final cell in row) _unaryScalar(n.op, cell)],
+      for (final row in v.rows)
+        [for (final cell in row) _unaryScalar(n.op, cell)],
     ]);
   }
   return _unaryScalar(n.op, v);

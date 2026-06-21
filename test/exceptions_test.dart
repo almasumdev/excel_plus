@@ -98,27 +98,33 @@ void main() {
   });
 
   group('Argument Validation Stays ArgumentError', () {
-    test('a negative cell index throws ArgumentError, not an ExcelException',
-        () {
-      final excel = Excel.createExcel();
-      final sheet = excel[excel.getDefaultSheet()!];
-      expect(
-        () => sheet
-            .cell(CellIndex.indexByColumnRow(columnIndex: -1, rowIndex: 0)),
-        throwsArgumentError,
-      );
-    });
+    test(
+      'a negative cell index throws ArgumentError, not an ExcelException',
+      () {
+        final excel = Excel.createExcel();
+        final sheet = excel[excel.getDefaultSheet()!];
+        expect(
+          () => sheet.cell(
+            CellIndex.indexByColumnRow(columnIndex: -1, rowIndex: 0),
+          ),
+          throwsArgumentError,
+        );
+      },
+    );
   });
 
   group('Formula Errors Stay Values', () {
-    test('an unparseable formula evaluates to an error value, never throws', () {
-      final excel = Excel.createExcel();
-      final sheet = excel[excel.getDefaultSheet()!];
-      final at = CellIndex.indexByString('A1');
-      sheet.updateCell(at, FormulaCellValue('1 +'));
+    test(
+      'an unparseable formula evaluates to an error value, never throws',
+      () {
+        final excel = Excel.createExcel();
+        final sheet = excel[excel.getDefaultSheet()!];
+        final at = CellIndex.indexByString('A1');
+        sheet.updateCell(at, FormulaCellValue('1 +'));
 
-      final result = sheet.evaluate(at);
-      expect(result, isA<CellErrorValue>());
-    });
+        final result = sheet.evaluate(at);
+        expect(result, isA<CellErrorValue>());
+      },
+    );
   });
 }

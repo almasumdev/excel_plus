@@ -84,7 +84,9 @@ class _FormulaParser {
   _FNode parse() {
     final node = _parseExpr(1);
     if (_pos != _toks.length) {
-      throw const FormulaParseException('Unexpected trailing tokens in formula');
+      throw const FormulaParseException(
+        'Unexpected trailing tokens in formula',
+      );
     }
     return node;
   }
@@ -158,7 +160,9 @@ class _FormulaParser {
 
   _FNode _parseAtom() {
     final t = _peek;
-    if (t == null) throw const FormulaParseException('Unexpected end of formula');
+    if (t == null) {
+      throw const FormulaParseException('Unexpected end of formula');
+    }
     switch (t.kind) {
       case _TokKind.number:
         _consume();

@@ -52,7 +52,6 @@ List<String> _splitSections(String code) {
   return out;
 }
 
-
 int _countUnquoted(String sec, String target) {
   var inQuote = false;
   var n = 0;

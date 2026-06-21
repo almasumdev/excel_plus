@@ -246,7 +246,10 @@ void main() {
         _part(a, 'xl/drawings/_rels/drawing1.xml.rels'),
         contains('charts/chart1.xml'),
       );
-      expect(_part(a, '[Content_Types].xml'), contains('/xl/charts/chart1.xml'));
+      expect(
+        _part(a, '[Content_Types].xml'),
+        contains('/xl/charts/chart1.xml'),
+      );
     });
   });
 

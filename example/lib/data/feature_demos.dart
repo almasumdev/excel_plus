@@ -3306,7 +3306,9 @@ Excel _buildPivot() {
         v is int ? IntCellValue(v) : TextCellValue(v as String),
         r == 0
             ? header
-            : _box(align: c == 2 ? HorizontalAlign.Right : HorizontalAlign.Left),
+            : _box(
+                align: c == 2 ? HorizontalAlign.Right : HorizontalAlign.Left,
+              ),
       );
     }
   }
