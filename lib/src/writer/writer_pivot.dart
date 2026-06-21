@@ -122,6 +122,7 @@ mixin _WriterPivotMixin on _WriterBase {
     final dataCols = pivot.dataFields.map((d) => d.column).toSet();
     final dimensionCols = <int>{
       pivot.rowField,
+      ...pivot.subRowFields,
       if (pivot.columnField != null) pivot.columnField!,
       ...pivot.pageFields,
     };
@@ -318,9 +319,49 @@ mixin _WriterPivotMixin on _WriterBase {
     _p('i', [_att('t', 'grand')], [_p('x')]),
   ];
 
+  /// Compact `<rowItems>` for one or more row fields: distinct value tuples in
+  /// sorted order, each `<i>` carrying an `r` (repeated-prefix) count and an
+  /// `<x>` per level past the prefix, plus a grand-total row.
+  List<XmlElement> _nestedRowItems(List<List<int>> perField, int recordCount) {
+    final n = perField.length;
+    final seen = <String>{};
+    final tuples = <List<int>>[];
+    for (var r = 0; r < recordCount; r++) {
+      final t = [for (final idx in perField) idx[r]];
+      if (seen.add(t.join(','))) tuples.add(t);
+    }
+    tuples.sort((a, b) {
+      for (var i = 0; i < n; i++) {
+        final c = a[i].compareTo(b[i]);
+        if (c != 0) return c;
+      }
+      return 0;
+    });
+
+    final items = <XmlElement>[];
+    List<int>? prev;
+    for (final t in tuples) {
+      var r = 0;
+      if (prev != null) {
+        while (r < n && prev[r] == t[r]) {
+          r++;
+        }
+      }
+      items.add(
+        _p('i', r > 0 ? [_att('r', '$r')] : const [], [
+          for (var i = r; i < n; i++)
+            t[i] == 0 ? _p('x') : _p('x', [_att('v', '${t[i]}')]),
+        ]),
+      );
+      prev = t;
+    }
+    items.add(_p('i', [_att('t', 'grand')], [_p('x')]));
+    return items;
+  }
+
   String _buildPivotTableXml(PivotTable pivot, _PivotModel model) {
-    final rowField = model.fields[pivot.rowField];
-    final itemCount = rowField.items.length;
+    final rowFieldCols = [pivot.rowField, ...pivot.subRowFields];
+    final itemCount = model.fields[pivot.rowField].items.length;
     final dataCount = pivot.dataFields.length;
     final dataCols = pivot.dataFields.map((d) => d.column).toSet();
     final colField = pivot.columnField;
@@ -332,8 +373,10 @@ mixin _WriterPivotMixin on _WriterBase {
     // pivotFields — one per source column.
     final pivotFields = <XmlElement>[];
     for (var j = 0; j < model.fields.length; j++) {
-      if (j == pivot.rowField) {
-        pivotFields.add(_dimensionField('axisRow', itemCount));
+      if (rowFieldCols.contains(j)) {
+        pivotFields.add(
+          _dimensionField('axisRow', model.fields[j].items.length),
+        );
       } else if (j == colField) {
         pivotFields.add(_dimensionField('axisCol', colItemCount));
       } else if (pageFields.contains(j)) {
@@ -349,8 +392,12 @@ mixin _WriterPivotMixin on _WriterBase {
       }
     }
 
-    // rowItems: each distinct value plus a grand total.
-    final rowItems = _axisItems(itemCount);
+    // rowItems: nested distinct tuples of the row fields plus a grand total.
+    final rowItems = rowFieldCols.length == 1
+        ? _axisItems(itemCount)
+        : _nestedRowItems([
+            for (final c in rowFieldCols) model.fields[c].recordIndex,
+          ], model.recordCount);
 
     final children = <XmlElement>[
       _p('location', [
@@ -359,23 +406,26 @@ mixin _WriterPivotMixin on _WriterBase {
           getSpanCellId(
             pivot.anchor.columnIndex,
             pivot.anchor.rowIndex,
-            pivot.anchor.columnIndex + (dataCount > 1 ? dataCount : 1),
+            pivot.anchor.columnIndex +
+                rowFieldCols.length -
+                1 +
+                (dataCount > 1 ? dataCount : 1),
             pivot.anchor.rowIndex + itemCount + 1,
           ),
         ),
         _att('firstHeaderRow', '1'),
         _att('firstDataRow', '2'),
-        _att('firstDataCol', '1'),
+        _att('firstDataCol', '${rowFieldCols.length}'),
       ]),
       _p('pivotFields', [_att('count', '${model.fields.length}')], pivotFields),
       _p(
         'rowFields',
-        [_att('count', '1')],
+        [_att('count', '${rowFieldCols.length}')],
         [
-          _p('field', [_att('x', '${pivot.rowField}')]),
+          for (final c in rowFieldCols) _p('field', [_att('x', '$c')]),
         ],
       ),
-      _p('rowItems', [_att('count', '${itemCount + 1}')], rowItems),
+      _p('rowItems', [_att('count', '${rowItems.length}')], rowItems),
       // Column axis: a real column field, else a "values" axis for >1 measure.
       if (colField != null)
         _p(

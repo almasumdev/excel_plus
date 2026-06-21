@@ -61,8 +61,12 @@ class PivotTable {
   /// Name of the sheet holding the source data; defaults to the pivot's sheet.
   final String? sourceSheet;
 
-  /// 0-based source column used as the row (grouping) field.
+  /// 0-based source column used as the (outermost) row grouping field.
   final int rowField;
+
+  /// Optional further row fields nested under [rowField], outermost first, for
+  /// a multi-level row axis (e.g. Region › Product).
+  final List<int> subRowFields;
 
   /// Optional 0-based source column used as the column field (produces a
   /// row×column matrix). When set, exactly one data field is supported.
@@ -85,6 +89,7 @@ class PivotTable {
     required this.sourceTo,
     required this.rowField,
     required this.dataFields,
+    this.subRowFields = const [],
     this.columnField,
     this.pageFields = const [],
     this.sourceSheet,

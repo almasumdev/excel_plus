@@ -267,6 +267,46 @@ void main() {
       );
     });
 
+    test('nested row fields produce compact multi-level rowItems', () {
+      final excel = Excel.createExcel();
+      _seed(excel).addPivotTable(
+        PivotTable(
+          name: 'Nested',
+          anchor: CellIndex.indexByString('E1'),
+          sourceFrom: CellIndex.indexByString('A1'),
+          sourceTo: CellIndex.indexByString('C6'),
+          rowField: 0,
+          subRowFields: const [1],
+          dataFields: const [PivotDataField(2)],
+        ),
+      );
+      final table = XmlDocument.parse(
+        _part(_encode(excel), 'xl/pivotTables/pivotTable1.xml'),
+      );
+      // Two row fields are declared.
+      expect(
+        table
+            .findAllElements('rowFields')
+            .first
+            .findAllElements('field')
+            .length,
+        2,
+      );
+      final rowItems = table.findAllElements('rowItems').first;
+      // At least one nested item carries the repeated-prefix `r` attribute.
+      expect(
+        rowItems.childElements.any((e) => e.getAttribute('r') != null),
+        isTrue,
+      );
+      // Last item is the grand total.
+      expect(rowItems.childElements.last.getAttribute('t'), 'grand');
+      // count matches the number of <i> children.
+      expect(
+        rowItems.getAttribute('count'),
+        '${rowItems.childElements.length}',
+      );
+    });
+
     test('a page field is emitted as a report filter', () {
       final excel = Excel.createExcel();
       _seed(excel).addPivotTable(

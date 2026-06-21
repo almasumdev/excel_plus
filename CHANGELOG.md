@@ -105,9 +105,11 @@
   workbook/worksheet wiring (`<pivotCaches>`, rels, content-types) with a
   workbook-unique `cacheId`. The cache is marked `refreshOnLoad`, so Excel
   rebuilds it from the source range on open. Existing pivots round-trip
-  untouched. A `columnField` produces a row×column matrix (with one measure) and
-  `pageFields` add report filters; multi-level (nested) row fields are not yet
-  supported, and `sheet.pivotTables` lists only API-added pivots.
+  untouched. A `columnField` produces a row×column matrix (with one measure),
+  `pageFields` add report filters, and `subRowFields` nest extra row levels
+  (compact outline `rowItems`). `sheet.pivotTables` lists only API-added pivots;
+  typed read-back of existing pivots is not yet modeled (they round-trip
+  untouched).
 
 ### Fixed
 
