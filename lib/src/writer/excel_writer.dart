@@ -5,6 +5,7 @@ class ExcelWriter extends _WriterBase
     with
         _WriterStylesMixin,
         _WriterRelationsMixin,
+        _WriterChartsMixin,
         _WriterDrawingsMixin,
         _WriterCommentsMixin,
         _WriterTablesMixin,

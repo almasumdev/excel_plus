@@ -85,6 +85,16 @@
   requires; the header row gets an autofilter. Built-in styles via `TableStyle`
   (e.g. `TableStyleMedium9`). Existing tables round-trip untouched unless changed
   through the API.
+- **Charts (authoring)** — add charts over data ranges with
+  `sheet.addChart(Chart.column(...))` and the `Chart.bar` / `line` / `area` /
+  `pie` / `doughnut` / `scatter` constructors. Each supports multiple
+  `ChartSeries` (values + optional name; x-values for scatter), category labels,
+  a title and axis titles, a legend position, grouping (clustered/stacked), and a
+  pixel size, anchored to a cell. Written as `xl/charts/chartN.xml` drawn through
+  the sheet's drawing part (shared with images), with the drawing relationship,
+  content-type, and graphic-frame anchor. Bare ranges (`'B2:B5'`) are qualified
+  with the chart's sheet. Charts already in an opened file round-trip untouched
+  (typed read-back is not yet modeled).
 
 ### Fixed
 

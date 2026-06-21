@@ -65,6 +65,7 @@ final featureDemos = <FeatureDemo>[
   _workbookProtection,
   _patternFills,
   _tables,
+  _charts,
 ];
 
 FeatureDemo? featureById(String id) {
@@ -3078,5 +3079,136 @@ Excel _buildTables() {
   s.setColumnWidth(0, 14);
   s.setColumnWidth(1, 10);
   s.setColumnWidth(2, 10);
+  return excel;
+}
+
+// ---------------------------------------------------------------------------
+// 29. Charts
+// ---------------------------------------------------------------------------
+
+final _charts = FeatureDemo(
+  id: 'charts',
+  title: 'Charts',
+  description:
+      'Author charts over your data: column, bar, line, area, pie, doughnut and '
+      'scatter. Each is anchored to a cell with a title, legend, multiple series '
+      'and category labels. Download the file to see the rendered chart.',
+  points: [
+    'Chart.column / bar / line / area / pie / doughnut / scatter',
+    'Multiple series + category labels from cell ranges',
+    'Title, axis titles and legend position',
+    'sheet.addChart(...) — anchored to a cell',
+  ],
+  snippet: '''
+sheet.addChart(Chart.column(
+  anchor: CellIndex.indexByString('E2'),
+  title: 'Quarterly sales',
+  categories: 'A2:A5',
+  series: [
+    ChartSeries(name: 'Q1', values: 'B2:B5'),
+    ChartSeries(name: 'Q2', values: 'C2:C5'),
+  ],
+));''',
+  fullCode: r'''
+import 'package:excel_plus/excel_plus.dart';
+
+Excel buildCharts() {
+  final excel = Excel.createExcel();
+  final s = excel[excel.getDefaultSheet() ?? 'Sheet1'];
+
+  const headers = ['Region', 'Q1', 'Q2'];
+  const rows = [
+    ['East', 120, 150],
+    ['West', 90, 130],
+    ['North', 60, 80],
+    ['South', 110, 70],
+  ];
+  for (var c = 0; c < headers.length; c++) {
+    s.updateCell(CellIndex.indexByColumnRow(columnIndex: c, rowIndex: 0),
+        TextCellValue(headers[c]));
+  }
+  for (var r = 0; r < rows.length; r++) {
+    for (var c = 0; c < headers.length; c++) {
+      final v = rows[r][c];
+      s.updateCell(
+        CellIndex.indexByColumnRow(columnIndex: c, rowIndex: r + 1),
+        v is int ? IntCellValue(v) : TextCellValue(v as String),
+      );
+    }
+  }
+
+  s.addChart(Chart.column(
+    anchor: CellIndex.indexByString('E2'),
+    title: 'Quarterly sales',
+    categories: 'A2:A5',
+    series: [
+      ChartSeries(name: 'Q1', values: 'B2:B5'),
+      ChartSeries(name: 'Q2', values: 'C2:C5'),
+    ],
+  ));
+
+  s.addChart(Chart.pie(
+    anchor: CellIndex.indexByString('E20'),
+    title: 'Q1 share',
+    categories: 'A2:A5',
+    series: ChartSeries(values: 'B2:B5'),
+  ));
+  return excel;
+}
+''',
+  build: _buildCharts,
+);
+
+Excel _buildCharts() {
+  final excel = _book('Charts');
+  final s = excel['Charts'];
+
+  final header = _box(bold: true, fill: _headerFill, font: ExcelColor.white);
+  const headers = ['Region', 'Q1', 'Q2'];
+  for (var c = 0; c < headers.length; c++) {
+    _put(s, c, 0, TextCellValue(headers[c]), header);
+  }
+  const rows = [
+    ['East', 120, 150],
+    ['West', 90, 130],
+    ['North', 60, 80],
+    ['South', 110, 70],
+  ];
+  for (var r = 0; r < rows.length; r++) {
+    for (var c = 0; c < headers.length; c++) {
+      final v = rows[r][c];
+      _put(
+        s,
+        c,
+        r + 1,
+        v is int ? IntCellValue(v) : TextCellValue(v as String),
+        _box(align: c == 0 ? HorizontalAlign.Left : HorizontalAlign.Right),
+      );
+    }
+  }
+
+  s.addChart(
+    Chart.column(
+      anchor: CellIndex.indexByString('E2'),
+      title: 'Quarterly sales',
+      categories: 'A2:A5',
+      series: [
+        ChartSeries(name: 'Q1', values: 'B2:B5'),
+        ChartSeries(name: 'Q2', values: 'C2:C5'),
+      ],
+      xAxisTitle: 'Region',
+      yAxisTitle: 'Units',
+    ),
+  );
+  s.addChart(
+    Chart.pie(
+      anchor: CellIndex.indexByString('E20'),
+      title: 'Q1 share by region',
+      categories: 'A2:A5',
+      series: ChartSeries(values: 'B2:B5'),
+    ),
+  );
+
+  s.setColumnWidth(0, 12);
   return excel;
 }

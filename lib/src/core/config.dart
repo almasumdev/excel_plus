@@ -30,6 +30,9 @@ const _relationshipsVmlDrawing =
 const _relationshipsTable =
     "http://schemas.openxmlformats.org/officeDocument/2006/relationships/table";
 
+const _relationshipsChart =
+    "http://schemas.openxmlformats.org/officeDocument/2006/relationships/chart";
+
 const _relationships =
     'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
 
@@ -49,6 +52,13 @@ const _contentTypeVml =
 /// Content type for a table (ListObject) part (`xl/tables/tableN.xml`).
 const _contentTypeTable =
     'application/vnd.openxmlformats-officedocument.spreadsheetml.table+xml';
+
+/// Content type for a chart part (`xl/charts/chartN.xml`).
+const _contentTypeChart =
+    'application/vnd.openxmlformats-officedocument.drawingml.chart+xml';
+
+/// DrawingML chart namespace.
+const _chartNS = 'http://schemas.openxmlformats.org/drawingml/2006/chart';
 
 /// Namespaces used in a worksheet drawing part.
 const _drawingSpreadsheetNS =

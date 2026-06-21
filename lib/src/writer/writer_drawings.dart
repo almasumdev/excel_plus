@@ -8,14 +8,16 @@ part of '../../excel_plus.dart';
 /// untouched drawing round-trips byte-for-byte through `_cloneArchive`. New
 /// pictures are appended to the existing drawing so any images already in the
 /// file keep their original anchors.
-mixin _WriterDrawingsMixin on _WriterBase {
+mixin _WriterDrawingsMixin on _WriterBase, _WriterChartsMixin {
   void _applyDrawingsForSheet(String sheetName) {
     final sheet = _excel._sheetMap[sheetName];
     final partPath = _excel._xmlSheetId[sheetName];
-    if (sheet == null || partPath == null || !sheet._imagesChanged) return;
+    if (sheet == null || partPath == null) return;
+    if (!sheet._imagesChanged && !sheet._chartsChanged) return;
 
     final newImages = sheet._images.where((i) => i._isNew).toList();
-    if (newImages.isEmpty) return;
+    final newCharts = sheet._charts.where((c) => !c._written).toList();
+    if (newImages.isEmpty && newCharts.isEmpty) return;
 
     final doc = _excel._xmlFiles[partPath];
     final worksheet = doc?.findAllElements('worksheet').firstOrNull;
@@ -74,6 +76,41 @@ mixin _WriterDrawingsMixin on _WriterBase {
         ),
       );
       nextShapeId++;
+    }
+
+    // Each new chart: a chart part, a drawing relationship to it, and a
+    // graphic-frame anchor in the drawing.
+    for (final chart in newCharts) {
+      final chartPath = _nextChartPath();
+      _registerXmlPart(
+        chartPath,
+        _buildChartXml(sheetName, chart),
+        isNew: true,
+      );
+      _ensureOverrideContentType('/$chartPath', _contentTypeChart);
+
+      final chartRelId = 'rId$nextRid';
+      nextRid++;
+      rels.add(
+        _Relationship(
+          id: chartRelId,
+          type: _relationshipsChart,
+          target: '../charts/${chartPath.split('/').last}',
+        ),
+      );
+
+      wsDr.children.add(
+        _buildChartAnchor(
+          col: chart.anchor.columnIndex,
+          row: chart.anchor.rowIndex,
+          cx: chart.width * 9525,
+          cy: chart.height * 9525,
+          shapeId: nextShapeId,
+          chartRelId: chartRelId,
+        ),
+      );
+      nextShapeId++;
+      chart._written = true;
     }
 
     // Serialize the drawing part (overriding the cloned copy when it existed).

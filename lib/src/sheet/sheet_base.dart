@@ -76,6 +76,12 @@ class _SheetBase {
   /// to it on save.
   bool _imagesChanged = false;
 
+  /// Charts added via [addChart], written into the sheet's drawing on save.
+  final List<Chart> _charts = [];
+
+  /// Whether a chart was added via the API.
+  bool _chartsChanged = false;
+
   /// Package path of this sheet's drawing part (e.g.
   /// `xl/drawings/drawing1.xml`), or `null` when the sheet has no drawing.
   String? _drawingPath;
@@ -524,6 +530,28 @@ class _SheetBase {
       ExcelImage._insert(bytes, anchor, width: width, height: height),
     );
     _imagesChanged = true;
+  }
+
+  /// The charts added to this sheet via [addChart]. Read-only.
+  ///
+  /// Charts already present in an opened file round-trip untouched but are not
+  /// read into this list.
+  List<Chart> get charts => List.unmodifiable(_charts);
+
+  /// Adds [chart] to the sheet. It is drawn through the sheet's drawing part on
+  /// save, alongside any images or existing charts.
+  ///
+  /// ```dart
+  /// sheet.addChart(Chart.column(
+  ///   anchor: CellIndex.indexByString('E2'),
+  ///   title: 'Sales',
+  ///   categories: 'A2:A5',
+  ///   series: [ChartSeries(name: 'Q1', values: 'B2:B5')],
+  /// ));
+  /// ```
+  void addChart(Chart chart) {
+    _charts.add(chart);
+    _chartsChanged = true;
   }
 
   /// The `sqref` range string for [start] (and optional [end]), e.g. `"C2"` or

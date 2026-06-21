@@ -136,6 +136,7 @@ cd ../excel_plus_bench                && dart pub get && dart run bin/benchmark.
 - ✅ Grouping & outline
 - ✅ Comments / notes
 - ✅ Excel tables (ListObjects)
+- ✅ Charts (column, bar, line, area, pie, doughnut, scatter)
 - ✅ Rich text (read & write)
 - ✅ Theme & indexed colours
 - ✅ Merge & unmerge
@@ -150,7 +151,7 @@ cd ../excel_plus_bench                && dart pub get && dart run bin/benchmark.
 - ❌ Array-formula spilling
 - ❌ Long-tail / engineering formula functions
 - ❌ Split panes
-- ❌ Charts
+- ❌ Chart read-back (authoring is supported)
 - ❌ Pivot tables
 
 ## Roadmap
@@ -161,8 +162,8 @@ cd ../excel_plus_bench                && dart pub get && dart run bin/benchmark.
 - ✅ Images, comments, page & print setup, grouping — 1.1.0
 - ✅ Formula-evaluation engine (~130 functions) — 1.1.0
 - ✅ Excel tables / ListObjects — 1.1.0
+- ✅ Charts (7 types) — 1.1.0
 - ⬜ Array-formula spilling
-- ⬜ Charts
 - ⬜ Pivot-table authoring
 
 See the
