@@ -33,6 +33,15 @@ const _relationshipsTable =
 const _relationshipsChart =
     "http://schemas.openxmlformats.org/officeDocument/2006/relationships/chart";
 
+const _relationshipsPivotTable =
+    "http://schemas.openxmlformats.org/officeDocument/2006/relationships/pivotTable";
+
+const _relationshipsPivotCacheDefinition =
+    "http://schemas.openxmlformats.org/officeDocument/2006/relationships/pivotCacheDefinition";
+
+const _relationshipsPivotCacheRecords =
+    "http://schemas.openxmlformats.org/officeDocument/2006/relationships/pivotCacheRecords";
+
 const _relationships =
     'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
 
@@ -59,6 +68,22 @@ const _contentTypeChart =
 
 /// DrawingML chart namespace.
 const _chartNS = 'http://schemas.openxmlformats.org/drawingml/2006/chart';
+
+/// Content type for a pivot-table definition part (`xl/pivotTables/pivotTableN.xml`).
+const _contentTypePivotTable =
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.pivotTable+xml';
+
+/// Content type for a pivot-cache definition part.
+const _contentTypePivotCacheDefinition =
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.pivotCacheDefinition+xml';
+
+/// Content type for a pivot-cache records part.
+const _contentTypePivotCacheRecords =
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.pivotCacheRecords+xml';
+
+/// SpreadsheetML main namespace (used by pivot parts).
+const _spreadsheetMainNS =
+    'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
 
 /// Namespaces used in a worksheet drawing part.
 const _drawingSpreadsheetNS =

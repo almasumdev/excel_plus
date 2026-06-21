@@ -43,6 +43,7 @@ class HomePage extends StatelessWidget {
     'pattern_fills': Icons.texture,
     'tables': Icons.table_view_outlined,
     'charts': Icons.bar_chart_outlined,
+    'pivot_tables': Icons.pivot_table_chart_outlined,
   };
 
   static const _showcaseIcons = <String, IconData>{

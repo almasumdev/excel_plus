@@ -9,6 +9,7 @@ class ExcelWriter extends _WriterBase
         _WriterDrawingsMixin,
         _WriterCommentsMixin,
         _WriterTablesMixin,
+        _WriterPivotMixin,
         _WriterWorksheetFeaturesMixin,
         _WriterConditionalFormatMixin {
   ExcelWriter._(super.excel, super.parser);
@@ -550,6 +551,10 @@ class ExcelWriter extends _WriterBase
       // Emit Excel tables (table parts + rels + <tableParts>) before hyperlinks
       // so the table relationships are included when the rels are (re)written.
       _applyTablesForSheet(sheetName);
+
+      // Emit pivot tables (cache + table parts, workbook wiring) before
+      // hyperlinks so their worksheet relationship is included in the rels.
+      _applyPivotTablesForSheet(sheetName);
 
       // Emit hyperlinks (+ their worksheet rels) into the DOM.
       _applyHyperlinksForSheet(sheetName);

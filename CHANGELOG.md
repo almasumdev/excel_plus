@@ -98,6 +98,15 @@
   content-type, and graphic-frame anchor. Bare ranges (`'B2:B5'`) are qualified
   with the chart's sheet. Charts already in an opened file round-trip untouched
   (typed read-back is not yet modeled).
+- **Pivot tables (authoring)** — summarise a range with
+  `sheet.addPivotTable(PivotTable(...))`: one row (grouping) field plus one or
+  more `PivotDataField` measures (sum/count/average/max/min/product). Writes the
+  pivot-cache definition + records, the pivot-table definition, and the full
+  workbook/worksheet wiring (`<pivotCaches>`, rels, content-types) with a
+  workbook-unique `cacheId`. The cache is marked `refreshOnLoad`, so Excel
+  rebuilds it from the source range on open. Existing pivots round-trip
+  untouched. Column/page fields and multi-level rows are not yet supported, and
+  `sheet.pivotTables` lists only API-added pivots.
 
 ### Fixed
 

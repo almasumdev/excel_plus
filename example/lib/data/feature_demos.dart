@@ -66,6 +66,7 @@ final featureDemos = <FeatureDemo>[
   _patternFills,
   _tables,
   _charts,
+  _pivotTables,
 ];
 
 FeatureDemo? featureById(String id) {
@@ -3206,6 +3207,121 @@ Excel _buildCharts() {
       title: 'Q1 share by region',
       categories: 'A2:A5',
       series: ChartSeries(values: 'B2:B5'),
+    ),
+  );
+
+  s.setColumnWidth(0, 12);
+  return excel;
+}
+
+// ---------------------------------------------------------------------------
+// 30. Pivot tables
+// ---------------------------------------------------------------------------
+
+final _pivotTables = FeatureDemo(
+  id: 'pivot_tables',
+  title: 'Pivot tables',
+  description:
+      'Summarise a range with a pivot table: group by one column and aggregate '
+      'one or more measures (sum, count, average, …). The cache refreshes on '
+      'open, so Excel rebuilds it from the source. Download to view it live.',
+  points: [
+    'sheet.addPivotTable(PivotTable(...))',
+    'rowField groups; dataFields aggregate (PivotFunction)',
+    'Cache refreshes on load from the source range',
+    'One row field + one or more measures',
+  ],
+  snippet: '''
+sheet.addPivotTable(PivotTable(
+  name: 'ByRegion',
+  anchor: CellIndex.indexByString('E1'),
+  sourceFrom: CellIndex.indexByString('A1'),
+  sourceTo: CellIndex.indexByString('C13'),
+  rowField: 0,                       // group by the 1st column
+  dataFields: [
+    PivotDataField(2),                              // Sum of col 3
+    PivotDataField(2, function: PivotFunction.count),
+  ],
+));''',
+  fullCode: r'''
+import 'package:excel_plus/excel_plus.dart';
+
+Excel buildPivot() {
+  final excel = Excel.createExcel();
+  final s = excel[excel.getDefaultSheet() ?? 'Sheet1'];
+
+  const data = [
+    ['Region', 'Product', 'Sales'],
+    ['East', 'A', 120], ['West', 'A', 90], ['East', 'B', 60],
+    ['West', 'B', 110], ['East', 'A', 30], ['West', 'B', 75],
+  ];
+  for (var r = 0; r < data.length; r++) {
+    for (var c = 0; c < 3; c++) {
+      final v = data[r][c];
+      s.updateCell(
+        CellIndex.indexByColumnRow(columnIndex: c, rowIndex: r),
+        v is int ? IntCellValue(v) : TextCellValue(v as String),
+      );
+    }
+  }
+
+  s.addPivotTable(PivotTable(
+    name: 'ByRegion',
+    anchor: CellIndex.indexByString('E1'),
+    sourceFrom: CellIndex.indexByString('A1'),
+    sourceTo: CellIndex.indexByString('C7'),
+    rowField: 0,
+    dataFields: [
+      PivotDataField(2),
+      PivotDataField(2, function: PivotFunction.count),
+    ],
+  ));
+  return excel;
+}
+''',
+  build: _buildPivot,
+);
+
+Excel _buildPivot() {
+  final excel = _book('Pivot');
+  final s = excel['Pivot'];
+
+  final header = _box(bold: true, fill: _headerFill, font: ExcelColor.white);
+  const data = [
+    ['Region', 'Product', 'Sales'],
+    ['East', 'A', 120],
+    ['West', 'A', 90],
+    ['East', 'B', 60],
+    ['West', 'B', 110],
+    ['East', 'A', 30],
+    ['West', 'B', 75],
+  ];
+  for (var r = 0; r < data.length; r++) {
+    for (var c = 0; c < 3; c++) {
+      final v = data[r][c];
+      _put(
+        s,
+        c,
+        r,
+        v is int ? IntCellValue(v) : TextCellValue(v as String),
+        r == 0
+            ? header
+            : _box(align: c == 2 ? HorizontalAlign.Right : HorizontalAlign.Left),
+      );
+    }
+  }
+
+  s.addPivotTable(
+    PivotTable(
+      name: 'ByRegion',
+      anchor: CellIndex.indexByString('E1'),
+      sourceFrom: CellIndex.indexByString('A1'),
+      sourceTo: CellIndex.indexByString('C7'),
+      rowField: 0,
+      dataFields: [
+        PivotDataField(2),
+        PivotDataField(2, function: PivotFunction.count),
+      ],
     ),
   );
 

@@ -82,6 +82,12 @@ class _SheetBase {
   /// Whether a chart was added via the API.
   bool _chartsChanged = false;
 
+  /// Pivot tables added via [addPivotTable].
+  final List<PivotTable> _pivotTables = [];
+
+  /// Whether a pivot table was added via the API.
+  bool _pivotTablesChanged = false;
+
   /// Package path of this sheet's drawing part (e.g.
   /// `xl/drawings/drawing1.xml`), or `null` when the sheet has no drawing.
   String? _drawingPath;
@@ -552,6 +558,45 @@ class _SheetBase {
   void addChart(Chart chart) {
     _charts.add(chart);
     _chartsChanged = true;
+  }
+
+  /// The pivot tables added to this sheet via [addPivotTable]. Read-only.
+  ///
+  /// Pivot tables already present in an opened file round-trip untouched but are
+  /// not read into this list.
+  List<PivotTable> get pivotTables => List.unmodifiable(_pivotTables);
+
+  /// Adds a [PivotTable] summarising a worksheet range.
+  ///
+  /// On save the pivot's cache and definition parts are written and wired into
+  /// the workbook; the cache is marked `refreshOnLoad` so Excel rebuilds it from
+  /// the source range when the file is opened.
+  ///
+  /// ```dart
+  /// sheet.addPivotTable(PivotTable(
+  ///   name: 'ByRegion',
+  ///   anchor: CellIndex.indexByString('F1'),
+  ///   sourceFrom: CellIndex.indexByString('A1'),
+  ///   sourceTo: CellIndex.indexByString('C13'),
+  ///   rowField: 0,
+  ///   dataFields: [PivotDataField(2)],
+  /// ));
+  /// ```
+  ///
+  /// Throws [ArgumentError] if the name is empty or there are no data fields.
+  void addPivotTable(PivotTable pivot) {
+    if (pivot.name.trim().isEmpty) {
+      throw ArgumentError.value(pivot.name, 'pivot.name', 'must not be empty');
+    }
+    if (pivot.dataFields.isEmpty) {
+      throw ArgumentError.value(
+        pivot.dataFields,
+        'pivot.dataFields',
+        'a pivot needs at least one data field',
+      );
+    }
+    _pivotTables.add(pivot);
+    _pivotTablesChanged = true;
   }
 
   /// The `sqref` range string for [start] (and optional [end]), e.g. `"C2"` or
