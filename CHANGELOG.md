@@ -73,8 +73,11 @@
   functions). Register your own with `excel.formula.registerFunction(name, fn)`.
   Shared formulas (`<f t="shared">`) are expanded on read by shifting relative
   references. Nothing here runs during normal read/write, so plain workbooks pay
-  no cost. Dynamic-array formulas do not yet *spill* across the grid (a top-level
-  dynamic-array formula evaluates to its first cell).
+  no cost. `recalculate()` also **spills** an array result (a dynamic-array
+  function or a range like `=A1:A3`): the anchor keeps the formula as
+  `<f t="array" ref="…">` and the rest of the spill range receives the computed
+  values (existing formula cells in the range are left untouched). `evaluate()`
+  remains scalar (returns the top-left cell).
 - **Excel tables / ListObjects (read + write)** — turn a range into a named
   table with `sheet.addTable(ExcelTable(name:, from:, to:, style:))`; read them
   via `sheet.tables` / `getTable`, and remove with `removeTable`. Writes the

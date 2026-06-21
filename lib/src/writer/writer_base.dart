@@ -180,8 +180,11 @@ abstract class _WriterBase {
         break;
       case FormulaCellValue():
         final cached = value.cachedValue;
+        final fOpen = value._arrayRef != null
+            ? '<f t="array" ref="${value._arrayRef}">'
+            : '<f>';
         buf.write(
-          '<f>${_escapeXmlValue(value.formula)}</f>'
+          '$fOpen${_escapeXmlValue(value.formula)}</f>'
           '<v>${cached != null ? _escapeXmlValue(cached) : ''}</v>',
         );
       case IntCellValue():

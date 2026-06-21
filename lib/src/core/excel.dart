@@ -166,6 +166,12 @@ class Excel {
   /// across sheets), ranges, defined names, and custom functions resolve on
   /// demand, and each cell is computed once. A self-referential formula resolves
   /// to `#CIRC`; an unparseable one to `#ERROR!`.
+  ///
+  /// A formula whose result is an array (a dynamic-array function such as
+  /// `FILTER`/`SEQUENCE`, or a range like `=A1:A3`) **spills**: the anchor cell
+  /// keeps the formula (written as `<f t="array" ref="…">`) and the remaining
+  /// cells of the spill range receive the computed values. Existing formulas in
+  /// the spill range are left untouched.
   void recalculate() {
     parser._ensureAllSheetsParsed();
     final ctx = _FormulaContext(this);
@@ -178,14 +184,53 @@ class Excel {
         }
       }
     }
+
+    final anchorWrites = <(Data, FormulaCellValue)>[];
+    final spills = <(String, int, int, CellValue)>[]; // sheet, row, col, value
     for (final (data, name) in targets) {
       final formula = (data.value as FormulaCellValue).formula;
       final index = data.cellIndex;
-      final result = _evalToCell(
-        ctx.cellValue(name, index.columnIndex, index.rowIndex),
+      final raw = ctx.cellValue(name, index.columnIndex, index.rowIndex);
+      final rows = raw is _ArrayVal ? raw.rows.length : 1;
+      final cols = raw is _ArrayVal && raw.rows.isNotEmpty
+          ? raw.rows.first.length
+          : 1;
+      if (raw is _ArrayVal && (rows > 1 || cols > 1)) {
+        final c0 = index.columnIndex;
+        final r0 = index.rowIndex;
+        final ref = getSpanCellId(c0, r0, c0 + cols - 1, r0 + rows - 1);
+        final (cached, type) = _cachedFor(_evalToCell(raw.rows[0][0]));
+        anchorWrites.add((
+          data,
+          FormulaCellValue._typed(formula, cached, type, arrayRef: ref),
+        ));
+        for (var r = 0; r < rows; r++) {
+          for (var c = 0; c < cols; c++) {
+            if (r == 0 && c == 0) continue;
+            spills.add((name, r0 + r, c0 + c, _evalToCell(raw.rows[r][c])));
+          }
+        }
+      } else {
+        final (cached, type) = _cachedFor(_evalToCell(raw));
+        anchorWrites.add((
+          data,
+          FormulaCellValue._typed(formula, cached, type),
+        ));
+      }
+    }
+
+    for (final (data, value) in anchorWrites) {
+      data._value = value;
+    }
+    // Apply spilled values last, never overwriting another formula cell.
+    for (final (name, row, col, value) in spills) {
+      final sheet = _sheetMap[name];
+      if (sheet == null) continue;
+      if (sheet._sheetData[row]?[col]?.value is FormulaCellValue) continue;
+      sheet.updateCell(
+        CellIndex.indexByColumnRow(columnIndex: col, rowIndex: row),
+        value,
       );
-      final (cached, type) = _cachedFor(result);
-      data._value = FormulaCellValue._typed(formula, cached, type);
     }
   }
 

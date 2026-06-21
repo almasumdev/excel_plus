@@ -36,16 +36,25 @@ class FormulaCellValue extends CellValue {
   /// not part of equality.
   final String? _cachedType;
 
+  /// The spill range (e.g. `"A1:A3"`) when this is the anchor of a recalculated
+  /// dynamic-/array-formula result; emitted as `<f t="array" ref="…">`. Set by
+  /// [Excel.recalculate]; not part of equality.
+  final String? _arrayRef;
+
   /// Creates a formula cell value from the given [formula] string, with an
   /// optional [cachedValue] result.
-  const FormulaCellValue(this.formula, {this.cachedValue}) : _cachedType = null;
+  const FormulaCellValue(this.formula, {this.cachedValue})
+    : _cachedType = null,
+      _arrayRef = null;
 
-  /// Internal: a formula carrying a typed cached result from recalculation.
+  /// Internal: a formula carrying a typed cached result from recalculation,
+  /// optionally as the anchor of an array spill ([arrayRef]).
   const FormulaCellValue._typed(
     this.formula,
     this.cachedValue,
-    this._cachedType,
-  );
+    this._cachedType, {
+    String? arrayRef,
+  }) : _arrayRef = arrayRef;
 
   @override
   String toString() {

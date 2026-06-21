@@ -148,7 +148,6 @@ cd ../excel_plus_bench                && dart pub get && dart run bin/benchmark.
 
 ## Limitations
 
-- ❌ Array-formula spilling
 - ❌ Long-tail / engineering formula functions
 - ❌ Split panes
 - ❌ Chart read-back (authoring is supported)
@@ -163,7 +162,7 @@ cd ../excel_plus_bench                && dart pub get && dart run bin/benchmark.
 - ✅ Formula-evaluation engine (~130 functions) — 1.1.0
 - ✅ Excel tables / ListObjects — 1.1.0
 - ✅ Charts (7 types) — 1.1.0
-- ⬜ Array-formula spilling
+- ✅ Array-formula spilling (recalculate) — 1.1.0
 - ⬜ Pivot-table authoring
 
 See the

@@ -125,4 +125,65 @@ void main() {
       expect(_formula(excel['Sheet2'], 'A1').cachedValue, '10');
     });
   });
+
+  group('Array Spilling', () {
+    num? numOf(CellValue? v) =>
+        v is IntCellValue ? v.value : (v is DoubleCellValue ? v.value : null);
+
+    test('a 1-D array result spills down into adjacent cells', () {
+      final excel = Excel.createExcel();
+      final s = excel['Sheet1'];
+      s.updateCell(
+        CellIndex.indexByString('A1'),
+        FormulaCellValue('SEQUENCE(3)'),
+      );
+      excel.recalculate();
+
+      // Anchor keeps the formula; the rest of the range gets literal values.
+      expect(_formula(s, 'A1').cachedValue, '1');
+      expect(numOf(s.cell(CellIndex.indexByString('A2')).value), 2);
+      expect(numOf(s.cell(CellIndex.indexByString('A3')).value), 3);
+    });
+
+    test('a 2-D array result spills across rows and columns', () {
+      final excel = Excel.createExcel();
+      final s = excel['Sheet1'];
+      s.updateCell(
+        CellIndex.indexByString('A1'),
+        FormulaCellValue('SEQUENCE(2,2,1,1)'),
+      );
+      excel.recalculate();
+      expect(numOf(s.cell(CellIndex.indexByString('B1')).value), 2);
+      expect(numOf(s.cell(CellIndex.indexByString('A2')).value), 3);
+      expect(numOf(s.cell(CellIndex.indexByString('B2')).value), 4);
+    });
+
+    test('the spilled values survive a save round-trip', () {
+      final excel = Excel.createExcel();
+      excel['Sheet1'].updateCell(
+        CellIndex.indexByString('A1'),
+        FormulaCellValue('SEQUENCE(3)'),
+      );
+      excel.recalculate();
+
+      final reopened = Excel.decodeBytes(excel.encode()!)['Sheet1'];
+      expect(numOf(reopened.cell(CellIndex.indexByString('A3')).value), 3);
+    });
+
+    test('spilling never overwrites an existing formula cell', () {
+      final excel = Excel.createExcel();
+      final s = excel['Sheet1'];
+      s.updateCell(
+        CellIndex.indexByString('A1'),
+        FormulaCellValue('SEQUENCE(3)'),
+      );
+      s.updateCell(CellIndex.indexByString('A2'), FormulaCellValue('99'));
+      excel.recalculate();
+      // A2 stays a formula (was not clobbered by the spill).
+      expect(
+        s.cell(CellIndex.indexByString('A2')).value,
+        isA<FormulaCellValue>(),
+      );
+    });
+  });
 }
