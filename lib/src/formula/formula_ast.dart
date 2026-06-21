@@ -117,6 +117,15 @@ class _BinaryNode extends _FNode {
   String toString() => '($left$op$right)';
 }
 
+/// An omitted argument, e.g. the 4th in `XLOOKUP(x,a,b,,-1)`. Evaluates to a
+/// blank value.
+class _MissingNode extends _FNode {
+  const _MissingNode();
+
+  @override
+  String toString() => '';
+}
+
 /// A function call (`SUM(A1:A3)`).
 class _FuncNode extends _FNode {
   final String name;

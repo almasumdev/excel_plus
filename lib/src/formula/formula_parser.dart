@@ -195,14 +195,24 @@ class _FormulaParser {
     _expect(_TokKind.lparen);
     final args = <_FNode>[];
     if (_peek?.kind != _TokKind.rparen) {
-      args.add(_parseExpr(1));
+      args.add(_parseArg());
       while (_peek?.kind == _TokKind.comma) {
         _consume();
-        args.add(_parseExpr(1));
+        args.add(_parseArg());
       }
     }
     _expect(_TokKind.rparen);
     return _FuncNode(name, args);
+  }
+
+  /// Parses one call argument, allowing an omitted one (between commas or before
+  /// the closing paren) → a [_MissingNode].
+  _FNode _parseArg() {
+    final k = _peek?.kind;
+    if (k == _TokKind.comma || k == _TokKind.rparen) {
+      return const _MissingNode();
+    }
+    return _parseExpr(1);
   }
 
   void _expect(_TokKind kind) {

@@ -113,4 +113,32 @@ void main() {
       expect(_num(_evalOn(_table(), 'LOOKUP(2,A1:A3,C1:C3)')), 0.3);
     });
   });
+
+  group('XLOOKUP', () {
+    test('exact match returns the corresponding result', () {
+      expect(_num(_evalOn(_table(), 'XLOOKUP(2,A1:A3,C1:C3)')), 0.3);
+      expect(
+        _text(_evalOn(_table(), 'XLOOKUP("cherry",B1:B3,B1:B3)')),
+        'cherry',
+      );
+    });
+
+    test('not found returns the if-not-found argument', () {
+      expect(_text(_evalOn(_table(), 'XLOOKUP(9,A1:A3,C1:C3,"none")')), 'none');
+    });
+
+    test('not found without a fallback yields #N/A', () {
+      expect(_err(_evalOn(_table(), 'XLOOKUP(9,A1:A3,C1:C3)')), '#N/A');
+    });
+
+    test('match mode -1 finds the next-smaller key (omitted arg)', () {
+      // 2.5 -> next smaller key is 2 -> price 0.3
+      expect(_num(_evalOn(_table(), 'XLOOKUP(2.5,A1:A3,C1:C3,,-1)')), 0.3);
+    });
+
+    test('match mode 1 finds the next-larger key', () {
+      // 2.5 -> next larger key is 3 -> price 2.0
+      expect(_num(_evalOn(_table(), 'XLOOKUP(2.5,A1:A3,C1:C3,,1)')), 2.0);
+    });
+  });
 }

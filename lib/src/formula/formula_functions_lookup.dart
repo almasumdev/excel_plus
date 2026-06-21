@@ -156,6 +156,62 @@ void _registerLookupFunctions(Map<String, _FormulaFn> r) {
     return res[found];
   });
 
+  r['XLOOKUP'] = _guard((a) {
+    if (a.length < 3) return const _ErrVal(CellErrorValue.valueError);
+    final lookup = a.evalScalar(0);
+    final look = _asArray(a.eval(1)).cells.toList();
+    final ret = _asArray(a.eval(2)).cells.toList();
+    final matchMode = a.length > 4 ? _coerceNum(a.evalScalar(4)).toInt() : 0;
+    final searchMode = a.length > 5 ? _coerceNum(a.evalScalar(5)).toInt() : 1;
+
+    var idx = -1;
+    if (matchMode == 0) {
+      // Exact match; search_mode -1 scans last-to-first.
+      if (searchMode == -1) {
+        for (var i = look.length - 1; i >= 0; i--) {
+          if (_compare(look[i], lookup) == 0) {
+            idx = i;
+            break;
+          }
+        }
+      } else {
+        for (var i = 0; i < look.length; i++) {
+          if (_compare(look[i], lookup) == 0) {
+            idx = i;
+            break;
+          }
+        }
+      }
+    } else if (matchMode == -1) {
+      // Exact or next smaller: largest value <= lookup.
+      for (var i = 0; i < look.length; i++) {
+        if (_compare(look[i], lookup) <= 0 &&
+            (idx < 0 || _compare(look[i], look[idx]) > 0)) {
+          idx = i;
+        }
+      }
+    } else if (matchMode == 1) {
+      // Exact or next larger: smallest value >= lookup.
+      for (var i = 0; i < look.length; i++) {
+        if (_compare(look[i], lookup) >= 0 &&
+            (idx < 0 || _compare(look[i], look[idx]) < 0)) {
+          idx = i;
+        }
+      }
+    }
+
+    if (idx < 0) {
+      // 4th arg is "if not found", when supplied and non-blank.
+      if (a.length > 3) {
+        final fallback = a.eval(3);
+        if (fallback is! _BlankVal) return fallback;
+      }
+      return const _ErrVal(CellErrorValue.notAvailable);
+    }
+    if (idx >= ret.length) return const _ErrVal(CellErrorValue.reference);
+    return ret[idx];
+  });
+
   r['CHOOSE'] = _guard((a) {
     if (a.length < 2) return const _ErrVal(CellErrorValue.valueError);
     final idx = _coerceNum(a.evalScalar(0)).toInt();
