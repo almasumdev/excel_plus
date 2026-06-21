@@ -221,6 +221,35 @@ void main() {
     });
   });
 
+  group('Chart Round-Trip Through The Reader', () {
+    test('an authored chart survives decode + re-encode', () {
+      final excel = Excel.createExcel();
+      _seed(excel).addChart(
+        Chart.column(
+          anchor: CellIndex.indexByString('D2'),
+          title: 'Sales',
+          categories: 'A2:A5',
+          series: [ChartSeries(name: 'Q', values: 'B2:B5')],
+        ),
+      );
+      // Author -> save -> reopen with the full reader -> save again. The chart
+      // has no parser, so it survives the second save only via _cloneArchive.
+      final twice = Excel.decodeBytes(excel.encode()!).encode()!;
+      final a = ZipDecoder().decodeBytes(twice);
+
+      final chart = _part(a, 'xl/charts/chart1.xml');
+      expect(chart, isNotEmpty, reason: 'chart part lost on round-trip');
+      expect(() => XmlDocument.parse(chart), returnsNormally);
+      expect(chart, contains('barChart')); // a column chart
+      expect(_part(a, 'xl/drawings/drawing1.xml'), contains('graphicFrame'));
+      expect(
+        _part(a, 'xl/drawings/_rels/drawing1.xml.rels'),
+        contains('charts/chart1.xml'),
+      );
+      expect(_part(a, '[Content_Types].xml'), contains('/xl/charts/chart1.xml'));
+    });
+  });
+
   group('Chart Validation', () {
     test('addChart rejects a chart with no data series', () {
       final excel = Excel.createExcel();

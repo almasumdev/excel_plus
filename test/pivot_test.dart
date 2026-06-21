@@ -472,6 +472,38 @@ void main() {
       );
     });
 
+    test('an authored pivot survives decode + re-encode', () {
+      final excel = Excel.createExcel();
+      _seed(excel).addPivotTable(_byRegion());
+      // Author -> save -> reopen with the full reader -> save again. Pivots have
+      // no parser, so all parts + the rel chain survive only via _cloneArchive.
+      final twice = Excel.decodeBytes(excel.encode()!).encode()!;
+      final a = ZipDecoder().decodeBytes(twice);
+
+      for (final p in [
+        'xl/pivotTables/pivotTable1.xml',
+        'xl/pivotCache/pivotCacheDefinition1.xml',
+        'xl/pivotCache/pivotCacheRecords1.xml',
+      ]) {
+        expect(_part(a, p), isNotEmpty, reason: '$p lost on round-trip');
+        expect(() => XmlDocument.parse(_part(a, p)), returnsNormally);
+      }
+      // The rel chain and workbook wiring survive too.
+      expect(
+        _part(a, 'xl/pivotTables/_rels/pivotTable1.xml.rels'),
+        contains('pivotCacheDefinition1.xml'),
+      );
+      expect(
+        _part(a, 'xl/pivotCache/_rels/pivotCacheDefinition1.xml.rels'),
+        contains('pivotCacheRecords1.xml'),
+      );
+      expect(_part(a, 'xl/workbook.xml'), contains('pivotCaches'));
+      expect(
+        _part(a, '[Content_Types].xml'),
+        contains('/xl/pivotTables/pivotTable1.xml'),
+      );
+    });
+
     test('pivotCaches is ordered after customWorkbookViews in the workbook', () {
       // Seed a workbook, inject <customWorkbookViews>, then add a pivot. Per
       // CT_Workbook order <pivotCaches> must come AFTER <customWorkbookViews>.
