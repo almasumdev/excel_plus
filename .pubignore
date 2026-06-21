@@ -15,6 +15,9 @@ test/
 .github/
 firebase.json
 .firebaserc
+# Stray local spreadsheets (e.g. manual Excel/LibreOffice test artifacts) must
+# never ship in the package.
+*.xlsx
 # README references these via absolute raw.githubusercontent URLs, so they
 # don't need to ship — but images/logo.png ships as the pub.dev screenshot/logo.
 images/banner.png
