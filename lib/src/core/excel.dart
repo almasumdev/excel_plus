@@ -42,6 +42,11 @@ class Excel {
   /// Workbook defined names (named ranges/formulas), in document order.
   final List<DefinedName> _definedNames = [];
 
+  /// Custom formula functions registered via [formula], keyed by upper-cased
+  /// name. Empty unless the app registers one; consulted by [Sheet.evaluate]
+  /// after the built-in library.
+  final Map<String, ExcelFunction> _customFunctions = {};
+
   Archive _archive;
 
   final Map<String, XmlNode> _sheets = {};
@@ -149,6 +154,9 @@ class Excel {
     parser._ensureAllSheetsParsed();
     return Map<String, Sheet>.from(_sheetMap);
   }
+
+  /// The formula subsystem — register custom functions for [Sheet.evaluate].
+  late final FormulaApi formula = FormulaApi._(this);
 
   /// Sets [sheet] contents to a clone of [sheetObject].
   void operator []=(String sheet, Sheet sheetObject) {

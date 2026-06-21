@@ -284,5 +284,6 @@ Map<String, _FormulaFn> _buildFunctionRegistry() {
     return _TextVal(s.substring(from, to));
   });
 
+  _registerExtraFunctions(r);
   return r;
 }

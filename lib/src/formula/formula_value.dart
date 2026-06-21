@@ -134,6 +134,32 @@ CellValue _evalToCell(_EvalValue v) {
   return IntCellValue(0);
 }
 
+/// Like [_evalToCell] but a blank result is `null` (used when handing values to
+/// a custom [ExcelFunction]).
+CellValue? _evalToCellOrNull(_EvalValue v) {
+  final s = _scalar(v);
+  return s is _BlankVal ? null : _evalToCell(s);
+}
+
+/// The numeric view of a value, or null if it is not numeric (number/boolean).
+double? _asNumOrNull(_EvalValue v) {
+  final s = _scalar(v);
+  if (s is _NumVal) return s.value;
+  if (s is _BoolVal) return s.value ? 1.0 : 0.0;
+  return null;
+}
+
+/// The text view of a value, or null if it cannot be rendered as text (e.g. an
+/// error).
+String? _asTextOrNull(_EvalValue v) {
+  final s = _scalar(v);
+  if (s is _TextVal) return s.value;
+  if (s is _NumVal) return _numToText(s.value);
+  if (s is _BoolVal) return s.value ? 'TRUE' : 'FALSE';
+  if (s is _BlankVal) return '';
+  return null;
+}
+
 /// Converts a literal (non-formula) [CellValue] to an evaluation value. Date and
 /// time cells resolve to their Excel serial number.
 _EvalValue _cellToEval(CellValue? v) {
@@ -144,8 +170,9 @@ _EvalValue _cellToEval(CellValue? v) {
   if (v is TextCellValue) return _TextVal(v.value.toString());
   if (v is CellErrorValue) return _ErrVal(v);
   if (v is DateCellValue) return _NumVal(_serialFromDate(v.asDateTimeUtc()));
-  if (v is DateTimeCellValue)
+  if (v is DateTimeCellValue) {
     return _NumVal(_serialFromDate(v.asDateTimeUtc()));
+  }
   if (v is TimeCellValue) {
     return _NumVal(v.asDuration().inMicroseconds / Duration.microsecondsPerDay);
   }

@@ -73,6 +73,8 @@ part 'src/formula/formula_parser.dart';
 part 'src/formula/formula_value.dart';
 part 'src/formula/formula_evaluator.dart';
 part 'src/formula/formula_functions.dart';
+part 'src/formula/formula_functions_extra.dart';
+part 'src/formula/formula_api.dart';
 
 /// Utils
 part 'src/utils/archive_utils.dart';
