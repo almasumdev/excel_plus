@@ -151,7 +151,7 @@ cd ../excel_plus_bench                && dart pub get && dart run bin/benchmark.
 - ❌ Long-tail / engineering formula functions
 - ❌ Split panes
 - ❌ Chart read-back (authoring is supported)
-- ❌ Pivot tables
+- ❌ Pivot-table authoring (existing pivots are preserved)
 
 ## Roadmap
 
