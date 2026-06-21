@@ -134,6 +134,18 @@ CellValue _evalToCell(_EvalValue v) {
   return IntCellValue(0);
 }
 
+/// Derives the cached `<v>` string and OOXML type code for a recalculated
+/// formula [result]: `null` = numeric, `'str'` = text, `'b'` = boolean,
+/// `'e'` = error.
+(String, String?) _cachedFor(CellValue result) {
+  if (result is IntCellValue) return (result.value.toString(), null);
+  if (result is DoubleCellValue) return (_numToText(result.value), null);
+  if (result is BoolCellValue) return (result.value ? '1' : '0', 'b');
+  if (result is CellErrorValue) return (result.value, 'e');
+  if (result is TextCellValue) return (result.value.toString(), 'str');
+  return ('0', null);
+}
+
 /// Like [_evalToCell] but a blank result is `null` (used when handing values to
 /// a custom [ExcelFunction]).
 CellValue? _evalToCellOrNull(_EvalValue v) {

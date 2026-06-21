@@ -30,9 +30,22 @@ class FormulaCellValue extends CellValue {
   /// equality or [hashCode], so formula cells dedup by formula alone.
   final String? cachedValue;
 
+  /// OOXML value-type of [cachedValue] when it carries a recalculated result:
+  /// `null` = numeric, `'str'` = text, `'b'` = boolean, `'e'` = error. Set by
+  /// [Excel.recalculate] so the result is written with the correct cell type;
+  /// not part of equality.
+  final String? _cachedType;
+
   /// Creates a formula cell value from the given [formula] string, with an
   /// optional [cachedValue] result.
-  const FormulaCellValue(this.formula, {this.cachedValue});
+  const FormulaCellValue(this.formula, {this.cachedValue}) : _cachedType = null;
+
+  /// Internal: a formula carrying a typed cached result from recalculation.
+  const FormulaCellValue._typed(
+    this.formula,
+    this.cachedValue,
+    this._cachedType,
+  );
 
   @override
   String toString() {

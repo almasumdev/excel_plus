@@ -158,6 +158,37 @@ class Excel {
   /// The formula subsystem — register custom functions for [Sheet.evaluate].
   late final FormulaApi formula = FormulaApi._(this);
 
+  /// Recomputes every formula cell in the workbook and stores each result as the
+  /// formula's cached value (its `<v>`), so a saved file shows results without
+  /// the spreadsheet app having to recalculate.
+  ///
+  /// Opt-in — nothing here runs during normal read/write. Dependencies (incl.
+  /// across sheets), ranges, defined names, and custom functions resolve on
+  /// demand, and each cell is computed once. A self-referential formula resolves
+  /// to `#CIRC`; an unparseable one to `#ERROR!`.
+  void recalculate() {
+    parser._ensureAllSheetsParsed();
+    final ctx = _FormulaContext(this);
+    // Collect first, then mutate, so we don't change a map while iterating it.
+    final targets = <(Data, String)>[];
+    for (final entry in _sheetMap.entries) {
+      for (final row in entry.value._sheetData.values) {
+        for (final data in row.values) {
+          if (data.value is FormulaCellValue) targets.add((data, entry.key));
+        }
+      }
+    }
+    for (final (data, name) in targets) {
+      final formula = (data.value as FormulaCellValue).formula;
+      final index = data.cellIndex;
+      final result = _evalToCell(
+        ctx.cellValue(name, index.columnIndex, index.rowIndex),
+      );
+      final (cached, type) = _cachedFor(result);
+      data._value = FormulaCellValue._typed(formula, cached, type);
+    }
+  }
+
   /// Sets [sheet] contents to a clone of [sheetObject].
   void operator []=(String sheet, Sheet sheetObject) {
     _availSheet(sheet);

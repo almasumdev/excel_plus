@@ -168,6 +168,9 @@ abstract class _WriterBase {
     if (value is TextCellValue) buf.write(' t="s"');
     if (value is BoolCellValue) buf.write(' t="b"');
     if (value is CellErrorValue) buf.write(' t="e"');
+    if (value is FormulaCellValue && value._cachedType != null) {
+      buf.write(' t="${value._cachedType}"');
+    }
 
     buf.write('>');
 
