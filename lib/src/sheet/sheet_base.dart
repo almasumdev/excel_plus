@@ -206,6 +206,33 @@ class _SheetBase {
     return _sheetData[cellIndex.rowIndex]![cellIndex.columnIndex]!;
   }
 
+  /// Evaluates the formula at [index] and returns the computed [CellValue].
+  ///
+  /// A cell holding a literal value is returned unchanged; an empty cell returns
+  /// `null`. This is **opt-in** — nothing here runs during normal read/write,
+  /// so plain workbooks pay no cost. References to other cells (including other
+  /// sheets), ranges, defined names, and the built-in function library are
+  /// resolved on demand.
+  ///
+  /// Errors surface as a [CellErrorValue]: an unknown function yields `#NAME?`,
+  /// a division by zero `#DIV/0!`, a self-referential formula `#CIRC`, and an
+  /// unparseable formula `#ERROR!`.
+  ///
+  /// {@category Core}
+  CellValue? evaluate(CellIndex index) {
+    final v = _sheetData[index.rowIndex]?[index.columnIndex]?.value;
+    if (v is! FormulaCellValue) return v;
+    try {
+      return _evalToCell(
+        _FormulaContext(
+          _excel,
+        ).cellValue(_sheet, index.columnIndex, index.rowIndex),
+      );
+    } catch (_) {
+      return _parseError;
+    }
+  }
+
   ///
   /// returns `2-D dynamic List` of the sheet elements
   ///

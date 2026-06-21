@@ -66,6 +66,14 @@ part 'src/writer/writer_conditional_format.dart';
 part 'src/writer/excel_writer.dart';
 part 'src/writer/span_corrector.dart';
 
+/// Formula
+part 'src/formula/formula_token.dart';
+part 'src/formula/formula_ast.dart';
+part 'src/formula/formula_parser.dart';
+part 'src/formula/formula_value.dart';
+part 'src/formula/formula_evaluator.dart';
+part 'src/formula/formula_functions.dart';
+
 /// Utils
 part 'src/utils/archive_utils.dart';
 part 'src/utils/cell_utils.dart';
