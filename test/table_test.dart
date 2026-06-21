@@ -1,6 +1,8 @@
 import 'package:excel_plus/excel_plus.dart';
 import 'package:test/test.dart';
 
+import 'test_helper.dart';
+
 Sheet _firstSheet(Excel excel) => excel.tables.values.first;
 
 Sheet _roundTrip(Excel excel) =>
@@ -195,6 +197,46 @@ void main() {
       );
       expect(s.getTable('lookup')?.name, 'Lookup');
       expect(s.getTable('missing'), isNull);
+    });
+
+    test('removing a table deletes its orphaned part and content type', () {
+      final excel = Excel.createExcel();
+      final s = _firstSheet(excel);
+      for (final c in [0, 1, 4, 5]) {
+        s.updateCell(
+          CellIndex.indexByColumnRow(columnIndex: c, rowIndex: 0),
+          TextCellValue('H$c'),
+        );
+      }
+      s.addTable(
+        ExcelTable(
+          name: 'T1',
+          from: CellIndex.indexByString('A1'),
+          to: CellIndex.indexByString('B3'),
+        ),
+      );
+      s.addTable(
+        ExcelTable(
+          name: 'T2',
+          from: CellIndex.indexByString('E1'),
+          to: CellIndex.indexByString('F3'),
+        ),
+      );
+      final twoTables = excel.encode()!;
+      expect(partExists(twoTables, 'xl/tables/table1.xml'), isTrue);
+      expect(partExists(twoTables, 'xl/tables/table2.xml'), isTrue);
+
+      // Re-open, remove one table, re-save: the orphaned part and its
+      // content-type override must be gone, the other untouched.
+      final reopened = Excel.decodeBytes(twoTables);
+      expect(_firstSheet(reopened).removeTable('T2'), isTrue);
+      final oneTable = reopened.encode()!;
+
+      expect(partExists(oneTable, 'xl/tables/table1.xml'), isTrue);
+      expect(partExists(oneTable, 'xl/tables/table2.xml'), isFalse);
+      final ct = readPart(oneTable, '[Content_Types].xml');
+      expect(ct, contains('/xl/tables/table1.xml'));
+      expect(ct, isNot(contains('/xl/tables/table2.xml')));
     });
   });
 }

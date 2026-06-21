@@ -106,5 +106,13 @@ void main() {
       expect(_num(_evalOn(s, 'SUM(FILTER(A1:A3,A1:A3>9,0))')), 0);
       expect(_err(_evalOn(s, 'FILTER(A1:A3,A1:A3>9)')), '#CALC!');
     });
+
+    test('a unary operator broadcasts element-wise over an array', () {
+      final s = _sheetWithA([1, 2, 3]);
+      // -A1:A3 must negate every element, so the sum is -(1+2+3).
+      expect(_num(_evalOn(s, 'SUM(-A1:A3)')), -6);
+      // A percent postfix broadcasts too.
+      expect(_num(_evalOn(s, 'SUM(A1:A3%)')), closeTo(0.06, 1e-9));
+    });
   });
 }

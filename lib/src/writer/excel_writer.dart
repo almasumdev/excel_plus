@@ -32,11 +32,18 @@ class ExcelWriter extends _WriterBase
 
     for (var xmlFile in _excel._xmlFiles.keys) {
       if (_archiveFiles.containsKey(xmlFile)) continue;
+      if (_removedParts.contains(xmlFile)) continue;
       var xml = _excel._xmlFiles[xmlFile].toString();
       var content = utf8.encode(xml);
       _archiveFiles[xmlFile] = ArchiveFile(xmlFile, content.length, content);
     }
-    return ZipEncoder().encode(_cloneArchive(_excel._archive, _archiveFiles));
+    return ZipEncoder().encode(
+      _cloneArchive(
+        _excel._archive,
+        _archiveFiles,
+        excludedFiles: _removedParts,
+      ),
+    );
   }
 
   void _setColumns(Sheet sheetObject, XmlDocument xmlFile) {

@@ -32,6 +32,11 @@ mixin _WriterTablesMixin on _WriterBase {
         .toList();
 
     if (sheet._tables.isEmpty) {
+      // Every existing table part is now orphaned — drop the parts so they
+      // don't ride _cloneArchive with a content type but no relationship.
+      for (final rel in existingTableRels) {
+        _removePart(_resolveRelTarget(partPath, rel.target));
+      }
       final kept = sheet._worksheetRels
           .where((r) => r.type != _relationshipsTable)
           .toList();
@@ -40,6 +45,11 @@ mixin _WriterTablesMixin on _WriterBase {
         sheet._worksheetRelsChanged = true;
       }
       return;
+    }
+
+    // When the table count dropped, remove the now-orphaned surplus parts.
+    for (var i = sheet._tables.length; i < existingTableRels.length; i++) {
+      _removePart(_resolveRelTarget(partPath, existingTableRels[i].target));
     }
 
     final kept = sheet._worksheetRels

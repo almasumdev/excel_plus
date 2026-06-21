@@ -141,4 +141,57 @@ void main() {
       expect(_num(_evalOn(_table(), 'XLOOKUP(2.5,A1:A3,C1:C3,,1)')), 2.0);
     });
   });
+
+  group('INDEX Whole Row And Column', () {
+    // A1:B3 = [[1,4],[2,5],[3,6]].
+    Sheet grid() {
+      final excel = Excel.createExcel();
+      final s = excel['Sheet1'];
+      const vals = [
+        [1, 4],
+        [2, 5],
+        [3, 6],
+      ];
+      for (var r = 0; r < 3; r++) {
+        for (var c = 0; c < 2; c++) {
+          s.updateCell(
+            CellIndex.indexByColumnRow(columnIndex: c, rowIndex: r),
+            IntCellValue(vals[r][c]),
+          );
+        }
+      }
+      return s;
+    }
+
+    test('INDEX(range,0,c) returns the whole column', () {
+      expect(_num(_evalOn(grid(), 'SUM(INDEX(A1:B3,0,1))')), 6); // 1+2+3
+      expect(_num(_evalOn(grid(), 'SUM(INDEX(A1:B3,0,2))')), 15); // 4+5+6
+    });
+
+    test('INDEX(range,r,0) returns the whole row', () {
+      expect(_num(_evalOn(grid(), 'SUM(INDEX(A1:B3,2,0))')), 7); // 2+5
+    });
+
+    test('INDEX with both selectors still returns the scalar cell', () {
+      expect(_num(_evalOn(grid(), 'INDEX(A1:B3,3,2)')), 6);
+    });
+  });
+
+  group('Approximate Match Across Types', () {
+    test('VLOOKUP approximate match ignores cells of a different type', () {
+      final excel = Excel.createExcel();
+      final s = excel['Sheet1'];
+      void put(String ref, CellValue v) =>
+          s.updateCell(CellIndex.indexByString(ref), v);
+      // First column mixes a text cell among numbers; an approximate numeric
+      // lookup must skip the text rather than treat it as out-of-range.
+      put('A1', TextCellValue('label'));
+      put('B1', IntCellValue(99));
+      put('A2', IntCellValue(5));
+      put('B2', IntCellValue(20));
+      put('A3', IntCellValue(15));
+      put('B3', IntCellValue(30));
+      expect(_num(_evalOn(s, 'VLOOKUP(7,A1:B3,2)')), 20); // matches key 5
+    });
+  });
 }

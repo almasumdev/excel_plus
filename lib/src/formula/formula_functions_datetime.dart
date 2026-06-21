@@ -75,12 +75,22 @@ void _registerDateTimeFunctions(Map<String, _FormulaFn> r) {
     // Dart: Monday=1..Sunday=7.
     final mondayBased = dt.weekday; // 1..7
     switch (type) {
+      case 1: // 1 = Sunday .. 7 = Saturday
+      case 17: // same numbering as type 1
+        return _NumVal((mondayBased % 7 + 1).toDouble());
       case 2: // 1 = Monday .. 7 = Sunday
+      case 11: // same numbering as type 2
         return _NumVal(mondayBased.toDouble());
       case 3: // 0 = Monday .. 6 = Sunday
         return _NumVal((mondayBased - 1).toDouble());
-      default: // type 1: 1 = Sunday .. 7 = Saturday
-        return _NumVal((mondayBased % 7 + 1).toDouble());
+      default:
+        // Types 12..16: a 1..7 week whose start day shifts (12 = Tuesday-based,
+        // … 16 = Saturday-based). Any other type is invalid → #NUM!.
+        if (type >= 12 && type <= 16) {
+          final startDay = type - 10; // 2 (Tue) .. 6 (Sat)
+          return _NumVal((((mondayBased - startDay + 7) % 7) + 1).toDouble());
+        }
+        throw const _EvalException(CellErrorValue.number);
     }
   });
   r['DAYS'] = _guard((a) {

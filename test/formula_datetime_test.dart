@@ -12,6 +12,8 @@ CellValue? _eval(String formula) {
 num? _num(CellValue? v) =>
     v is IntCellValue ? v.value : (v is DoubleCellValue ? v.value : null);
 
+String? _err(CellValue? v) => v is CellErrorValue ? v.value : null;
+
 void main() {
   group('Date Construction & Components', () {
     test('DATE round-trips through YEAR/MONTH/DAY', () {
@@ -39,6 +41,18 @@ void main() {
       // 2024-01-08 is a Monday.
       expect(_num(_eval('WEEKDAY(DATE(2024,1,8))')), 2);
       expect(_num(_eval('WEEKDAY(DATE(2024,1,8),2)')), 1); // Monday-based
+    });
+
+    test('WEEKDAY supports the 11..17 return types', () {
+      // 2024-01-08 is a Monday.
+      expect(_num(_eval('WEEKDAY(DATE(2024,1,8),11)')), 1); // Monday-based
+      expect(_num(_eval('WEEKDAY(DATE(2024,1,8),12)')), 7); // Tuesday-based
+      // 2024-01-07 is a Sunday.
+      expect(_num(_eval('WEEKDAY(DATE(2024,1,7),17)')), 1); // Sunday-based
+    });
+
+    test('WEEKDAY rejects an unsupported return type with #NUM!', () {
+      expect(_err(_eval('WEEKDAY(DATE(2024,1,8),99)')), '#NUM!');
     });
 
     test('DAYS counts whole days between two dates', () {

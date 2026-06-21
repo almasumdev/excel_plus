@@ -6,10 +6,19 @@ part of '../../excel_plus.dart';
 ///
 /// {@category Tables}
 abstract final class TableStyle {
+  /// No table style (plain, unbanded).
   static const none = 'None';
+
+  /// A light blue banded style.
   static const light9 = 'TableStyleLight9';
+
+  /// A medium blue banded style (a common default).
   static const medium2 = 'TableStyleMedium2';
+
+  /// A medium, more saturated banded style.
   static const medium9 = 'TableStyleMedium9';
+
+  /// A dark, high-contrast banded style.
   static const dark1 = 'TableStyleDark1';
 }
 

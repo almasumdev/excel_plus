@@ -4,12 +4,19 @@ Archive _cloneArchive(
   Archive archive,
   Map<String, ArchiveFile> archiveFiles, {
   String? excludedFile,
+  Set<String> excludedFiles = const {},
 }) {
+  final excludedLower = {
+    for (final p in excludedFiles) p.toLowerCase(),
+  };
   var clone = Archive();
   for (var file in archive.files) {
     if (file.isFile) {
       if (excludedFile != null &&
           file.name.toLowerCase() == excludedFile.toLowerCase()) {
+        continue;
+      }
+      if (excludedLower.contains(file.name.toLowerCase())) {
         continue;
       }
       if (archiveFiles.containsKey(file.name)) {

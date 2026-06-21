@@ -52,22 +52,6 @@ List<String> _splitSections(String code) {
   return out;
 }
 
-bool _containsUnquoted(String sec, String target) {
-  var inQuote = false;
-  for (var i = 0; i < sec.length; i++) {
-    final ch = sec[i];
-    if (ch == '"') {
-      inQuote = !inQuote;
-      continue;
-    }
-    if (ch == r'\') {
-      i++;
-      continue;
-    }
-    if (!inQuote && ch == target) return true;
-  }
-  return false;
-}
 
 int _countUnquoted(String sec, String target) {
   var inQuote = false;
@@ -178,6 +162,42 @@ String _formatNumberCode(double value, String code) {
   final decimals = _placeholderCount(fracFormat);
   final minInt = _zeroCount(intFormat);
 
+  // Distinguish grouping commas (between digit placeholders in the integer
+  // part) from trailing scaling commas (after the last placeholder → divide by
+  // 1000 each). Scan the whole section so trailing commas after the fraction
+  // (e.g. "0.0,,") count as scaling.
+  var lastPlaceholder = -1;
+  final commaPositions = <int>[];
+  for (var j = 0; j < sec.length; j++) {
+    final c = sec[j];
+    if (c == '"') {
+      j++;
+      while (j < sec.length && sec[j] != '"') {
+        j++;
+      }
+      continue;
+    }
+    if (c == r'\') {
+      j++;
+      continue;
+    }
+    if (c == '0' || c == '#' || c == '?') lastPlaceholder = j;
+    if (c == ',') commaPositions.add(j);
+  }
+  var scalingCommas = 0;
+  var grouping = false;
+  for (final p in commaPositions) {
+    if (lastPlaceholder < 0) continue;
+    if (p > lastPlaceholder) {
+      scalingCommas++;
+    } else if (dotIdx < 0 || p < dotIdx) {
+      grouping = true; // a comma among the integer placeholders
+    }
+  }
+  for (var k = 0; k < scalingCommas; k++) {
+    scaled /= 1000;
+  }
+
   final fixed = _roundTo(scaled, decimals).toStringAsFixed(decimals);
   var intDigits = fixed;
   var fracDigits = '';
@@ -188,7 +208,7 @@ String _formatNumberCode(double value, String code) {
   }
   intDigits = intDigits.replaceFirst(RegExp(r'^0+(?=\d)'), '');
   if (intDigits.length < minInt) intDigits = intDigits.padLeft(minInt, '0');
-  if (_containsUnquoted(sec, ',')) intDigits = _groupThousands(intDigits);
+  if (grouping) intDigits = _groupThousands(intDigits);
 
   final sb = StringBuffer();
   var emittedInt = false;

@@ -18,6 +18,7 @@ void _registerLookupFunctions(Map<String, _FormulaFn> r) {
     }
     var found = -1;
     for (var i = 0; i < vec.length; i++) {
+      if (!_sameKind(vec[i], lookup)) continue;
       final cmp = _compare(vec[i], lookup);
       if (matchType > 0) {
         // ascending: largest value <= lookup
@@ -42,31 +43,43 @@ void _registerLookupFunctions(Map<String, _FormulaFn> r) {
   r['INDEX'] = _guard((a) {
     if (a.length < 2) return const _ErrVal(CellErrorValue.valueError);
     final rows = _asArray(a.eval(0)).rows;
+    if (rows.isEmpty) return const _ErrVal(CellErrorValue.reference);
+    final nRows = rows.length;
+    final nCols = rows.first.length;
     final rowNum = _coerceNum(a.evalScalar(1)).toInt();
     final colNum = a.length > 2 ? _coerceNum(a.evalScalar(2)).toInt() : null;
 
-    int rr;
-    int cc;
+    // Resolve the row/column selectors; 0 selects the whole dimension.
+    int selRow;
+    int selCol;
     if (colNum != null) {
-      rr = rowNum;
-      cc = colNum;
-    } else if (rows.length == 1) {
-      rr = 1;
-      cc = rowNum; // single row → index is the column
-    } else if (rows.isNotEmpty && rows.first.length == 1) {
-      rr = rowNum; // single column → index is the row
-      cc = 1;
+      selRow = rowNum;
+      selCol = colNum;
+    } else if (nRows == 1) {
+      selRow = 1;
+      selCol = rowNum; // single row → the index is the column
+    } else if (nCols == 1) {
+      selRow = rowNum; // single column → the index is the row
+      selCol = 1;
     } else {
+      // 2-D array with a single selector is ambiguous unless it is 0.
+      if (rowNum == 0) return _ArrayVal(rows);
       return const _ErrVal(CellErrorValue.reference);
     }
-    if (rr < 1 || rr > rows.length) {
+    if (selRow < 0 || selRow > nRows || selCol < 0 || selCol > nCols) {
       return const _ErrVal(CellErrorValue.reference);
     }
-    final row = rows[rr - 1];
-    if (cc < 1 || cc > row.length) {
-      return const _ErrVal(CellErrorValue.reference);
+    if (selRow == 0 && selCol == 0) return _ArrayVal(rows);
+    if (selRow == 0) {
+      // The whole column [selCol] as a column vector.
+      return _ArrayVal([
+        for (final row in rows) [row[selCol - 1]],
+      ]);
     }
-    return row[cc - 1];
+    if (selCol == 0) {
+      return _ArrayVal([rows[selRow - 1]]); // the whole row [selRow]
+    }
+    return rows[selRow - 1][selCol - 1];
   });
 
   r['VLOOKUP'] = _guard((a) {
@@ -81,6 +94,7 @@ void _registerLookupFunctions(Map<String, _FormulaFn> r) {
     var matchRow = -1;
     if (approx) {
       for (var i = 0; i < table.length; i++) {
+        if (!_sameKind(table[i].first, lookup)) continue;
         if (_compare(table[i].first, lookup) <= 0) {
           matchRow = i;
         } else {
@@ -116,6 +130,7 @@ void _registerLookupFunctions(Map<String, _FormulaFn> r) {
     var matchCol = -1;
     if (approx) {
       for (var j = 0; j < header.length; j++) {
+        if (!_sameKind(header[j], lookup)) continue;
         if (_compare(header[j], lookup) <= 0) {
           matchCol = j;
         } else {
@@ -144,6 +159,7 @@ void _registerLookupFunctions(Map<String, _FormulaFn> r) {
     final res = a.length > 2 ? _asArray(a.eval(2)).cells.toList() : vec;
     var found = -1;
     for (var i = 0; i < vec.length; i++) {
+      if (!_sameKind(vec[i], lookup)) continue;
       if (_compare(vec[i], lookup) <= 0) {
         found = i;
       } else {

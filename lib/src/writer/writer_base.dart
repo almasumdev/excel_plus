@@ -6,6 +6,11 @@ part of '../../excel_plus.dart';
 abstract class _WriterBase {
   final Excel _excel;
   final Map<String, ArchiveFile> _archiveFiles = {};
+
+  /// Package parts removed via the API this save (e.g. an orphaned table part
+  /// after [Sheet.removeTable]); excluded when cloning the archive so they do
+  /// not ship with a content type but no relationship.
+  final Set<String> _removedParts = {};
   final Map<CellStyle, int> _innerCellStyle = {};
   final Parser parser;
 
@@ -379,6 +384,26 @@ abstract class _WriterBase {
     if (isNew && _excel._archive.findFile(path) == null) {
       _excel._archive.addFile(file);
     }
+  }
+
+  /// Removes a package part [path] entirely: from the source archive (so
+  /// `_cloneArchive` no longer carries it), from any pending generated content,
+  /// and its `<Override>` content-type entry. Used when a feature is removed via
+  /// the API and its part would otherwise be orphaned (a part with a content
+  /// type but no relationship triggers an Excel repair).
+  void _removePart(String path) {
+    _removedParts.add(path);
+    _archiveFiles.remove(path);
+    _excel._xmlFiles.remove(path);
+    final types = _excel._xmlFiles['[Content_Types].xml']
+        ?.findAllElements('Types')
+        .firstOrNull;
+    types?.children.removeWhere(
+      (e) =>
+          e is XmlElement &&
+          e.name.local == 'Override' &&
+          e.getAttribute('PartName') == '/$path',
+    );
   }
 
   /// Ensures `[Content_Types].xml` has a `<Default Extension=.. ContentType=..>`

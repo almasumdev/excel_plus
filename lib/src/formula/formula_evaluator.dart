@@ -186,8 +186,21 @@ _EvalValue _resolveName(_NameNode n, _FormulaContext ctx, String sheet) {
 _EvalValue _evalUnary(_UnaryNode n, _FormulaContext ctx, String sheet) {
   final v = _evalNode(n.operand, ctx, sheet);
   if (v is _ErrVal) return v;
+  // Broadcast element-wise over an array operand (e.g. `-A1:A3`), mirroring the
+  // binary-operator behaviour.
+  if (v is _ArrayVal) {
+    return _ArrayVal([
+      for (final row in v.rows) [for (final cell in row) _unaryScalar(n.op, cell)],
+    ]);
+  }
+  return _unaryScalar(n.op, v);
+}
+
+/// Applies a unary operator to a single scalar operand.
+_EvalValue _unaryScalar(String op, _EvalValue v) {
+  if (v is _ErrVal) return v;
   try {
-    switch (n.op) {
+    switch (op) {
       case '-':
         return _NumVal(-_coerceNum(v));
       case '+':
@@ -337,6 +350,12 @@ int _rank(_EvalValue v) {
   if (v is _BoolVal) return 3;
   return 1; // number (and anything else) sorts first
 }
+
+/// Whether [cell] and the [lookup] key are the same value kind. Approximate
+/// (sorted) lookups match within a type only — Excel never treats a number as
+/// "≤" a text key just because numbers sort before text.
+bool _sameKind(_EvalValue cell, _EvalValue lookup) =>
+    _rank(cell) == _rank(lookup);
 
 _EvalValue _zeroLike(_EvalValue v) {
   if (v is _TextVal) return const _TextVal('');

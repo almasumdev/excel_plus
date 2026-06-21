@@ -23,6 +23,13 @@ void main() {
       expect(_text(_eval('TEXT(1234.5,"#,##0.00")')), '1,234.50');
     });
 
+    test('a trailing comma scales the number by 1000', () {
+      expect(_text(_eval('TEXT(1234567,"0,")')), '1235'); // thousands
+      expect(_text(_eval('TEXT(1234567,"0.0,,")')), '1.2'); // millions
+      // A grouping comma still groups (no scaling) when placeholders follow it.
+      expect(_text(_eval('TEXT(1234567,"#,##0,")')), '1,235');
+    });
+
     test('percent scales by 100', () {
       expect(_text(_eval('TEXT(0.25,"0%")')), '25%');
       expect(_text(_eval('TEXT(0.1234,"0.0%")')), '12.3%');

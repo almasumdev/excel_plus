@@ -47,6 +47,41 @@
   }
   ```
 
+### Fixed
+
+- **Pivot `<pivotCaches>` workbook ordering** — it was written before
+  `<oleSize>`/`<customWorkbookViews>`, an invalid `CT_Workbook` order that made
+  Excel offer to "repair" files already containing those elements. It is now
+  ordered after them.
+- **Formula serialization round-trip** — expanding a shared formula re-serializes
+  the parsed expression; embedded quotes in string literals are now re-doubled
+  (`"a""b"`) and sheet names that aren't bare identifiers are single-quoted, so
+  such shared formulas no longer fail to re-parse.
+- **Criteria wildcards** — `COUNTIF`/`SUMIF`/`COUNTIFS`/`SUMIFS`/`AVERAGEIFS`
+  text criteria now honor Excel's `*` and `?` wildcards (with `~` as the literal
+  escape).
+- **`WEEKDAY`** — now supports return types `11`–`17` and returns `#NUM!` for an
+  unsupported return type.
+- **`INDEX`** — `INDEX(range, 0, c)` / `INDEX(range, r, 0)` now return the whole
+  column / row (as an array) instead of `#REF!`.
+- **Approximate `VLOOKUP`/`HLOOKUP`/`MATCH`/`LOOKUP`** — a sorted (approximate)
+  match now compares within a value type, so a number is never treated as "≤" a
+  text key.
+- **Unary operators broadcast over arrays** — `-A1:A3` (and a `%` postfix) now
+  apply element-wise, matching the binary operators.
+- **`TEXT` scaling commas** — a comma after the last digit placeholder
+  (`"0,"`, `"0.0,,"`) now scales the value by 1000 per comma, distinct from a
+  grouping comma.
+- **Input validation & cleanup** — `addPivotTable` rejects field indices outside
+  the source range (instead of crashing on save), `addChart` rejects a chart
+  with no series, and `removeTable` now deletes the orphaned table part and its
+  content-type entry rather than leaving them in the package.
+
+### Internal
+
+- Replaced literal NUL bytes used as map-key delimiters with Unicode escapes so
+  the affected source files are plain text again; added `*.xlsx` to `.pubignore`.
+
 ## 1.1.0
 
 ### Added
