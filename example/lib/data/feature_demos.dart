@@ -43,6 +43,7 @@ final featureDemos = <FeatureDemo>[
   _numberFormats,
   _merges,
   _formulas,
+  _formulaEval,
   _sizing,
   _multiSheet,
   _colorsRead,
@@ -896,6 +897,142 @@ Excel buildFormulas() {
     s.setColumnWidth(1, 3);
     s.setColumnWidth(2, 12);
     s.setColumnWidth(3, 18);
+    return excel;
+  },
+);
+
+// ---------------------------------------------------------------------------
+// 8b. Formula evaluation
+// ---------------------------------------------------------------------------
+
+final _formulaEval = FeatureDemo(
+  id: 'formula_eval',
+  title: 'Formula evaluation',
+  description:
+      'Compute formula results in pure Dart — no spreadsheet app needed. '
+      'evaluate() returns a single cell\'s value; recalculate() fills every '
+      'formula\'s cached result. ~85 built-in functions plus your own.',
+  points: [
+    'sheet.evaluate(cell) computes a result on demand',
+    'excel.recalculate() recomputes every formula cell',
+    '~85 functions: SUM, AVERAGE, IF, VLOOKUP, COUNTIF, …',
+    'Register custom functions with excel.formula.registerFunction',
+  ],
+  snippet: '''
+sheet.updateCell(at, FormulaCellValue('SUM(A2:A6)'));
+final result = sheet.evaluate(at); // -> 519
+
+// ...or recompute every formula in the workbook at once:
+excel.recalculate();''',
+  fullCode: r'''
+import 'package:excel_plus/excel_plus.dart';
+
+Excel buildFormulaEval() {
+  final excel = Excel.createExcel();
+  final s = excel[excel.getDefaultSheet() ?? 'Sheet1'];
+
+  const nums = [120.0, 45.0, 18.0, 240.0, 96.0];
+  for (var i = 0; i < nums.length; i++) {
+    s.updateCell(
+      CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: i + 1),
+      DoubleCellValue(nums[i]),
+    );
+  }
+
+  // A custom function: SPAN(range) = max - min.
+  excel.formula.registerFunction('SPAN', (args) {
+    final ns = <double>[
+      for (final a in args)
+        if (a is DoubleCellValue) a.value
+        else if (a is IntCellValue) a.value.toDouble(),
+    ];
+    if (ns.isEmpty) return DoubleCellValue(0);
+    ns.sort();
+    return DoubleCellValue(ns.last - ns.first);
+  });
+
+  final measures = [
+    'SUM(A2:A6)',
+    'AVERAGE(A2:A6)',
+    'MAX(A2:A6)',
+    'COUNTIF(A2:A6,">100")',
+    'SPAN(A2:A6)',
+  ];
+  for (var i = 0; i < measures.length; i++) {
+    final at = CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: i + 1);
+    s.updateCell(at, FormulaCellValue(measures[i]));
+    // Evaluate on demand and store the computed value next to the formula.
+    s.updateCell(
+      CellIndex.indexByColumnRow(columnIndex: 5, rowIndex: i + 1),
+      s.evaluate(at) ?? TextCellValue(''),
+    );
+  }
+  return excel;
+}
+''',
+  build: () {
+    final excel = _book('Calc');
+    final s = excel['Calc'];
+    final white = ExcelColor.white;
+    CellStyle hdr() => _box(bold: true, fill: _headerFill, font: white);
+
+    const nums = [120.0, 45.0, 18.0, 240.0, 96.0];
+    _put(s, 0, 0, TextCellValue('Data'), hdr());
+    for (var i = 0; i < nums.length; i++) {
+      _put(
+        s,
+        0,
+        i + 1,
+        DoubleCellValue(nums[i]),
+        _box(align: HorizontalAlign.Right),
+      );
+    }
+
+    // A custom function: SPAN(range) = max - min.
+    excel.formula.registerFunction('SPAN', (args) {
+      final ns = <double>[
+        for (final a in args)
+          if (a is DoubleCellValue)
+            a.value
+          else if (a is IntCellValue)
+            a.value.toDouble(),
+      ];
+      if (ns.isEmpty) return DoubleCellValue(0);
+      ns.sort();
+      return DoubleCellValue(ns.last - ns.first);
+    });
+
+    _put(s, 2, 0, TextCellValue('Measure'), hdr());
+    _put(s, 3, 0, TextCellValue('Formula'), hdr());
+    _put(s, 4, 0, TextCellValue('Result'), hdr());
+    final rows = <(String, String)>[
+      ('Sum', 'SUM(A2:A6)'),
+      ('Average', 'AVERAGE(A2:A6)'),
+      ('Max', 'MAX(A2:A6)'),
+      ('Count > 100', 'COUNTIF(A2:A6,">100")'),
+      ('Span (custom)', 'SPAN(A2:A6)'),
+    ];
+    for (var i = 0; i < rows.length; i++) {
+      final r = i + 1;
+      _put(s, 2, r, TextCellValue(rows[i].$1), _box(bold: true));
+      _put(s, 3, r, TextCellValue(rows[i].$2), _box());
+      final at = CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: r);
+      s.updateCell(at, FormulaCellValue(rows[i].$2));
+      // Evaluate on demand and show the computed value as a literal.
+      _put(
+        s,
+        4,
+        r,
+        s.evaluate(at) ?? TextCellValue(''),
+        _box(align: HorizontalAlign.Right),
+      );
+    }
+
+    s.setColumnWidth(0, 10);
+    s.setColumnWidth(1, 3);
+    s.setColumnWidth(2, 16);
+    s.setColumnWidth(3, 20);
+    s.setColumnWidth(4, 10);
     return excel;
   },
 );

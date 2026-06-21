@@ -20,6 +20,7 @@ class HomePage extends StatelessWidget {
     'formats': Icons.numbers,
     'merges': Icons.grid_on,
     'formulas': Icons.functions,
+    'formula_eval': Icons.calculate_outlined,
     'sizing': Icons.aspect_ratio,
     'sheets': Icons.layers,
     'colors_read': Icons.palette_outlined,
