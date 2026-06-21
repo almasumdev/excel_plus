@@ -286,5 +286,6 @@ Map<String, _FormulaFn> _buildFunctionRegistry() {
 
   _registerExtraFunctions(r);
   _registerLookupFunctions(r);
+  _registerDateTimeFunctions(r);
   return r;
 }

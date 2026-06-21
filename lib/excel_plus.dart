@@ -75,6 +75,7 @@ part 'src/formula/formula_evaluator.dart';
 part 'src/formula/formula_functions.dart';
 part 'src/formula/formula_functions_extra.dart';
 part 'src/formula/formula_functions_lookup.dart';
+part 'src/formula/formula_functions_datetime.dart';
 part 'src/formula/formula_api.dart';
 
 /// Utils
