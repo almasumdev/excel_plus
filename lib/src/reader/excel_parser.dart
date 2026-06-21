@@ -263,6 +263,10 @@ class Parser extends _ParserBase
     String? currentElement; // 'v', 'f', 't'
     StringBuffer valueBuf = StringBuffer();
     StringBuffer? formulaBuf;
+    String? formulaType; // `<f t="...">`: 'shared', 'array', or null
+    String? formulaSi; // shared-formula group id
+    // Shared-formula masters by `si`: (anchorRow, anchorCol, formula).
+    final sharedFormulas = <String, (int, int, String)>{};
 
     for (final event in parseEvents(wrappedXml)) {
       if (event is XmlStartElementEvent) {
@@ -298,6 +302,8 @@ class Parser extends _ParserBase
             cellStyle = 0;
             valueBuf.clear();
             formulaBuf = null;
+            formulaType = null;
+            formulaSi = null;
             for (final attr in event.attributes) {
               switch (attr.localName) {
                 case 'r':
@@ -324,6 +330,13 @@ class Parser extends _ParserBase
           case 'f':
             currentElement = 'f';
             formulaBuf = StringBuffer();
+            for (final attr in event.attributes) {
+              if (attr.localName == 't') {
+                formulaType = attr.value;
+              } else if (attr.localName == 'si') {
+                formulaSi = attr.value;
+              }
+            }
           case 't':
             // inline string <is><t>text</t></is> — may contain multiple runs,
             // so accumulate (do not clear) across <t> elements.
@@ -343,6 +356,9 @@ class Parser extends _ParserBase
                 cellStyle,
                 valueBuf.toString(),
                 formulaBuf?.toString(),
+                formulaType,
+                formulaSi,
+                sharedFormulas,
               );
             }
             currentElement = null;
@@ -373,10 +389,30 @@ class Parser extends _ParserBase
     int styleIndex,
     String rawValue,
     String? formula,
+    String? formulaType,
+    String? formulaSi,
+    Map<String, (int, int, String)> sharedFormulas,
   ) {
     final coords = _cellCoordsFromCellId(cellRef);
     final rowIndex = coords.$1;
     final columnIndex = coords.$2;
+
+    // Shared formulas: the master cell carries the formula text + `si`; its
+    // dependents carry only `si` and are expanded by offsetting relative refs.
+    if (formulaType == 'shared' && formulaSi != null) {
+      if (formula != null && formula.isNotEmpty) {
+        sharedFormulas[formulaSi] = (rowIndex, columnIndex, formula);
+      } else {
+        final master = sharedFormulas[formulaSi];
+        formula = master == null
+            ? null
+            : _expandSharedFormula(
+                master.$3,
+                rowIndex - master.$1,
+                columnIndex - master.$2,
+              );
+      }
+    }
 
     // Style reference tracking
     if (styleIndex > 0) {

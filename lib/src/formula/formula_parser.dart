@@ -18,6 +18,54 @@ _FNode _parseFormula(String formula) {
 final _cellRefPattern = RegExp(r'^(\$?)([A-Za-z]{1,3})(\$?)([0-9]+)$');
 final _columnPattern = RegExp(r'^\$?[A-Za-z]{1,3}$');
 
+/// Expands a shared-formula master into a dependent cell's formula by shifting
+/// relative references by ([dRow], [dCol]). Falls back to the master text on a
+/// parse failure.
+String _expandSharedFormula(String formula, int dRow, int dCol) {
+  try {
+    return _shiftRefs(_parseFormula(formula), dRow, dCol).toString();
+  } catch (_) {
+    return formula;
+  }
+}
+
+/// Returns a copy of [node] with every relative reference shifted by
+/// ([dRow], [dCol]); absolute (`$`) components and non-reference nodes are
+/// unchanged.
+_FNode _shiftRefs(_FNode node, int dRow, int dCol) {
+  if (node is _RefNode) return _shiftRef(node, dRow, dCol);
+  if (node is _RangeNode) {
+    return _RangeNode(
+      _shiftRef(node.start, dRow, dCol),
+      _shiftRef(node.end, dRow, dCol),
+    );
+  }
+  if (node is _UnaryNode) {
+    return _UnaryNode(node.op, _shiftRefs(node.operand, dRow, dCol));
+  }
+  if (node is _BinaryNode) {
+    return _BinaryNode(
+      node.op,
+      _shiftRefs(node.left, dRow, dCol),
+      _shiftRefs(node.right, dRow, dCol),
+    );
+  }
+  if (node is _FuncNode) {
+    return _FuncNode(node.name, [
+      for (final a in node.args) _shiftRefs(a, dRow, dCol),
+    ]);
+  }
+  return node;
+}
+
+_RefNode _shiftRef(_RefNode r, int dRow, int dCol) => _RefNode(
+  col: r.col == null ? null : (r.colAbs ? r.col! : r.col! + dCol),
+  row: r.row == null ? null : (r.rowAbs ? r.row! : r.row! + dRow),
+  colAbs: r.colAbs,
+  rowAbs: r.rowAbs,
+  sheet: r.sheet,
+);
+
 /// A precedence-climbing (Pratt) parser for Excel formula expressions.
 ///
 /// Operator precedence, lowest to highest: comparisons (`= <> < > <= >=`),
