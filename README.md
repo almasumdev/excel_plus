@@ -22,8 +22,12 @@
 editing, and styling Microsoft Excel `.xlsx` spreadsheets**. It works in plain
 Dart and in Flutter apps, on the VM, Web (JS & WASM), and mobile. excel_plus is a
 source-compatible **drop-in replacement for the [`excel`](https://pub.dev/packages/excel)
-package** — change one import and your existing code keeps working, with better
-performance on large workbooks.
+package** — change one import and your existing code keeps working, with far more
+features, better performance on large workbooks, and active maintenance.
+
+> ⭐ **Find this useful?** [Star it on GitHub](https://github.com/almasumdev/excel_plus)
+> and 👍 [like it on pub.dev](https://pub.dev/packages/excel_plus) — it helps other
+> Dart & Flutter developers discover a maintained, full-featured Excel library.
 
 ## Overview
 
@@ -108,6 +112,15 @@ cd ../excel_plus_bench                && dart pub get && dart run bin/benchmark.
     - [Find and replace](#find-and-replace)
     - [Save the workbook](#save-the-workbook)
     - [Flutter — read from assets, edit, and save](#flutter--read-from-assets-edit-and-save)
+    - [Charts](#charts)
+    - [Pivot tables](#pivot-tables)
+    - [Conditional formatting](#conditional-formatting)
+    - [Data validation (dropdown lists)](#data-validation-dropdown-lists)
+    - [Hyperlinks](#hyperlinks)
+    - [Freeze panes](#freeze-panes)
+    - [Excel tables](#excel-tables)
+    - [Insert an image](#insert-an-image)
+    - [Cell comments](#cell-comments)
   - [excel\_plus vs excel](#excel_plus-vs-excel)
   - [Migrating from the excel package](#migrating-from-the-excel-package)
   - [FAQ](#faq)
@@ -496,6 +509,151 @@ final dir = await getApplicationDocumentsDirectory();
 File('${dir.path}/output.xlsx').writeAsBytesSync(excel.save()!);
 ```
 
+### Charts
+
+Add a chart over a data range; charts in an opened file are read back via
+`sheet.charts`.
+
+```dart
+// Assuming category labels in A2:A4 and values in B2:B4...
+sheet.addChart(Chart.column(
+  anchor: CellIndex.indexByString('D2'),
+  title: 'Quarterly sales',
+  categories: 'A2:A4',
+  series: [ChartSeries(name: 'Sales', values: 'B2:B4')],
+));
+
+for (final c in sheet.charts) {
+  print('${c.type} • ${c.series.length} series');
+}
+```
+
+Also `Chart.bar`, `Chart.line`, `Chart.area`, `Chart.pie`, `Chart.doughnut`,
+and `Chart.scatter`.
+
+### Pivot tables
+
+```dart
+sheet.addPivotTable(PivotTable(
+  name: 'ByRegion',
+  anchor: CellIndex.indexByString('F1'),
+  sourceFrom: CellIndex.indexByString('A1'), // header row
+  sourceTo: CellIndex.indexByString('C13'),
+  rowField: 0,                               // group by the 1st column
+  dataFields: [PivotDataField(2, function: PivotFunction.sum)],
+));
+
+// Pivots in an opened file are read back into sheet.pivotTables.
+```
+
+### Conditional formatting
+
+```dart
+final from = CellIndex.indexByString('B2');
+final to = CellIndex.indexByString('B20');
+
+// Bold-red any value greater than 100.
+sheet.addConditionalFormat(
+  from,
+  to,
+  ConditionalFormat.greaterThan(
+    100,
+    style: CellStyle(bold: true, fontColorHex: ExcelColor.red),
+  ),
+);
+
+// ...or a 3-colour heat map across the range.
+sheet.addConditionalFormat(
+  from,
+  to,
+  ConditionalFormat.colorScale(
+    min: ExcelColor.red,
+    mid: ExcelColor.yellow,
+    max: ExcelColor.green,
+  ),
+);
+```
+
+### Data validation (dropdown lists)
+
+```dart
+// A dropdown of fixed choices on B2.
+sheet.setDataValidation(
+  CellIndex.indexByString('B2'),
+  DataValidation.list(['Low', 'Medium', 'High'], prompt: 'Pick a priority'),
+);
+
+// A whole-number range applied to B3:B10.
+sheet.setDataValidation(
+  CellIndex.indexByString('B3'),
+  DataValidation.wholeNumber(min: 1, max: 100),
+  end: CellIndex.indexByString('B10'),
+);
+```
+
+### Hyperlinks
+
+```dart
+sheet.setHyperlink(
+  CellIndex.indexByString('A1'),
+  Hyperlink.url('https://pub.dev', tooltip: 'Open pub.dev'),
+);
+sheet.setHyperlink(
+  CellIndex.indexByString('A2'),
+  Hyperlink.location("'Sheet2'!A1"), // jump within the workbook
+);
+sheet.setHyperlink(
+  CellIndex.indexByString('A3'),
+  Hyperlink.email('dev@example.com', subject: 'Hello'),
+);
+```
+
+### Freeze panes
+
+```dart
+// Keep the top row and first column in view while scrolling.
+sheet.freezePanes(rows: 1, columns: 1);
+
+// ...or independent split panes instead (offsets in twips, 1/20 pt).
+sheet.splitPanes(xSplit: 2400, ySplit: 1200, topLeftCell: 'C3');
+```
+
+### Excel tables
+
+```dart
+sheet.addTable(ExcelTable(
+  name: 'Sales',
+  from: CellIndex.indexByString('A1'),
+  to: CellIndex.indexByString('C13'),
+  style: TableStyle.medium9,
+));
+```
+
+### Insert an image
+
+```dart
+import 'dart:io'; // Dart VM / desktop / mobile
+
+final bytes = File('logo.png').readAsBytesSync(); // PNG / JPEG / GIF
+sheet.insertImage(
+  bytes,
+  anchor: CellIndex.indexByString('E2'),
+  width: 120,
+  height: 60,
+);
+
+// Images in an opened file are available via sheet.images.
+```
+
+### Cell comments
+
+```dart
+sheet.setComment(
+  CellIndex.indexByString('A1'),
+  Comment('Reviewed and approved', author: 'QA'),
+);
+```
+
 ## excel_plus vs excel
 
 excel_plus is a performance-focused fork of the
@@ -576,7 +734,3 @@ excel_plus grows with its community — every contributor is listed here:
 </a>
 
 Want to help? Pull requests are welcome — see [Support and feedback](#support-and-feedback).
-
-If excel_plus helps you, please ⭐ the
-[repository](https://github.com/almasumdev/excel_plus) and 👍 it on
-[pub.dev](https://pub.dev/packages/excel_plus) — it genuinely helps others find it.
