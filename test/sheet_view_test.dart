@@ -63,6 +63,78 @@ void main() {
     });
   });
 
+  group('Split Panes Roundtrip', () {
+    test('a both-axis split survives encode and re-decode', () {
+      final excel = Excel.createExcel();
+      excel['Sheet1'].splitPanes(xSplit: 2400, ySplit: 1200, topLeftCell: 'C3');
+
+      final bytes = excel.encode()!;
+      final xml = readPart(bytes, 'xl/worksheets/sheet1.xml');
+      expect(xml, contains('state="split"'));
+      expect(xml, contains('xSplit="2400"'));
+      expect(xml, contains('ySplit="1200"'));
+      expect(xml, contains('topLeftCell="C3"'));
+      expect(xml, contains('activePane="bottomRight"'));
+
+      final d = Excel.decodeBytes(bytes)['Sheet1'];
+      expect(d.splitX, 2400);
+      expect(d.splitY, 1200);
+    });
+
+    test('a horizontal-only split uses the topRight active pane', () {
+      final excel = Excel.createExcel();
+      excel['Sheet1'].splitPanes(xSplit: 3000);
+
+      final xml = readPart(excel.encode()!, 'xl/worksheets/sheet1.xml');
+      expect(xml, contains('state="split"'));
+      expect(xml, contains('xSplit="3000"'));
+      expect(xml, isNot(contains('ySplit=')));
+      expect(xml, contains('activePane="topRight"'));
+    });
+
+    test('setting a split clears any frozen panes (they are exclusive)', () {
+      final excel = Excel.createExcel();
+      final s = excel['Sheet1'];
+      s.freezePanes(rows: 1, columns: 1);
+      s.splitPanes(xSplit: 1000, ySplit: 1000);
+
+      expect(s.frozenRows, 0);
+      expect(s.frozenColumns, 0);
+      final xml = readPart(excel.encode()!, 'xl/worksheets/sheet1.xml');
+      expect(xml, contains('state="split"'));
+      expect(xml, isNot(contains('state="frozen"')));
+    });
+
+    test('freezing after a split clears the split', () {
+      final excel = Excel.createExcel();
+      final s = excel['Sheet1'];
+      s.splitPanes(xSplit: 1000, ySplit: 1000);
+      s.freezePanes(rows: 2);
+
+      expect(s.splitX, 0);
+      expect(s.splitY, 0);
+      final xml = readPart(excel.encode()!, 'xl/worksheets/sheet1.xml');
+      expect(xml, contains('state="frozen"'));
+      expect(xml, isNot(contains('state="split"')));
+    });
+
+    test('unfreezePanes also clears a split', () {
+      final excel = Excel.createExcel();
+      final s = excel['Sheet1'];
+      s.splitPanes(xSplit: 1000, ySplit: 1000);
+      s.unfreezePanes();
+
+      final bytes = excel.encode()!;
+      expect(
+        readPart(bytes, 'xl/worksheets/sheet1.xml'),
+        isNot(contains('<pane')),
+      );
+      final d = Excel.decodeBytes(bytes)['Sheet1'];
+      expect(d.splitX, 0);
+      expect(d.splitY, 0);
+    });
+  });
+
   group('Sheet View Options Roundtrip', () {
     test('hiding gridlines survives a round-trip', () {
       final excel = Excel.createExcel();

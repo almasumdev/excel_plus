@@ -1,3 +1,13 @@
+## 2.1.0
+
+### Added
+
+- **Split panes** — `sheet.splitPanes(xSplit:, ySplit:, topLeftCell:)` creates
+  independently-scrolling split panes (positions in twips, 1/20 pt), complementing
+  the existing `freezePanes`. Read them back via `sheet.splitX` / `sheet.splitY`;
+  splits round-trip and are mutually exclusive with frozen panes. `unfreezePanes`
+  clears either.
+
 ## 2.0.0
 
 ### Breaking

@@ -62,6 +62,10 @@ mixin _ParserWorksheetFeaturesMixin on _ParserBase {
       sheet._frozenColumns =
           int.tryParse(pane!.getAttribute('xSplit') ?? '') ?? 0;
       sheet._frozenRows = int.tryParse(pane.getAttribute('ySplit') ?? '') ?? 0;
+    } else if (state == 'split') {
+      sheet._splitX = int.tryParse(pane!.getAttribute('xSplit') ?? '') ?? 0;
+      sheet._splitY = int.tryParse(pane.getAttribute('ySplit') ?? '') ?? 0;
+      sheet._splitTopLeftCell = pane.getAttribute('topLeftCell');
     }
   }
 

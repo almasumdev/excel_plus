@@ -127,7 +127,7 @@ cd ../excel_plus_bench                && dart pub get && dart run bin/benchmark.
 - ✅ Hyperlinks
 - ✅ Data validation
 - ✅ Conditional formatting
-- ✅ Freeze panes
+- ✅ Freeze & split panes
 - ✅ Autofilter
 - ✅ Sheet & workbook protection
 - ✅ Defined names
@@ -151,7 +151,6 @@ cd ../excel_plus_bench                && dart pub get && dart run bin/benchmark.
 ## Limitations
 
 - ❌ Long-tail / engineering formula functions
-- ❌ Split panes
 - ❌ Chart read-back (authoring is supported)
 - ❌ Pivot typed read-back (authoring — incl. row/column/page/nested fields — is
   supported; existing pivots are preserved on round-trip)

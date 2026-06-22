@@ -36,6 +36,13 @@ class _SheetBase {
   int _frozenRows = 0;
   int _frozenColumns = 0;
 
+  /// Split-pane positions in twips (1/20 pt), `0` when not split. Mutually
+  /// exclusive with the frozen-pane fields (a `<pane>` is either frozen or
+  /// split). [_splitTopLeftCell] is the top-left cell of the bottom-right pane.
+  int _splitX = 0;
+  int _splitY = 0;
+  String? _splitTopLeftCell;
+
   /// Autofilter range (`<autoFilter ref>`), or `null` when there is none.
   String? _autoFilterRef;
 
@@ -706,12 +713,45 @@ class _SheetBase {
   void freezePanes({int rows = 0, int columns = 0}) {
     _frozenRows = rows < 0 ? 0 : rows;
     _frozenColumns = columns < 0 ? 0 : columns;
+    // Freeze and split share the worksheet `<pane>`, so they're exclusive.
+    _splitX = 0;
+    _splitY = 0;
+    _splitTopLeftCell = null;
   }
 
-  /// Removes any frozen panes from this sheet.
+  /// The horizontal split position in twips (1/20 pt), or `0` when not split.
+  int get splitX => _splitX;
+
+  /// The vertical split position in twips (1/20 pt), or `0` when not split.
+  int get splitY => _splitY;
+
+  /// Splits the sheet into independently-scrolling panes at [xSplit] twips from
+  /// the left and/or [ySplit] twips from the top (1 twip = 1/20 pt). Unlike
+  /// [freezePanes], split panes are draggable and scroll independently.
+  ///
+  /// [topLeftCell] is the cell shown at the top-left of the bottom-right pane
+  /// (e.g. `'C3'`); omit it to leave the scroll position unset. Pass both splits
+  /// as `0` (or call [unfreezePanes]) to clear. Setting a split clears any
+  /// frozen panes, since a worksheet has a single pane.
+  ///
+  /// ```dart
+  /// sheet.splitPanes(xSplit: 2400, ySplit: 1200, topLeftCell: 'C3');
+  /// ```
+  void splitPanes({int xSplit = 0, int ySplit = 0, String? topLeftCell}) {
+    _splitX = xSplit < 0 ? 0 : xSplit;
+    _splitY = ySplit < 0 ? 0 : ySplit;
+    _splitTopLeftCell = topLeftCell;
+    _frozenRows = 0;
+    _frozenColumns = 0;
+  }
+
+  /// Removes any frozen or split panes from this sheet.
   void unfreezePanes() {
     _frozenRows = 0;
     _frozenColumns = 0;
+    _splitX = 0;
+    _splitY = 0;
+    _splitTopLeftCell = null;
   }
 
   /// The autofilter range as an `A1:D1`-style string, or `null` if none is set.

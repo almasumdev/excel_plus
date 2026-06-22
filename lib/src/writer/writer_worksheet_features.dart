@@ -106,13 +106,15 @@ mixin _WriterWorksheetFeaturesMixin on _WriterBase {
     );
     _setOrRemoveAttr(view, 'zoomScale', sheet._zoomScale?.toString());
 
-    // Regenerate the freeze pane (any prior pane/selection is replaced).
+    // Regenerate the pane (frozen or split); any prior pane/selection is
+    // replaced. A worksheet has a single pane, so the two are exclusive.
     view.children.removeWhere(
       (n) =>
           n is XmlElement &&
           (n.name.local == 'pane' || n.name.local == 'selection'),
     );
     final rows = sheet._frozenRows, cols = sheet._frozenColumns;
+    final splitX = sheet._splitX, splitY = sheet._splitY;
     if (rows > 0 || cols > 0) {
       final topLeft = getCellId(cols, rows);
       final activePane = (cols > 0 && rows > 0)
@@ -135,6 +137,29 @@ mixin _WriterWorksheetFeaturesMixin on _WriterBase {
           XmlAttribute(_xmlName('topLeftCell'), topLeft),
           XmlAttribute(_xmlName('activePane'), activePane),
           XmlAttribute(_xmlName('state'), 'frozen'),
+        ]),
+      );
+    } else if (splitX > 0 || splitY > 0) {
+      final topLeft = sheet._splitTopLeftCell;
+      final activePane = (splitX > 0 && splitY > 0)
+          ? 'bottomRight'
+          : (splitX > 0 ? 'topRight' : 'bottomLeft');
+      view.children.insert(
+        0,
+        XmlElement(_xmlName('selection'), [
+          XmlAttribute(_xmlName('pane'), activePane),
+          if (topLeft != null) XmlAttribute(_xmlName('activeCell'), topLeft),
+          if (topLeft != null) XmlAttribute(_xmlName('sqref'), topLeft),
+        ]),
+      );
+      view.children.insert(
+        0,
+        XmlElement(_xmlName('pane'), [
+          if (splitX > 0) XmlAttribute(_xmlName('xSplit'), splitX.toString()),
+          if (splitY > 0) XmlAttribute(_xmlName('ySplit'), splitY.toString()),
+          if (topLeft != null) XmlAttribute(_xmlName('topLeftCell'), topLeft),
+          XmlAttribute(_xmlName('activePane'), activePane),
+          XmlAttribute(_xmlName('state'), 'split'),
         ]),
       );
     }
