@@ -668,19 +668,21 @@ final _yearlySales = Showcase(
       'A chart-on-top dashboard: a coloured title bar, then a real column chart '
       'of monthly internet sales filling the top, above four KPI cards in a 2×2 '
       'grid (Sales Amount, Average Unit Price, Gross Profit Margin, Customer '
-      'Count) built from merged fills. The chart is fed by a hidden 12-row source '
-      'table. Offset 5×5 for a margin, and its used range fills a 570×795 portrait '
-      'phone frame exactly.',
+      'Count) built from merged fills. The chart is fed by a 12-row source table '
+      'tucked into zero-height (not hidden) rows so it plots everywhere yet stays '
+      'out of the frame. Offset 5×5 for a margin, and its used range fills a '
+      '570×795 portrait phone frame exactly.',
   snippet: r'''
 // a real column chart of monthly sales, anchored at the top of the sheet
 sheet.addChart(Chart.column(
   anchor:   CellIndex.indexByString('F7'),
   anchorTo: CellIndex.indexByString('L15'),    // span the chart area exactly
   series: [ChartSeries(name: 'Internet Sales Amount', values: 'F20:F31')],
-  categories: 'E20:E31',                       // Jan..Dec (hidden source rows)
+  categories: 'E20:E31',                       // Jan..Dec source rows
   legend: LegendPosition.bottom,
-  plotVisibleOnly: false,                      // plot the hidden source rows
-));''',
+));
+// keep the source off-screen but plottable: zero height, NOT hidden
+for (final r in sourceRows) sheet.setRowHeight(r, 0);''',
   fullCode: _yearlyCode,
   build: _buildYearlySales,
 );
@@ -820,13 +822,16 @@ Excel _buildYearlySales() {
     final r = srcTop + i;
     put(0, r, TextCellValue(months[i]));
     put(1, r, DoubleCellValue(sales[i].toDouble()));
-    s.setRowHidden(r + dr, true);
+    // Zero height, NOT hidden: the source stays invisible and out of the phone
+    // frame, but LibreOffice (which won't plot bars from hidden rows) still
+    // renders it. Hidden rows would need plotVisibleOnly and break there.
+    s.setRowHeight(r + dr, 0);
   }
 
-  // The 12-month source sits in hidden rows; plotVisibleOnly:false lets the
-  // chart plot them. A two-cell anchor spans the chart area exactly — full width
-  // (cols 0..5) by the 8 blank rows — so it lines up with the title bar and sits
-  // flush above the KPI cards.
+  // The 12-month source sits in zero-height (but visible) rows below the cards.
+  // A two-cell anchor spans the chart area exactly — full width (cols 0..5) by
+  // the 8 blank rows — so it lines up with the title bar and sits flush above
+  // the KPI cards.
   s.addChart(
     Chart.column(
       anchor: CellIndex.indexByColumnRow(columnIndex: dc, rowIndex: 1 + dr),
@@ -842,7 +847,6 @@ Excel _buildYearlySales() {
       ],
       categories: '${a1(0, srcTop)}:${a1(0, srcTop + months.length - 1)}',
       legend: LegendPosition.bottom,
-      plotVisibleOnly: false,
     ),
   );
 
@@ -1407,7 +1411,9 @@ Excel buildSalesDashboard() {
     final r = srcTop + i;
     put(0, r, TextCellValue(months[i]));
     put(1, r, DoubleCellValue(sales[i].toDouble()));
-    s.setRowHidden(r + dr, true);
+    // zero height, NOT hidden: stays out of the frame but still plots in
+    // LibreOffice (which won't draw bars from hidden rows)
+    s.setRowHeight(r + dr, 0);
   }
 
   // a two-cell anchor spans the chart area exactly (full width × the 8 blank
@@ -1418,7 +1424,7 @@ Excel buildSalesDashboard() {
     series: [ChartSeries(name: 'Internet Sales Amount',
         values: '${a1(1, srcTop)}:${a1(1, srcTop + months.length - 1)}')],
     categories: '${a1(0, srcTop)}:${a1(0, srcTop + months.length - 1)}',
-    legend: LegendPosition.bottom, plotVisibleOnly: false,
+    legend: LegendPosition.bottom,
   ));
 
   for (var r = 0; r < dr; r++) {
