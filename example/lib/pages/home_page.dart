@@ -50,6 +50,9 @@ class HomePage extends StatelessWidget {
     'invoice': Icons.receipt_long_outlined,
     'yearly_sales': Icons.dashboard_outlined,
     'timesheet': Icons.calendar_month_outlined,
+    'project_tracker': Icons.checklist_outlined,
+    'budget': Icons.account_balance_wallet_outlined,
+    'workout': Icons.fitness_center_outlined,
   };
 
   void _open(BuildContext context, Widget page) {

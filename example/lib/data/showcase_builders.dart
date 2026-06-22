@@ -22,7 +22,14 @@ class Showcase {
   String get exportName => '$id.xlsx';
 }
 
-final showcases = <Showcase>[_invoice, _yearlySales, _timesheet];
+final showcases = <Showcase>[
+  _invoice,
+  _yearlySales,
+  _timesheet,
+  _projectTracker,
+  _budget,
+  _workout,
+];
 
 Showcase? showcaseById(String id) {
   for (final s in showcases) {
@@ -1051,6 +1058,694 @@ Excel _buildYearlySales() {
 }
 
 // ===========================================================================
+// 4. Project tracker (sprint board: status/priority chips + progress bars)
+// ===========================================================================
+
+final _projectTracker = Showcase(
+  id: 'project_tracker',
+  title: 'Project Tracker',
+  subtitle:
+      'A sprint board — eight tasks with owner, colour-coded priority and '
+      'status chips, an in-cell progress bar with %, and a due date that turns '
+      'red when a task is blocked, above a status summary. Offset 5×5 for a '
+      'margin, and its used range is sized to fill a 570×795 portrait phone '
+      'frame exactly.',
+  snippet: r'''
+// a colour-coded status chip that fills the whole cell
+final c = switch (status) {
+  'Done'        => (fill: 'FFE6F4EA', font: 'FF1E7E34'),
+  'In progress' => (fill: 'FFE5EEF9', font: 'FF1F4E79'),
+  'Blocked'     => (fill: 'FFFAE3E3', font: 'FFB42318'),
+  _             => (fill: 'FFEFF1F3', font: 'FF66727E'), // To do
+};
+sheet.updateCell(cell, TextCellValue(status), cellStyle: CellStyle(
+  bold: true, horizontalAlign: HorizontalAlign.Center,
+  backgroundColorHex: ExcelColor.fromHexString(c.fill),
+  fontColorHex: ExcelColor.fromHexString(c.font)));''',
+  fullCode: _projectTrackerCode,
+  build: _buildProjectTracker,
+);
+
+Excel _buildProjectTracker() {
+  final excel = _book('Project Tracker');
+  final s = excel['Project Tracker'];
+
+  final indigo = ExcelColor.fromHexString('FF3B4CCA');
+  final zebra = ExcelColor.fromHexString('FFF6F7FB');
+  final done = ExcelColor.fromHexString('FF1E7E34');
+  final overdueRed = ExcelColor.fromHexString('FFB42318');
+
+  const dc = _marginCells, dr = _marginCells;
+  void put(int c, int r, CellValue v, [CellStyle? st]) =>
+      _put(s, c + dc, r + dr, v, st);
+  void merge(int c0, int r0, int c1, int r1) =>
+      _merge(s, c0 + dc, r0 + dr, c1 + dc, r1 + dr);
+
+  CellStyle box({
+    bool bold = false,
+    ExcelColor? fill,
+    ExcelColor? font,
+    HorizontalAlign align = HorizontalAlign.Left,
+  }) =>
+      _bordered(bold: bold, fill: fill, font: font, align: align, fontSize: 9);
+
+  // A colour-coded chip for both the Priority and Status columns.
+  ({ExcelColor fill, ExcelColor font}) chip(String key) => switch (key) {
+    'Done' || 'Low' => (
+      fill: ExcelColor.fromHexString('FFE6F4EA'),
+      font: ExcelColor.fromHexString('FF1E7E34'),
+    ),
+    'In progress' => (
+      fill: ExcelColor.fromHexString('FFE5EEF9'),
+      font: ExcelColor.fromHexString('FF1F4E79'),
+    ),
+    'High' || 'Blocked' => (
+      fill: ExcelColor.fromHexString('FFFAE3E3'),
+      font: ExcelColor.fromHexString('FFB42318'),
+    ),
+    'Med' => (
+      fill: ExcelColor.fromHexString('FFFCEFD6'),
+      font: ExcelColor.fromHexString('FFB7791F'),
+    ),
+    _ => (
+      fill: ExcelColor.fromHexString('FFEFF1F3'),
+      font: ExcelColor.fromHexString('FF66727E'),
+    ),
+  };
+
+  // Title + info band.
+  put(
+    0,
+    0,
+    TextCellValue('Sprint 14 — Board'),
+    CellStyle(
+      bold: true,
+      fontSize: 14,
+      fontColorHex: ExcelColor.white,
+      backgroundColorHex: indigo,
+      horizontalAlign: HorizontalAlign.Center,
+      verticalAlign: VerticalAlign.Center,
+    ),
+  );
+  merge(0, 0, 5, 0);
+  put(
+    0,
+    1,
+    TextCellValue('excel_plus · 8 tasks · 26 Aug 2026'),
+    CellStyle(
+      fontSize: 9,
+      fontColorHex: _muted,
+      backgroundColorHex: ExcelColor.fromHexString('FFEDF0EE'),
+      horizontalAlign: HorizontalAlign.Center,
+      verticalAlign: VerticalAlign.Center,
+    ),
+  );
+  merge(0, 1, 5, 1);
+
+  // Header.
+  const headerRow = 2;
+  final headers = ['Task', 'Owner', 'Priority', 'Status', 'Progress', 'Due'];
+  for (var c = 0; c < headers.length; c++) {
+    put(
+      c,
+      headerRow,
+      TextCellValue(headers[c]),
+      box(
+        bold: true,
+        fill: indigo,
+        font: ExcelColor.white,
+        align: (c >= 2 && c <= 3)
+            ? HorizontalAlign.Center
+            : HorizontalAlign.Left,
+      ),
+    );
+  }
+
+  // (task, owner, priority, status, progress 0..1, due, overdue)
+  final tasks = <(String, String, String, String, double, String, bool)>[
+    ('Design system audit', 'A. Khan', 'High', 'Done', 1.0, 'Aug 12', false),
+    (
+      'API rate limiting',
+      'M. Ortiz',
+      'High',
+      'In progress',
+      0.6,
+      'Aug 28',
+      false,
+    ),
+    ('Onboarding flow', 'S. Lee', 'Med', 'In progress', 0.4, 'Sep 02', false),
+    ('Billing webhooks', 'J. Park', 'High', 'Blocked', 0.2, 'Aug 25', true),
+    ('Dark mode', 'R. Davis', 'Low', 'Done', 1.0, 'Aug 10', false),
+    ('Search revamp', 'T. Müller', 'Med', 'To do', 0.0, 'Sep 10', false),
+    ('Mobile push', 'K. Singh', 'Med', 'In progress', 0.75, 'Sep 05', false),
+    ('Docs refresh', 'L. Costa', 'Low', 'To do', 0.0, 'Sep 14', false),
+  ];
+  for (var i = 0; i < tasks.length; i++) {
+    final r = headerRow + 1 + i;
+    final (task, owner, prio, status, prog, due, overdue) = tasks[i];
+    final fill = i.isOdd ? zebra : null;
+    final pc = chip(prio);
+    final sc = chip(status);
+    put(0, r, TextCellValue(task), box(fill: fill));
+    put(1, r, TextCellValue(owner), box(fill: fill, font: _muted));
+    put(
+      2,
+      r,
+      TextCellValue(prio),
+      box(
+        bold: true,
+        fill: pc.fill,
+        font: pc.font,
+        align: HorizontalAlign.Center,
+      ),
+    );
+    put(
+      3,
+      r,
+      TextCellValue(status),
+      box(
+        bold: true,
+        fill: sc.fill,
+        font: sc.font,
+        align: HorizontalAlign.Center,
+      ),
+    );
+    put(
+      4,
+      r,
+      TextCellValue('${_bar(prog, 6)} ${(prog * 100).round()}%'),
+      box(fill: fill, font: prog == 1.0 ? done : indigo),
+    );
+    put(
+      5,
+      r,
+      TextCellValue(due),
+      box(
+        fill: fill,
+        align: HorizontalAlign.Right,
+        bold: overdue,
+        font: overdue ? overdueRed : _ink,
+      ),
+    );
+  }
+
+  // Status summary band.
+  final summaryRow = headerRow + 1 + tasks.length;
+  put(
+    0,
+    summaryRow,
+    TextCellValue('2 done   ·   3 in progress   ·   1 blocked   ·   2 to do'),
+    box(
+      bold: true,
+      fill: indigo,
+      font: ExcelColor.white,
+      align: HorizontalAlign.Center,
+    ),
+  );
+  merge(0, summaryRow, 5, summaryRow);
+
+  _layMargin(s);
+  _fitColumns(
+    s,
+    [21, 9, 9, 12, 13, 8],
+    first: dc,
+    totalPx: phoneWidthPx - _marginPxX,
+  );
+  _fitRows(
+    s,
+    [1.7, 1.0, 1.2, ...List.filled(8, 1.0), 1.2],
+    first: dr,
+    totalPx: phoneHeightPx - _marginPxY,
+  );
+  return excel;
+}
+
+// ===========================================================================
+// 5. Monthly budget (budget vs actual + a real doughnut chart)
+// ===========================================================================
+
+final _budget = Showcase(
+  id: 'budget',
+  title: 'Monthly Budget',
+  subtitle:
+      'A household budget — eight categories comparing Budget to Actual, the '
+      'difference colour-coded, a heat-mapped "% used" bar, a totals row and a '
+      'saved-this-month highlight. It also embeds a real doughnut chart of '
+      'spending (visible when the .xlsx is opened in Excel). Sized to a 570×795 '
+      'portrait phone frame.',
+  snippet: r'''
+// a real doughnut chart over the Category / Actual columns
+sheet.addChart(Chart.doughnut(
+  anchor: CellIndex.indexByString('F18'),
+  title: 'Spending by category',
+  categories: 'F8:F15',                          // category names
+  series: ChartSeries(name: 'Spent', values: 'H8:H15'),
+));''',
+  fullCode: _budgetCode,
+  build: _buildBudget,
+);
+
+Excel _buildBudget() {
+  final excel = _book('Budget');
+  final s = excel['Budget'];
+
+  final teal = ExcelColor.fromHexString('FF0F766E');
+  final green = ExcelColor.fromHexString('FF1E7E34');
+  final red = ExcelColor.fromHexString('FFB42318');
+  final amber = ExcelColor.fromHexString('FFB7791F');
+  final zebra = ExcelColor.fromHexString('FFF3F8F7');
+
+  const dc = _marginCells, dr = _marginCells;
+  void put(int c, int r, CellValue v, [CellStyle? st]) =>
+      _put(s, c + dc, r + dr, v, st);
+  void merge(int c0, int r0, int c1, int r1) =>
+      _merge(s, c0 + dc, r0 + dr, c1 + dc, r1 + dr);
+  String a1(int c, int r) =>
+      CellIndex.indexByColumnRow(columnIndex: c + dc, rowIndex: r + dr).cellId;
+
+  // Title + subtitle.
+  put(
+    0,
+    0,
+    TextCellValue('Monthly Budget'),
+    CellStyle(
+      bold: true,
+      fontSize: 15,
+      fontColorHex: ExcelColor.white,
+      backgroundColorHex: teal,
+      horizontalAlign: HorizontalAlign.Center,
+      verticalAlign: VerticalAlign.Center,
+    ),
+  );
+  merge(0, 0, 4, 0);
+  put(
+    0,
+    1,
+    TextCellValue('August 2026 · Household'),
+    CellStyle(
+      fontSize: 10,
+      fontColorHex: _muted,
+      backgroundColorHex: ExcelColor.fromHexString('FFEDF0EE'),
+      horizontalAlign: HorizontalAlign.Center,
+      verticalAlign: VerticalAlign.Center,
+    ),
+  );
+  merge(0, 1, 4, 1);
+
+  // Header.
+  const headerRow = 2;
+  final headers = ['Category', 'Budget', 'Actual', 'Δ', 'Used'];
+  for (var c = 0; c < headers.length; c++) {
+    put(
+      c,
+      headerRow,
+      TextCellValue(headers[c]),
+      _bordered(
+        bold: true,
+        fill: teal,
+        font: ExcelColor.white,
+        align: (c >= 1 && c <= 3)
+            ? HorizontalAlign.Right
+            : HorizontalAlign.Left,
+      ),
+    );
+  }
+
+  // (category, budget, actual)
+  final cats = <(String, double, double)>[
+    ('Rent', 1500, 1500),
+    ('Groceries', 600, 680),
+    ('Transport', 200, 150),
+    ('Utilities', 250, 240),
+    ('Dining out', 200, 310),
+    ('Health', 150, 90),
+    ('Subscriptions', 80, 95),
+    ('Savings', 500, 500),
+  ];
+  var budgetTotal = 0.0, actualTotal = 0.0;
+  for (var i = 0; i < cats.length; i++) {
+    final r = headerRow + 1 + i;
+    final (name, budget, actual) = cats[i];
+    final diff = budget - actual; // positive = under budget
+    final used = actual / budget;
+    budgetTotal += budget;
+    actualTotal += actual;
+    final fill = i.isOdd ? zebra : null;
+    final usedColor = used > 1.0 ? red : (used >= 0.9 ? amber : green);
+    put(0, r, TextCellValue(name), _bordered(fill: fill));
+    put(
+      1,
+      r,
+      DoubleCellValue(budget),
+      _bordered(
+        fill: fill,
+        align: HorizontalAlign.Right,
+        numberFormat: _currency0,
+      ),
+    );
+    put(
+      2,
+      r,
+      DoubleCellValue(actual),
+      _bordered(
+        fill: fill,
+        align: HorizontalAlign.Right,
+        numberFormat: _currency0,
+      ),
+    );
+    put(
+      3,
+      r,
+      DoubleCellValue(diff),
+      _bordered(
+        fill: fill,
+        align: HorizontalAlign.Right,
+        numberFormat: _redParen,
+        font: diff < 0 ? red : green,
+      ),
+    );
+    put(
+      4,
+      r,
+      TextCellValue(_bar(used, 8, cap: 8)),
+      _bordered(fill: fill, font: usedColor),
+    );
+  }
+
+  // Totals.
+  final totalRow = headerRow + 1 + cats.length;
+  put(
+    0,
+    totalRow,
+    TextCellValue('Total'),
+    _bordered(bold: true, fill: teal, font: ExcelColor.white),
+  );
+  put(
+    1,
+    totalRow,
+    DoubleCellValue(budgetTotal),
+    _bordered(
+      bold: true,
+      fill: teal,
+      font: ExcelColor.white,
+      align: HorizontalAlign.Right,
+      numberFormat: _currency0,
+    ),
+  );
+  put(
+    2,
+    totalRow,
+    DoubleCellValue(actualTotal),
+    _bordered(
+      bold: true,
+      fill: teal,
+      font: ExcelColor.white,
+      align: HorizontalAlign.Right,
+      numberFormat: _currency0,
+    ),
+  );
+  put(
+    3,
+    totalRow,
+    DoubleCellValue(budgetTotal - actualTotal),
+    _bordered(
+      bold: true,
+      fill: teal,
+      font: ExcelColor.white,
+      align: HorizontalAlign.Right,
+      numberFormat: _redParen,
+    ),
+  );
+  put(4, totalRow, TextCellValue(''), _bordered(fill: teal));
+
+  // Saved-this-month highlight.
+  final saveRow = totalRow + 1;
+  final saved = budgetTotal - actualTotal;
+  put(
+    0,
+    saveRow,
+    TextCellValue('Saved this month:   \$${saved.toStringAsFixed(0)}'),
+    CellStyle(
+      bold: true,
+      fontSize: 12,
+      fontColorHex: green,
+      backgroundColorHex: ExcelColor.fromHexString('FFE6F4EA'),
+      horizontalAlign: HorizontalAlign.Center,
+      verticalAlign: VerticalAlign.Center,
+    ),
+  );
+  merge(0, saveRow, 4, saveRow);
+
+  // A real doughnut chart of spending by category (renders in Excel).
+  s.addChart(
+    Chart.doughnut(
+      anchor: CellIndex.indexByColumnRow(
+        columnIndex: dc,
+        rowIndex: saveRow + 2 + dr,
+      ),
+      title: 'Spending by category',
+      categories: '${a1(0, headerRow + 1)}:${a1(0, headerRow + cats.length)}',
+      series: ChartSeries(
+        name: 'Spent',
+        values: '${a1(2, headerRow + 1)}:${a1(2, headerRow + cats.length)}',
+      ),
+      width: 360,
+      height: 240,
+    ),
+  );
+
+  _layMargin(s);
+  _fitColumns(
+    s,
+    [13, 9, 9, 9, 12],
+    first: dc,
+    totalPx: phoneWidthPx - _marginPxX,
+  );
+  _fitRows(
+    s,
+    [1.6, 1.0, 1.2, ...List.filled(8, 1.0), 1.2, 1.4],
+    first: dr,
+    totalPx: phoneHeightPx - _marginPxY,
+  );
+  return excel;
+}
+
+// ===========================================================================
+// 6. Workout log (weekly activity heat-map + a real column chart)
+// ===========================================================================
+
+final _workout = Showcase(
+  id: 'workout',
+  title: 'Workout Log',
+  subtitle:
+      'A weekly training log — seven days of activity, minutes and calories '
+      'with a heat-mapped intensity bar (the rest day greyed out) and a totals '
+      'row. It also embeds a real column chart of calories per day (visible '
+      'when the .xlsx is opened in Excel). Sized to fill a 570×795 portrait '
+      'phone frame exactly.',
+  snippet: r'''
+// a real column chart over the Day / Calories columns
+sheet.addChart(Chart.column(
+  anchor: CellIndex.indexByString('F13'),
+  title: 'Calories by day',
+  categories: 'F8:F14',                          // Mon..Sun
+  series: [ChartSeries(name: 'Calories', values: 'I8:I14')],
+  legend: LegendPosition.none,
+));''',
+  fullCode: _workoutCode,
+  build: _buildWorkout,
+);
+
+Excel _buildWorkout() {
+  final excel = _book('Workout');
+  final s = excel['Workout'];
+
+  final plum = ExcelColor.fromHexString('FF7C3AED');
+  final rest = ExcelColor.fromHexString('FFEFF1F3');
+
+  const dc = _marginCells, dr = _marginCells;
+  void put(int c, int r, CellValue v, [CellStyle? st]) =>
+      _put(s, c + dc, r + dr, v, st);
+  void merge(int c0, int r0, int c1, int r1) =>
+      _merge(s, c0 + dc, r0 + dr, c1 + dc, r1 + dr);
+  String a1(int c, int r) =>
+      CellIndex.indexByColumnRow(columnIndex: c + dc, rowIndex: r + dr).cellId;
+
+  // Intensity heat colour from a calories fraction (0..1).
+  ExcelColor heat(double f) => f <= 0
+      ? _muted
+      : f < 0.34
+      ? ExcelColor.fromHexString('FF60A5FA')
+      : f < 0.67
+      ? ExcelColor.fromHexString('FFB7791F')
+      : ExcelColor.fromHexString('FFDB4437');
+
+  // Title + info band.
+  put(
+    0,
+    0,
+    TextCellValue('Workout Log — Week 32'),
+    CellStyle(
+      bold: true,
+      fontSize: 14,
+      fontColorHex: ExcelColor.white,
+      backgroundColorHex: plum,
+      horizontalAlign: HorizontalAlign.Center,
+      verticalAlign: VerticalAlign.Center,
+    ),
+  );
+  merge(0, 0, 4, 0);
+  put(
+    0,
+    1,
+    TextCellValue('Goal 1,800 kcal · 6 active days'),
+    CellStyle(
+      fontSize: 9,
+      fontColorHex: _muted,
+      backgroundColorHex: ExcelColor.fromHexString('FFEDF0EE'),
+      horizontalAlign: HorizontalAlign.Center,
+      verticalAlign: VerticalAlign.Center,
+    ),
+  );
+  merge(0, 1, 4, 1);
+
+  // Header.
+  const headerRow = 2;
+  final headers = ['Day', 'Activity', 'Min', 'Calories', 'Intensity'];
+  for (var c = 0; c < headers.length; c++) {
+    put(
+      c,
+      headerRow,
+      TextCellValue(headers[c]),
+      _bordered(
+        bold: true,
+        fill: plum,
+        font: ExcelColor.white,
+        align: (c == 2 || c == 3)
+            ? HorizontalAlign.Right
+            : HorizontalAlign.Left,
+      ),
+    );
+  }
+
+  // (day, activity, minutes, calories)
+  final days = <(String, String, int, int)>[
+    ('Mon', 'Run', 35, 420),
+    ('Tue', 'Strength', 45, 300),
+    ('Wed', 'Rest', 0, 0),
+    ('Thu', 'Cycling', 50, 520),
+    ('Fri', 'Yoga', 30, 180),
+    ('Sat', 'HIIT', 25, 360),
+    ('Sun', 'Walk', 40, 240),
+  ];
+  const maxCal = 520.0;
+  var totalMin = 0, totalCal = 0;
+  for (var i = 0; i < days.length; i++) {
+    final r = headerRow + 1 + i;
+    final (day, act, mins, cal) = days[i];
+    final isRest = cal == 0;
+    totalMin += mins;
+    totalCal += cal;
+    final rowFill = isRest ? rest : null;
+    final ink = isRest ? _muted : _ink;
+    put(
+      0,
+      r,
+      TextCellValue(day),
+      _bordered(bold: true, fill: rowFill, font: ink),
+    );
+    put(1, r, TextCellValue(act), _bordered(fill: rowFill, font: ink));
+    put(
+      2,
+      r,
+      IntCellValue(mins),
+      _bordered(fill: rowFill, align: HorizontalAlign.Right, font: ink),
+    );
+    put(
+      3,
+      r,
+      IntCellValue(cal),
+      _bordered(fill: rowFill, align: HorizontalAlign.Right, font: ink),
+    );
+    put(
+      4,
+      r,
+      TextCellValue(_bar(cal / maxCal, 8)),
+      _bordered(fill: rowFill, font: heat(cal / maxCal)),
+    );
+  }
+
+  // Totals.
+  final totalRow = headerRow + 1 + days.length;
+  put(
+    0,
+    totalRow,
+    TextCellValue('Total'),
+    _bordered(bold: true, fill: plum, font: ExcelColor.white),
+  );
+  merge(0, totalRow, 1, totalRow);
+  put(
+    2,
+    totalRow,
+    IntCellValue(totalMin),
+    _bordered(
+      bold: true,
+      fill: plum,
+      font: ExcelColor.white,
+      align: HorizontalAlign.Right,
+    ),
+  );
+  put(
+    3,
+    totalRow,
+    IntCellValue(totalCal),
+    _bordered(
+      bold: true,
+      fill: plum,
+      font: ExcelColor.white,
+      align: HorizontalAlign.Right,
+    ),
+  );
+  put(4, totalRow, TextCellValue(''), _bordered(fill: plum));
+
+  // A real column chart of calories per day (renders in Excel).
+  s.addChart(
+    Chart.column(
+      anchor: CellIndex.indexByColumnRow(
+        columnIndex: dc,
+        rowIndex: totalRow + 2 + dr,
+      ),
+      title: 'Calories by day',
+      categories: '${a1(0, headerRow + 1)}:${a1(0, headerRow + days.length)}',
+      series: [
+        ChartSeries(
+          name: 'Calories',
+          values: '${a1(3, headerRow + 1)}:${a1(3, headerRow + days.length)}',
+        ),
+      ],
+      legend: LegendPosition.none,
+      width: 360,
+      height: 220,
+    ),
+  );
+
+  _layMargin(s);
+  _fitColumns(
+    s,
+    [7, 16, 6, 9, 12],
+    first: dc,
+    totalPx: phoneWidthPx - _marginPxX,
+  );
+  _fitRows(
+    s,
+    [1.7, 1.0, 1.2, ...List.filled(7, 1.0), 1.2],
+    first: dr,
+    totalPx: phoneHeightPx - _marginPxY,
+  );
+  return excel;
+}
+
+// ===========================================================================
 // copyable full source for each showcase
 // ===========================================================================
 
@@ -1449,6 +2144,350 @@ Excel buildSalesDashboard() {
   fitRows(List.filled(dr, 1), 0, mY);
   fitCols([6, 9, 9, 10, 7, 12], dc, wPx - mX);
   fitRows([1.6, 0.5, 1.4, 1.0, 1.4, 1.0, 0.5, 1.2, ...List.filled(12, 1.0), 1.2], dr, hPx - mY);
+  return excel;
+}
+''';
+
+const _projectTrackerCode = r'''
+import 'package:excel_plus/excel_plus.dart';
+
+/// A sprint board, offset 5×5 for a margin, sized to fill a 570×795 portrait
+/// phone frame exactly: colour-coded priority/status chips, an in-cell progress
+/// bar, and a due date that turns red when a task is blocked.
+Excel buildProjectTracker() {
+  final excel = Excel.createExcel();
+  excel.rename(excel.getDefaultSheet() ?? 'Sheet1', 'Project Tracker');
+  final s = excel['Project Tracker'];
+  final ink = ExcelColor.fromHexString('FF1B2430');
+  final muted = ExcelColor.fromHexString('FF66727E');
+  final indigo = ExcelColor.fromHexString('FF3B4CCA');
+  final zebra = ExcelColor.fromHexString('FFF6F7FB');
+
+  // --- 5×5 margin + fit the used range to a 570×795 phone frame ---
+  const dc = 5, dr = 5, wPx = 570.0, hPx = 795.0, mX = 40.0, mY = 50.0;
+  void fitCols(List<double> w, int first, double total) {
+    final sum = w.reduce((a, b) => a + b);
+    for (var c = 0; c < w.length; c++) {
+      s.setColumnWidth(first + c, (total * w[c] / sum - 5) / 7);
+    }
+  }
+  void fitRows(List<double> w, int first, double total) {
+    final sum = w.reduce((a, b) => a + b);
+    for (var r = 0; r < w.length; r++) {
+      s.setRowHeight(first + r, total * w[r] / sum * 0.75);
+    }
+  }
+  Border edge() => Border(borderStyle: BorderStyle.Thin,
+      borderColorHex: ExcelColor.fromHexString('FFC7D0CB'));
+  void put(int c, int r, CellValue v, [CellStyle? st]) => s.updateCell(
+      CellIndex.indexByColumnRow(columnIndex: c + dc, rowIndex: r + dr), v, cellStyle: st);
+  void mergeRange(int c0, int r0, int c1, int r1) => s.merge(
+      CellIndex.indexByColumnRow(columnIndex: c0 + dc, rowIndex: r0 + dr),
+      CellIndex.indexByColumnRow(columnIndex: c1 + dc, rowIndex: r1 + dr));
+  CellStyle box({bool bold = false, ExcelColor? fill, ExcelColor? font,
+      HorizontalAlign align = HorizontalAlign.Left}) =>
+      CellStyle(bold: bold, fontSize: 9, backgroundColorHex: fill ?? ExcelColor.none,
+          fontColorHex: font ?? ink, horizontalAlign: align,
+          verticalAlign: VerticalAlign.Center, indent: 1,
+          leftBorder: edge(), rightBorder: edge(), topBorder: edge(), bottomBorder: edge());
+  String bar(double f, int n) => '█' * (f * n).round();
+  ({ExcelColor fill, ExcelColor font}) chip(String key) => switch (key) {
+    'Done' || 'Low'    => (fill: ExcelColor.fromHexString('FFE6F4EA'), font: ExcelColor.fromHexString('FF1E7E34')),
+    'In progress'      => (fill: ExcelColor.fromHexString('FFE5EEF9'), font: ExcelColor.fromHexString('FF1F4E79')),
+    'High' || 'Blocked'=> (fill: ExcelColor.fromHexString('FFFAE3E3'), font: ExcelColor.fromHexString('FFB42318')),
+    'Med'              => (fill: ExcelColor.fromHexString('FFFCEFD6'), font: ExcelColor.fromHexString('FFB7791F')),
+    _                  => (fill: ExcelColor.fromHexString('FFEFF1F3'), font: ExcelColor.fromHexString('FF66727E')),
+  };
+
+  put(0, 0, TextCellValue('Sprint 14 — Board'), CellStyle(bold: true, fontSize: 14,
+      fontColorHex: ExcelColor.white, backgroundColorHex: indigo,
+      horizontalAlign: HorizontalAlign.Center, verticalAlign: VerticalAlign.Center));
+  mergeRange(0, 0, 5, 0);
+  put(0, 1, TextCellValue('excel_plus · 8 tasks · 26 Aug 2026'),
+      CellStyle(fontSize: 9, fontColorHex: muted, horizontalAlign: HorizontalAlign.Center,
+          verticalAlign: VerticalAlign.Center, backgroundColorHex: ExcelColor.fromHexString('FFEDF0EE')));
+  mergeRange(0, 1, 5, 1);
+
+  const headerRow = 2;
+  final headers = ['Task', 'Owner', 'Priority', 'Status', 'Progress', 'Due'];
+  for (var c = 0; c < headers.length; c++) {
+    put(c, headerRow, TextCellValue(headers[c]),
+        box(bold: true, fill: indigo, font: ExcelColor.white,
+            align: (c >= 2 && c <= 3) ? HorizontalAlign.Center : HorizontalAlign.Left));
+  }
+
+  final tasks = <(String, String, String, String, double, String, bool)>[
+    ('Design system audit', 'A. Khan', 'High', 'Done', 1.0, 'Aug 12', false),
+    ('API rate limiting', 'M. Ortiz', 'High', 'In progress', 0.6, 'Aug 28', false),
+    ('Onboarding flow', 'S. Lee', 'Med', 'In progress', 0.4, 'Sep 02', false),
+    ('Billing webhooks', 'J. Park', 'High', 'Blocked', 0.2, 'Aug 25', true),
+    ('Dark mode', 'R. Davis', 'Low', 'Done', 1.0, 'Aug 10', false),
+    ('Search revamp', 'T. Müller', 'Med', 'To do', 0.0, 'Sep 10', false),
+    ('Mobile push', 'K. Singh', 'Med', 'In progress', 0.75, 'Sep 05', false),
+    ('Docs refresh', 'L. Costa', 'Low', 'To do', 0.0, 'Sep 14', false),
+  ];
+  for (var i = 0; i < tasks.length; i++) {
+    final r = headerRow + 1 + i;
+    final (task, owner, prio, status, prog, due, overdue) = tasks[i];
+    final fill = i.isOdd ? zebra : null;
+    final pc = chip(prio), sc = chip(status);
+    put(0, r, TextCellValue(task), box(fill: fill));
+    put(1, r, TextCellValue(owner), box(fill: fill, font: muted));
+    put(2, r, TextCellValue(prio), box(bold: true, fill: pc.fill, font: pc.font, align: HorizontalAlign.Center));
+    put(3, r, TextCellValue(status), box(bold: true, fill: sc.fill, font: sc.font, align: HorizontalAlign.Center));
+    put(4, r, TextCellValue('${bar(prog, 6)} ${(prog * 100).round()}%'),
+        box(fill: fill, font: prog == 1.0 ? ExcelColor.fromHexString('FF1E7E34') : indigo));
+    put(5, r, TextCellValue(due), box(fill: fill, align: HorizontalAlign.Right,
+        bold: overdue, font: overdue ? ExcelColor.fromHexString('FFB42318') : ink));
+  }
+
+  final summaryRow = headerRow + 1 + tasks.length;
+  put(0, summaryRow, TextCellValue('2 done   ·   3 in progress   ·   1 blocked   ·   2 to do'),
+      box(bold: true, fill: indigo, font: ExcelColor.white, align: HorizontalAlign.Center));
+  mergeRange(0, summaryRow, 5, summaryRow);
+
+  for (var r = 0; r < dr; r++) {
+    s.updateCell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: r), TextCellValue(''));
+  }
+  fitCols(List.filled(dc, 1), 0, mX);
+  fitRows(List.filled(dr, 1), 0, mY);
+  fitCols([21, 9, 9, 12, 13, 8], dc, wPx - mX);
+  fitRows([1.7, 1.0, 1.2, ...List.filled(8, 1.0), 1.2], dr, hPx - mY);
+  return excel;
+}
+''';
+
+const _budgetCode = r'''
+import 'package:excel_plus/excel_plus.dart';
+
+/// A monthly budget, offset 5×5 for a margin, sized to fill a 570×795 portrait
+/// phone frame exactly: Budget vs Actual with a colour-coded difference, a
+/// heat-mapped "% used" bar, and a real doughnut chart of spending.
+Excel buildBudget() {
+  final excel = Excel.createExcel();
+  excel.rename(excel.getDefaultSheet() ?? 'Sheet1', 'Budget');
+  final s = excel['Budget'];
+  final teal = ExcelColor.fromHexString('FF0F766E');
+  final green = ExcelColor.fromHexString('FF1E7E34');
+  final red = ExcelColor.fromHexString('FFB42318');
+  final amber = ExcelColor.fromHexString('FFB7791F');
+  final zebra = ExcelColor.fromHexString('FFF3F8F7');
+  final money = NumFormat.custom(formatCode: r'$#,##0');
+  final redParen = NumFormat.custom(formatCode: r'$#,##0;[Red]($#,##0)');
+
+  // --- 5×5 margin + fit the used range to a 570×795 phone frame ---
+  const dc = 5, dr = 5, wPx = 570.0, hPx = 795.0, mX = 40.0, mY = 50.0;
+  void fitCols(List<double> w, int first, double total) {
+    final sum = w.reduce((a, b) => a + b);
+    for (var c = 0; c < w.length; c++) {
+      s.setColumnWidth(first + c, (total * w[c] / sum - 5) / 7);
+    }
+  }
+  void fitRows(List<double> w, int first, double total) {
+    final sum = w.reduce((a, b) => a + b);
+    for (var r = 0; r < w.length; r++) {
+      s.setRowHeight(first + r, total * w[r] / sum * 0.75);
+    }
+  }
+  Border edge() => Border(borderStyle: BorderStyle.Thin,
+      borderColorHex: ExcelColor.fromHexString('FFC7D0CB'));
+  void put(int c, int r, CellValue v, [CellStyle? st]) => s.updateCell(
+      CellIndex.indexByColumnRow(columnIndex: c + dc, rowIndex: r + dr), v, cellStyle: st);
+  void mergeRange(int c0, int r0, int c1, int r1) => s.merge(
+      CellIndex.indexByColumnRow(columnIndex: c0 + dc, rowIndex: r0 + dr),
+      CellIndex.indexByColumnRow(columnIndex: c1 + dc, rowIndex: r1 + dr));
+  String a1(int c, int r) =>
+      CellIndex.indexByColumnRow(columnIndex: c + dc, rowIndex: r + dr).cellId;
+  CellStyle cell({bool bold = false, ExcelColor? fill, ExcelColor? font,
+      HorizontalAlign align = HorizontalAlign.Left, NumFormat? fmt}) =>
+      CellStyle(bold: bold, backgroundColorHex: fill ?? ExcelColor.none,
+          fontColorHex: font ?? ExcelColor.fromHexString('FF1B2430'), horizontalAlign: align,
+          verticalAlign: VerticalAlign.Center, numberFormat: fmt ?? NumFormat.standard_0,
+          indent: 1, leftBorder: edge(), rightBorder: edge(), topBorder: edge(), bottomBorder: edge());
+  String bar(double f, int n) { var k = (f * n).round(); if (k > n) k = n; return '█' * k; }
+
+  put(0, 0, TextCellValue('Monthly Budget'), CellStyle(bold: true, fontSize: 15,
+      fontColorHex: ExcelColor.white, backgroundColorHex: teal,
+      horizontalAlign: HorizontalAlign.Center, verticalAlign: VerticalAlign.Center));
+  mergeRange(0, 0, 4, 0);
+  put(0, 1, TextCellValue('August 2026 · Household'), CellStyle(fontSize: 10,
+      fontColorHex: ExcelColor.fromHexString('FF66727E'), horizontalAlign: HorizontalAlign.Center,
+      verticalAlign: VerticalAlign.Center, backgroundColorHex: ExcelColor.fromHexString('FFEDF0EE')));
+  mergeRange(0, 1, 4, 1);
+
+  const headerRow = 2;
+  final headers = ['Category', 'Budget', 'Actual', 'Δ', 'Used'];
+  for (var c = 0; c < headers.length; c++) {
+    put(c, headerRow, TextCellValue(headers[c]), cell(bold: true, fill: teal,
+        font: ExcelColor.white, align: (c >= 1 && c <= 3) ? HorizontalAlign.Right : HorizontalAlign.Left));
+  }
+
+  final cats = <(String, double, double)>[
+    ('Rent', 1500, 1500), ('Groceries', 600, 680), ('Transport', 200, 150),
+    ('Utilities', 250, 240), ('Dining out', 200, 310), ('Health', 150, 90),
+    ('Subscriptions', 80, 95), ('Savings', 500, 500),
+  ];
+  var budgetTotal = 0.0, actualTotal = 0.0;
+  for (var i = 0; i < cats.length; i++) {
+    final r = headerRow + 1 + i;
+    final (name, budget, actual) = cats[i];
+    final diff = budget - actual, used = actual / budget;
+    budgetTotal += budget;
+    actualTotal += actual;
+    final fill = i.isOdd ? zebra : null;
+    final usedColor = used > 1.0 ? red : (used >= 0.9 ? amber : green);
+    put(0, r, TextCellValue(name), cell(fill: fill));
+    put(1, r, DoubleCellValue(budget), cell(fill: fill, align: HorizontalAlign.Right, fmt: money));
+    put(2, r, DoubleCellValue(actual), cell(fill: fill, align: HorizontalAlign.Right, fmt: money));
+    put(3, r, DoubleCellValue(diff), cell(fill: fill, align: HorizontalAlign.Right, fmt: redParen, font: diff < 0 ? red : green));
+    put(4, r, TextCellValue(bar(used, 8)), cell(fill: fill, font: usedColor));
+  }
+
+  final totalRow = headerRow + 1 + cats.length;
+  put(0, totalRow, TextCellValue('Total'), cell(bold: true, fill: teal, font: ExcelColor.white));
+  put(1, totalRow, DoubleCellValue(budgetTotal), cell(bold: true, fill: teal, font: ExcelColor.white, align: HorizontalAlign.Right, fmt: money));
+  put(2, totalRow, DoubleCellValue(actualTotal), cell(bold: true, fill: teal, font: ExcelColor.white, align: HorizontalAlign.Right, fmt: money));
+  put(3, totalRow, DoubleCellValue(budgetTotal - actualTotal), cell(bold: true, fill: teal, font: ExcelColor.white, align: HorizontalAlign.Right, fmt: redParen));
+  put(4, totalRow, TextCellValue(''), cell(fill: teal));
+
+  final saveRow = totalRow + 1;
+  final saved = budgetTotal - actualTotal;
+  put(0, saveRow, TextCellValue('Saved this month:   \$${saved.toStringAsFixed(0)}'),
+      CellStyle(bold: true, fontSize: 12, fontColorHex: green,
+          backgroundColorHex: ExcelColor.fromHexString('FFE6F4EA'),
+          horizontalAlign: HorizontalAlign.Center, verticalAlign: VerticalAlign.Center));
+  mergeRange(0, saveRow, 4, saveRow);
+
+  // A real doughnut chart of spending by category (renders in Excel).
+  s.addChart(Chart.doughnut(
+    anchor: CellIndex.indexByColumnRow(columnIndex: dc, rowIndex: saveRow + 2 + dr),
+    title: 'Spending by category',
+    categories: '${a1(0, headerRow + 1)}:${a1(0, headerRow + cats.length)}',
+    series: ChartSeries(name: 'Spent', values: '${a1(2, headerRow + 1)}:${a1(2, headerRow + cats.length)}'),
+    width: 360, height: 240,
+  ));
+
+  for (var r = 0; r < dr; r++) {
+    s.updateCell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: r), TextCellValue(''));
+  }
+  fitCols(List.filled(dc, 1), 0, mX);
+  fitRows(List.filled(dr, 1), 0, mY);
+  fitCols([13, 9, 9, 9, 12], dc, wPx - mX);
+  fitRows([1.6, 1.0, 1.2, ...List.filled(8, 1.0), 1.2, 1.4], dr, hPx - mY);
+  return excel;
+}
+''';
+
+const _workoutCode = r'''
+import 'package:excel_plus/excel_plus.dart';
+
+/// A weekly workout log, offset 5×5 for a margin, sized to fill a 570×795
+/// portrait phone frame exactly: a heat-mapped intensity bar per day, a rest
+/// day greyed out, and a real column chart of calories per day.
+Excel buildWorkout() {
+  final excel = Excel.createExcel();
+  excel.rename(excel.getDefaultSheet() ?? 'Sheet1', 'Workout');
+  final s = excel['Workout'];
+  final ink = ExcelColor.fromHexString('FF1B2430');
+  final muted = ExcelColor.fromHexString('FF66727E');
+  final plum = ExcelColor.fromHexString('FF7C3AED');
+  final rest = ExcelColor.fromHexString('FFEFF1F3');
+
+  // --- 5×5 margin + fit the used range to a 570×795 phone frame ---
+  const dc = 5, dr = 5, wPx = 570.0, hPx = 795.0, mX = 40.0, mY = 50.0;
+  void fitCols(List<double> w, int first, double total) {
+    final sum = w.reduce((a, b) => a + b);
+    for (var c = 0; c < w.length; c++) {
+      s.setColumnWidth(first + c, (total * w[c] / sum - 5) / 7);
+    }
+  }
+  void fitRows(List<double> w, int first, double total) {
+    final sum = w.reduce((a, b) => a + b);
+    for (var r = 0; r < w.length; r++) {
+      s.setRowHeight(first + r, total * w[r] / sum * 0.75);
+    }
+  }
+  Border edge() => Border(borderStyle: BorderStyle.Thin,
+      borderColorHex: ExcelColor.fromHexString('FFC7D0CB'));
+  void put(int c, int r, CellValue v, [CellStyle? st]) => s.updateCell(
+      CellIndex.indexByColumnRow(columnIndex: c + dc, rowIndex: r + dr), v, cellStyle: st);
+  void mergeRange(int c0, int r0, int c1, int r1) => s.merge(
+      CellIndex.indexByColumnRow(columnIndex: c0 + dc, rowIndex: r0 + dr),
+      CellIndex.indexByColumnRow(columnIndex: c1 + dc, rowIndex: r1 + dr));
+  String a1(int c, int r) =>
+      CellIndex.indexByColumnRow(columnIndex: c + dc, rowIndex: r + dr).cellId;
+  CellStyle cell({bool bold = false, ExcelColor? fill, ExcelColor? font,
+      HorizontalAlign align = HorizontalAlign.Left}) =>
+      CellStyle(bold: bold, backgroundColorHex: fill ?? ExcelColor.none,
+          fontColorHex: font ?? ink, horizontalAlign: align, verticalAlign: VerticalAlign.Center,
+          indent: 1, leftBorder: edge(), rightBorder: edge(), topBorder: edge(), bottomBorder: edge());
+  String bar(double f, int n) => '█' * (f * n).round();
+  ExcelColor heat(double f) => f <= 0 ? muted
+      : f < 0.34 ? ExcelColor.fromHexString('FF60A5FA')
+      : f < 0.67 ? ExcelColor.fromHexString('FFB7791F')
+      : ExcelColor.fromHexString('FFDB4437');
+
+  put(0, 0, TextCellValue('Workout Log — Week 32'), CellStyle(bold: true, fontSize: 14,
+      fontColorHex: ExcelColor.white, backgroundColorHex: plum,
+      horizontalAlign: HorizontalAlign.Center, verticalAlign: VerticalAlign.Center));
+  mergeRange(0, 0, 4, 0);
+  put(0, 1, TextCellValue('Goal 1,800 kcal · 6 active days'), CellStyle(fontSize: 9,
+      fontColorHex: muted, horizontalAlign: HorizontalAlign.Center,
+      verticalAlign: VerticalAlign.Center, backgroundColorHex: ExcelColor.fromHexString('FFEDF0EE')));
+  mergeRange(0, 1, 4, 1);
+
+  const headerRow = 2;
+  final headers = ['Day', 'Activity', 'Min', 'Calories', 'Intensity'];
+  for (var c = 0; c < headers.length; c++) {
+    put(c, headerRow, TextCellValue(headers[c]), cell(bold: true, fill: plum,
+        font: ExcelColor.white, align: (c == 2 || c == 3) ? HorizontalAlign.Right : HorizontalAlign.Left));
+  }
+
+  final days = <(String, String, int, int)>[
+    ('Mon', 'Run', 35, 420), ('Tue', 'Strength', 45, 300), ('Wed', 'Rest', 0, 0),
+    ('Thu', 'Cycling', 50, 520), ('Fri', 'Yoga', 30, 180), ('Sat', 'HIIT', 25, 360),
+    ('Sun', 'Walk', 40, 240),
+  ];
+  const maxCal = 520.0;
+  var totalMin = 0, totalCal = 0;
+  for (var i = 0; i < days.length; i++) {
+    final r = headerRow + 1 + i;
+    final (day, act, mins, cal) = days[i];
+    final isRest = cal == 0;
+    totalMin += mins;
+    totalCal += cal;
+    final rowFill = isRest ? rest : null;
+    final fg = isRest ? muted : ink;
+    put(0, r, TextCellValue(day), cell(bold: true, fill: rowFill, font: fg));
+    put(1, r, TextCellValue(act), cell(fill: rowFill, font: fg));
+    put(2, r, IntCellValue(mins), cell(fill: rowFill, align: HorizontalAlign.Right, font: fg));
+    put(3, r, IntCellValue(cal), cell(fill: rowFill, align: HorizontalAlign.Right, font: fg));
+    put(4, r, TextCellValue(bar(cal / maxCal, 8)), cell(fill: rowFill, font: heat(cal / maxCal)));
+  }
+
+  final totalRow = headerRow + 1 + days.length;
+  put(0, totalRow, TextCellValue('Total'), cell(bold: true, fill: plum, font: ExcelColor.white));
+  mergeRange(0, totalRow, 1, totalRow);
+  put(2, totalRow, IntCellValue(totalMin), cell(bold: true, fill: plum, font: ExcelColor.white, align: HorizontalAlign.Right));
+  put(3, totalRow, IntCellValue(totalCal), cell(bold: true, fill: plum, font: ExcelColor.white, align: HorizontalAlign.Right));
+  put(4, totalRow, TextCellValue(''), cell(fill: plum));
+
+  // A real column chart of calories per day (renders in Excel).
+  s.addChart(Chart.column(
+    anchor: CellIndex.indexByColumnRow(columnIndex: dc, rowIndex: totalRow + 2 + dr),
+    title: 'Calories by day',
+    categories: '${a1(0, headerRow + 1)}:${a1(0, headerRow + days.length)}',
+    series: [ChartSeries(name: 'Calories', values: '${a1(3, headerRow + 1)}:${a1(3, headerRow + days.length)}')],
+    legend: LegendPosition.none, width: 360, height: 220,
+  ));
+
+  for (var r = 0; r < dr; r++) {
+    s.updateCell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: r), TextCellValue(''));
+  }
+  fitCols(List.filled(dc, 1), 0, mX);
+  fitRows(List.filled(dr, 1), 0, mY);
+  fitCols([7, 16, 6, 9, 12], dc, wPx - mX);
+  fitRows([1.7, 1.0, 1.2, ...List.filled(7, 1.0), 1.2], dr, hPx - mY);
   return excel;
 }
 ''';
