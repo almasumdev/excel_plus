@@ -1,9 +1,12 @@
+// Internal platform helper; not part of the public API docs.
+// ignore_for_file: public_member_api_docs
 import 'dart:js_interop';
 import 'dart:typed_data';
 
 import 'package:web/web.dart';
 
 // A wrapper to save the excel file in browser
+/// @nodoc
 class SavingHelper {
   static List<int>? saveFile(List<int>? val, String fileName) {
     if (val == null) {

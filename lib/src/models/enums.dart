@@ -3,7 +3,13 @@ part of '../../excel_plus.dart';
 /// Text wrapping mode for cells.
 ///
 /// {@category Styling}
-enum TextWrapping { WrapText, Clip }
+enum TextWrapping {
+  /// Wrap long content onto multiple lines within the cell.
+  WrapText,
+
+  /// Keep content on a single line, clipping any overflow.
+  Clip,
+}
 
 /// Visibility of a worksheet's tab within the workbook.
 ///
@@ -11,22 +17,58 @@ enum TextWrapping { WrapText, Clip }
 /// UI). A workbook must keep at least one [visible] sheet.
 ///
 /// {@category Worksheet}
-enum SheetVisibility { visible, hidden, veryHidden }
+enum SheetVisibility {
+  /// The sheet's tab is shown in the workbook.
+  visible,
+
+  /// The sheet's tab is hidden but can be unhidden from Excel's UI.
+  hidden,
+
+  /// The sheet is hidden and can only be unhidden programmatically.
+  veryHidden,
+}
 
 /// Vertical alignment of cell content.
 ///
 /// {@category Styling}
-enum VerticalAlign { Top, Center, Bottom }
+enum VerticalAlign {
+  /// Align content to the top of the cell.
+  Top,
+
+  /// Center content vertically within the cell.
+  Center,
+
+  /// Align content to the bottom of the cell.
+  Bottom,
+}
 
 /// Horizontal alignment of cell content.
 ///
 /// {@category Styling}
-enum HorizontalAlign { Left, Center, Right }
+enum HorizontalAlign {
+  /// Align content to the left edge of the cell.
+  Left,
+
+  /// Center content horizontally within the cell.
+  Center,
+
+  /// Align content to the right edge of the cell.
+  Right,
+}
 
 /// Text underline style.
 ///
 /// {@category Styling}
-enum Underline { None, Single, Double }
+enum Underline {
+  /// No underline.
+  None,
+
+  /// A single underline.
+  Single,
+
+  /// A double underline.
+  Double,
+}
 
 /// Cell fill pattern. `solid` fills the cell with a single colour (the cell
 /// style's `backgroundColor`); the other patterns draw a hatch/shade using the
@@ -42,8 +84,13 @@ enum FillPatternType {
   /// A single solid colour.
   solid,
 
+  /// 50% grey shade.
   mediumGray,
+
+  /// 75% grey shade.
   darkGray,
+
+  /// 25% grey shade.
   lightGray,
 
   /// 12.5% grey shade (the default unused fill in most workbooks).
@@ -51,17 +98,41 @@ enum FillPatternType {
 
   /// 6.25% grey shade.
   gray0625,
+
+  /// Dark horizontal lines.
   darkHorizontal,
+
+  /// Dark vertical lines.
   darkVertical,
+
+  /// Dark diagonal lines running down (top-left to bottom-right).
   darkDown,
+
+  /// Dark diagonal lines running up (bottom-left to top-right).
   darkUp,
+
+  /// Dark crossed (grid) lines.
   darkGrid,
+
+  /// Dark crossed diagonal (trellis) lines.
   darkTrellis,
+
+  /// Thin horizontal lines.
   lightHorizontal,
+
+  /// Thin vertical lines.
   lightVertical,
+
+  /// Thin diagonal lines running down (top-left to bottom-right).
   lightDown,
+
+  /// Thin diagonal lines running up (bottom-left to top-right).
   lightUp,
+
+  /// Thin crossed (grid) lines.
   lightGrid,
+
+  /// Thin crossed diagonal (trellis) lines.
   lightTrellis,
 }
 
@@ -79,4 +150,13 @@ FillPatternType? _fillPatternFromXml(String s) {
 /// Font scheme setting.
 ///
 /// {@category Styling}
-enum FontScheme { Unset, Major, Minor }
+enum FontScheme {
+  /// No scheme; the font is not tied to a theme role.
+  Unset,
+
+  /// The theme's major (heading) font.
+  Major,
+
+  /// The theme's minor (body) font.
+  Minor,
+}

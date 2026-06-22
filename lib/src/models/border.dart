@@ -84,19 +84,46 @@ class _BorderSet {
 ///
 /// {@category Styling}
 enum BorderStyle {
+  /// No border line.
   None('none'),
+
+  /// A dash-dot line.
   DashDot('dashDot'),
+
+  /// A dash-dot-dot line.
   DashDotDot('dashDotDot'),
+
+  /// A dashed line.
   Dashed('dashed'),
+
+  /// A dotted line.
   Dotted('dotted'),
+
+  /// A double line.
   Double('double'),
+
+  /// A fine hairline.
   Hair('hair'),
+
+  /// A medium-weight line.
   Medium('medium'),
+
+  /// A medium-weight dash-dot line.
   MediumDashDot('mediumDashDot'),
+
+  /// A medium-weight dash-dot-dot line.
   MediumDashDotDot('mediumDashDotDot'),
+
+  /// A medium-weight dashed line.
   MediumDashed('mediumDashed'),
+
+  /// A slanted dash-dot line.
   SlantDashDot('slantDashDot'),
+
+  /// A thick line.
   Thick('thick'),
+
+  /// A thin line.
   Thin('thin');
 
   /// The OOXML name for this border style.

@@ -3,7 +3,28 @@ part of '../../excel_plus.dart';
 /// The aggregation applied to a pivot-table data field.
 ///
 /// {@category Pivot Tables}
-enum PivotFunction { sum, count, average, max, min, product, countNumbers }
+enum PivotFunction {
+  /// Sum of the values.
+  sum,
+
+  /// Count of all values (numeric or not).
+  count,
+
+  /// Arithmetic mean of the values.
+  average,
+
+  /// Largest value.
+  max,
+
+  /// Smallest value.
+  min,
+
+  /// Product of the values.
+  product,
+
+  /// Count of the numeric values only.
+  countNumbers,
+}
 
 /// A value field in a [PivotTable]: which source column to aggregate and how.
 ///
@@ -18,6 +39,8 @@ class PivotDataField {
   /// Optional caption (defaults to e.g. "Sum of <header>").
   final String? name;
 
+  /// Creates a data field that aggregates source [column] using [function],
+  /// with an optional caption [name].
   const PivotDataField(
     this.column, {
     this.function = PivotFunction.sum,
@@ -82,6 +105,8 @@ class PivotTable {
   int? _cacheId;
   bool _written = false;
 
+  /// Creates a pivot table over the source range [sourceFrom]–[sourceTo],
+  /// grouped by [rowField] and summarised by [dataFields], placed at [anchor].
   PivotTable({
     required this.name,
     required this.anchor,

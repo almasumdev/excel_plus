@@ -76,6 +76,7 @@ class ExcelTable {
   /// The table id from the source file (set on read; reused on write).
   int? _id;
 
+  /// Creates a table spanning the rectangle from [from] to [to] (inclusive).
   ExcelTable({
     required this.name,
     required this.from,

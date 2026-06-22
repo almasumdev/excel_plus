@@ -31,13 +31,28 @@ enum DataValidationType {
 /// [DataValidationType.decimal], [DataValidationType.date],
 /// [DataValidationType.time], [DataValidationType.textLength]).
 enum DataValidationOperator {
+  /// Value must fall within `[formula1, formula2]` (inclusive).
   between,
+
+  /// Value must fall outside `[formula1, formula2]`.
   notBetween,
+
+  /// Value must equal `formula1`.
   equal,
+
+  /// Value must not equal `formula1`.
   notEqual,
+
+  /// Value must be greater than `formula1`.
   greaterThan,
+
+  /// Value must be less than `formula1`.
   lessThan,
+
+  /// Value must be greater than or equal to `formula1`.
   greaterThanOrEqual,
+
+  /// Value must be less than or equal to `formula1`.
   lessThanOrEqual,
 }
 

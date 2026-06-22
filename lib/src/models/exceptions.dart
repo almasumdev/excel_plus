@@ -61,6 +61,7 @@ sealed class ExcelException implements Exception {
 ///
 /// {@category Errors}
 final class ExcelArchiveException extends ExcelException {
+  /// Creates an [ExcelArchiveException] describing an unreadable container.
   const ExcelArchiveException(super.message, {super.part, super.cause});
 
   @override
@@ -76,6 +77,7 @@ final class ExcelArchiveException extends ExcelException {
 ///
 /// {@category Errors}
 final class ExcelFormatException extends ExcelException {
+  /// Creates an [ExcelFormatException] describing malformed XML content.
   const ExcelFormatException(super.message, {super.part, super.cause});
 
   @override
@@ -91,6 +93,7 @@ final class ExcelFormatException extends ExcelException {
 ///
 /// {@category Errors}
 final class ExcelEncodeException extends ExcelException {
+  /// Creates an [ExcelEncodeException] describing a failed encode.
   const ExcelEncodeException(super.message, {super.part, super.cause});
 
   @override
@@ -119,6 +122,8 @@ final class FormulaParseException extends ExcelException
   @override
   final int offset;
 
+  /// Creates a [FormulaParseException] for the given [source] formula, with the
+  /// failing character [offset] (defaults to `-1` when unknown).
   const FormulaParseException(super.message, [this.source, this.offset = -1]);
 
   @override

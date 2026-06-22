@@ -35,11 +35,13 @@ sealed class DateTimeNumFormat extends NumFormat {
     }
   }
 
+  /// Returns the raw serial-day string used to store [value] in the worksheet.
   String writeDate(DateCellValue value) {
     final delta = value.asDateTimeUtc().difference(_excelEpoch);
     return _toDayFraction(delta).toString();
   }
 
+  /// Returns the raw serial-day string used to store [value] in the worksheet.
   String writeDateTime(DateTimeCellValue value) {
     final delta = value.asDateTimeUtc().difference(_excelEpoch);
     return _toDayFraction(delta).toString();
@@ -84,6 +86,7 @@ class StandardDateTimeNumFormat extends DateTimeNumFormat
 /// {@category Number Formats}
 class CustomDateTimeNumFormat extends DateTimeNumFormat
     implements CustomNumFormat {
+  /// Creates a custom date/time format with the given [formatCode].
   const CustomDateTimeNumFormat({required super.formatCode});
 
   @override
@@ -144,6 +147,8 @@ sealed class TimeNumFormat extends NumFormat {
     }
   }
 
+  /// Returns the raw day-fraction string used to store [value] in the
+  /// worksheet.
   String writeTime(TimeCellValue value) {
     return _toDayFraction(value.asDuration()).toString();
   }
@@ -185,6 +190,7 @@ class StandardTimeNumFormat extends TimeNumFormat implements StandardNumFormat {
 ///
 /// {@category Number Formats}
 class CustomTimeNumFormat extends TimeNumFormat implements CustomNumFormat {
+  /// Creates a custom time format with the given [formatCode].
   const CustomTimeNumFormat({required super.formatCode});
 
   @override

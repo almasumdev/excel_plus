@@ -96,6 +96,9 @@ class Excel {
   }
 
   String? _defaultSheet;
+
+  /// The internal parser that decoded this workbook. Exposed for advanced use;
+  /// not part of the supported public surface and may change between releases.
   late Parser parser;
 
   Excel._(this._archive) {

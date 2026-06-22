@@ -7,6 +7,8 @@ part of '../../excel_plus.dart';
 ///
 /// {@category Core}
 class DefinedName {
+  /// Creates a defined name. Provide [localSheetId] to scope it to a single
+  /// sheet, or leave it `null` for a workbook-global name.
   const DefinedName({
     required this.name,
     required this.refersTo,

@@ -3,17 +3,65 @@ part of '../../excel_plus.dart';
 /// The kind of chart to render.
 ///
 /// {@category Charts}
-enum ChartType { column, bar, line, pie, doughnut, area, scatter }
+enum ChartType {
+  /// A vertical bar (column) chart.
+  column,
+
+  /// A horizontal bar chart.
+  bar,
+
+  /// A line chart.
+  line,
+
+  /// A pie chart.
+  pie,
+
+  /// A doughnut chart.
+  doughnut,
+
+  /// An area chart.
+  area,
+
+  /// A scatter (XY) chart.
+  scatter,
+}
 
 /// How multiple series are combined (ignored by pie/doughnut/scatter).
 ///
 /// {@category Charts}
-enum ChartGrouping { clustered, stacked, percentStacked, standard }
+enum ChartGrouping {
+  /// Series are drawn side by side.
+  clustered,
+
+  /// Series are stacked on top of one another.
+  stacked,
+
+  /// Series are stacked and scaled so each category totals 100%.
+  percentStacked,
+
+  /// Series are drawn independently (the default for line/area charts).
+  standard,
+}
 
 /// Where the legend sits, or [none] to hide it.
 ///
 /// {@category Charts}
-enum LegendPosition { right, left, top, bottom, none }
+enum LegendPosition {
+  /// Legend on the right of the plot area.
+  right,
+
+  /// Legend on the left of the plot area.
+  left,
+
+  /// Legend above the plot area.
+  top,
+
+  /// Legend below the plot area.
+  bottom,
+
+  /// No legend.
+  none,
+}
 
 /// One data series in a [Chart]: a values range plus an optional name and, for
 /// scatter charts, an x-values range.
@@ -32,6 +80,8 @@ class ChartSeries {
   /// For scatter charts, the x-values range. Ignored by other chart types.
   final String? xValues;
 
+  /// Creates a series over the [values] range, with an optional [name] and,
+  /// for scatter charts, an [xValues] range.
   const ChartSeries({this.name, required this.values, this.xValues});
 }
 
@@ -90,6 +140,8 @@ class Chart {
   /// Set true once the chart has been written, so a re-save doesn't duplicate it.
   bool _written = false;
 
+  /// Creates a chart of the given [type]; prefer the named factories
+  /// ([Chart.column], [Chart.line], [Chart.pie], …) for the common kinds.
   Chart({
     required this.type,
     required this.anchor,

@@ -17,6 +17,7 @@ linter:
   rules:
     constant_identifier_names: false
     unnecessary_getters_setters: false
+    public_member_api_docs: true
 
 analyzer:
   exclude:

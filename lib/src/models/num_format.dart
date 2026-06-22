@@ -16,6 +16,8 @@ class NumFormatMaintainer {
   Map<int, NumFormat> _map = {..._standardNumFormats};
   Map<NumFormat, int> _inverseMap = _createInverseMap(_standardNumFormats);
 
+  /// Registers [format] under [numFmtId], throwing if the id is already in use
+  /// or is below the first custom id (164).
   void add(int numFmtId, CustomNumFormat format) {
     if (_map.containsKey(numFmtId)) {
       throw ArgumentError.value(numFmtId, 'numFmtId', 'already exists');
@@ -34,6 +36,8 @@ class NumFormatMaintainer {
     }
   }
 
+  /// Returns the id already registered for [format], or assigns and returns the
+  /// next available custom id.
   int findOrAdd(CustomNumFormat format) {
     var fmtId = _inverseMap[format];
     if (fmtId != null) {
@@ -45,12 +49,15 @@ class NumFormatMaintainer {
     return fmtId;
   }
 
+  /// Resets the maintainer to only the standard formats, discarding all
+  /// registered custom formats.
   void clear() {
     _nextFmtId = _firstCustomFmtId;
     _map = {..._standardNumFormats};
     _inverseMap = _createInverseMap(_standardNumFormats);
   }
 
+  /// Returns the format registered under [numFmtId], or `null` if none exists.
   NumFormat? getByNumFmtId(int numFmtId) {
     return _map[numFmtId];
   }
@@ -60,123 +67,196 @@ class NumFormatMaintainer {
 ///
 /// {@category Number Formats}
 sealed class NumFormat {
+  /// The Excel format code string that controls how the value is displayed.
   final String formatCode;
 
+  /// The default format for integer values (numeric `standard_1`).
   static const defaultNumeric = standard_1;
+
+  /// The default format for floating-point values (`standard_2`, `0.00`).
   static const defaultFloat = standard_2;
+
+  /// The default format for boolean values (`standard_0`, `General`).
   static const defaultBool = standard_0;
+
+  /// The default format for date values (`standard_14`).
   static const defaultDate = standard_14;
+
+  /// The default format for time values (`standard_20`).
   static const defaultTime = standard_20;
+
+  /// The default format for date-time values (`standard_22`).
   static const defaultDateTime = standard_22;
 
+  /// Standard format `0`: the `General` format (no specific formatting).
   static const standard_0 = StandardNumericNumFormat._(
     numFmtId: 0,
     formatCode: 'General',
   );
+
+  /// Standard format `1`: integer with no decimals (`0`).
   static const standard_1 = StandardNumericNumFormat._(
     numFmtId: 1,
     formatCode: "0",
   );
+
+  /// Standard format `2`: number with two decimals (`0.00`).
   static const standard_2 = StandardNumericNumFormat._(
     numFmtId: 2,
     formatCode: "0.00",
   );
+
+  /// Standard format `3`: thousands-separated integer (`#,##0`).
   static const standard_3 = StandardNumericNumFormat._(
     numFmtId: 3,
     formatCode: "#,##0",
   );
+
+  /// Standard format `4`: thousands-separated number with two decimals
+  /// (`#,##0.00`).
   static const standard_4 = StandardNumericNumFormat._(
     numFmtId: 4,
     formatCode: "#,##0.00",
   );
+
+  /// Standard format `9`: percentage with no decimals (`0%`).
   static const standard_9 = StandardNumericNumFormat._(
     numFmtId: 9,
     formatCode: "0%",
   );
+
+  /// Standard format `10`: percentage with two decimals (`0.00%`).
   static const standard_10 = StandardNumericNumFormat._(
     numFmtId: 10,
     formatCode: "0.00%",
   );
+
+  /// Standard format `11`: scientific notation (`0.00E+00`).
   static const standard_11 = StandardNumericNumFormat._(
     numFmtId: 11,
     formatCode: "0.00E+00",
   );
+
+  /// Standard format `12`: single-digit fraction (`# ?/?`).
   static const standard_12 = StandardNumericNumFormat._(
     numFmtId: 12,
     formatCode: "# ?/?",
   );
+
+  /// Standard format `13`: two-digit fraction (`# ??/??`).
   static const standard_13 = StandardNumericNumFormat._(
     numFmtId: 13,
     formatCode: "# ??/??",
   );
+
+  /// Standard format `14`: short date (`mm-dd-yy`).
   static const standard_14 = StandardDateTimeNumFormat._(
     numFmtId: 14,
     formatCode: "mm-dd-yy",
   );
+
+  /// Standard format `15`: day, abbreviated month and year (`d-mmm-yy`).
   static const standard_15 = StandardDateTimeNumFormat._(
     numFmtId: 15,
     formatCode: "d-mmm-yy",
   );
+
+  /// Standard format `16`: day and abbreviated month (`d-mmm`).
   static const standard_16 = StandardDateTimeNumFormat._(
     numFmtId: 16,
     formatCode: "d-mmm",
   );
+
+  /// Standard format `17`: abbreviated month and year (`mmm-yy`).
   static const standard_17 = StandardDateTimeNumFormat._(
     numFmtId: 17,
     formatCode: "mmm-yy",
   );
+
+  /// Standard format `18`: 12-hour time with AM/PM (`h:mm AM/PM`).
   static const standard_18 = StandardTimeNumFormat._(
     numFmtId: 18,
     formatCode: "h:mm AM/PM",
   );
+
+  /// Standard format `19`: 12-hour time with seconds and AM/PM
+  /// (`h:mm:ss AM/PM`).
   static const standard_19 = StandardTimeNumFormat._(
     numFmtId: 19,
     formatCode: "h:mm:ss AM/PM",
   );
+
+  /// Standard format `20`: 24-hour time (`h:mm`).
   static const standard_20 = StandardTimeNumFormat._(
     numFmtId: 20,
     formatCode: "h:mm",
   );
+
+  /// Standard format `21`: 24-hour time with seconds (`h:mm:dd`).
   static const standard_21 = StandardTimeNumFormat._(
     numFmtId: 21,
     formatCode: "h:mm:dd",
   );
+
+  /// Standard format `22`: date and time (`m/d/yy h:mm`).
   static const standard_22 = StandardDateTimeNumFormat._(
     numFmtId: 22,
     formatCode: "m/d/yy h:mm",
   );
+
+  /// Standard format `37`: thousands-separated integer with parenthesized
+  /// negatives (`#,##0 ;(#,##0)`).
   static const standard_37 = StandardNumericNumFormat._(
     numFmtId: 37,
     formatCode: "#,##0 ;(#,##0)",
   );
+
+  /// Standard format `38`: thousands-separated integer with red parenthesized
+  /// negatives (`#,##0 ;[Red](#,##0)`).
   static const standard_38 = StandardNumericNumFormat._(
     numFmtId: 38,
     formatCode: "#,##0 ;[Red](#,##0)",
   );
+
+  /// Standard format `39`: two-decimal number with parenthesized negatives
+  /// (`#,##0.00;(#,##0.00)`).
   static const standard_39 = StandardNumericNumFormat._(
     numFmtId: 39,
     formatCode: "#,##0.00;(#,##0.00)",
   );
+
+  /// Standard format `40`: two-decimal number with red parenthesized negatives
+  /// (`#,##0.00;[Red](#,#)`).
   static const standard_40 = StandardNumericNumFormat._(
     numFmtId: 40,
     formatCode: "#,##0.00;[Red](#,#)",
   );
+
+  /// Standard format `45`: minutes and seconds (`mm:ss`).
   static const standard_45 = StandardTimeNumFormat._(
     numFmtId: 45,
     formatCode: "mm:ss",
   );
+
+  /// Standard format `46`: elapsed hours, minutes and seconds (`[h]:mm:ss`).
   static const standard_46 = StandardTimeNumFormat._(
     numFmtId: 46,
     formatCode: "[h]:mm:ss",
   );
+
+  /// Standard format `47`: minutes, seconds and tenths (`mmss.0`).
   static const standard_47 = StandardTimeNumFormat._(
     numFmtId: 47,
     formatCode: "mmss.0",
   );
+
+  /// Standard format `48`: number in thousands with one decimal (`##0.0`).
   static const standard_48 = StandardNumericNumFormat._(
     numFmtId: 48,
     formatCode: "##0.0",
   );
+
+  /// Standard format `49`: text (`@`).
   static const standard_49 = StandardNumericNumFormat._(
     numFmtId: 49,
     formatCode: "@",
@@ -184,6 +264,8 @@ sealed class NumFormat {
 
   const NumFormat({required this.formatCode});
 
+  /// Creates a custom number format from [formatCode], inferring whether it is a
+  /// date/time or numeric format from the code.
   static CustomNumFormat custom({required String formatCode}) {
     if (formatCode == 'General') {
       return CustomNumericNumFormat(formatCode: 'General');
@@ -210,6 +292,8 @@ sealed class NumFormat {
     }
   }
 
+  /// Parses the raw stored string [v] into the [CellValue] this format
+  /// represents.
   CellValue read(String v);
 
   @override
@@ -220,8 +304,10 @@ sealed class NumFormat {
       other.runtimeType == runtimeType &&
       (other as NumFormat).formatCode == formatCode;
 
+  /// Whether [value] can be displayed with this format.
   bool accepts(CellValue? value);
 
+  /// Returns the default format appropriate for [value]'s runtime type.
   static NumFormat defaultFor(CellValue? value) => switch (value) {
     null ||
     FormulaCellValue() ||
@@ -311,6 +397,7 @@ bool _formatCodeLooksLikeDateTime(String formatCode) {
 ///
 /// {@category Number Formats}
 sealed class StandardNumFormat implements NumFormat {
+  /// The built-in Excel format id (`numFmtId`) of this standard format.
   int get numFmtId;
 }
 
@@ -353,10 +440,12 @@ sealed class NumericNumFormat extends NumFormat {
     return DoubleCellValue(double.parse(v));
   }
 
+  /// Returns the raw string used to store [value] in the worksheet.
   String writeDouble(DoubleCellValue value) {
     return value.value.toString();
   }
 
+  /// Returns the raw string used to store [value] in the worksheet.
   String writeInt(IntCellValue value) {
     return value.value.toString();
   }
@@ -400,6 +489,7 @@ class StandardNumericNumFormat extends NumericNumFormat
 /// {@category Number Formats}
 class CustomNumericNumFormat extends NumericNumFormat
     implements CustomNumFormat {
+  /// Creates a custom numeric format with the given [formatCode].
   const CustomNumericNumFormat({required super.formatCode});
 
   @override

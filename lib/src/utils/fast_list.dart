@@ -1,5 +1,8 @@
 part of '../../excel_plus.dart';
 
+// @nodoc type: excluded from the public API docs (the lint can't see @nodoc).
+// ignore_for_file: public_member_api_docs
+
 /// @nodoc
 class FastList<K> {
   Map<K, int> _map = <K, int>{};

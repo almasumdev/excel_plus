@@ -1,5 +1,8 @@
 part of '../../excel_plus.dart';
 
+// Internal helpers and a @nodoc extension; not part of the public API docs.
+// ignore_for_file: public_member_api_docs
+
 String _decimalToHexadecimal(int decimalVal) {
   if (decimalVal == 0) {
     return '0';
