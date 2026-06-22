@@ -55,6 +55,7 @@ part 'src/reader/parser_theme.dart';
 part 'src/reader/parser_relations.dart';
 part 'src/reader/parser_drawings.dart';
 part 'src/reader/parser_comments.dart';
+part 'src/reader/parser_pivots.dart';
 part 'src/reader/parser_tables.dart';
 part 'src/reader/parser_worksheet_features.dart';
 part 'src/reader/parser_styles.dart';

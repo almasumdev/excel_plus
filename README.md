@@ -137,7 +137,7 @@ cd ../excel_plus_bench                && dart pub get && dart run bin/benchmark.
 - ✅ Comments / notes
 - ✅ Excel tables (ListObjects)
 - ✅ Charts — read & write (column, bar, line, area, pie, doughnut, scatter)
-- ✅ Pivot tables (row / column / page / nested fields + measures)
+- ✅ Pivot tables — read & write (row / column / page / nested fields + measures)
 - ✅ Rich text (read & write)
 - ✅ Theme & indexed colours
 - ✅ Merge & unmerge
@@ -151,8 +151,6 @@ cd ../excel_plus_bench                && dart pub get && dart run bin/benchmark.
 ## Limitations
 
 - ❌ Long-tail / engineering formula functions
-- ❌ Pivot typed read-back (authoring — incl. row/column/page/nested fields — is
-  supported; existing pivots are preserved on round-trip)
 
 ## Roadmap
 
@@ -166,6 +164,7 @@ cd ../excel_plus_bench                && dart pub get && dart run bin/benchmark.
 - ✅ Array-formula spilling (recalculate) — 1.1.0
 - ✅ Pivot tables (row / column / page / nested fields + measures) — 1.1.0
 - ✅ Typed exception hierarchy (`ExcelException` + subtypes) — 2.0.0
+- ✅ Split panes, chart & pivot typed read-back — 2.1.0
 
 See the
 [**formula functions reference**](https://github.com/almasumdev/excel_plus/blob/main/doc/functions.md)

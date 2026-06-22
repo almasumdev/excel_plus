@@ -15,6 +15,13 @@
   `sheet.charts` as `Chart` objects (type, title, series, categories, grouping,
   legend, axis titles, anchor). Previously charts were authoring-only; existing
   charts still round-trip untouched and are not duplicated on save.
+- **Pivot-table read-back** — pivots in an opened workbook are now parsed into
+  `sheet.pivotTables` as `PivotTable` objects (name, anchor, source range/sheet,
+  row / nested-row / column / page fields, and data fields with their aggregation
+  function and caption). Previously pivots were authoring-only; existing pivots
+  still round-trip untouched and are not duplicated on save. A pivot whose shape
+  isn't modelled (no row or data field, or a non-worksheet cache source) is
+  preserved on save but omitted from the list.
 
 ## 2.0.0
 

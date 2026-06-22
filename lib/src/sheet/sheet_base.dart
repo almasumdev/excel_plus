@@ -547,10 +547,12 @@ class _SheetBase {
     _imagesChanged = true;
   }
 
-  /// The charts added to this sheet via [addChart]. Read-only.
+  /// The charts on this sheet — both those added via [addChart] and those read
+  /// from an opened file. Read-only.
   ///
-  /// Charts already present in an opened file round-trip untouched but are not
-  /// read into this list.
+  /// Charts read from a file are reconstructed from their chart part (type,
+  /// title, series, categories, grouping, legend, axis titles, anchor). They
+  /// round-trip untouched and are not re-authored on save.
   List<Chart> get charts => List.unmodifiable(_charts);
 
   /// Adds [chart] to the sheet. It is drawn through the sheet's drawing part on
@@ -576,10 +578,14 @@ class _SheetBase {
     _chartsChanged = true;
   }
 
-  /// The pivot tables added to this sheet via [addPivotTable]. Read-only.
+  /// The pivot tables on this sheet — both those added via [addPivotTable] and
+  /// those read from an opened file. Read-only.
   ///
-  /// Pivot tables already present in an opened file round-trip untouched but are
-  /// not read into this list.
+  /// Pivots read from a file are reconstructed from their definition and cache
+  /// source (name, anchor, source range, row/column/page/data fields). They
+  /// round-trip untouched and are not re-authored on save. A pivot whose shape
+  /// can't be modelled (no row or data field, or a non-worksheet source) is
+  /// still preserved on save but omitted from this list.
   List<PivotTable> get pivotTables => List.unmodifiable(_pivotTables);
 
   /// Adds a [PivotTable] summarising a worksheet range.

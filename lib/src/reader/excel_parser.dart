@@ -8,6 +8,7 @@ class Parser extends _ParserBase
         _ParserRelationsMixin,
         _ParserDrawingsMixin,
         _ParserCommentsMixin,
+        _ParserPivotsMixin,
         _ParserTablesMixin,
         _ParserWorksheetFeaturesMixin {
   Parser._(super.excel);
@@ -98,6 +99,7 @@ class Parser extends _ParserBase
     _parseHyperlinksForSheet(sheetName);
     _parseDrawingsForSheet(sheetName);
     _parseCommentsForSheet(sheetName);
+    _parsePivotTablesForSheet(sheetName);
     _parseTablesForSheet(sheetName);
     _parseDataValidationsForSheet(sheetName);
     _parseSheetViewForSheet(sheetName);

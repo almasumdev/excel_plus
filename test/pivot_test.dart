@@ -5,6 +5,8 @@ import 'package:excel_plus/excel_plus.dart';
 import 'package:test/test.dart';
 import 'package:xml/xml.dart';
 
+import 'test_helper.dart';
+
 Sheet _firstSheet(Excel excel) => excel.tables.values.first;
 
 Archive _encode(Excel excel) => ZipDecoder().decodeBytes(excel.encode()!);
@@ -528,4 +530,198 @@ void main() {
       );
     });
   });
+
+  group('Pivot Read-Back', () {
+    List<PivotTable> reopenPivots(Excel excel) =>
+        Excel.decodeBytes(excel.encode()!)['Sheet1'].pivotTables;
+
+    test('an authored pivot is read back as a typed PivotTable', () {
+      final excel = Excel.createExcel();
+      _seed(excel).addPivotTable(_byRegion());
+
+      final pivots = reopenPivots(excel);
+      expect(pivots, hasLength(1));
+      final p = pivots.first;
+      expect(p.name, 'ByRegion');
+      expect(p.anchor.cellId, 'E1');
+      expect(p.sourceFrom.cellId, 'A1');
+      expect(p.sourceTo.cellId, 'C6');
+      expect(p.sourceSheet, 'Sheet1');
+      expect(p.rowField, 0);
+      expect(p.subRowFields, isEmpty);
+      expect(p.columnField, isNull);
+      expect(p.pageFields, isEmpty);
+      expect(p.dataFields, hasLength(1));
+      expect(p.dataFields.first.column, 2);
+      expect(p.dataFields.first.function, PivotFunction.sum);
+      // The writer always materializes a caption, so it reads back populated.
+      expect(p.dataFields.first.name, 'Sum of Sales');
+    });
+
+    test('data-field aggregation functions survive the round-trip', () {
+      final excel = Excel.createExcel();
+      _seed(excel).addPivotTable(
+        _byRegion(
+          dataFields: const [
+            PivotDataField(2, function: PivotFunction.sum, name: 'Total'),
+            PivotDataField(2, function: PivotFunction.average, name: 'Avg'),
+          ],
+        ),
+      );
+
+      final p = reopenPivots(excel).single;
+      expect(p.dataFields.map((d) => d.function), [
+        PivotFunction.sum,
+        PivotFunction.average,
+      ]);
+      expect(p.dataFields.map((d) => d.name), ['Total', 'Avg']);
+      // The implicit "values" column axis (field x="-2") is not a real field.
+      expect(p.columnField, isNull);
+    });
+
+    test('a column field is read back', () {
+      final excel = Excel.createExcel();
+      _seed(excel).addPivotTable(
+        PivotTable(
+          name: 'Matrix',
+          anchor: CellIndex.indexByString('E1'),
+          sourceFrom: CellIndex.indexByString('A1'),
+          sourceTo: CellIndex.indexByString('C6'),
+          rowField: 0,
+          columnField: 1,
+          dataFields: const [PivotDataField(2)],
+        ),
+      );
+
+      final p = reopenPivots(excel).single;
+      expect(p.rowField, 0);
+      expect(p.columnField, 1);
+    });
+
+    test('nested row fields are read back', () {
+      final excel = Excel.createExcel();
+      _seed(excel).addPivotTable(
+        PivotTable(
+          name: 'Nested',
+          anchor: CellIndex.indexByString('E1'),
+          sourceFrom: CellIndex.indexByString('A1'),
+          sourceTo: CellIndex.indexByString('C6'),
+          rowField: 0,
+          subRowFields: const [1],
+          dataFields: const [PivotDataField(2)],
+        ),
+      );
+
+      final p = reopenPivots(excel).single;
+      expect(p.rowField, 0);
+      expect(p.subRowFields, [1]);
+    });
+
+    test('a page (report-filter) field is read back', () {
+      final excel = Excel.createExcel();
+      _seed(excel).addPivotTable(
+        PivotTable(
+          name: 'Filtered',
+          anchor: CellIndex.indexByString('E1'),
+          sourceFrom: CellIndex.indexByString('A1'),
+          sourceTo: CellIndex.indexByString('C6'),
+          rowField: 0,
+          pageFields: const [1],
+          dataFields: const [PivotDataField(2)],
+        ),
+      );
+
+      final p = reopenPivots(excel).single;
+      expect(p.pageFields, [1]);
+    });
+
+    test('re-saving a read-back pivot does not duplicate its parts', () {
+      final excel = Excel.createExcel();
+      _seed(excel).addPivotTable(_byRegion());
+
+      final reopened = Excel.decodeBytes(excel.encode()!);
+      expect(reopened['Sheet1'].pivotTables, hasLength(1)); // parsed
+      final a = _encode(reopened); // save again
+
+      expect(_part(a, 'xl/pivotTables/pivotTable1.xml'), isNotEmpty);
+      expect(_part(a, 'xl/pivotTables/pivotTable2.xml'), isEmpty); // no dupe
+      expect(_part(a, 'xl/pivotCache/pivotCacheDefinition2.xml'), isEmpty);
+    });
+
+    test('reads a hand-written pivot with a \$-absolute source ref', () {
+      final bytes = buildXlsx(
+        '<row r="1"><c r="A1" t="inlineStr"><is><t>Region</t></is></c></row>',
+        sheetRels:
+            '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+            '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+            '<Relationship Id="rId1" Type="$_relType" Target="../pivotTables/pivotTable1.xml"/>'
+            '</Relationships>',
+        extraParts: {
+          'xl/pivotTables/pivotTable1.xml':
+              '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+              '<pivotTableDefinition xmlns="$_ns" name="HandMade" cacheId="3">'
+              r'<location ref="$F$2:$H$12" firstHeaderRow="1" firstDataRow="2" firstDataCol="1"/>'
+              '<rowFields count="1"><field x="0"/></rowFields>'
+              '<pageFields count="1"><pageField fld="1" hier="-1"/></pageFields>'
+              '<dataFields count="1">'
+              '<dataField name="Average of Sales" fld="2" subtotal="average" baseField="0" baseItem="0"/>'
+              '</dataFields>'
+              '</pivotTableDefinition>',
+          'xl/pivotTables/_rels/pivotTable1.xml.rels':
+              '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+              '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+              '<Relationship Id="rId1" Type="$_cacheRelType" Target="../pivotCache/pivotCacheDefinition1.xml"/>'
+              '</Relationships>',
+          'xl/pivotCache/pivotCacheDefinition1.xml':
+              '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+              '<pivotCacheDefinition xmlns="$_ns" recordCount="5">'
+              '<cacheSource type="worksheet">'
+              r'<worksheetSource ref="$A$1:$C$6" sheet="Sheet1"/>'
+              '</cacheSource></pivotCacheDefinition>',
+        },
+      );
+
+      final p = Excel.decodeBytes(bytes)['Sheet1'].pivotTables.single;
+      expect(p.name, 'HandMade');
+      expect(p.anchor.cellId, 'F2'); // first cell of the location ref
+      expect(p.sourceFrom.cellId, 'A1'); // $ stripped
+      expect(p.sourceTo.cellId, 'C6');
+      expect(p.sourceSheet, 'Sheet1');
+      expect(p.rowField, 0);
+      expect(p.pageFields, [1]);
+      expect(p.dataFields.single.function, PivotFunction.average);
+    });
+
+    test('a pivot with no modelable shape is skipped but still preserved', () {
+      // No rowFields / dataFields / worksheet source — not representable as a
+      // typed PivotTable, but the part must still survive the round-trip.
+      final bytes = buildXlsx(
+        '<row r="1"><c r="A1" t="inlineStr"><is><t>x</t></is></c></row>',
+        sheetRels:
+            '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+            '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+            '<Relationship Id="rId1" Type="$_relType" Target="../pivotTables/pivotTable1.xml"/>'
+            '</Relationships>',
+        extraParts: {
+          'xl/pivotTables/pivotTable1.xml':
+              '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+              '<pivotTableDefinition xmlns="$_ns" name="Empty" cacheId="9"/>',
+        },
+      );
+
+      final excel = Excel.decodeBytes(bytes);
+      expect(excel['Sheet1'].pivotTables, isEmpty); // skipped, no crash
+      final saved = excel.encode()!;
+      expect(
+        partExists(saved, 'xl/pivotTables/pivotTable1.xml'),
+        isTrue, // preserved via _cloneArchive
+      );
+    });
+  });
 }
+
+const _ns = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
+const _relType =
+    'http://schemas.openxmlformats.org/officeDocument/2006/relationships/pivotTable';
+const _cacheRelType =
+    'http://schemas.openxmlformats.org/officeDocument/2006/relationships/pivotCacheDefinition';
