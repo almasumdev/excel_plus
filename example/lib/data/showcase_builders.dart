@@ -101,25 +101,6 @@ void _layMargin(Sheet s) {
   _fitRows(s, List.filled(_marginCells, 1), totalPx: _marginPxY);
 }
 
-/// Pixel ([width], [height]) for a chart that fills the "chart area" — the full
-/// content width, by the height of [count] rows starting at content-row [start]
-/// in the [rowWeights] layout. The height is trimmed slightly so the chart never
-/// overlaps the table beneath it (charts anchor top-left with no cell offset).
-({int width, int height}) _chartBox(
-  List<double> rowWeights,
-  int start,
-  int count,
-) {
-  final sum = rowWeights.fold<double>(0, (a, b) => a + b);
-  var span = 0.0;
-  for (var i = start; i < start + count; i++) {
-    span += rowWeights[i];
-  }
-  final h = (phoneHeightPx - _marginPxY) * span / sum;
-  final w = phoneWidthPx - _marginPxX;
-  return (width: w.round(), height: (h * 0.94).round());
-}
-
 // ---------------------------------------------------------------------------
 // shared helpers / palette
 // ---------------------------------------------------------------------------
@@ -474,14 +455,14 @@ final _timesheet = Showcase(
   snippet: r'''
 // a real clustered column chart of planned vs actual hours per week
 sheet.addChart(Chart.column(
-  anchor: CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 1),
+  anchor:   CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 1),
+  anchorTo: CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: 9), // span the area
   categories: 'A11:A15',                          // Week 1..5
   series: [
     ChartSeries(name: 'Planned', values: 'B11:B15'),
     ChartSeries(name: 'Actual',  values: 'C11:C15'),
   ],
   legend: LegendPosition.bottom,
-  width: 500, height: 300,
 ));''',
   fullCode: _timesheetCode,
   build: _buildTimesheet,
@@ -629,13 +610,16 @@ Excel _buildTimesheet() {
     ),
   );
 
-  // A real clustered column chart of planned vs actual hours (renders in Excel),
-  // sized to fill the chart area exactly so it never overlaps the table below.
-  final rows = [1.6, ...List.filled(8, 1.0), 1.2, ...List.filled(5, 1.0), 1.2];
-  final box = _chartBox(rows, 1, 8);
+  // A real clustered column chart of planned vs actual hours (renders in Excel).
+  // A two-cell anchor spans the chart area exactly — full table width (cols 0..3)
+  // by the 8 blank rows — so its edges line up with the title and table.
   s.addChart(
     Chart.column(
       anchor: CellIndex.indexByColumnRow(columnIndex: dc, rowIndex: 1 + dr),
+      anchorTo: CellIndex.indexByColumnRow(
+        columnIndex: dc + 4,
+        rowIndex: headerRow + dr,
+      ),
       categories: '${a1(0, headerRow + 1)}:${a1(0, headerRow + weeks.length)}',
       series: [
         ChartSeries(
@@ -648,8 +632,6 @@ Excel _buildTimesheet() {
         ),
       ],
       legend: LegendPosition.bottom,
-      width: box.width,
-      height: box.height,
     ),
   );
 
@@ -660,7 +642,12 @@ Excel _buildTimesheet() {
     first: dc,
     totalPx: phoneWidthPx - _marginPxX,
   );
-  _fitRows(s, rows, first: dr, totalPx: phoneHeightPx - _marginPxY);
+  _fitRows(
+    s,
+    [1.6, ...List.filled(8, 1.0), 1.2, ...List.filled(5, 1.0), 1.2],
+    first: dr,
+    totalPx: phoneHeightPx - _marginPxY,
+  );
   return excel;
 }
 
@@ -681,12 +668,12 @@ final _yearlySales = Showcase(
   snippet: r'''
 // a real column chart of monthly sales, anchored at the top of the sheet
 sheet.addChart(Chart.column(
-  anchor: CellIndex.indexByString('F7'),
+  anchor:   CellIndex.indexByString('F7'),
+  anchorTo: CellIndex.indexByString('L15'),    // span the chart area exactly
   series: [ChartSeries(name: 'Internet Sales Amount', values: 'F20:F31')],
   categories: 'E20:E31',                       // Jan..Dec (hidden source rows)
   legend: LegendPosition.bottom,
   plotVisibleOnly: false,                      // plot the hidden source rows
-  width: 510, height: 300,
 ));''',
   fullCode: _yearlyCode,
   build: _buildYearlySales,
@@ -831,12 +818,16 @@ Excel _buildYearlySales() {
   }
 
   // The 12-month source sits in hidden rows; plotVisibleOnly:false lets the
-  // chart plot them. Sized to fill the chart area exactly (no table overlap).
-  final rows = [1.6, ...List.filled(8, 1.0), 1.5, 1.0, 1.5, 1.0];
-  final box = _chartBox(rows, 1, 8);
+  // chart plot them. A two-cell anchor spans the chart area exactly — full width
+  // (cols 0..5) by the 8 blank rows — so it lines up with the title bar and sits
+  // flush above the KPI cards.
   s.addChart(
     Chart.column(
       anchor: CellIndex.indexByColumnRow(columnIndex: dc, rowIndex: 1 + dr),
+      anchorTo: CellIndex.indexByColumnRow(
+        columnIndex: dc + 6,
+        rowIndex: 9 + dr,
+      ),
       series: [
         ChartSeries(
           name: 'Internet Sales Amount',
@@ -846,8 +837,6 @@ Excel _buildYearlySales() {
       categories: '${a1(0, srcTop)}:${a1(0, srcTop + months.length - 1)}',
       legend: LegendPosition.bottom,
       plotVisibleOnly: false,
-      width: box.width,
-      height: box.height,
     ),
   );
 
@@ -858,7 +847,12 @@ Excel _buildYearlySales() {
     first: dc,
     totalPx: phoneWidthPx - _marginPxX,
   );
-  _fitRows(s, rows, first: dr, totalPx: phoneHeightPx - _marginPxY);
+  _fitRows(
+    s,
+    [1.6, ...List.filled(8, 1.0), 1.5, 1.0, 1.5, 1.0],
+    first: dr,
+    totalPx: phoneHeightPx - _marginPxY,
+  );
   return excel;
 }
 
@@ -878,11 +872,11 @@ final _eventExpenses = Showcase(
   snippet: r'''
 // a real pie chart of expected cost by category, anchored over the table
 sheet.addChart(Chart.pie(
-  anchor: CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 1),
+  anchor:   CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 1),
+  anchorTo: CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: 9), // span the area
   categories: 'A11:A17',                          // category names
   series: ChartSeries(name: 'Expected', values: 'B11:B17'),
   legend: LegendPosition.right,
-  width: 500, height: 300,
 ));''',
   fullCode: _eventExpensesCode,
   build: _buildEventExpenses,
@@ -1035,20 +1029,21 @@ Excel _buildEventExpenses() {
     ),
   );
 
-  // Sized to fill the chart area exactly so the pie never overlaps the table.
-  final rows = [1.6, ...List.filled(8, 1.0), 1.2, ...List.filled(7, 1.0), 1.2];
-  final box = _chartBox(rows, 1, 8);
+  // A two-cell anchor spans the chart area exactly — full table width (cols 0..3)
+  // by the 8 blank rows — so the pie lines up with the title and table.
   s.addChart(
     Chart.pie(
       anchor: CellIndex.indexByColumnRow(columnIndex: dc, rowIndex: 1 + dr),
+      anchorTo: CellIndex.indexByColumnRow(
+        columnIndex: dc + 4,
+        rowIndex: headerRow + dr,
+      ),
       categories: '${a1(0, headerRow + 1)}:${a1(0, headerRow + cats.length)}',
       series: ChartSeries(
         name: 'Expected',
         values: '${a1(1, headerRow + 1)}:${a1(1, headerRow + cats.length)}',
       ),
       legend: LegendPosition.right,
-      width: box.width,
-      height: box.height,
     ),
   );
 
@@ -1059,7 +1054,12 @@ Excel _buildEventExpenses() {
     first: dc,
     totalPx: phoneWidthPx - _marginPxX,
   );
-  _fitRows(s, rows, first: dr, totalPx: phoneHeightPx - _marginPxY);
+  _fitRows(
+    s,
+    [1.6, ...List.filled(8, 1.0), 1.2, ...List.filled(7, 1.0), 1.2],
+    first: dr,
+    totalPx: phoneHeightPx - _marginPxY,
+  );
   return excel;
 }
 
@@ -1307,15 +1307,17 @@ Excel buildTimesheet() {
   put(2, totalRow, DoubleCellValue(actualTotal), cell(bold: true, fill: slate, font: ExcelColor.white, align: HorizontalAlign.Right, fmt: oneDp));
   put(3, totalRow, DoubleCellValue(actualTotal - plannedTotal), cell(bold: true, fill: slate, font: ExcelColor.white, align: HorizontalAlign.Right, fmt: variance));
 
-  // a real clustered column chart of planned vs actual hours (renders in Excel)
+  // a real clustered column chart of planned vs actual hours (renders in Excel);
+  // a two-cell anchor spans the chart area exactly so it lines up with the table
   s.addChart(Chart.column(
     anchor: CellIndex.indexByColumnRow(columnIndex: dc, rowIndex: 1 + dr),
+    anchorTo: CellIndex.indexByColumnRow(columnIndex: dc + 4, rowIndex: headerRow + dr),
     categories: '${a1(0, headerRow + 1)}:${a1(0, headerRow + weeks.length)}',
     series: [
       ChartSeries(name: 'Planned', values: '${a1(1, headerRow + 1)}:${a1(1, headerRow + weeks.length)}'),
       ChartSeries(name: 'Actual', values: '${a1(2, headerRow + 1)}:${a1(2, headerRow + weeks.length)}'),
     ],
-    legend: LegendPosition.bottom, width: 500, height: 300,
+    legend: LegendPosition.bottom,
   ));
 
   for (var r = 0; r < dr; r++) {
@@ -1402,12 +1404,15 @@ Excel buildSalesDashboard() {
     s.setRowHidden(r + dr, true);
   }
 
+  // a two-cell anchor spans the chart area exactly (full width × the 8 blank
+  // rows) so the chart lines up with the title bar and sits above the KPI cards
   s.addChart(Chart.column(
     anchor: CellIndex.indexByColumnRow(columnIndex: dc, rowIndex: 1 + dr),
+    anchorTo: CellIndex.indexByColumnRow(columnIndex: dc + 6, rowIndex: 9 + dr),
     series: [ChartSeries(name: 'Internet Sales Amount',
         values: '${a1(1, srcTop)}:${a1(1, srcTop + months.length - 1)}')],
     categories: '${a1(0, srcTop)}:${a1(0, srcTop + months.length - 1)}',
-    legend: LegendPosition.bottom, plotVisibleOnly: false, width: 510, height: 300,
+    legend: LegendPosition.bottom, plotVisibleOnly: false,
   ));
 
   for (var r = 0; r < dr; r++) {
@@ -1509,11 +1514,14 @@ Excel buildEventExpenses() {
   put(2, totalRow, DoubleCellValue(actualTotal), cell(bold: true, fill: slate, font: ExcelColor.white, align: HorizontalAlign.Right, fmt: money));
   put(3, totalRow, DoubleCellValue(expectedTotal - actualTotal), cell(bold: true, fill: slate, font: ExcelColor.white, align: HorizontalAlign.Right, fmt: redParen));
 
+  // a two-cell anchor spans the chart area exactly so the pie lines up with the
+  // table below it
   s.addChart(Chart.pie(
     anchor: CellIndex.indexByColumnRow(columnIndex: dc, rowIndex: 1 + dr),
+    anchorTo: CellIndex.indexByColumnRow(columnIndex: dc + 4, rowIndex: headerRow + dr),
     categories: '${a1(0, headerRow + 1)}:${a1(0, headerRow + cats.length)}',
     series: ChartSeries(name: 'Expected', values: '${a1(1, headerRow + 1)}:${a1(1, headerRow + cats.length)}'),
-    legend: LegendPosition.right, width: 500, height: 300,
+    legend: LegendPosition.right,
   ));
 
   for (var r = 0; r < dr; r++) {
