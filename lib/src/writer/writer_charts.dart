@@ -30,6 +30,122 @@ mixin _WriterChartsMixin on _WriterBase {
     return '$quoted!$ref';
   }
 
+  /// Resolves an A1 range [ref] (optionally `'Sheet'!`-qualified, `$`-anchors
+  /// tolerated) to the cell values it covers, in row-major order, against the
+  /// already-parsed sheet data. [hostSheet] supplies the sheet when [ref] is not
+  /// sheet-qualified. Returns an empty list if the sheet or ref can't be
+  /// resolved, so the caller simply omits the cache and keeps the bare `<c:f>`.
+  List<CellValue?> _refValues(String hostSheet, String ref) {
+    var sheetName = hostSheet;
+    var range = ref.trim();
+    final bang = range.lastIndexOf('!');
+    if (bang != -1) {
+      var sp = range.substring(0, bang);
+      range = range.substring(bang + 1);
+      if (sp.length >= 2 && sp.startsWith("'") && sp.endsWith("'")) {
+        sp = sp.substring(1, sp.length - 1).replaceAll("''", "'");
+      }
+      sheetName = sp;
+    }
+    final sheet = _excel._sheetMap[sheetName];
+    if (sheet == null) return const [];
+
+    range = range.replaceAll(r'$', '');
+    final ends = range.split(':');
+    try {
+      final (r1, c1) = _cellCoordsFromCellId(ends.first);
+      final (r2, c2) = ends.length > 1
+          ? _cellCoordsFromCellId(ends[1])
+          : (r1, c1);
+      final minR = min(r1, r2), maxR = max(r1, r2);
+      final minC = min(c1, c2), maxC = max(c1, c2);
+      final out = <CellValue?>[];
+      for (var r = minR; r <= maxR; r++) {
+        for (var c = minC; c <= maxC; c++) {
+          out.add(sheet._sheetData[r]?[c]?.value);
+        }
+      }
+      return out;
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  /// Numeric value of [v] for a chart value cache, or `null` to leave a gap.
+  double? _chartNum(CellValue? v) {
+    if (v is IntCellValue) return v.value.toDouble();
+    if (v is DoubleCellValue) return v.value;
+    if (v is BoolCellValue) return v.value ? 1 : 0;
+    if (v is FormulaCellValue && v.cachedValue != null) {
+      return double.tryParse(v.cachedValue!);
+    }
+    return null;
+  }
+
+  /// Display text of [v] for a chart category cache.
+  String _chartText(CellValue? v) {
+    if (v == null) return '';
+    if (v is TextCellValue) return v.value.toString();
+    return v.toString();
+  }
+
+  /// Renders a cache number without a redundant `.0` on whole values.
+  String _numStr(double n) =>
+      (n == n.roundToDouble() && n.abs() < 1e15) ? '${n.toInt()}' : '$n';
+
+  /// A `<c:numRef>` (formula + a `<c:numCache>` of the actual values) for [ref].
+  /// The cache lets consumers that don't re-evaluate the reference — or that
+  /// skip hidden source rows (e.g. LibreOffice) — still draw the data.
+  XmlElement _numRef(String hostSheet, String ref) {
+    final children = <XmlNode>[
+      _c('f', [], [XmlText(_chartRef(hostSheet, ref))]),
+    ];
+    final values = _refValues(hostSheet, ref);
+    if (values.isNotEmpty) {
+      children.add(
+        _c('numCache', [], [
+          _c('formatCode', [], [XmlText('General')]),
+          _cVal('ptCount', '${values.length}'),
+          for (var i = 0; i < values.length; i++)
+            if (_chartNum(values[i]) case final n?)
+              _c(
+                'pt',
+                [XmlAttribute(_xmlName('idx'), '$i')],
+                [
+                  _c('v', [], [XmlText(_numStr(n))]),
+                ],
+              ),
+        ]),
+      );
+    }
+    return _c('numRef', [], children);
+  }
+
+  /// A `<c:strRef>` (formula + a `<c:strCache>` of the actual labels) for [ref].
+  XmlElement _strRef(String hostSheet, String ref) {
+    final children = <XmlNode>[
+      _c('f', [], [XmlText(_chartRef(hostSheet, ref))]),
+    ];
+    final values = _refValues(hostSheet, ref);
+    if (values.isNotEmpty) {
+      children.add(
+        _c('strCache', [], [
+          _cVal('ptCount', '${values.length}'),
+          for (var i = 0; i < values.length; i++)
+            if (values[i] != null)
+              _c(
+                'pt',
+                [XmlAttribute(_xmlName('idx'), '$i')],
+                [
+                  _c('v', [], [XmlText(_chartText(values[i]))]),
+                ],
+              ),
+        ]),
+      );
+    }
+    return _c('strRef', [], children);
+  }
+
   /// A `<c:title>` holding plain [text].
   XmlElement _chartTitle(String text) => _c('title', [], [
     _c('tx', [], [
@@ -60,17 +176,8 @@ mixin _WriterChartsMixin on _WriterBase {
         _c('tx', [], [
           _c('v', [], [XmlText(s.name!)]),
         ]),
-      if (categories != null)
-        _c('cat', [], [
-          _c('strRef', [], [
-            _c('f', [], [XmlText(_chartRef(sheetName, categories))]),
-          ]),
-        ]),
-      _c('val', [], [
-        _c('numRef', [], [
-          _c('f', [], [XmlText(_chartRef(sheetName, s.values))]),
-        ]),
-      ]),
+      if (categories != null) _c('cat', [], [_strRef(sheetName, categories)]),
+      _c('val', [], [_numRef(sheetName, s.values)]),
     ];
     return _c('ser', [], children);
   }
@@ -84,16 +191,8 @@ mixin _WriterChartsMixin on _WriterBase {
         _c('tx', [], [
           _c('v', [], [XmlText(s.name!)]),
         ]),
-      _c('xVal', [], [
-        _c('numRef', [], [
-          _c('f', [], [XmlText(_chartRef(sheetName, s.xValues ?? s.values))]),
-        ]),
-      ]),
-      _c('yVal', [], [
-        _c('numRef', [], [
-          _c('f', [], [XmlText(_chartRef(sheetName, s.values))]),
-        ]),
-      ]),
+      _c('xVal', [], [_numRef(sheetName, s.xValues ?? s.values)]),
+      _c('yVal', [], [_numRef(sheetName, s.values)]),
     ]);
   }
 

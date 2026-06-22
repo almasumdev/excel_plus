@@ -49,6 +49,14 @@
   template no longer contains a drawing, so a fresh chart/image now lands in a
   single clean `drawing1.xml` with exactly one content-type entry. Blank
   workbooks are also smaller (no drawing part, sheet rels, or drawing override).
+- **Authored charts now bake in cached values.** Chart series were written with
+  only a formula reference (`<c:f>`) and no `<c:numCache>`/`<c:strCache>`. Excel
+  and Google Sheets re-evaluate the reference, but consumers that don't — notably
+  **LibreOffice**, and any chart whose source rows are **hidden** — drew an empty
+  plot (axes but no bars). Series now embed the actual values and category labels
+  resolved from the sheet, matching what Excel writes, so charts render correctly
+  everywhere (including over hidden source data with `plotVisibleOnly: false`).
+  Charts read from an existing file still round-trip untouched.
 
 ## 2.0.0
 

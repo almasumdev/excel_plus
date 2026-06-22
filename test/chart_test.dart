@@ -115,6 +115,54 @@ void main() {
       expect(rels, isNot(contains('drawing2.xml')));
     });
 
+    test('a series bakes in cached values and category labels', () {
+      final excel = Excel.createExcel();
+      _seed(excel).addChart(
+        Chart.column(
+          anchor: CellIndex.indexByString('D2'),
+          categories: 'A2:A5',
+          series: [ChartSeries(name: 'Units', values: 'B2:B5')],
+        ),
+      );
+
+      final chart = _part(_encode(excel), 'xl/charts/chart1.xml');
+      // Without a cache, consumers that don't re-evaluate the <c:f> reference
+      // draw nothing. The values and labels must be baked in.
+      expect(chart, contains('<c:numCache>'));
+      expect(chart, contains('<c:strCache>'));
+      expect(chart, contains('<c:ptCount val="4"/>'));
+      expect(chart, contains('<c:v>10</c:v>')); // B2
+      expect(chart, contains('<c:v>30</c:v>')); // B5
+      expect(chart, contains('<c:v>Q1</c:v>')); // A2
+      expect(chart, contains('<c:v>Q4</c:v>')); // A5
+    });
+
+    test('cached values include data in hidden source rows', () {
+      // The exact failure that left LibreOffice charts blank: source rows hidden
+      // and plotted via plotVisibleOnly:false. The cache must still carry them.
+      final excel = Excel.createExcel();
+      final s = _firstSheet(excel);
+      for (var i = 0; i < 3; i++) {
+        s.updateCell(
+          CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: i + 1),
+          IntCellValue((i + 1) * 100),
+        );
+        s.setRowHidden(i + 1, true);
+      }
+      s.addChart(
+        Chart.column(
+          anchor: CellIndex.indexByString('D2'),
+          series: [ChartSeries(name: 'V', values: 'A2:A4')],
+          plotVisibleOnly: false,
+        ),
+      );
+
+      final chart = _part(_encode(excel), 'xl/charts/chart1.xml');
+      expect(chart, contains('<c:v>100</c:v>'));
+      expect(chart, contains('<c:v>200</c:v>'));
+      expect(chart, contains('<c:v>300</c:v>'));
+    });
+
     test('every chart type emits its plot element and parses as XML', () {
       final cases = <ChartType, String>{
         ChartType.column: '<c:barChart>',
