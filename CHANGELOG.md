@@ -11,6 +11,10 @@
   `MROUND`, `ISEVEN`, `ISODD`.
 - **`XLOOKUP` enhancements** — match mode `2` (wildcard match) and search mode
   `-2` (reverse scan).
+- **Chart read-back** — charts in an opened workbook are now parsed into
+  `sheet.charts` as `Chart` objects (type, title, series, categories, grouping,
+  legend, axis titles, anchor). Previously charts were authoring-only; existing
+  charts still round-trip untouched and are not duplicated on save.
 
 ## 2.0.0
 

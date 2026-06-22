@@ -136,7 +136,7 @@ cd ../excel_plus_bench                && dart pub get && dart run bin/benchmark.
 - ✅ Grouping & outline
 - ✅ Comments / notes
 - ✅ Excel tables (ListObjects)
-- ✅ Charts (column, bar, line, area, pie, doughnut, scatter)
+- ✅ Charts — read & write (column, bar, line, area, pie, doughnut, scatter)
 - ✅ Pivot tables (row / column / page / nested fields + measures)
 - ✅ Rich text (read & write)
 - ✅ Theme & indexed colours
@@ -151,7 +151,6 @@ cd ../excel_plus_bench                && dart pub get && dart run bin/benchmark.
 ## Limitations
 
 - ❌ Long-tail / engineering formula functions
-- ❌ Chart read-back (authoring is supported)
 - ❌ Pivot typed read-back (authoring — incl. row/column/page/nested fields — is
   supported; existing pivots are preserved on round-trip)
 

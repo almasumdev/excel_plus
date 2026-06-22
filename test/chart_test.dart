@@ -328,6 +328,112 @@ void main() {
     });
   });
 
+  group('Chart Read-Back', () {
+    List<Chart> readCharts(Excel excel) =>
+        Excel.decodeBytes(excel.encode()!)['Sheet1'].charts;
+
+    test('a column chart reads back its type, title, series and anchor', () {
+      final excel = Excel.createExcel();
+      _seed(excel).addChart(
+        Chart.column(
+          anchor: CellIndex.indexByString('D2'),
+          title: 'Sales',
+          categories: 'A2:A5',
+          series: [ChartSeries(name: 'Units', values: 'B2:B5')],
+          xAxisTitle: 'Quarter',
+          yAxisTitle: 'Amount',
+        ),
+      );
+
+      final charts = readCharts(excel);
+      expect(charts, hasLength(1));
+      final c = charts.first;
+      expect(c.type, ChartType.column);
+      expect(c.title, 'Sales');
+      expect(c.xAxisTitle, 'Quarter');
+      expect(c.yAxisTitle, 'Amount');
+      expect(c.anchor.columnIndex, 3); // D
+      expect(c.anchor.rowIndex, 1); // row 2
+      expect(c.series, hasLength(1));
+      expect(c.series.first.name, 'Units');
+      expect(c.series.first.values, contains('B2:B5'));
+      expect(c.categories, contains('A2:A5'));
+    });
+
+    test('every chart type reads back its kind', () {
+      for (final type in ChartType.values) {
+        final excel = Excel.createExcel();
+        final series = type == ChartType.scatter
+            ? [ChartSeries(values: 'B2:B5', xValues: 'A2:A5')]
+            : [ChartSeries(values: 'B2:B5')];
+        _seed(excel).addChart(
+          Chart(
+            type: type,
+            anchor: CellIndex.indexByString('D2'),
+            categories: 'A2:A5',
+            series: series,
+          ),
+        );
+        expect(readCharts(excel).single.type, type, reason: '$type');
+      }
+    });
+
+    test('a scatter chart reads back its x and y refs', () {
+      final excel = Excel.createExcel();
+      _seed(excel).addChart(
+        Chart.scatter(
+          anchor: CellIndex.indexByString('D2'),
+          series: [ChartSeries(values: 'B2:B5', xValues: 'A2:A5')],
+        ),
+      );
+      final s = readCharts(excel).single.series.single;
+      expect(s.values, contains('B2:B5'));
+      expect(s.xValues, contains('A2:A5'));
+    });
+
+    test('grouping and legend position round-trip', () {
+      final excel = Excel.createExcel();
+      _seed(excel).addChart(
+        Chart.column(
+          anchor: CellIndex.indexByString('D2'),
+          grouping: ChartGrouping.stacked,
+          legend: LegendPosition.bottom,
+          series: [ChartSeries(values: 'B2:B5')],
+        ),
+      );
+      final c = readCharts(excel).single;
+      expect(c.grouping, ChartGrouping.stacked);
+      expect(c.legend, LegendPosition.bottom);
+    });
+
+    test('a chart with no legend reads back LegendPosition.none', () {
+      final excel = Excel.createExcel();
+      _seed(excel).addChart(
+        Chart.column(
+          anchor: CellIndex.indexByString('D2'),
+          legend: LegendPosition.none,
+          series: [ChartSeries(values: 'B2:B5')],
+        ),
+      );
+      expect(readCharts(excel).single.legend, LegendPosition.none);
+    });
+
+    test('reading then re-saving does not duplicate the chart part', () {
+      final excel = Excel.createExcel();
+      _seed(excel).addChart(
+        Chart.column(
+          anchor: CellIndex.indexByString('D2'),
+          series: [ChartSeries(values: 'B2:B5')],
+        ),
+      );
+      final reopened = Excel.decodeBytes(excel.encode()!);
+      expect(reopened['Sheet1'].charts, hasLength(1)); // parsed
+      final a = ZipDecoder().decodeBytes(reopened.encode()!);
+      expect(_part(a, 'xl/charts/chart1.xml'), isNotEmpty);
+      expect(_part(a, 'xl/charts/chart2.xml'), isEmpty); // not duplicated
+    });
+  });
+
   group('Chart Validation', () {
     test('addChart rejects a chart with no data series', () {
       final excel = Excel.createExcel();

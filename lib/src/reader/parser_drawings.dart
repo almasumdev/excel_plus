@@ -60,9 +60,9 @@ mixin _ParserDrawingsMixin on _ParserBase {
       return; // malformed drawing — degrade gracefully
     }
 
-    // Map the drawing's own relationship ids to media part paths.
-    final mediaById = _parseDrawingRels(drawingPath);
-    if (mediaById.isEmpty) return;
+    // Map the drawing's own relationship ids to target part paths (media for
+    // pictures, chart parts for graphic frames).
+    final relsById = _parseDrawingRels(drawingPath);
 
     for (final pic in doc.descendantElements.where(
       (e) => e.name.local == 'pic',
@@ -72,7 +72,7 @@ mixin _ParserDrawingsMixin on _ParserBase {
           .firstOrNull;
       if (blip == null) continue;
       final embed = _attrByLocal(blip, 'embed');
-      final mediaPath = embed == null ? null : mediaById[embed];
+      final mediaPath = embed == null ? null : relsById[embed];
       if (mediaPath == null) continue;
 
       final mediaFile = _excel._archive.findFile(mediaPath);
@@ -97,7 +97,201 @@ mixin _ParserDrawingsMixin on _ParserBase {
         ),
       );
     }
+
+    _parseChartsInDrawing(sheet, doc, relsById);
   }
+
+  /// Parses each `<xdr:graphicFrame>` chart reference in the drawing [doc] into
+  /// a [Chart] on [sheet], marked as already-written so it round-trips untouched
+  /// (the chart part rides `_cloneArchive`) and is not re-authored on save.
+  void _parseChartsInDrawing(
+    Sheet sheet,
+    XmlDocument doc,
+    Map<String, String> relsById,
+  ) {
+    for (final frame in doc.descendantElements.where(
+      (e) => e.name.local == 'graphicFrame',
+    )) {
+      final chartRef = frame.descendantElements
+          .where(
+            (e) => e.name.local == 'chart' && _attrByLocal(e, 'id') != null,
+          )
+          .firstOrNull;
+      if (chartRef == null) continue;
+      final chartPath = relsById[_attrByLocal(chartRef, 'id')];
+      if (chartPath == null) continue;
+
+      final file = _excel._archive.findFile(chartPath);
+      if (file == null) continue;
+      file.decompress();
+      final XmlDocument cdoc;
+      try {
+        cdoc = XmlDocument.parse(utf8.decode(file.content));
+      } catch (_) {
+        continue; // malformed chart part — degrade gracefully
+      }
+
+      final anchorEl = _ancestorAnchor(frame);
+      final (w, h) = _readAnchorSize(anchorEl);
+      final chart = _chartFromDoc(cdoc, _readAnchorCell(anchorEl), w, h);
+      if (chart == null) continue;
+      chart._written = true; // preserved as-is; do not re-author on save
+      sheet._charts.add(chart);
+    }
+  }
+
+  /// Builds a [Chart] from a parsed `chartN.xml` document, or `null` when it has
+  /// no recognizable plot/series.
+  Chart? _chartFromDoc(
+    XmlDocument cdoc,
+    CellIndex anchor,
+    int width,
+    int height,
+  ) {
+    final chartEl = cdoc.descendantElements
+        .where((e) => e.name.local == 'chart')
+        .firstOrNull;
+    final plotArea = chartEl?.descendantElements
+        .where((e) => e.name.local == 'plotArea')
+        .firstOrNull;
+    if (chartEl == null || plotArea == null) return null;
+
+    final plot = plotArea.childElements
+        .where((e) => e.name.local.endsWith('Chart'))
+        .firstOrNull;
+    if (plot == null) return null;
+
+    final ChartType type;
+    switch (plot.name.local) {
+      case 'barChart':
+        type = _childVal(plot, 'barDir') == 'bar'
+            ? ChartType.bar
+            : ChartType.column;
+      case 'lineChart':
+        type = ChartType.line;
+      case 'areaChart':
+        type = ChartType.area;
+      case 'pieChart':
+        type = ChartType.pie;
+      case 'doughnutChart':
+        type = ChartType.doughnut;
+      case 'scatterChart':
+        type = ChartType.scatter;
+      default:
+        return null;
+    }
+    final isScatter = type == ChartType.scatter;
+
+    final titleEl = chartEl.childElements
+        .where((e) => e.name.local == 'title')
+        .firstOrNull;
+    final legendEl = chartEl.descendantElements
+        .where((e) => e.name.local == 'legend')
+        .firstOrNull;
+
+    String? xTitle;
+    String? yTitle;
+    if (isScatter) {
+      final valAxes = plotArea.childElements
+          .where((e) => e.name.local == 'valAx')
+          .toList();
+      if (valAxes.isNotEmpty) xTitle = _axisTitle(valAxes.first);
+      if (valAxes.length > 1) yTitle = _axisTitle(valAxes[1]);
+    } else {
+      xTitle = _axisTitle(
+        plotArea.childElements
+            .where((e) => e.name.local == 'catAx')
+            .firstOrNull,
+      );
+      yTitle = _axisTitle(
+        plotArea.childElements
+            .where((e) => e.name.local == 'valAx')
+            .firstOrNull,
+      );
+    }
+
+    String? categories;
+    final series = <ChartSeries>[];
+    for (final ser in plot.childElements.where((e) => e.name.local == 'ser')) {
+      final name = _refText(ser, 'tx', leaf: 'v');
+      if (isScatter) {
+        final y = _refText(ser, 'yVal');
+        if (y == null) continue;
+        series.add(
+          ChartSeries(name: name, values: y, xValues: _refText(ser, 'xVal')),
+        );
+      } else {
+        final v = _refText(ser, 'val');
+        categories ??= _refText(ser, 'cat');
+        if (v == null) continue;
+        series.add(ChartSeries(name: name, values: v));
+      }
+    }
+    if (series.isEmpty) return null;
+
+    return Chart(
+      type: type,
+      anchor: anchor,
+      title: titleEl == null ? null : _titleText(titleEl),
+      categories: categories,
+      series: series,
+      grouping: _groupingFromVal(_childVal(plot, 'grouping')),
+      legend: legendEl == null
+          ? LegendPosition.none
+          : _legendFromVal(_childVal(legendEl, 'legendPos')),
+      width: width > 0 ? width : 480,
+      height: height > 0 ? height : 288,
+      xAxisTitle: xTitle,
+      yAxisTitle: yTitle,
+    );
+  }
+
+  /// The `val` attribute of [parent]'s direct child named [local].
+  String? _childVal(XmlElement parent, String local) {
+    final el = parent.childElements
+        .where((e) => e.name.local == local)
+        .firstOrNull;
+    return el == null ? null : _attrByLocal(el, 'val');
+  }
+
+  /// The text of the `<c:title>` on an axis element [ax], or `null`.
+  String? _axisTitle(XmlElement? ax) {
+    final t = ax?.childElements
+        .where((e) => e.name.local == 'title')
+        .firstOrNull;
+    return t == null ? null : _titleText(t);
+  }
+
+  /// Concatenated `<a:t>` runs inside a `<c:title>` element.
+  String _titleText(XmlElement titleEl) => titleEl.descendantElements
+      .where((e) => e.name.local == 't')
+      .map((e) => e.innerText)
+      .join();
+
+  /// The reference/text inside `ser > [tag] > … > <c:f>` (or a `<c:v>` literal
+  /// when [leaf] is `'v'`), or `null`.
+  String? _refText(XmlElement ser, String tag, {String leaf = 'f'}) {
+    final box = ser.childElements.where((e) => e.name.local == tag).firstOrNull;
+    final node = box?.descendantElements
+        .where((e) => e.name.local == leaf)
+        .firstOrNull;
+    final text = node?.innerText.trim();
+    return (text == null || text.isEmpty) ? null : text;
+  }
+
+  ChartGrouping _groupingFromVal(String? v) => switch (v) {
+    'stacked' => ChartGrouping.stacked,
+    'percentStacked' => ChartGrouping.percentStacked,
+    'standard' => ChartGrouping.standard,
+    _ => ChartGrouping.clustered,
+  };
+
+  LegendPosition _legendFromVal(String? v) => switch (v) {
+    'l' => LegendPosition.left,
+    't' => LegendPosition.top,
+    'b' => LegendPosition.bottom,
+    _ => LegendPosition.right,
+  };
 
   /// Reads `xl/drawings/_rels/drawingN.xml.rels` into a map of relationship id
   /// -> media part path (resolved against the drawing's folder).
