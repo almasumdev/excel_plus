@@ -197,12 +197,9 @@ platform. Expand a group for details:
 
 ## Limitations
 
-- ❌ Long-tail statistical, engineering & database (D-) formula functions —
-  unknown functions evaluate to a `#NAME?` cell (never crash), and you can plug
-  in your own with `excel.formula.registerFunction`
-- ❌ Dynamic-array spilling across the grid — a top-level dynamic-array formula
-  (`FILTER`, `SORT`, `UNIQUE`, `SEQUENCE`) returns only its first cell
-- ❌ R1C1-style `INDIRECT` — only A1-style references are resolved
+- ❌ Long-tail statistical, engineering & database functions (register your own)
+- ❌ Dynamic-array spilling across the grid
+- ❌ R1C1-style references (A1-style only)
 
 ## Roadmap
 
