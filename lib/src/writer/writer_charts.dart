@@ -146,6 +146,44 @@ mixin _WriterChartsMixin on _WriterBase {
     return _c('strRef', [], children);
   }
 
+  /// Office accent palette used to colour series (and pie/doughnut slices).
+  /// Excel and Google auto-colour an uncoloured series from the theme, but
+  /// LibreOffice leaves an imported series with no `<c:spPr>` unfilled — i.e.
+  /// invisible bars. Emitting an explicit fill makes charts render everywhere.
+  static const _seriesPalette = <String>[
+    '4472C4', 'ED7D31', 'A5A5A5', 'FFC000', '5B9BD5', '70AD47', //
+    '264478', '9E480E', '636363', '997300', '255E91', '43682B',
+  ];
+
+  String _seriesColor(int i) => _seriesPalette[i % _seriesPalette.length];
+
+  XmlElement _srgb(String hex) =>
+      _ca('srgbClr', [XmlAttribute(_xmlName('val'), hex)]);
+
+  /// A solid-fill `<c:spPr>` (no outline) for a bar/area series or pie slice.
+  XmlElement _fillSpPr(String hex) => _c('spPr', [], [
+    _ca('solidFill', [], [_srgb(hex)]),
+    _ca('ln', [], [_ca('noFill')]),
+  ]);
+
+  /// A line-coloured `<c:spPr>` for a line/scatter series.
+  XmlElement _lineSpPr(String hex) => _c('spPr', [], [
+    _ca(
+      'ln',
+      [XmlAttribute(_xmlName('w'), '28575')],
+      [
+        _ca('solidFill', [], [_srgb(hex)]),
+      ],
+    ),
+  ]);
+
+  /// A coloured `<c:dPt>` so each pie/doughnut slice gets its own colour.
+  XmlElement _dPt(int idx, String hex) => _c('dPt', [], [
+    _cVal('idx', '$idx'),
+    _cVal('bubble3D', '0'),
+    _fillSpPr(hex),
+  ]);
+
   /// A `<c:title>` holding plain [text].
   XmlElement _chartTitle(String text) => _c('title', [], [
     _c('tx', [], [
@@ -163,12 +201,17 @@ mixin _WriterChartsMixin on _WriterBase {
   ]);
 
   /// Builds the `<c:ser>` for a category-based chart (bar/line/area/pie).
+  ///
+  /// [type] decides how the series is coloured: a solid fill for bar/area, a
+  /// line colour for line, and a per-slice `<c:dPt>` colour for pie/doughnut.
   XmlElement _categorySeries(
+    ChartType type,
     String sheetName,
     ChartSeries s,
     int index,
     String? categories,
   ) {
+    final isPieLike = type == ChartType.pie || type == ChartType.doughnut;
     final children = <XmlNode>[
       _cVal('idx', '$index'),
       _cVal('order', '$index'),
@@ -176,6 +219,15 @@ mixin _WriterChartsMixin on _WriterBase {
         _c('tx', [], [
           _c('v', [], [XmlText(s.name!)]),
         ]),
+      if (type == ChartType.line)
+        _lineSpPr(_seriesColor(index))
+      else if (!isPieLike)
+        _fillSpPr(_seriesColor(index)),
+      if (type == ChartType.column || type == ChartType.bar)
+        _cVal('invertIfNegative', '0'),
+      if (isPieLike)
+        for (var i = 0; i < _refValues(sheetName, s.values).length; i++)
+          _dPt(i, _seriesColor(i)),
       if (categories != null) _c('cat', [], [_strRef(sheetName, categories)]),
       _c('val', [], [_numRef(sheetName, s.values)]),
     ];
@@ -191,6 +243,7 @@ mixin _WriterChartsMixin on _WriterBase {
         _c('tx', [], [
           _c('v', [], [XmlText(s.name!)]),
         ]),
+      _lineSpPr(_seriesColor(index)),
       _c('xVal', [], [_numRef(sheetName, s.xValues ?? s.values)]),
       _c('yVal', [], [_numRef(sheetName, s.values)]),
     ]);
@@ -212,6 +265,7 @@ mixin _WriterChartsMixin on _WriterBase {
       _cVal('axPos', chart.type == ChartType.bar ? 'l' : 'b'),
       if (chart.xAxisTitle != null) _chartTitle(chart.xAxisTitle!),
       _cVal('crossAx', _valAxId),
+      _cVal('crosses', 'autoZero'),
     ]),
     _c('valAx', [], [
       _cVal('axId', _valAxId),
@@ -220,6 +274,7 @@ mixin _WriterChartsMixin on _WriterBase {
       _cVal('axPos', chart.type == ChartType.bar ? 'b' : 'l'),
       if (chart.yAxisTitle != null) _chartTitle(chart.yAxisTitle!),
       _cVal('crossAx', _catAxId),
+      _cVal('crosses', 'autoZero'),
     ]),
   ];
 
@@ -247,7 +302,13 @@ mixin _WriterChartsMixin on _WriterBase {
   List<XmlElement> _plotElements(String sheetName, Chart chart) {
     final ser = [
       for (var i = 0; i < chart.series.length; i++)
-        _categorySeries(sheetName, chart.series[i], i, chart.categories),
+        _categorySeries(
+          chart.type,
+          sheetName,
+          chart.series[i],
+          i,
+          chart.categories,
+        ),
     ];
     final axIds = [_cVal('axId', _catAxId), _cVal('axId', _valAxId)];
 
@@ -260,6 +321,7 @@ mixin _WriterChartsMixin on _WriterBase {
             _cVal('grouping', _groupingVal(chart.grouping)),
             _cVal('varyColors', '0'),
             ...ser,
+            _cVal('gapWidth', '150'),
             ...axIds,
           ]),
           ..._categoryValueAxes(chart),
@@ -295,7 +357,13 @@ mixin _WriterChartsMixin on _WriterBase {
         return [
           _c('pieChart', [], [
             _cVal('varyColors', '1'),
-            _categorySeries(sheetName, chart.series.first, 0, chart.categories),
+            _categorySeries(
+              ChartType.pie,
+              sheetName,
+              chart.series.first,
+              0,
+              chart.categories,
+            ),
             _cVal('firstSliceAng', '0'),
           ]),
         ];
@@ -303,7 +371,13 @@ mixin _WriterChartsMixin on _WriterBase {
         return [
           _c('doughnutChart', [], [
             _cVal('varyColors', '1'),
-            _categorySeries(sheetName, chart.series.first, 0, chart.categories),
+            _categorySeries(
+              ChartType.doughnut,
+              sheetName,
+              chart.series.first,
+              0,
+              chart.categories,
+            ),
             _cVal('firstSliceAng', '0'),
             _cVal('holeSize', '50'),
           ]),
@@ -339,6 +413,7 @@ mixin _WriterChartsMixin on _WriterBase {
           _cVal('overlay', '0'),
         ]),
       _cVal('plotVisOnly', chart.plotVisibleOnly ? '1' : '0'),
+      _cVal('dispBlanksAs', 'gap'),
     ];
 
     final root = XmlElement(

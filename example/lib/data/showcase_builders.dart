@@ -680,6 +680,7 @@ sheet.addChart(Chart.column(
   series: [ChartSeries(name: 'Internet Sales Amount', values: 'F20:F31')],
   categories: 'E20:E31',                       // Jan..Dec source rows
   legend: LegendPosition.bottom,
+  plotVisibleOnly: false,
 ));
 // keep the source off-screen but plottable: zero height, NOT hidden
 for (final r in sourceRows) sheet.setRowHeight(r, 0);''',
@@ -828,10 +829,11 @@ Excel _buildYearlySales() {
     s.setRowHeight(r + dr, 0);
   }
 
-  // The 12-month source sits in zero-height (but visible) rows below the cards.
-  // A two-cell anchor spans the chart area exactly — full width (cols 0..5) by
-  // the 8 blank rows — so it lines up with the title bar and sits flush above
-  // the KPI cards.
+  // The 12-month source sits in zero-height (but not hidden) rows below the
+  // cards; plotVisibleOnly:false plots them no matter how a viewer treats a
+  // zero-height row. A two-cell anchor spans the chart area exactly — full width
+  // (cols 0..5) by the 8 blank rows — so it lines up with the title bar and sits
+  // flush above the KPI cards.
   s.addChart(
     Chart.column(
       anchor: CellIndex.indexByColumnRow(columnIndex: dc, rowIndex: 1 + dr),
@@ -847,6 +849,7 @@ Excel _buildYearlySales() {
       ],
       categories: '${a1(0, srcTop)}:${a1(0, srcTop + months.length - 1)}',
       legend: LegendPosition.bottom,
+      plotVisibleOnly: false,
     ),
   );
 
@@ -1424,7 +1427,7 @@ Excel buildSalesDashboard() {
     series: [ChartSeries(name: 'Internet Sales Amount',
         values: '${a1(1, srcTop)}:${a1(1, srcTop + months.length - 1)}')],
     categories: '${a1(0, srcTop)}:${a1(0, srcTop + months.length - 1)}',
-    legend: LegendPosition.bottom,
+    legend: LegendPosition.bottom, plotVisibleOnly: false,
   ));
 
   for (var r = 0; r < dr; r++) {

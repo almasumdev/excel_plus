@@ -57,6 +57,14 @@
   resolved from the sheet, matching what Excel writes, so charts render correctly
   everywhere (including over hidden source data with `plotVisibleOnly: false`).
   Charts read from an existing file still round-trip untouched.
+- **Authored chart series now have explicit colours.** Series were written with
+  no shape properties (`<c:spPr>`), so they had no fill. Excel and Google
+  auto-colour an uncoloured series from the theme, but **LibreOffice** renders an
+  imported series with no fill — i.e. **invisible bars/areas/lines** (the axes and
+  labels showed, but no data). Each series (and each pie/doughnut slice) is now
+  given an explicit colour from the Office accent palette, so charts are visibly
+  drawn in every app. Bar charts also gain a standard `gapWidth`, axes a
+  `crosses`, and the chart a `dispBlanksAs` for broader compatibility.
 
 ## 2.0.0
 

@@ -163,6 +163,43 @@ void main() {
       expect(chart, contains('<c:v>300</c:v>'));
     });
 
+    test(
+      'a bar series gets an explicit fill colour so it renders everywhere',
+      () {
+        final excel = Excel.createExcel();
+        _seed(excel).addChart(
+          Chart.column(
+            anchor: CellIndex.indexByString('D2'),
+            categories: 'A2:A5',
+            series: [ChartSeries(name: 'Units', values: 'B2:B5')],
+          ),
+        );
+
+        final chart = _part(_encode(excel), 'xl/charts/chart1.xml');
+        // Without an explicit fill, LibreOffice draws invisible (uncoloured) bars.
+        expect(chart, contains('<c:spPr>'));
+        expect(chart, contains('<a:solidFill>'));
+        expect(chart, contains('<a:srgbClr val="4472C4"/>'));
+      },
+    );
+
+    test('a pie chart colours each slice with its own data point', () {
+      final excel = Excel.createExcel();
+      _seed(excel).addChart(
+        Chart.pie(
+          anchor: CellIndex.indexByString('D2'),
+          categories: 'A2:A5',
+          series: ChartSeries(name: 'Units', values: 'B2:B5'),
+        ),
+      );
+
+      final chart = _part(_encode(excel), 'xl/charts/chart1.xml');
+      // 4 values → 4 coloured <c:dPt> slices.
+      expect(RegExp(r'<c:dPt>').allMatches(chart).length, 4);
+      expect(chart, contains('<a:srgbClr val="4472C4"/>'));
+      expect(chart, contains('<a:srgbClr val="ED7D31"/>'));
+    });
+
     test('every chart type emits its plot element and parses as XML', () {
       final cases = <ChartType, String>{
         ChartType.column: '<c:barChart>',
