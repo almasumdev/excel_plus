@@ -113,6 +113,37 @@ void main() {
       expect(col, contains('bestFit="1"'));
     });
 
+    test('the worksheet dimension reflects the true used range', () {
+      // A stale dimension (the template's "A1") makes some consumers — notably
+      // Google Sheets — treat columns outside it as empty and drop their widths.
+      final excel = Excel.createExcel();
+      final sheet = excel['Sheet1'];
+      sheet.updateCell(CellIndex.indexByString('A1'), TextCellValue('a'));
+      sheet.updateCell(CellIndex.indexByString('C5'), TextCellValue('b'));
+
+      final xml = readPart(excel.encode()!, 'xl/worksheets/sheet1.xml');
+      final ref = RegExp(r'<dimension ref="([^"]*)"').firstMatch(xml)!.group(1);
+      expect(ref, 'A1:C5');
+    });
+
+    test('an explicit column width widens the dimension past the cells', () {
+      final excel = Excel.createExcel();
+      final sheet = excel['Sheet1'];
+      sheet.updateCell(CellIndex.indexByString('A1'), TextCellValue('a'));
+      sheet.setColumnWidth(5, 20.0); // column F, no cell of its own
+
+      final xml = readPart(excel.encode()!, 'xl/worksheets/sheet1.xml');
+      final ref = RegExp(r'<dimension ref="([^"]*)"').firstMatch(xml)!.group(1);
+      expect(ref, 'A1:F1');
+    });
+
+    test('an empty sheet keeps an A1 dimension', () {
+      final excel = Excel.createExcel();
+      final xml = readPart(excel.encode()!, 'xl/worksheets/sheet1.xml');
+      final ref = RegExp(r'<dimension ref="([^"]*)"').firstMatch(xml)!.group(1);
+      expect(ref, 'A1');
+    });
+
     test('width/height fall back to Excel defaults when none set', () {
       final excel = Excel.decodeBytes(
         buildXlsx('<row r="1"><c r="A1"><v>1</v></c></row>'),

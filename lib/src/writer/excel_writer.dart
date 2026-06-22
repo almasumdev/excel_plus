@@ -120,6 +120,65 @@ class ExcelWriter extends _WriterBase
     }
   }
 
+  /// Rewrites the worksheet `<dimension ref>` to the true used range.
+  ///
+  /// The blank-sheet template hardcodes `ref="A1"` and the writer otherwise
+  /// never updates it, so an authored sheet would ship claiming a single-cell
+  /// used range. Some consumers trust `<dimension>` — notably Google Sheets,
+  /// which treats columns outside it as empty and drops their custom widths.
+  /// [Sheet.maxRows]/[Sheet.maxColumns] already extend across cells, explicit
+  /// row heights / column widths, and merges, so they bound the used range.
+  void _setDimension(Sheet sheetObject, XmlDocument xmlFile) {
+    var maxCol = sheetObject.maxColumns;
+    var maxRow = sheetObject.maxRows;
+
+    // maxColumns/maxRows track cells and merges but not columns/rows that exist
+    // only for an explicit width/height or a grouping flag (those setters don't
+    // bump the counts), so fold them in — mirroring how _setColumns and
+    // _buildSheetDataXml extend their own bounds.
+    void coverCol(Iterable<int> keys) {
+      for (final k in keys) {
+        if (k + 1 > maxCol) maxCol = k + 1;
+      }
+    }
+
+    void coverRow(Iterable<int> keys) {
+      for (final k in keys) {
+        if (k + 1 > maxRow) maxRow = k + 1;
+      }
+    }
+
+    coverCol(sheetObject.getColumnWidths.keys);
+    coverCol(sheetObject.getColumnAutoFits.keys);
+    coverCol(sheetObject._columnOutlineLevel.keys);
+    coverCol(sheetObject._columnHidden);
+    coverCol(sheetObject._columnCollapsed);
+    coverRow(sheetObject.getRowHeights.keys);
+    coverRow(sheetObject._rowOutlineLevel.keys);
+    coverRow(sheetObject._rowHidden);
+    coverRow(sheetObject._rowCollapsed);
+
+    final ref = (maxRow <= 0 || maxCol <= 0)
+        ? 'A1'
+        : 'A1:${getCellId(maxCol - 1, maxRow - 1)}';
+
+    final worksheet = xmlFile.findAllElements('worksheet').first;
+    final existing = worksheet.findElements('dimension').firstOrNull;
+    if (existing != null) {
+      final attr = existing.getAttributeNode('ref');
+      if (attr != null) {
+        attr.value = ref;
+      } else {
+        existing.attributes.add(XmlAttribute(_xmlName('ref'), ref));
+      }
+      return;
+    }
+    _insertWorksheetChildOrdered(
+      worksheet,
+      XmlElement(_xmlName('dimension'), [XmlAttribute(_xmlName('ref'), ref)]),
+    );
+  }
+
   bool _setDefaultSheet(String? sheetName) {
     if (sheetName == null || _excel._xmlFiles['xl/workbook.xml'] == null) {
       return false;
@@ -532,6 +591,8 @@ class ExcelWriter extends _WriterBase
       }
 
       _setColumns(sheetObject, xmlFile);
+
+      _setDimension(sheetObject, xmlFile);
 
       _setHeaderFooter(sheetName);
 

@@ -8,6 +8,20 @@ import 'test_helper.dart';
 
 void main() {
   group('Cell style roundtrip', () {
+    test('a style-only cell (no value) is still written as a cell', () {
+      // Styling a cell without giving it a value must emit a <c r s> element so
+      // the column counts as used — what merged-card layouts rely on to keep
+      // their column widths in Google Sheets.
+      final excel = Excel.createExcel();
+      excel['Sheet1'].cell(CellIndex.indexByString('B2')).cellStyle = CellStyle(
+        backgroundColorHex: ExcelColor.fromHexString('FFBDD7EE'),
+      );
+
+      final xml = readPart(excel.encode()!, 'xl/worksheets/sheet1.xml');
+      // A styled, value-less cell: opens with a style index and has no <v>.
+      expect(xml, matches(RegExp(r'<c r="B2" s="\d+"></c>')));
+    });
+
     test('bold and italic survive encode and decode', () {
       var excel = Excel.createExcel();
       var sheet = excel['Sheet1'];

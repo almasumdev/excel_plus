@@ -198,6 +198,26 @@ void main() {
       expect(chart, contains('<a:srgbClr val="ED7D31"/>'));
     });
 
+    test('a chart gets a white chart-area and plot-area background', () {
+      // LibreOffice renders a fill-less imported chart transparent, so the
+      // chart area and plot area must be authored explicitly.
+      final excel = Excel.createExcel();
+      _seed(excel).addChart(
+        Chart.column(
+          anchor: CellIndex.indexByString('D2'),
+          categories: 'A2:A5',
+          series: [ChartSeries(name: 'Units', values: 'B2:B5')],
+        ),
+      );
+
+      final chart = _part(_encode(excel), 'xl/charts/chart1.xml');
+      // Chart-area spPr is a sibling right after <c:chart>.
+      expect(chart, contains('</c:chart><c:spPr>'));
+      // Plot-area spPr is the last child of <c:plotArea>.
+      expect(chart, matches(RegExp(r'<c:spPr>.*?</c:spPr></c:plotArea>')));
+      expect(chart, contains('<a:srgbClr val="FFFFFF"/>'));
+    });
+
     test('every chart type emits its plot element and parses as XML', () {
       final cases = <ChartType, String>{
         ChartType.column: '<c:barChart>',

@@ -58,6 +58,16 @@
   Sheets) ignored the width and re-fit the column to its contents — collapsing
   content-less columns and skewing merged layouts. A set width now omits `bestFit`;
   only `setColumnAutoFit` columns keep it.
+- **Worksheet `<dimension>` reflects the real used range** — the writer never
+  updated the template's `<dimension ref="A1"/>`, so every authored sheet shipped
+  claiming a single-cell used range. Consumers that trust it (notably Google
+  Sheets) then treated columns outside that range as empty and dropped their
+  custom widths. The dimension is now recomputed from the true used range (cells,
+  merges, explicit widths/heights, and grouping).
+- **Authored charts get an explicit background** — neither `<c:chartSpace>` nor
+  `<c:plotArea>` carried a `<c:spPr>`, so LibreOffice rendered the chart and plot
+  areas transparent (Excel/Sheets synthesise a default). Both now get an explicit
+  white fill so charts read the same everywhere.
 
 ## 2.0.0
 

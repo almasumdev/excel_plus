@@ -402,7 +402,15 @@ mixin _WriterChartsMixin on _WriterBase {
     final chartChildren = <XmlNode>[
       if (chart.title != null) _chartTitle(chart.title!),
       _cVal('autoTitleDeleted', chart.title == null ? '1' : '0'),
-      _c('plotArea', [], [_c('layout'), ..._plotElements(sheetName, chart)]),
+      // A white plot-area background. LibreOffice leaves a fill-less imported
+      // plot area transparent (Excel/Sheets synthesise a default), so author it
+      // explicitly. Per CT_PlotArea the `<c:spPr>` must be the LAST child —
+      // after the chart group and axes that `_plotElements` emits.
+      _c('plotArea', [], [
+        _c('layout'),
+        ..._plotElements(sheetName, chart),
+        _fillSpPr('FFFFFF'),
+      ]),
       if (chart.legend != LegendPosition.none)
         _c('legend', [], [
           _cVal('legendPos', switch (chart.legend) {
@@ -424,7 +432,13 @@ mixin _WriterChartsMixin on _WriterBase {
         XmlAttribute(_xmlName('a', 'xmlns'), _drawingMainNS),
         XmlAttribute(_xmlName('r', 'xmlns'), _relationships),
       ],
-      [_c('chart', [], chartChildren)],
+      [
+        _c('chart', [], chartChildren),
+        // A white chart-area background, a sibling of (and after) `<c:chart>`
+        // per CT_ChartSpace — same reason as the plot area: keep LibreOffice
+        // from rendering the chart transparent.
+        _fillSpPr('FFFFFF'),
+      ],
     );
     return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
         '${root.toXmlString()}';

@@ -717,6 +717,29 @@ Excel _buildYearlySales() {
   );
   merge(0, 0, 5, 0);
 
+  // Seed a style-only cell into every column a merge spans. merge() strips the
+  // covered cells, so a title/card that is purely a merge leaves its inner
+  // columns with no cell at all — and Google Sheets re-fits cell-less columns
+  // to content, collapsing them (the right-hand cards shrink to one column).
+  // A backing cell per column keeps the explicit <col> width; Excel and
+  // LibreOffice still show only the anchor's text.
+  void seed(int row, int c0, int c1, CellStyle st) {
+    for (var c = c0; c <= c1; c++) {
+      final idx = CellIndex.indexByColumnRow(
+        columnIndex: c + dc,
+        rowIndex: row + dr,
+      );
+      s.cell(idx).cellStyle = st;
+    }
+  }
+
+  seed(
+    0,
+    1,
+    5,
+    CellStyle(backgroundColorHex: blue, verticalAlign: VerticalAlign.Center),
+  );
+
   for (var r = 1; r <= 8; r++) {
     put(0, r, TextCellValue(''));
   }
@@ -755,6 +778,15 @@ Excel _buildYearlySales() {
       ),
     );
     merge(c0, valueRow + 1, c0 + 2, valueRow + 1);
+    // Back the two spanned columns of both card rows so the card keeps its
+    // width in Google Sheets (see seed()).
+    final spanFill = CellStyle(
+      backgroundColorHex: fill,
+      fontColorHex: font,
+      verticalAlign: VerticalAlign.Center,
+    );
+    seed(valueRow, c0 + 1, c0 + 2, spanFill);
+    seed(valueRow + 1, c0 + 1, c0 + 2, spanFill);
   }
 
   kpi(
@@ -1382,6 +1414,18 @@ Excel buildSalesDashboard() {
       horizontalAlign: HorizontalAlign.Center, verticalAlign: VerticalAlign.Center));
   mergeRange(0, 0, 5, 0);
 
+  // Seed a style-only cell into every column a merge spans. merge() strips the
+  // covered cells, leaving those columns empty, and Google Sheets re-fits
+  // empty columns to content (collapsing them). A backing cell keeps the
+  // explicit <col> width; Excel/LibreOffice still show only the anchor.
+  void seed(int row, int c0, int c1, CellStyle st) {
+    for (var c = c0; c <= c1; c++) {
+      s.cell(CellIndex.indexByColumnRow(columnIndex: c + dc, rowIndex: row + dr))
+          .cellStyle = st;
+    }
+  }
+  seed(0, 1, 5, CellStyle(backgroundColorHex: blue, verticalAlign: VerticalAlign.Center));
+
   for (var r = 1; r <= 8; r++) {
     put(0, r, TextCellValue(''));
   }
@@ -1395,6 +1439,10 @@ Excel buildSalesDashboard() {
         fontColorHex: font, horizontalAlign: HorizontalAlign.Center,
         verticalAlign: VerticalAlign.Center));
     mergeRange(c0, valueRow + 1, c0 + 2, valueRow + 1);
+    final spanFill = CellStyle(backgroundColorHex: fill, fontColorHex: font,
+        verticalAlign: VerticalAlign.Center);
+    seed(valueRow, c0 + 1, c0 + 2, spanFill);
+    seed(valueRow + 1, c0 + 1, c0 + 2, spanFill);
   }
 
   kpi(0, 9, '\$ 4.51 M', 'Sales Amount',
