@@ -34,37 +34,24 @@
 
 ### Fixed
 
-- **Left-aligned cell padding (`indent`) is no longer silently dropped.** A
-  left-aligned cell with an `indent` was written under Excel's `general`
-  alignment, which ignores `indent`, so the text sat flush against the cell's
-  left edge. Such cells now emit an explicit `horizontal="left"` and keep their
-  padding. Right-aligned cells already emitted `horizontal="right"` and were
-  unaffected; round-trip behaviour is unchanged.
-- **No more orphaned drawing part.** The blank-workbook template shipped an empty
-  `xl/drawings/drawing1.xml` wired into the default sheet. Adding the first chart
-  or image then created `drawing2.xml` and left `drawing1.xml` stranded — present
-  in the package with a dangling content-type declaration but referenced by
-  nothing. Excel tolerated it, but stricter importers (e.g. Google Sheets) could
-  mishandle the duplicate drawing parts and mis-place or mis-size the chart. The
-  template no longer contains a drawing, so a fresh chart/image now lands in a
-  single clean `drawing1.xml` with exactly one content-type entry. Blank
-  workbooks are also smaller (no drawing part, sheet rels, or drawing override).
-- **Authored charts now bake in cached values.** Chart series were written with
-  only a formula reference (`<c:f>`) and no `<c:numCache>`/`<c:strCache>`. Excel
-  and Google Sheets re-evaluate the reference, but consumers that don't — notably
-  **LibreOffice**, and any chart whose source rows are **hidden** — drew an empty
-  plot (axes but no bars). Series now embed the actual values and category labels
-  resolved from the sheet, matching what Excel writes, so charts render correctly
-  everywhere (including over hidden source data with `plotVisibleOnly: false`).
-  Charts read from an existing file still round-trip untouched.
-- **Authored chart series now have explicit colours.** Series were written with
-  no shape properties (`<c:spPr>`), so they had no fill. Excel and Google
-  auto-colour an uncoloured series from the theme, but **LibreOffice** renders an
-  imported series with no fill — i.e. **invisible bars/areas/lines** (the axes and
-  labels showed, but no data). Each series (and each pie/doughnut slice) is now
-  given an explicit colour from the Office accent palette, so charts are visibly
-  drawn in every app. Bar charts also gain a standard `gapWidth`, axes a
-  `crosses`, and the chart a `dispBlanksAs` for broader compatibility.
+- **Left-aligned cell padding (`indent`) no longer dropped** — an indented
+  left-aligned cell was written under Excel's `general` alignment (which ignores
+  `indent`), so text sat flush left. Such cells now emit an explicit
+  `horizontal="left"` and keep their padding.
+- **No more orphaned drawing part** — the blank-workbook template shipped an empty
+  `xl/drawings/drawing1.xml`, so the first chart/image created `drawing2.xml` and
+  left `drawing1.xml` stranded (a dangling part stricter importers like Google
+  Sheets could mishandle). The template no longer carries a drawing, so a fresh
+  chart/image lands in a single clean `drawing1.xml`; blank workbooks are smaller.
+- **Authored charts bake in cached values** — series were written with only a
+  formula reference and no `<c:numCache>`/`<c:strCache>`, so consumers that don't
+  re-evaluate (notably LibreOffice, and charts over hidden rows) drew empty plots.
+  Series now embed the resolved values and category labels; charts read from a
+  file still round-trip untouched.
+- **Authored chart series have explicit colours** — series had no `<c:spPr>`, so
+  LibreOffice rendered them with no fill (invisible bars/lines/areas). Each series
+  (and pie/doughnut slice) now gets an explicit Office-accent colour; bar charts
+  also gain a `gapWidth`, axes a `crosses`, and the chart a `dispBlanksAs`.
 
 ## 2.0.0
 

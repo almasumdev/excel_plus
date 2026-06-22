@@ -55,9 +55,8 @@ void main() {
       // Series and category refs are qualified with the sheet name.
       expect(chart, contains("'Sheet1'!B2:B5"));
       expect(chart, contains("'Sheet1'!A2:A5"));
-      expect(chart, contains('Sales')); // title
+      expect(chart, contains('Sales'));
 
-      // The drawing references the chart, and the part is declared.
       final drawing = _part(a, 'xl/drawings/drawing1.xml');
       expect(drawing, contains('graphicFrame'));
       final drawingRels = _part(a, 'xl/drawings/_rels/drawing1.xml.rels');
@@ -97,7 +96,6 @@ void main() {
       );
 
       final a = _encode(excel);
-      // Exactly one drawing part, and it holds the chart anchor.
       final drawings = a.files
           .map((f) => f.name)
           .where((n) => RegExp(r'^xl/drawings/drawing\d+\.xml$').hasMatch(n))
@@ -226,7 +224,6 @@ void main() {
         );
         final chart = _part(_encode(excel), 'xl/charts/chart1.xml');
         expect(chart, contains(marker), reason: 'missing $marker for $type');
-        // Must be well-formed XML.
         expect(() => XmlDocument.parse(chart), returnsNormally);
       });
     });
@@ -633,7 +630,7 @@ void main() {
         ),
       );
       final reopened = Excel.decodeBytes(excel.encode()!);
-      expect(reopened['Sheet1'].charts, hasLength(1)); // parsed
+      expect(reopened['Sheet1'].charts, hasLength(1));
       final a = ZipDecoder().decodeBytes(reopened.encode()!);
       expect(_part(a, 'xl/charts/chart1.xml'), isNotEmpty);
       expect(_part(a, 'xl/charts/chart2.xml'), isEmpty); // not duplicated

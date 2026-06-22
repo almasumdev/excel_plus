@@ -7,7 +7,6 @@ mixin _WriterChartsMixin on _WriterBase {
   static const _catAxId = '111111111';
   static const _valAxId = '222222222';
 
-  // --- DrawingML / chart element helpers ---
   XmlElement _c(
     String l, [
     List<XmlAttribute> a = const [],
@@ -86,6 +85,7 @@ mixin _WriterChartsMixin on _WriterBase {
   String _chartText(CellValue? v) {
     if (v == null) return '';
     if (v is TextCellValue) return v.value.toString();
+    if (v is FormulaCellValue) return v.cachedValue ?? '';
     return v.toString();
   }
 
@@ -212,6 +212,8 @@ mixin _WriterChartsMixin on _WriterBase {
     String? categories,
   ) {
     final isPieLike = type == ChartType.pie || type == ChartType.doughnut;
+    // Pie/doughnut: one coloured slice per value — resolve the count once.
+    final sliceCount = isPieLike ? _refValues(sheetName, s.values).length : 0;
     final children = <XmlNode>[
       _cVal('idx', '$index'),
       _cVal('order', '$index'),
@@ -226,8 +228,7 @@ mixin _WriterChartsMixin on _WriterBase {
       if (type == ChartType.column || type == ChartType.bar)
         _cVal('invertIfNegative', '0'),
       if (isPieLike)
-        for (var i = 0; i < _refValues(sheetName, s.values).length; i++)
-          _dPt(i, _seriesColor(i)),
+        for (var i = 0; i < sliceCount; i++) _dPt(i, _seriesColor(i)),
       if (categories != null) _c('cat', [], [_strRef(sheetName, categories)]),
       _c('val', [], [_numRef(sheetName, s.values)]),
     ];
