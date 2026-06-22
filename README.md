@@ -168,7 +168,9 @@ platform. Expand a group for details:
 <details>
 <summary><b>📊 Formulas & data tools</b></summary>
 
-- Formula-evaluation engine — ~130 functions, plus `registerFunction` for your own
+- Formula-evaluation engine — ~130 functions
+  ([function reference](https://github.com/almasumdev/excel_plus/blob/main/doc/functions.md)),
+  plus `registerFunction` for your own
 - Excel tables (ListObjects)
 - Pivot tables — read & write (row / column / page / nested fields + measures)
 - Find & replace
@@ -212,9 +214,7 @@ Planned next — direction is driven by what users request on the
 - ⬜ Streaming / sink encode to cap peak memory on very large saves
 
 Shipped milestones are in the
-[changelog](https://github.com/almasumdev/excel_plus/blob/main/CHANGELOG.md); the
-[**formula functions reference**](https://github.com/almasumdev/excel_plus/blob/main/doc/functions.md)
-lists every supported and planned function.
+[changelog](https://github.com/almasumdev/excel_plus/blob/main/CHANGELOG.md).
 
 ## Error handling
 
