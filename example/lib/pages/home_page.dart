@@ -51,7 +51,7 @@ class HomePage extends StatelessWidget {
     'yearly_sales': Icons.dashboard_outlined,
     'timesheet': Icons.calendar_month_outlined,
     'project_tracker': Icons.checklist_outlined,
-    'budget': Icons.account_balance_wallet_outlined,
+    'event_expenses': Icons.celebration_outlined,
     'workout': Icons.fitness_center_outlined,
   };
 
@@ -92,21 +92,30 @@ class HomePage extends StatelessWidget {
                     'copy the complete source.',
               ),
               const SizedBox(height: 12),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  for (var i = 0; i < showcases.length; i++) ...[
-                    if (i > 0) const SizedBox(width: 12),
-                    Expanded(
-                      child: _ShowcaseCard(
-                        showcase: showcases[i],
-                        icon:
-                            _showcaseIcons[showcases[i].id] ??
-                            Icons.table_chart_outlined,
-                      ),
-                    ),
-                  ],
-                ],
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final width = constraints.maxWidth;
+                  // At most three per row, dropping to two then one as it narrows.
+                  final columns = width >= 720 ? 3 : (width >= 480 ? 2 : 1);
+                  const gap = 12.0;
+                  final tileWidth = (width - gap * (columns - 1)) / columns;
+                  return Wrap(
+                    spacing: gap,
+                    runSpacing: gap,
+                    children: [
+                      for (final sc in showcases)
+                        SizedBox(
+                          width: tileWidth,
+                          child: _ShowcaseCard(
+                            showcase: sc,
+                            icon:
+                                _showcaseIcons[sc.id] ??
+                                Icons.table_chart_outlined,
+                          ),
+                        ),
+                    ],
+                  );
+                },
               ),
               const SizedBox(height: 24),
 
