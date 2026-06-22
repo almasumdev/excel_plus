@@ -32,6 +32,15 @@
   isn't modelled (no row or data field, or a non-worksheet cache source) is
   preserved on save but omitted from the list.
 
+### Fixed
+
+- **Left-aligned cell padding (`indent`) is no longer silently dropped.** A
+  left-aligned cell with an `indent` was written under Excel's `general`
+  alignment, which ignores `indent`, so the text sat flush against the cell's
+  left edge. Such cells now emit an explicit `horizontal="left"` and keep their
+  padding. Right-aligned cells already emitted `horizontal="right"` and were
+  unaffected; round-trip behaviour is unchanged.
+
 ## 2.0.0
 
 ### Breaking

@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:archive/archive.dart';
 import 'package:excel_plus/excel_plus.dart';
 import 'package:test/test.dart';
 
@@ -227,6 +230,23 @@ void main() {
           .cell(CellIndex.indexByString('A1'))
           .cellStyle;
       expect(style?.indent, 2);
+    });
+
+    test('a left-aligned indented cell emits horizontal="left" so the padding '
+        'is not dropped', () {
+      final excel = Excel.createExcel();
+      excel['Sheet1'].updateCell(
+        CellIndex.indexByString('A1'),
+        TextCellValue('padded'),
+        cellStyle: CellStyle(horizontalAlign: HorizontalAlign.Left, indent: 1),
+      );
+      final zip = ZipDecoder().decodeBytes(excel.encode()!);
+      final styles = zip.findFile('xl/styles.xml')!..decompress();
+      final xml = utf8.decode(styles.content);
+      // Excel ignores `indent` under a `general` (omitted) alignment, so an
+      // indented left cell must carry an explicit horizontal="left".
+      expect(xml, contains('horizontal="left"'));
+      expect(xml, contains('indent="1"'));
     });
 
     test('negative indent is clamped to zero', () {

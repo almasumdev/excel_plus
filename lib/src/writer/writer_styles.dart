@@ -319,10 +319,16 @@ mixin _WriterStylesMixin on _WriterBase {
           childAttributes.add(XmlAttribute(_xmlName('vertical'), ver));
         }
 
-        if (horizontalAlign != HorizontalAlign.Left) {
-          String hor = horizontalAlign == HorizontalAlign.Right
-              ? 'right'
-              : 'center';
+        // Excel applies `indent` only when `horizontal` is explicitly left /
+        // right / distributed — a `general` (omitted) alignment ignores it. So
+        // emit `horizontal="left"` for an indented left-aligned cell too, or its
+        // padding is silently dropped and the text sits flush against the edge.
+        if (horizontalAlign != HorizontalAlign.Left || indent > 0) {
+          final String hor = switch (horizontalAlign) {
+            HorizontalAlign.Right => 'right',
+            HorizontalAlign.Center => 'center',
+            HorizontalAlign.Left => 'left',
+          };
           childAttributes.add(XmlAttribute(_xmlName('horizontal'), hor));
         }
         if (rotation != 0) {
