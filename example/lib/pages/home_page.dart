@@ -48,11 +48,9 @@ class HomePage extends StatelessWidget {
 
   static const _showcaseIcons = <String, IconData>{
     'invoice': Icons.receipt_long_outlined,
-    'yearly_sales': Icons.dashboard_outlined,
-    'timesheet': Icons.calendar_month_outlined,
-    'project_tracker': Icons.checklist_outlined,
-    'event_expenses': Icons.celebration_outlined,
-    'workout': Icons.fitness_center_outlined,
+    'yearly_sales': Icons.bar_chart_outlined,
+    'timesheet': Icons.insert_chart_outlined,
+    'event_expenses': Icons.pie_chart_outline,
   };
 
   void _open(BuildContext context, Widget page) {
