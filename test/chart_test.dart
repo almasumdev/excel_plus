@@ -67,6 +67,54 @@ void main() {
       expect(types, contains('chart+xml'));
     });
 
+    test('a blank workbook ships no drawing part', () {
+      final a = _encode(Excel.createExcel());
+      final drawings = a.files
+          .map((f) => f.name)
+          .where((n) => n.startsWith('xl/drawings/'))
+          .toList();
+      expect(drawings, isEmpty);
+      // ...and no dangling drawing content-type declaration.
+      expect(_part(a, '[Content_Types].xml'), isNot(contains('drawing+xml')));
+    });
+
+    test('adding a chart leaves exactly one drawing and no orphan part', () {
+      // Mirror the example app's access pattern: rename + index the sheet, then
+      // add a chart WITHOUT forcing a full parse first. This is the path that
+      // used to strand the template's empty drawing1.xml as an orphan (the
+      // chart went to drawing2.xml while drawing1.xml kept a dangling
+      // content-type Override) — which strict importers like Google Sheets
+      // mishandle.
+      final excel = Excel.createExcel();
+      excel.rename(excel.getDefaultSheet() ?? 'Sheet1', 'Data');
+      excel['Data'].addChart(
+        Chart.column(
+          anchor: CellIndex.indexByString('D2'),
+          anchorTo: CellIndex.indexByString('J10'),
+          categories: 'A2:A5',
+          series: [ChartSeries(name: 'Units', values: 'B2:B5')],
+        ),
+      );
+
+      final a = _encode(excel);
+      // Exactly one drawing part, and it holds the chart anchor.
+      final drawings = a.files
+          .map((f) => f.name)
+          .where((n) => RegExp(r'^xl/drawings/drawing\d+\.xml$').hasMatch(n))
+          .toList();
+      expect(drawings, ['xl/drawings/drawing1.xml']);
+      expect(_part(a, 'xl/drawings/drawing1.xml'), contains('graphicFrame'));
+      // Exactly one drawing content-type Override — no orphaned declaration.
+      final overrides = RegExp(
+        r'/xl/drawings/drawing\d+\.xml',
+      ).allMatches(_part(a, '[Content_Types].xml')).length;
+      expect(overrides, 1);
+      // The sheet references that single drawing, not a stranded second one.
+      final rels = _part(a, 'xl/worksheets/_rels/sheet1.xml.rels');
+      expect(rels, contains('drawings/drawing1.xml'));
+      expect(rels, isNot(contains('drawing2.xml')));
+    });
+
     test('every chart type emits its plot element and parses as XML', () {
       final cases = <ChartType, String>{
         ChartType.column: '<c:barChart>',

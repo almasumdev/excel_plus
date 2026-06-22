@@ -40,6 +40,15 @@
   left edge. Such cells now emit an explicit `horizontal="left"` and keep their
   padding. Right-aligned cells already emitted `horizontal="right"` and were
   unaffected; round-trip behaviour is unchanged.
+- **No more orphaned drawing part.** The blank-workbook template shipped an empty
+  `xl/drawings/drawing1.xml` wired into the default sheet. Adding the first chart
+  or image then created `drawing2.xml` and left `drawing1.xml` stranded — present
+  in the package with a dangling content-type declaration but referenced by
+  nothing. Excel tolerated it, but stricter importers (e.g. Google Sheets) could
+  mishandle the duplicate drawing parts and mis-place or mis-size the chart. The
+  template no longer contains a drawing, so a fresh chart/image now lands in a
+  single clean `drawing1.xml` with exactly one content-type entry. Blank
+  workbooks are also smaller (no drawing part, sheet rels, or drawing override).
 
 ## 2.0.0
 
