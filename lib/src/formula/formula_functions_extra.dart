@@ -175,6 +175,16 @@ void _registerExtraFunctions(Map<String, _FormulaFn> r) {
     if (sig == 0) return const _ErrVal(CellErrorValue.divisionByZero);
     return _NumVal((x / sig).floorToDouble() * sig);
   });
+  r['MROUND'] = _guard((a) {
+    final x = _coerceNum(a.evalScalar(0));
+    final m = _coerceNum(a.evalScalar(1));
+    if (m == 0) return const _NumVal(0);
+    // Excel #NUM! when number and multiple have opposite signs.
+    if (x.sign != 0 && m.sign != 0 && x.sign != m.sign) {
+      return const _ErrVal(CellErrorValue.number);
+    }
+    return _NumVal((x / m).roundToDouble() * m);
+  });
   r['LN'] = _guard((a) {
     final x = _coerceNum(a.evalScalar(0));
     if (x <= 0) return const _ErrVal(CellErrorValue.number);
@@ -277,6 +287,12 @@ void _registerExtraFunctions(Map<String, _FormulaFn> r) {
   r['ISTEXT'] = _guard((a) => _BoolVal(_scalar(_safeArg(a, 0)) is _TextVal));
   r['ISLOGICAL'] = _guard((a) => _BoolVal(_scalar(_safeArg(a, 0)) is _BoolVal));
   r['ISBLANK'] = _guard((a) => _BoolVal(_scalar(_safeArg(a, 0)) is _BlankVal));
+  r['ISEVEN'] = _guard(
+    (a) => _BoolVal(_coerceNum(a.evalScalar(0)).truncate().isEven),
+  );
+  r['ISODD'] = _guard(
+    (a) => _BoolVal(_coerceNum(a.evalScalar(0)).truncate().isOdd),
+  );
   r['IFNA'] = _guard((a) {
     if (a.length < 2) return const _ErrVal(CellErrorValue.valueError);
     final v = _safeArg(a, 0);
@@ -327,6 +343,19 @@ void _registerExtraFunctions(Map<String, _FormulaFn> r) {
       return const _ErrVal(CellErrorValue.valueError);
     }
     return _TextVal(_substitute(text, oldT, newT, instance));
+  });
+  r['REPLACE'] = _guard((a) {
+    // REPLACE(old_text, start_num, num_chars, new_text) — 1-based start.
+    final text = _coerceText(a.evalScalar(0));
+    final start = _coerceNum(a.evalScalar(1)).toInt();
+    final count = _coerceNum(a.evalScalar(2)).toInt();
+    final newT = _coerceText(a.evalScalar(3));
+    if (start < 1 || count < 0) {
+      return const _ErrVal(CellErrorValue.valueError);
+    }
+    final from = (start - 1).clamp(0, text.length);
+    final to = (from + count).clamp(from, text.length);
+    return _TextVal(text.substring(0, from) + newT + text.substring(to));
   });
   r['FIND'] = _guard((a) {
     final find = _coerceText(a.evalScalar(0));

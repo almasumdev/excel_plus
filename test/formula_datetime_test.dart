@@ -59,6 +59,27 @@ void main() {
       expect(_num(_eval('DAYS(DATE(2024,1,10),DATE(2024,1,1))')), 9);
     });
 
+    test('DATEDIF computes complete years, months, days and remainders', () {
+      // 2020-01-15 -> 2024-03-20
+      const s = 'DATE(2020,1,15)', e = 'DATE(2024,3,20)';
+      expect(_num(_eval('DATEDIF($s,$e,"Y")')), 4); // complete years
+      expect(_num(_eval('DATEDIF($s,$e,"M")')), 50); // complete months
+      expect(_num(_eval('DATEDIF($s,$e,"D")')), 1526); // total days
+      expect(_num(_eval('DATEDIF($s,$e,"YM")')), 2); // months ignoring years
+      expect(_num(_eval('DATEDIF($s,$e,"MD")')), 5); // days ignoring m/y
+    });
+
+    test('DATEDIF rejects an end before the start and a bad unit', () {
+      expect(
+        _err(_eval('DATEDIF(DATE(2024,2,1),DATE(2024,1,1),"D")')),
+        '#NUM!',
+      );
+      expect(
+        _err(_eval('DATEDIF(DATE(2024,1,1),DATE(2024,2,1),"Q")')),
+        '#NUM!',
+      );
+    });
+
     test('EDATE shifts by months, clamping the day', () {
       // Jan 31 + 1 month -> Feb 29 in a leap year.
       expect(_num(_eval('MONTH(EDATE(DATE(2024,1,31),1))')), 2);

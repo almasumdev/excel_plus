@@ -179,11 +179,38 @@ void _registerLookupFunctions(Map<String, _FormulaFn> r) {
     final ret = _asArray(a.eval(2)).cells.toList();
     final matchMode = a.length > 4 ? _coerceNum(a.evalScalar(4)).toInt() : 0;
     final searchMode = a.length > 5 ? _coerceNum(a.evalScalar(5)).toInt() : 1;
+    // search_mode -1/-2 scan last-to-first; binary modes (±2) fall back to a
+    // linear scan, which yields the same result on sorted data.
+    final reverse = searchMode == -1 || searchMode == -2;
 
     var idx = -1;
-    if (matchMode == 0) {
-      // Exact match; search_mode -1 scans last-to-first.
-      if (searchMode == -1) {
+    if (matchMode == 2) {
+      // Wildcard exact match (* and ?, ~ escapes).
+      final re = _excelWildcard(_coerceText(lookup).toUpperCase());
+      final target = _coerceText(lookup).toUpperCase();
+      bool matches(_EvalValue v) {
+        final t = (_asTextOrNull(v) ?? '').toUpperCase();
+        return re != null ? re.hasMatch(t) : t == target;
+      }
+
+      if (reverse) {
+        for (var i = look.length - 1; i >= 0; i--) {
+          if (matches(look[i])) {
+            idx = i;
+            break;
+          }
+        }
+      } else {
+        for (var i = 0; i < look.length; i++) {
+          if (matches(look[i])) {
+            idx = i;
+            break;
+          }
+        }
+      }
+    } else if (matchMode == 0) {
+      // Exact match.
+      if (reverse) {
         for (var i = look.length - 1; i >= 0; i--) {
           if (_compare(look[i], lookup) == 0) {
             idx = i;

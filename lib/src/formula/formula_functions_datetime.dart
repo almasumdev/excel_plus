@@ -98,6 +98,41 @@ void _registerDateTimeFunctions(Map<String, _FormulaFn> r) {
     final start = _coerceNum(a.evalScalar(1)).floorToDouble();
     return _NumVal(end - start);
   });
+  r['DATEDIF'] = _guard((a) {
+    // DATEDIF(start, end, unit): Y/M/D complete units, MD/YM/YD remainders.
+    final start = _dateFromSerial(_coerceNum(a.evalScalar(0)));
+    final end = _dateFromSerial(_coerceNum(a.evalScalar(1)));
+    final unit = _coerceText(a.evalScalar(2)).toUpperCase();
+    if (end.isBefore(start)) return const _ErrVal(CellErrorValue.number);
+    int daysInMonth(int y, int m) => DateTime(y, m + 1, 0).day;
+    switch (unit) {
+      case 'D':
+        return _NumVal(end.difference(start).inDays.toDouble());
+      case 'M':
+      case 'Y':
+      case 'YM':
+        var months = (end.year - start.year) * 12 + (end.month - start.month);
+        if (end.day < start.day) months -= 1;
+        if (unit == 'M') return _NumVal(months.toDouble());
+        if (unit == 'Y') return _NumVal((months ~/ 12).toDouble());
+        return _NumVal((months % 12).toDouble()); // YM
+      case 'MD':
+        if (end.day >= start.day) {
+          return _NumVal((end.day - start.day).toDouble());
+        }
+        final pm = end.month == 1 ? 12 : end.month - 1;
+        final py = end.month == 1 ? end.year - 1 : end.year;
+        return _NumVal((daysInMonth(py, pm) - start.day + end.day).toDouble());
+      case 'YD':
+        var anniv = DateTime(end.year, start.month, start.day);
+        if (anniv.isAfter(end)) {
+          anniv = DateTime(end.year - 1, start.month, start.day);
+        }
+        return _NumVal(end.difference(anniv).inDays.toDouble());
+      default:
+        return const _ErrVal(CellErrorValue.number);
+    }
+  });
   r['EDATE'] = _guard((a) {
     final d = _dateFromSerial(_coerceNum(a.evalScalar(0)));
     final months = _coerceNum(a.evalScalar(1)).toInt();

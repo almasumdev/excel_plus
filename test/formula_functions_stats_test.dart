@@ -165,6 +165,10 @@ void main() {
       expect(_num(s.evaluate(at)), 2);
       s.updateCell(at, FormulaCellValue('AVERAGEIFS(C1:C4,A1:A4,"East")'));
       expect(_num(s.evaluate(at)), closeTo(26.6667, 1e-3)); // (10+30+40)/3
+      s.updateCell(at, FormulaCellValue('MAXIFS(C1:C4,A1:A4,"East")'));
+      expect(_num(s.evaluate(at)), 40); // max of 10,30,40
+      s.updateCell(at, FormulaCellValue('MINIFS(C1:C4,A1:A4,"East")'));
+      expect(_num(s.evaluate(at)), 10); // min of 10,30,40
     });
   });
 

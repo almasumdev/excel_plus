@@ -7,6 +7,10 @@
   the existing `freezePanes`. Read them back via `sheet.splitX` / `sheet.splitY`;
   splits round-trip and are mutually exclusive with frozen panes. `unfreezePanes`
   clears either.
+- **More formula functions** — `MAXIFS`, `MINIFS`, `DATEDIF`, `REPLACE`,
+  `MROUND`, `ISEVEN`, `ISODD`.
+- **`XLOOKUP` enhancements** — match mode `2` (wildcard match) and search mode
+  `-2` (reverse scan).
 
 ## 2.0.0
 

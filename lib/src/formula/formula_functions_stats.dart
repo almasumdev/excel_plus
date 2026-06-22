@@ -240,4 +240,21 @@ void _registerStatFunctions(Map<String, _FormulaFn> r) {
     if (count == 0) return const _ErrVal(CellErrorValue.divisionByZero);
     return _NumVal(sum / count);
   });
+  _FormulaFn maxMinIfs({required bool isMax}) => _guard((a) {
+    if (a.length < 3 || a.length.isEven) {
+      return const _ErrVal(CellErrorValue.valueError);
+    }
+    final range = _asArray(a.eval(0)).cells.toList();
+    final crits = _collectCriteria(a, 1);
+    double? best;
+    for (var i = 0; i < range.length; i++) {
+      if (!_allCriteriaMatch(crits, i)) continue;
+      final n = _asNumOrNull(range[i]);
+      if (n == null) continue;
+      if (best == null || (isMax ? n > best : n < best)) best = n;
+    }
+    return _NumVal(best ?? 0.0); // Excel returns 0 when nothing matches
+  });
+  r['MAXIFS'] = maxMinIfs(isMax: true);
+  r['MINIFS'] = maxMinIfs(isMax: false);
 }

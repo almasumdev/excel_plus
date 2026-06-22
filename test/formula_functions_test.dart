@@ -182,4 +182,25 @@ void main() {
       expect(excel.formula.registeredFunctions, isEmpty);
     });
   });
+
+  group('Added Math, Text & Logical Functions', () {
+    test('MROUND rounds to the nearest multiple', () {
+      expect(_num(_eval('MROUND(10,3)')), 9);
+      expect(_num(_eval('MROUND(11,3)')), 12);
+      expect(_num(_eval('MROUND(-11,-3)')), -12);
+      // opposite signs -> #NUM!
+      expect(_err(_eval('MROUND(5,-2)')), '#NUM!');
+    });
+
+    test('ISEVEN and ISODD test the truncated integer', () {
+      expect(_bool(_eval('ISEVEN(4)')), isTrue);
+      expect(_bool(_eval('ISODD(4)')), isFalse);
+      expect(_bool(_eval('ISODD(3.9)')), isTrue); // truncates to 3
+    });
+
+    test('REPLACE swaps a run of characters by position', () {
+      expect(_text(_eval('REPLACE("abcdef",2,3,"XY")')), 'aXYef');
+      expect(_text(_eval('REPLACE("abc",4,0,"!")')), 'abc!');
+    });
+  });
 }

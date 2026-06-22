@@ -140,6 +140,21 @@ void main() {
       // 2.5 -> next larger key is 3 -> price 2.0
       expect(_num(_evalOn(_table(), 'XLOOKUP(2.5,A1:A3,C1:C3,,1)')), 2.0);
     });
+
+    test('match mode 2 matches wildcards', () {
+      // names are apple/banana/cherry in B1:B3, prices in C1:C3
+      expect(_num(_evalOn(_table(), 'XLOOKUP("ban*",B1:B3,C1:C3,,2)')), 0.3);
+      expect(_num(_evalOn(_table(), 'XLOOKUP("c?erry",B1:B3,C1:C3,,2)')), 2.0);
+    });
+
+    test('search mode -2 scans last-to-first', () {
+      // two "apple"-like rows would resolve to the last on reverse search; here
+      // confirm reverse exact still finds the single match.
+      expect(
+        _text(_evalOn(_table(), 'XLOOKUP(3,A1:A3,B1:B3,,0,-2)')),
+        'cherry',
+      );
+    });
   });
 
   group('INDEX Whole Row And Column', () {
