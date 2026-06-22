@@ -24,13 +24,18 @@ abstract class _WriterBase {
     int? outlineLevel,
     bool hidden = false,
     bool collapsed = false,
+    bool bestFit = false,
   }) {
     columns.children.add(
       XmlElement(_xmlName('col'), [
         XmlAttribute(_xmlName('min'), (min + 1).toString()),
         XmlAttribute(_xmlName('max'), (max + 1).toString()),
         XmlAttribute(_xmlName('width'), width.toStringAsFixed(2)),
-        XmlAttribute(_xmlName('bestFit'), "1"),
+        // `bestFit` means "auto-sized to fit, never set by the user", so it
+        // belongs only on auto-fit columns. Stamping it on an explicit width
+        // makes content-honouring apps (e.g. Google Sheets) ignore the width
+        // and re-fit the column to its contents.
+        if (bestFit) XmlAttribute(_xmlName('bestFit'), "1"),
         XmlAttribute(_xmlName('customWidth'), "1"),
         if (outlineLevel != null && outlineLevel > 0)
           XmlAttribute(_xmlName('outlineLevel'), outlineLevel.toString()),

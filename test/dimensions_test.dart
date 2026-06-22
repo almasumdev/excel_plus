@@ -83,6 +83,36 @@ void main() {
       saveTestOutput(excel.save(), 'dim_auto_fit');
     });
 
+    test('an explicit column width is not written as bestFit', () {
+      // bestFit means "auto-sized, never set by the user"; pairing it with an
+      // explicit width makes Google Sheets re-fit the column to its contents
+      // (collapsing content-less columns), so a set width must omit it.
+      final excel = Excel.createExcel();
+      final sheet = excel['Sheet1'];
+      sheet.updateCell(CellIndex.indexByString('A1'), TextCellValue('data'));
+      sheet.setColumnWidth(0, 25.0);
+
+      final xml = readPart(excel.encode()!, 'xl/worksheets/sheet1.xml');
+      final col = RegExp(
+        r'<col\b[^>]*\bmin="1"[^>]*/>',
+      ).firstMatch(xml)!.group(0)!;
+      expect(col, contains('customWidth="1"'));
+      expect(col, isNot(contains('bestFit')));
+    });
+
+    test('an auto-fit column is written with bestFit', () {
+      final excel = Excel.createExcel();
+      final sheet = excel['Sheet1'];
+      sheet.updateCell(CellIndex.indexByString('A1'), TextCellValue('data'));
+      sheet.setColumnAutoFit(0);
+
+      final xml = readPart(excel.encode()!, 'xl/worksheets/sheet1.xml');
+      final col = RegExp(
+        r'<col\b[^>]*\bmin="1"[^>]*/>',
+      ).firstMatch(xml)!.group(0)!;
+      expect(col, contains('bestFit="1"'));
+    });
+
     test('width/height fall back to Excel defaults when none set', () {
       final excel = Excel.decodeBytes(
         buildXlsx('<row r="1"><c r="A1"><v>1</v></c></row>'),

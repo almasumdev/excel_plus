@@ -52,6 +52,12 @@
   LibreOffice rendered them with no fill (invisible bars/lines/areas). Each series
   (and pie/doughnut slice) now gets an explicit Office-accent colour; bar charts
   also gain a `gapWidth`, axes a `crosses`, and the chart a `dispBlanksAs`.
+- **Explicit column widths no longer written as `bestFit`** — every `<col>` was
+  stamped `bestFit="1"` even for a width set via `setColumnWidth`. `bestFit` means
+  "auto-sized, never set by the user", so content-honouring apps (notably Google
+  Sheets) ignored the width and re-fit the column to its contents — collapsing
+  content-less columns and skewing merged layouts. A set width now omits `bestFit`;
+  only `setColumnAutoFit` columns keep it.
 
 ## 2.0.0
 

@@ -99,12 +99,12 @@ class ExcelWriter extends _WriterBase
     for (var index = 0; index < columnCount; index++) {
       double width = defaultColumnWidth;
 
-      if (autoFits.containsKey(index) && (!customWidths.containsKey(index))) {
+      final isAutoFit =
+          autoFits.containsKey(index) && !customWidths.containsKey(index);
+      if (isAutoFit) {
         width = _calcAutoFitColumnWidth(sheetObject, index);
-      } else {
-        if (customWidths.containsKey(index)) {
-          width = customWidths[index]!;
-        }
+      } else if (customWidths.containsKey(index)) {
+        width = customWidths[index]!;
       }
 
       _addNewColumn(
@@ -115,6 +115,7 @@ class ExcelWriter extends _WriterBase
         outlineLevel: outline[index],
         hidden: hiddenCols.contains(index),
         collapsed: collapsedCols.contains(index),
+        bestFit: isAutoFit,
       );
     }
   }
