@@ -152,7 +152,8 @@ CellStyle _bordered({
   horizontalAlign: align,
   verticalAlign: VerticalAlign.Center,
   numberFormat: numberFormat ?? NumFormat.standard_0,
-  indent: indent,
+  // Right-aligned numbers get a wider gutter so they don't crowd the edge.
+  indent: align == HorizontalAlign.Right ? 2 : indent,
   leftBorder: _edge(),
   rightBorder: _edge(),
   topBorder: _edge(),
@@ -219,7 +220,12 @@ Excel _buildInvoice() {
       fontColorHex: font ?? _ink,
       horizontalAlign: align,
       verticalAlign: VerticalAlign.Center,
-      indent: align == HorizontalAlign.Center ? 0 : 1,
+      // Right-aligned amounts get a wider gutter; centred cells need none.
+      indent: switch (align) {
+        HorizontalAlign.Right => 2,
+        HorizontalAlign.Center => 0,
+        HorizontalAlign.Left => 1,
+      },
       numberFormat: fmt ?? NumFormat.standard_0,
       leftBorder: edge,
       rightBorder: edge,
@@ -413,7 +419,7 @@ Excel _buildInvoice() {
   _layMargin(s);
   _fitColumns(
     s,
-    [8, 24, 5, 9, 11],
+    [9, 23, 5, 9, 11],
     first: dc,
     totalPx: phoneWidthPx - _marginPxX,
   );
@@ -1050,7 +1056,7 @@ Excel _buildEventExpenses() {
   _layMargin(s);
   _fitColumns(
     s,
-    [13, 11, 11, 11],
+    [18, 11, 10, 10],
     first: dc,
     totalPx: phoneWidthPx - _marginPxX,
   );
@@ -1210,7 +1216,7 @@ Excel buildInvoice() {
   }
   fitCols(List.filled(dc, 1), 0, mX);
   fitRows(List.filled(dr, 1), 0, mY);
-  fitCols([8, 24, 5, 9, 11], dc, wPx - mX); // Code, Description, Qty, Price, Amount
+  fitCols([9, 23, 5, 9, 11], dc, wPx - mX); // Code, Description, Qty, Price, Amount
   fitRows([0.5, 0.4, 2.0, 0.9, 0.4, 1.0, 1.0, 1.0, 1.0, 0.4, 1.2,
       1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.2, 0.4, 1.1], dr, hPx - mY);
   return excel;
@@ -1529,7 +1535,7 @@ Excel buildEventExpenses() {
   }
   fitCols(List.filled(dc, 1), 0, mX);
   fitRows(List.filled(dr, 1), 0, mY);
-  fitCols([13, 11, 11, 11], dc, wPx - mX);
+  fitCols([18, 11, 10, 10], dc, wPx - mX);
   fitRows([1.6, ...List.filled(8, 1.0), 1.2, ...List.filled(7, 1.0), 1.2], dr, hPx - mY);
   return excel;
 }
