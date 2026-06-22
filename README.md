@@ -117,63 +117,104 @@ cd ../excel_plus_bench                && dart pub get && dart run bin/benchmark.
 
 ## Key features
 
-- ✅ Read & write `.xlsx`
-- ✅ Create workbooks
-- ✅ Multiple sheets
-- ✅ All cell types
-- ✅ Formula evaluation
-- ✅ Cell styling
-- ✅ Number formats
-- ✅ Hyperlinks
-- ✅ Data validation
-- ✅ Conditional formatting
-- ✅ Freeze & split panes
-- ✅ Autofilter
-- ✅ Sheet & workbook protection
-- ✅ Defined names
-- ✅ Images
-- ✅ Page & print setup
-- ✅ Grouping & outline
-- ✅ Comments / notes
-- ✅ Excel tables (ListObjects)
-- ✅ Charts — read & write (column, bar, line, area, pie, doughnut, scatter)
-- ✅ Pivot tables — read & write (row / column / page / nested fields + measures)
-- ✅ Rich text (read & write)
-- ✅ Theme & indexed colours
-- ✅ Merge & unmerge
-- ✅ Rows & columns
-- ✅ Column width / row height
-- ✅ Find & replace
-- ✅ Typed exceptions
-- ✅ Cross-platform
-- ✅ Source-compatible drop-in
+A complete read / create / edit toolkit for `.xlsx`, on every Dart & Flutter
+platform. Expand a group for details:
+
+<details>
+<summary><b>📄 Core & platform</b></summary>
+
+- Read, create & edit `.xlsx`
+- Multiple sheets — create, copy, rename, delete
+- All cell types — text, int, double, bool, date, time, datetime, formula
+- Cross-platform — VM, web (`dart2js` + `wasm`) & Flutter mobile
+- Source-compatible drop-in for the `excel` package
+
+</details>
+
+<details>
+<summary><b>🎨 Cells, styling & text</b></summary>
+
+- Cell styling — font, fill, borders, alignment, rotation, wrap
+- Number formats — standard & custom
+- Rich text (read & write)
+- Theme & indexed colours
+- Merge & unmerge
+
+</details>
+
+<details>
+<summary><b>📐 Rows, columns & layout</b></summary>
+
+- Insert / delete / clear rows & columns
+- Column width, row height & auto-fit
+- Grouping & outline levels
+- Page & print setup
+
+</details>
+
+<details>
+<summary><b>🧩 Worksheet features</b></summary>
+
+- Hyperlinks
+- Data validation / dropdowns
+- Conditional formatting
+- Freeze & split panes
+- Autofilter
+- Sheet & workbook protection
+- Defined names / named ranges
+
+</details>
+
+<details>
+<summary><b>📊 Formulas & data tools</b></summary>
+
+- Formula-evaluation engine — ~130 functions, plus `registerFunction` for your own
+- Excel tables (ListObjects)
+- Pivot tables — read & write (row / column / page / nested fields + measures)
+- Find & replace
+
+</details>
+
+<details>
+<summary><b>🖼️ Objects & media</b></summary>
+
+- Charts — read & write (column, bar, line, area, pie, doughnut, scatter)
+- Images
+- Comments / notes
+
+</details>
+
+<details>
+<summary><b>🛡️ Reliability & performance</b></summary>
+
+- Typed exceptions — `ExcelException` + subtypes
+- Lazy per-sheet parsing & SAX streaming for large files
+- Round-trip safety — unmodeled parts preserved byte-for-byte
+
+</details>
 
 ## Limitations
 
-- ❌ Long-tail / engineering formula functions
+- ❌ Long-tail statistical, engineering & database (D-) formula functions —
+  unknown functions evaluate to a `#NAME?` cell (never crash), and you can plug
+  in your own with `excel.formula.registerFunction`
+- ❌ Dynamic-array spilling across the grid — a top-level dynamic-array formula
+  (`FILTER`, `SORT`, `UNIQUE`, `SEQUENCE`) returns only its first cell
+- ❌ R1C1-style `INDIRECT` — only A1-style references are resolved
 
 ## Roadmap
 
-- ✅ Worksheet features (hyperlinks, validation, conditional formatting, panes,
-  autofilter, protection, named ranges) — 1.0.0
-- ✅ Theme & indexed colours, rich-text write, error values — 1.0.0
-- ✅ Images, comments, page & print setup, grouping — 1.1.0
-- ✅ Formula-evaluation engine (~130 functions) — 1.1.0
-- ✅ Excel tables / ListObjects — 1.1.0
-- ✅ Charts (7 types) — 1.1.0
-- ✅ Array-formula spilling (recalculate) — 1.1.0
-- ✅ Pivot tables (row / column / page / nested fields + measures) — 1.1.0
-- ✅ Typed exception hierarchy (`ExcelException` + subtypes) — 2.0.0
-- ✅ Split panes, chart & pivot typed read-back — 2.1.0
+Planned next — direction is driven by what users request on the
+[issue tracker](https://github.com/almasumdev/excel_plus/issues):
 
-See the
+- ⬜ More formula functions — long-tail statistical, engineering & database (D-)
+- ⬜ Dynamic-array spilling across the grid
+- ⬜ Streaming / sink encode to cap peak memory on very large saves
+
+Shipped milestones are in the
+[changelog](https://github.com/almasumdev/excel_plus/blob/main/CHANGELOG.md); the
 [**formula functions reference**](https://github.com/almasumdev/excel_plus/blob/main/doc/functions.md)
-for the full list of supported and planned functions.
-
-Shipped changes are tracked in the
-[changelog](https://github.com/almasumdev/excel_plus/blob/main/CHANGELOG.md), and
-the direction is driven by what users request on the
-[issue tracker](https://github.com/almasumdev/excel_plus/issues).
+lists every supported and planned function.
 
 ## Error handling
 
