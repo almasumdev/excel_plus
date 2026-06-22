@@ -199,6 +199,33 @@ void main() {
       expect(s.getTable('missing'), isNull);
     });
 
+    test('reads a hand-written table part (headerless, \$-absolute ref)', () {
+      final bytes = buildXlsx(
+        '<row r="1"><c r="A1"><v>1</v></c></row>',
+        sheetRels:
+            '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+            '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+            '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/table" Target="../tables/table1.xml"/>'
+            '</Relationships>',
+        extraParts: {
+          'xl/tables/table1.xml':
+              '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+              '<table xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" '
+              'id="1" name="Headerless" displayName="Headerless" '
+              r'ref="$A$1:$B$3" headerRowCount="0">'
+              '<tableColumns count="2">'
+              '<tableColumn id="1" name="X"/><tableColumn id="2" name="Y"/>'
+              '</tableColumns></table>',
+        },
+      );
+      final tables = Excel.decodeBytes(bytes)['Sheet1'].tables;
+      expect(tables, hasLength(1));
+      expect(tables.first.name, 'Headerless');
+      expect(tables.first.headerRow, isFalse);
+      expect(tables.first.ref, 'A1:B3'); // $ stripped
+      expect(tables.first.columns, ['X', 'Y']);
+    });
+
     test('removing a table deletes its orphaned part and content type', () {
       final excel = Excel.createExcel();
       final s = _firstSheet(excel);

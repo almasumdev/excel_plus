@@ -253,6 +253,81 @@ void main() {
     });
   });
 
+  group('Chart Options & Escaping', () {
+    test('a stacked column chart emits grouping="stacked"', () {
+      final excel = Excel.createExcel();
+      _seed(excel).addChart(
+        Chart.column(
+          anchor: CellIndex.indexByString('D2'),
+          grouping: ChartGrouping.stacked,
+          series: [ChartSeries(name: 'Q', values: 'B2:B5')],
+        ),
+      );
+      expect(
+        _part(_encode(excel), 'xl/charts/chart1.xml'),
+        contains('stacked'),
+      );
+    });
+
+    test('a clustered line chart is remapped to grouping="standard"', () {
+      final excel = Excel.createExcel();
+      _seed(excel).addChart(
+        Chart.line(
+          anchor: CellIndex.indexByString('D2'),
+          series: [ChartSeries(values: 'B2:B5')],
+        ),
+      );
+      final chart = _part(_encode(excel), 'xl/charts/chart1.xml');
+      expect(chart, contains('lineChart'));
+      expect(chart, contains('standard'));
+    });
+
+    test('custom width sets the anchor extent in EMU (px*9525)', () {
+      final excel = Excel.createExcel();
+      _seed(excel).addChart(
+        Chart.column(
+          anchor: CellIndex.indexByString('D2'),
+          width: 800,
+          series: [ChartSeries(values: 'B2:B5')],
+        ),
+      );
+      expect(
+        _part(_encode(excel), 'xl/drawings/drawing1.xml'),
+        contains('cx="${800 * 9525}"'),
+      );
+    });
+
+    test('a multi-series chart emits one <c:ser> per series', () {
+      final excel = Excel.createExcel();
+      _seed(excel).addChart(
+        Chart.column(
+          anchor: CellIndex.indexByString('D2'),
+          series: [
+            ChartSeries(name: 'A', values: 'B2:B5'),
+            ChartSeries(name: 'B', values: 'B2:B5'),
+          ],
+        ),
+      );
+      final chart = _part(_encode(excel), 'xl/charts/chart1.xml');
+      expect('<c:ser>'.allMatches(chart).length, 2);
+    });
+
+    test('special characters in a title are XML-escaped', () {
+      final excel = Excel.createExcel();
+      _seed(excel).addChart(
+        Chart.column(
+          anchor: CellIndex.indexByString('D2'),
+          title: 'A & B <"x">',
+          series: [ChartSeries(values: 'B2:B5')],
+        ),
+      );
+      final chart = _part(_encode(excel), 'xl/charts/chart1.xml');
+      expect(() => XmlDocument.parse(chart), returnsNormally);
+      expect(chart, contains('A &amp; B'));
+      expect(chart, isNot(contains('A & B'))); // raw ampersand never emitted
+    });
+  });
+
   group('Chart Validation', () {
     test('addChart rejects a chart with no data series', () {
       final excel = Excel.createExcel();
