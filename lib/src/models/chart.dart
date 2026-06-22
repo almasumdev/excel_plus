@@ -137,6 +137,12 @@ class Chart {
   /// Value (y) axis title, or `null`.
   final String? yAxisTitle;
 
+  /// Whether the chart plots only data in visible cells. When `false`, the chart
+  /// also plots cells in hidden rows and columns (Excel's "show data in hidden
+  /// rows and columns" option) — useful when the source data is kept off-screen.
+  /// Defaults to `true`.
+  final bool plotVisibleOnly;
+
   /// Set true once the chart has been written, so a re-save doesn't duplicate it.
   bool _written = false;
 
@@ -154,6 +160,7 @@ class Chart {
     this.height = 288,
     this.xAxisTitle,
     this.yAxisTitle,
+    this.plotVisibleOnly = true,
   });
 
   /// A vertical bar (column) chart.
@@ -168,6 +175,7 @@ class Chart {
     int height = 288,
     String? xAxisTitle,
     String? yAxisTitle,
+    bool plotVisibleOnly = true,
   }) => Chart(
     type: ChartType.column,
     anchor: anchor,
@@ -180,6 +188,7 @@ class Chart {
     height: height,
     xAxisTitle: xAxisTitle,
     yAxisTitle: yAxisTitle,
+    plotVisibleOnly: plotVisibleOnly,
   );
 
   /// A horizontal bar chart.
@@ -194,6 +203,7 @@ class Chart {
     int height = 288,
     String? xAxisTitle,
     String? yAxisTitle,
+    bool plotVisibleOnly = true,
   }) => Chart(
     type: ChartType.bar,
     anchor: anchor,
@@ -206,6 +216,7 @@ class Chart {
     height: height,
     xAxisTitle: xAxisTitle,
     yAxisTitle: yAxisTitle,
+    plotVisibleOnly: plotVisibleOnly,
   );
 
   /// A line chart.
@@ -220,6 +231,7 @@ class Chart {
     int height = 288,
     String? xAxisTitle,
     String? yAxisTitle,
+    bool plotVisibleOnly = true,
   }) => Chart(
     type: ChartType.line,
     anchor: anchor,
@@ -232,6 +244,7 @@ class Chart {
     height: height,
     xAxisTitle: xAxisTitle,
     yAxisTitle: yAxisTitle,
+    plotVisibleOnly: plotVisibleOnly,
   );
 
   /// An area chart.
@@ -246,6 +259,7 @@ class Chart {
     int height = 288,
     String? xAxisTitle,
     String? yAxisTitle,
+    bool plotVisibleOnly = true,
   }) => Chart(
     type: ChartType.area,
     anchor: anchor,
@@ -258,6 +272,7 @@ class Chart {
     height: height,
     xAxisTitle: xAxisTitle,
     yAxisTitle: yAxisTitle,
+    plotVisibleOnly: plotVisibleOnly,
   );
 
   /// A pie chart (uses the first series only).
@@ -269,6 +284,7 @@ class Chart {
     LegendPosition legend = LegendPosition.right,
     int width = 480,
     int height = 288,
+    bool plotVisibleOnly = true,
   }) => Chart(
     type: ChartType.pie,
     anchor: anchor,
@@ -278,6 +294,7 @@ class Chart {
     legend: legend,
     width: width,
     height: height,
+    plotVisibleOnly: plotVisibleOnly,
   );
 
   /// A doughnut chart (uses the first series only).
@@ -289,6 +306,7 @@ class Chart {
     LegendPosition legend = LegendPosition.right,
     int width = 480,
     int height = 288,
+    bool plotVisibleOnly = true,
   }) => Chart(
     type: ChartType.doughnut,
     anchor: anchor,
@@ -298,6 +316,7 @@ class Chart {
     legend: legend,
     width: width,
     height: height,
+    plotVisibleOnly: plotVisibleOnly,
   );
 
   /// A scatter (XY) chart. Each series needs both [ChartSeries.xValues] and
@@ -311,6 +330,7 @@ class Chart {
     int height = 288,
     String? xAxisTitle,
     String? yAxisTitle,
+    bool plotVisibleOnly = true,
   }) => Chart(
     type: ChartType.scatter,
     anchor: anchor,
@@ -321,6 +341,7 @@ class Chart {
     height: height,
     xAxisTitle: xAxisTitle,
     yAxisTitle: yAxisTitle,
+    plotVisibleOnly: plotVisibleOnly,
   );
 
   @override

@@ -239,7 +239,7 @@ mixin _WriterChartsMixin on _WriterBase {
           }),
           _cVal('overlay', '0'),
         ]),
-      _cVal('plotVisOnly', '1'),
+      _cVal('plotVisOnly', chart.plotVisibleOnly ? '1' : '0'),
     ];
 
     final root = XmlElement(

@@ -15,6 +15,10 @@
   `sheet.charts` as `Chart` objects (type, title, series, categories, grouping,
   legend, axis titles, anchor). Previously charts were authoring-only; existing
   charts still round-trip untouched and are not duplicated on save.
+- **`Chart.plotVisibleOnly`** — new option (default `true`) on every chart
+  factory. Set it `false` to have the chart plot data in hidden rows and columns
+  (Excel's "show data in hidden rows and columns"), e.g. when the source data is
+  kept off-screen behind the chart. Writes and reads back via `plotVisOnly`.
 - **Pivot-table read-back** — pivots in an opened workbook are now parsed into
   `sheet.pivotTables` as `PivotTable` objects (name, anchor, source range/sheet,
   row / nested-row / column / page fields, and data fields with their aggregation

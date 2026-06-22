@@ -243,6 +243,7 @@ mixin _ParserDrawingsMixin on _ParserBase {
       height: height > 0 ? height : 288,
       xAxisTitle: xTitle,
       yAxisTitle: yTitle,
+      plotVisibleOnly: _childVal(chartEl, 'plotVisOnly') != '0',
     );
   }
 

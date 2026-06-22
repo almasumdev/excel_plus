@@ -168,6 +168,36 @@ void main() {
       expect(chart, contains('Quarter'));
       expect(chart, contains('Units'));
     });
+
+    test('plotVisibleOnly defaults to plotVisOnly val="1"', () {
+      final excel = Excel.createExcel();
+      _seed(excel).addChart(
+        Chart.column(
+          anchor: CellIndex.indexByString('D2'),
+          series: [ChartSeries(values: 'B2:B5')],
+          categories: 'A2:A5',
+        ),
+      );
+      final chart = _part(_encode(excel), 'xl/charts/chart1.xml');
+      expect(chart, contains('<c:plotVisOnly val="1"/>'));
+    });
+
+    test(
+      'plotVisibleOnly:false emits plotVisOnly val="0" (plots hidden cells)',
+      () {
+        final excel = Excel.createExcel();
+        _seed(excel).addChart(
+          Chart.column(
+            anchor: CellIndex.indexByString('D2'),
+            series: [ChartSeries(values: 'B2:B5')],
+            categories: 'A2:A5',
+            plotVisibleOnly: false,
+          ),
+        );
+        final chart = _part(_encode(excel), 'xl/charts/chart1.xml');
+        expect(chart, contains('<c:plotVisOnly val="0"/>'));
+      },
+    );
   });
 
   group('Multiple Charts And Coexistence', () {
@@ -416,6 +446,18 @@ void main() {
         ),
       );
       expect(readCharts(excel).single.legend, LegendPosition.none);
+    });
+
+    test('plotVisibleOnly round-trips', () {
+      final excel = Excel.createExcel();
+      _seed(excel).addChart(
+        Chart.column(
+          anchor: CellIndex.indexByString('D2'),
+          series: [ChartSeries(values: 'B2:B5')],
+          plotVisibleOnly: false,
+        ),
+      );
+      expect(readCharts(excel).single.plotVisibleOnly, isFalse);
     });
 
     test('reading then re-saving does not duplicate the chart part', () {
