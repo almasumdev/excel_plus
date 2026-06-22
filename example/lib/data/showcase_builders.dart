@@ -101,6 +101,25 @@ void _layMargin(Sheet s) {
   _fitRows(s, List.filled(_marginCells, 1), totalPx: _marginPxY);
 }
 
+/// Pixel ([width], [height]) for a chart that fills the "chart area" — the full
+/// content width, by the height of [count] rows starting at content-row [start]
+/// in the [rowWeights] layout. The height is trimmed slightly so the chart never
+/// overlaps the table beneath it (charts anchor top-left with no cell offset).
+({int width, int height}) _chartBox(
+  List<double> rowWeights,
+  int start,
+  int count,
+) {
+  final sum = rowWeights.fold<double>(0, (a, b) => a + b);
+  var span = 0.0;
+  for (var i = start; i < start + count; i++) {
+    span += rowWeights[i];
+  }
+  final h = (phoneHeightPx - _marginPxY) * span / sum;
+  final w = phoneWidthPx - _marginPxX;
+  return (width: w.round(), height: (h * 0.94).round());
+}
+
 // ---------------------------------------------------------------------------
 // shared helpers / palette
 // ---------------------------------------------------------------------------
@@ -127,6 +146,7 @@ void _merge(Sheet s, int c0, int r0, int c1, int r1) {
 }
 
 final _ink = ExcelColor.fromHexString('FF1B2430');
+final _muted = ExcelColor.fromHexString('FF66727E');
 final _line = ExcelColor.fromHexString('FFC7D0CB');
 final _currency = NumFormat.custom(formatCode: r'$#,##0.00');
 final _currency0 = NumFormat.custom(formatCode: r'$#,##0');
@@ -166,19 +186,18 @@ final _invoice = Showcase(
   id: 'invoice',
   title: 'Invoice',
   subtitle:
-      'A billing summary led by a real column chart of line-item amounts, above '
-      'an itemised table with a Subtotal / Tax / TOTAL stack. The chart renders '
-      'when the .xlsx is opened in Excel, and the used range is sized to fill a '
-      '570×795 portrait phone frame exactly.',
+      'A complete billing document — an accent bar, a merged title, a bill-to '
+      'block beside aligned invoice meta, a zebra-striped itemised table, and a '
+      'Subtotal / Tax / TOTAL stack. Offset 5×5 for a margin, and its used range '
+      'is sized to fill a 570×795 portrait phone frame exactly.',
   snippet: r'''
-// a real column chart of line-item amounts, anchored over the table
-sheet.addChart(Chart.column(
-  anchor: CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 1),
-  categories: 'A11:A15',                          // item descriptions
-  series: [ChartSeries(name: 'Amount', values: 'D11:D15')],
-  legend: LegendPosition.none,
-  width: 500, height: 300,
-));''',
+// Every cell is vertically centred, with an indent so text never touches a
+// border (centre-aligned cells don't need one).
+CellStyle cell(HorizontalAlign align) => CellStyle(
+  horizontalAlign: align,
+  verticalAlign: VerticalAlign.Center,
+  indent: align == HorizontalAlign.Center ? 0 : 1,
+);''',
   fullCode: _invoiceCode,
   build: _buildInvoice,
 );
@@ -187,126 +206,200 @@ Excel _buildInvoice() {
   final excel = _book('Invoice');
   final s = excel['Invoice'];
 
+  final red = ExcelColor.fromHexString('FF9E1B32');
   final zebra = ExcelColor.fromHexString('FFF4F6F8');
 
+  // Author content offset by 5 columns / 5 rows (the top-left margin).
   const dc = _marginCells, dr = _marginCells;
   void put(int c, int r, CellValue v, [CellStyle? st]) =>
       _put(s, c + dc, r + dr, v, st);
   void merge(int c0, int r0, int c1, int r1) =>
       _merge(s, c0 + dc, r0 + dr, c1 + dc, r1 + dr);
-  String a1(int c, int r) =>
-      CellIndex.indexByColumnRow(columnIndex: c + dc, rowIndex: r + dr).cellId;
 
-  // Title bar.
-  put(
-    0,
-    0,
-    TextCellValue('Invoice'),
-    CellStyle(
-      bold: true,
-      fontSize: 15,
-      fontColorHex: ExcelColor.white,
-      backgroundColorHex: _ink,
-      horizontalAlign: HorizontalAlign.Center,
+  // Every cell is vertically centred; left/right cells get an indent so text
+  // never touches a border, and the generous column widths keep the other side
+  // clear too — decent padding on both sides. (Centred cells need no indent.)
+  CellStyle cs({
+    bool bold = false,
+    bool italic = false,
+    int? fontSize,
+    ExcelColor? fill,
+    ExcelColor? font,
+    HorizontalAlign align = HorizontalAlign.Left,
+    NumFormat? fmt,
+    bool bordered = false,
+  }) {
+    final edge = bordered ? _edge() : null;
+    return CellStyle(
+      bold: bold,
+      italic: italic,
+      fontSize: fontSize,
+      backgroundColorHex: fill ?? ExcelColor.none,
+      fontColorHex: font ?? _ink,
+      horizontalAlign: align,
       verticalAlign: VerticalAlign.Center,
-    ),
-  );
-  merge(0, 0, 3, 0);
-
-  // Chart area (the column chart is anchored here).
-  for (var r = 1; r <= 8; r++) {
-    put(0, r, TextCellValue(''));
+      indent: align == HorizontalAlign.Center ? 0 : 1,
+      numberFormat: fmt ?? NumFormat.standard_0,
+      leftBorder: edge,
+      rightBorder: edge,
+      topBorder: edge,
+      bottomBorder: edge,
+    );
   }
 
-  // Items table header.
-  const headerRow = 9;
-  final headers = ['Description', 'Qty', 'Price', 'Amount'];
+  // A blank cell keeps a spacer row from being dropped (so its height sticks).
+  void spacer(int r) => put(0, r, TextCellValue(''), cs());
+
+  // Accent bar.
+  put(0, 0, TextCellValue(''), cs(fill: _ink));
+  merge(0, 0, 4, 0);
+  spacer(1);
+
+  // Title + company block.
+  put(0, 2, TextCellValue('INVOICE'), cs(bold: true, fontSize: 28));
+  merge(0, 2, 1, 2);
+  put(
+    2,
+    2,
+    TextCellValue('Adventure Works Cycles'),
+    cs(bold: true, fontSize: 15, font: red, align: HorizontalAlign.Right),
+  );
+  merge(2, 2, 4, 2);
+  put(
+    2,
+    3,
+    TextCellValue('800 Interchange Blvd · Austin, TX'),
+    cs(font: _muted, align: HorizontalAlign.Right),
+  );
+  merge(2, 3, 4, 3);
+  spacer(4);
+
+  // Bill-to (merged A:B) and invoice meta (label in D, value in E).
+  void billTo(int rr, String text, {bool bold = false, bool muted = false}) {
+    put(
+      0,
+      rr,
+      TextCellValue(text),
+      cs(bold: bold, font: muted ? _muted : _ink),
+    );
+    merge(0, rr, 1, rr);
+  }
+
+  void meta(int rr, String label, String value) {
+    put(
+      3,
+      rr,
+      TextCellValue(label),
+      cs(bold: true, font: _muted, align: HorizontalAlign.Right),
+    );
+    put(4, rr, TextCellValue(value), cs(align: HorizontalAlign.Right));
+  }
+
+  billTo(5, 'BILL TO', bold: true, muted: true);
+  billTo(6, 'Abraham Swearegin', bold: true);
+  billTo(7, '9920 BridgePointe Parkway', muted: true);
+  billTo(8, 'San Mateo, California, United States', muted: true);
+  meta(5, 'Invoice #', '20585557939');
+  meta(6, 'Date', '31 Aug 2026');
+  meta(7, 'Due date', '30 Sep 2026');
+  meta(8, 'Terms', 'Net 30');
+  spacer(9);
+
+  // Items table.
+  const headerRow = 10;
+  final headers = ['Code', 'Description', 'Qty', 'Price', 'Amount'];
   for (var c = 0; c < headers.length; c++) {
     put(
       c,
       headerRow,
       TextCellValue(headers[c]),
-      _bordered(
+      cs(
         bold: true,
         fill: _ink,
         font: ExcelColor.white,
-        align: c >= 1 ? HorizontalAlign.Right : HorizontalAlign.Left,
+        bordered: true,
+        align: c >= 2 ? HorizontalAlign.Right : HorizontalAlign.Left,
       ),
     );
   }
 
-  final items = <(String, int, double)>[
-    ('AWC Logo Cap', 2, 8.99),
-    ('Long-Sleeve Jersey', 3, 49.99),
-    ('Mountain Bike Socks', 2, 9.50),
-    ('ML Fork', 6, 175.49),
-    ('Sports-100 Helmet', 1, 34.99),
+  final items = <(String, String, int, double)>[
+    ('CA-1098', 'AWC Logo Cap', 2, 8.99),
+    ('LJ-0192', 'Long-Sleeve Logo Jersey, M', 3, 49.99),
+    ('SO-B909-M', 'Mountain Bike Socks, M', 2, 9.50),
+    ('FK-5136', 'ML Fork', 6, 175.49),
+    ('HL-U509', 'Sports-100 Helmet, Black', 1, 34.99),
   ];
   var subtotal = 0.0;
   for (var i = 0; i < items.length; i++) {
     final r = headerRow + 1 + i;
-    final (desc, qty, price) = items[i];
+    final (code, desc, qty, price) = items[i];
     final line = qty * price;
     subtotal += line;
     final fill = i.isOdd ? zebra : null;
-    put(0, r, TextCellValue(desc), _bordered(fill: fill));
-    put(
-      1,
-      r,
-      IntCellValue(qty),
-      _bordered(fill: fill, align: HorizontalAlign.Right),
-    );
+    put(0, r, TextCellValue(code), cs(bordered: true, fill: fill));
+    put(1, r, TextCellValue(desc), cs(bordered: true, fill: fill));
     put(
       2,
       r,
-      DoubleCellValue(price),
-      _bordered(
-        fill: fill,
-        align: HorizontalAlign.Right,
-        numberFormat: _currency,
-      ),
+      IntCellValue(qty),
+      cs(bordered: true, fill: fill, align: HorizontalAlign.Right),
     );
     put(
       3,
       r,
-      DoubleCellValue(line),
-      _bordered(
+      DoubleCellValue(price),
+      cs(
+        bordered: true,
         fill: fill,
         align: HorizontalAlign.Right,
-        numberFormat: _currency,
+        fmt: _currency,
+      ),
+    );
+    put(
+      4,
+      r,
+      DoubleCellValue(line),
+      cs(
+        bordered: true,
+        fill: fill,
+        align: HorizontalAlign.Right,
+        fmt: _currency,
       ),
     );
   }
 
-  // Totals stack — label merged across A:C, amount under the Amount column (D).
+  // Totals stack — label merged across C:D, amount under the Amount column (E).
   final tax = subtotal * 0.0825;
   final grand = subtotal + tax;
-  var row = headerRow + 1 + items.length;
+  var row = headerRow + items.length + 1;
   void totalLine(String label, double value, {bool emphasize = false}) {
     final fill = emphasize ? _ink : null;
     final font = emphasize ? ExcelColor.white : _ink;
     put(
-      0,
+      2,
       row,
       TextCellValue(label),
-      _bordered(
+      cs(
         bold: emphasize,
         fill: fill,
         font: font,
+        bordered: true,
         align: HorizontalAlign.Right,
       ),
     );
-    merge(0, row, 2, row);
+    merge(2, row, 3, row);
     put(
-      3,
+      4,
       row,
       DoubleCellValue(value),
-      _bordered(
+      cs(
         bold: emphasize,
         fill: fill,
         font: font,
+        bordered: true,
         align: HorizontalAlign.Right,
-        numberFormat: _currency,
+        fmt: _currency,
       ),
     );
     row++;
@@ -315,29 +408,50 @@ Excel _buildInvoice() {
   totalLine('Subtotal', subtotal);
   totalLine('Tax (8.25%)', tax);
   totalLine('TOTAL', grand, emphasize: true);
+  spacer(row); // row == 19
 
-  // A real column chart of line-item amounts (renders in Excel).
-  s.addChart(
-    Chart.column(
-      anchor: CellIndex.indexByColumnRow(columnIndex: dc, rowIndex: 1 + dr),
-      categories: '${a1(0, headerRow + 1)}:${a1(0, headerRow + items.length)}',
-      series: [
-        ChartSeries(
-          name: 'Amount',
-          values: '${a1(3, headerRow + 1)}:${a1(3, headerRow + items.length)}',
-        ),
-      ],
-      legend: LegendPosition.none,
-      width: 500,
-      height: 300,
+  // Footer note.
+  final footerRow = row + 1; // 20
+  put(
+    0,
+    footerRow,
+    TextCellValue(
+      'Thank you for your business!    ·    support@adventure-works.com',
+    ),
+    cs(
+      italic: true,
+      font: _muted,
+      fill: ExcelColor.fromHexString('FFEDF0EE'),
+      align: HorizontalAlign.Center,
     ),
   );
+  merge(0, footerRow, 4, footerRow);
 
+  // Margin + fit the content into the remaining frame. Columns by natural
+  // content width (numbers stay fully visible); rows with a taller title/total.
   _layMargin(s);
-  _fitColumns(s, [16, 5, 9, 10], first: dc, totalPx: phoneWidthPx - _marginPxX);
+  _fitColumns(
+    s,
+    [8, 24, 5, 9, 11],
+    first: dc,
+    totalPx: phoneWidthPx - _marginPxX,
+  );
   _fitRows(
     s,
-    [1.6, ...List.filled(8, 1.0), 1.2, ...List.filled(5, 1.0), 1.0, 1.0, 1.2],
+    [
+      0.5, // 0  accent bar
+      0.4, // 1  spacer
+      2.0, // 2  title + company
+      0.9, // 3  address
+      0.4, // 4  spacer
+      1.0, 1.0, 1.0, 1.0, // 5-8  bill-to / meta
+      0.4, // 9  spacer
+      1.2, // 10 header
+      1.0, 1.0, 1.0, 1.0, 1.0, // 11-15 items
+      1.0, 1.0, 1.2, // 16-18 subtotal / tax / TOTAL
+      0.4, // 19 spacer
+      1.1, // 20 footer
+    ],
     first: dr,
     totalPx: phoneHeightPx - _marginPxY,
   );
@@ -345,7 +459,7 @@ Excel _buildInvoice() {
 }
 
 // ===========================================================================
-// 2. Timesheet (dense monthly attendance grid)
+// 2. Timesheet (clustered column chart on top + weekly hours table)
 // ===========================================================================
 
 final _timesheet = Showcase(
@@ -515,7 +629,10 @@ Excel _buildTimesheet() {
     ),
   );
 
-  // A real clustered column chart of planned vs actual hours (renders in Excel).
+  // A real clustered column chart of planned vs actual hours (renders in Excel),
+  // sized to fill the chart area exactly so it never overlaps the table below.
+  final rows = [1.6, ...List.filled(8, 1.0), 1.2, ...List.filled(5, 1.0), 1.2];
+  final box = _chartBox(rows, 1, 8);
   s.addChart(
     Chart.column(
       anchor: CellIndex.indexByColumnRow(columnIndex: dc, rowIndex: 1 + dr),
@@ -531,8 +648,8 @@ Excel _buildTimesheet() {
         ),
       ],
       legend: LegendPosition.bottom,
-      width: 500,
-      height: 300,
+      width: box.width,
+      height: box.height,
     ),
   );
 
@@ -543,12 +660,7 @@ Excel _buildTimesheet() {
     first: dc,
     totalPx: phoneWidthPx - _marginPxX,
   );
-  _fitRows(
-    s,
-    [1.6, ...List.filled(8, 1.0), 1.2, ...List.filled(5, 1.0), 1.2],
-    first: dr,
-    totalPx: phoneHeightPx - _marginPxY,
-  );
+  _fitRows(s, rows, first: dr, totalPx: phoneHeightPx - _marginPxY);
   return excel;
 }
 
@@ -573,6 +685,7 @@ sheet.addChart(Chart.column(
   series: [ChartSeries(name: 'Internet Sales Amount', values: 'F20:F31')],
   categories: 'E20:E31',                       // Jan..Dec (hidden source rows)
   legend: LegendPosition.bottom,
+  plotVisibleOnly: false,                      // plot the hidden source rows
   width: 510, height: 300,
 ));''',
   fullCode: _yearlyCode,
@@ -717,6 +830,10 @@ Excel _buildYearlySales() {
     s.setRowHidden(r + dr, true);
   }
 
+  // The 12-month source sits in hidden rows; plotVisibleOnly:false lets the
+  // chart plot them. Sized to fill the chart area exactly (no table overlap).
+  final rows = [1.6, ...List.filled(8, 1.0), 1.5, 1.0, 1.5, 1.0];
+  final box = _chartBox(rows, 1, 8);
   s.addChart(
     Chart.column(
       anchor: CellIndex.indexByColumnRow(columnIndex: dc, rowIndex: 1 + dr),
@@ -728,8 +845,9 @@ Excel _buildYearlySales() {
       ],
       categories: '${a1(0, srcTop)}:${a1(0, srcTop + months.length - 1)}',
       legend: LegendPosition.bottom,
-      width: 510,
-      height: 300,
+      plotVisibleOnly: false,
+      width: box.width,
+      height: box.height,
     ),
   );
 
@@ -740,17 +858,12 @@ Excel _buildYearlySales() {
     first: dc,
     totalPx: phoneWidthPx - _marginPxX,
   );
-  _fitRows(
-    s,
-    [1.6, ...List.filled(8, 1.0), 1.5, 1.0, 1.5, 1.0],
-    first: dr,
-    totalPx: phoneHeightPx - _marginPxY,
-  );
+  _fitRows(s, rows, first: dr, totalPx: phoneHeightPx - _marginPxY);
   return excel;
 }
 
 // ===========================================================================
-// 5. Event expenses (pie chart on top + expenses table)
+// 4. Event expenses (pie chart on top + expenses table)
 // ===========================================================================
 
 final _eventExpenses = Showcase(
@@ -922,6 +1035,9 @@ Excel _buildEventExpenses() {
     ),
   );
 
+  // Sized to fill the chart area exactly so the pie never overlaps the table.
+  final rows = [1.6, ...List.filled(8, 1.0), 1.2, ...List.filled(7, 1.0), 1.2];
+  final box = _chartBox(rows, 1, 8);
   s.addChart(
     Chart.pie(
       anchor: CellIndex.indexByColumnRow(columnIndex: dc, rowIndex: 1 + dr),
@@ -931,8 +1047,8 @@ Excel _buildEventExpenses() {
         values: '${a1(1, headerRow + 1)}:${a1(1, headerRow + cats.length)}',
       ),
       legend: LegendPosition.right,
-      width: 500,
-      height: 300,
+      width: box.width,
+      height: box.height,
     ),
   );
 
@@ -943,12 +1059,7 @@ Excel _buildEventExpenses() {
     first: dc,
     totalPx: phoneWidthPx - _marginPxX,
   );
-  _fitRows(
-    s,
-    [1.6, ...List.filled(8, 1.0), 1.2, ...List.filled(7, 1.0), 1.2],
-    first: dr,
-    totalPx: phoneHeightPx - _marginPxY,
-  );
+  _fitRows(s, rows, first: dr, totalPx: phoneHeightPx - _marginPxY);
   return excel;
 }
 
@@ -959,14 +1070,16 @@ Excel _buildEventExpenses() {
 const _invoiceCode = r'''
 import 'package:excel_plus/excel_plus.dart';
 
-/// A billing summary, offset 5×5 for a margin, sized to fill a 570×795 portrait
-/// phone frame exactly: a real column chart of line-item amounts over an
-/// itemised table with a Subtotal / Tax / TOTAL stack.
+/// A complete invoice, offset 5×5 for a top-left margin, whose used range is
+/// sized to fill a 570×795 portrait phone frame exactly. Every cell is
+/// vertically centred, with an indent so text never touches a border (the
+/// generous column widths keep the other side clear too).
 Excel buildInvoice() {
   final excel = Excel.createExcel();
   excel.rename(excel.getDefaultSheet() ?? 'Sheet1', 'Invoice');
   final s = excel['Invoice'];
   final ink = ExcelColor.fromHexString('FF1B2430');
+  final muted = ExcelColor.fromHexString('FF66727E');
   final zebra = ExcelColor.fromHexString('FFF4F6F8');
   final money = NumFormat.custom(formatCode: r'$#,##0.00');
 
@@ -985,6 +1098,7 @@ Excel buildInvoice() {
       s.setRowHeight(first + r, total * w[r] / sum * 0.75);
     }
   }
+
   Border edge() => Border(borderStyle: BorderStyle.Thin,
       borderColorHex: ExcelColor.fromHexString('FFC7D0CB'));
   void put(int c, int r, CellValue v, [CellStyle? st]) => s.updateCell(
@@ -992,81 +1106,113 @@ Excel buildInvoice() {
   void mergeRange(int c0, int r0, int c1, int r1) => s.merge(
       CellIndex.indexByColumnRow(columnIndex: c0 + dc, rowIndex: r0 + dr),
       CellIndex.indexByColumnRow(columnIndex: c1 + dc, rowIndex: r1 + dr));
-  String a1(int c, int r) =>
-      CellIndex.indexByColumnRow(columnIndex: c + dc, rowIndex: r + dr).cellId;
-  CellStyle cell({bool bold = false, ExcelColor? fill, ExcelColor? font,
-      HorizontalAlign align = HorizontalAlign.Left, NumFormat? fmt}) =>
-      CellStyle(bold: bold, backgroundColorHex: fill ?? ExcelColor.none,
-          fontColorHex: font ?? ink, horizontalAlign: align,
-          verticalAlign: VerticalAlign.Center, numberFormat: fmt ?? NumFormat.standard_0,
-          indent: 1, leftBorder: edge(), rightBorder: edge(), topBorder: edge(), bottomBorder: edge());
+  // Vertically centred; indent on left/right cells (centre needs none).
+  CellStyle cs({bool bold = false, bool italic = false, int? fontSize,
+      ExcelColor? fill, ExcelColor? font, HorizontalAlign align = HorizontalAlign.Left,
+      NumFormat? fmt, bool bordered = false}) =>
+      CellStyle(bold: bold, italic: italic, fontSize: fontSize,
+          backgroundColorHex: fill ?? ExcelColor.none, fontColorHex: font ?? ink,
+          horizontalAlign: align, verticalAlign: VerticalAlign.Center,
+          indent: align == HorizontalAlign.Center ? 0 : 1,
+          numberFormat: fmt ?? NumFormat.standard_0,
+          leftBorder: bordered ? edge() : null, rightBorder: bordered ? edge() : null,
+          topBorder: bordered ? edge() : null, bottomBorder: bordered ? edge() : null);
+  void spacer(int r) => put(0, r, TextCellValue(''), cs());
 
-  // title bar
-  put(0, 0, TextCellValue('Invoice'), CellStyle(bold: true, fontSize: 15,
-      fontColorHex: ExcelColor.white, backgroundColorHex: ink,
-      horizontalAlign: HorizontalAlign.Center, verticalAlign: VerticalAlign.Center));
-  mergeRange(0, 0, 3, 0);
+  // accent bar
+  put(0, 0, TextCellValue(''), cs(fill: ink));
+  mergeRange(0, 0, 4, 0);
+  spacer(1);
 
-  // chart area (the column chart is anchored here)
-  for (var r = 1; r <= 8; r++) {
-    put(0, r, TextCellValue(''));
+  // title + company
+  put(0, 2, TextCellValue('INVOICE'), cs(bold: true, fontSize: 28));
+  mergeRange(0, 2, 1, 2);
+  put(2, 2, TextCellValue('Adventure Works Cycles'), cs(bold: true, fontSize: 15,
+      font: ExcelColor.fromHexString('FF9E1B32'), align: HorizontalAlign.Right));
+  mergeRange(2, 2, 4, 2);
+  put(2, 3, TextCellValue('800 Interchange Blvd · Austin, TX'),
+      cs(font: muted, align: HorizontalAlign.Right));
+  mergeRange(2, 3, 4, 3);
+  spacer(4);
+
+  // bill-to (merged A:B) and meta (label in D, value in E)
+  void billTo(int row, String text, {bool bold = false, bool dim = false}) {
+    put(0, row, TextCellValue(text), cs(bold: bold, font: dim ? muted : ink));
+    mergeRange(0, row, 1, row);
   }
+  void meta(int row, String label, String value) {
+    put(3, row, TextCellValue(label), cs(bold: true, font: muted, align: HorizontalAlign.Right));
+    put(4, row, TextCellValue(value), cs(align: HorizontalAlign.Right));
+  }
+  billTo(5, 'BILL TO', bold: true, dim: true);
+  billTo(6, 'Abraham Swearegin', bold: true);
+  billTo(7, '9920 BridgePointe Parkway', dim: true);
+  billTo(8, 'San Mateo, California, United States', dim: true);
+  meta(5, 'Invoice #', '20585557939');
+  meta(6, 'Date', '31 Aug 2026');
+  meta(7, 'Due date', '30 Sep 2026');
+  meta(8, 'Terms', 'Net 30');
+  spacer(9);
 
-  const headerRow = 9;
-  final headers = ['Description', 'Qty', 'Price', 'Amount'];
+  const headerRow = 10;
+  final headers = ['Code', 'Description', 'Qty', 'Price', 'Amount'];
   for (var c = 0; c < headers.length; c++) {
-    put(c, headerRow, TextCellValue(headers[c]), cell(bold: true, fill: ink,
-        font: ExcelColor.white, align: c >= 1 ? HorizontalAlign.Right : HorizontalAlign.Left));
+    put(c, headerRow, TextCellValue(headers[c]), cs(bold: true, fill: ink,
+        font: ExcelColor.white, bordered: true,
+        align: c >= 2 ? HorizontalAlign.Right : HorizontalAlign.Left));
   }
 
-  final items = <(String, int, double)>[
-    ('AWC Logo Cap', 2, 8.99), ('Long-Sleeve Jersey', 3, 49.99),
-    ('Mountain Bike Socks', 2, 9.50), ('ML Fork', 6, 175.49),
-    ('Sports-100 Helmet', 1, 34.99),
+  final items = <(String, String, int, double)>[
+    ('CA-1098', 'AWC Logo Cap', 2, 8.99),
+    ('LJ-0192', 'Long-Sleeve Logo Jersey, M', 3, 49.99),
+    ('SO-B909-M', 'Mountain Bike Socks, M', 2, 9.50),
+    ('FK-5136', 'ML Fork', 6, 175.49),
+    ('HL-U509', 'Sports-100 Helmet, Black', 1, 34.99),
   ];
   var subtotal = 0.0;
   for (var i = 0; i < items.length; i++) {
     final r = headerRow + 1 + i;
-    final (desc, qty, price) = items[i];
+    final (code, desc, qty, price) = items[i];
     final line = qty * price;
     subtotal += line;
     final fill = i.isOdd ? zebra : null;
-    put(0, r, TextCellValue(desc), cell(fill: fill));
-    put(1, r, IntCellValue(qty), cell(fill: fill, align: HorizontalAlign.Right));
-    put(2, r, DoubleCellValue(price), cell(fill: fill, align: HorizontalAlign.Right, fmt: money));
-    put(3, r, DoubleCellValue(line), cell(fill: fill, align: HorizontalAlign.Right, fmt: money));
+    put(0, r, TextCellValue(code), cs(bordered: true, fill: fill));
+    put(1, r, TextCellValue(desc), cs(bordered: true, fill: fill));
+    put(2, r, IntCellValue(qty), cs(bordered: true, fill: fill, align: HorizontalAlign.Right));
+    put(3, r, DoubleCellValue(price), cs(bordered: true, fill: fill, align: HorizontalAlign.Right, fmt: money));
+    put(4, r, DoubleCellValue(line), cs(bordered: true, fill: fill, align: HorizontalAlign.Right, fmt: money));
   }
 
-  // totals stack: label merged A:C, amount under Amount (D)
+  // totals stack: label merged C:D, amount under the Amount column (E)
   final tax = subtotal * 0.0825;
-  var row = headerRow + 1 + items.length;
+  var row = headerRow + items.length + 1;
   void totalLine(String label, double value, {bool emphasize = false}) {
     final fill = emphasize ? ink : null;
     final font = emphasize ? ExcelColor.white : ink;
-    put(0, row, TextCellValue(label), cell(bold: emphasize, fill: fill, font: font, align: HorizontalAlign.Right));
-    mergeRange(0, row, 2, row);
-    put(3, row, DoubleCellValue(value), cell(bold: emphasize, fill: fill, font: font, align: HorizontalAlign.Right, fmt: money));
+    put(2, row, TextCellValue(label), cs(bold: emphasize, fill: fill, font: font, bordered: true, align: HorizontalAlign.Right));
+    mergeRange(2, row, 3, row);
+    put(4, row, DoubleCellValue(value), cs(bold: emphasize, fill: fill, font: font, bordered: true, align: HorizontalAlign.Right, fmt: money));
     row++;
   }
   totalLine('Subtotal', subtotal);
   totalLine('Tax (8.25%)', tax);
   totalLine('TOTAL', subtotal + tax, emphasize: true);
+  spacer(row); // 19
 
-  // a real column chart of line-item amounts (renders in Excel)
-  s.addChart(Chart.column(
-    anchor: CellIndex.indexByColumnRow(columnIndex: dc, rowIndex: 1 + dr),
-    categories: '${a1(0, headerRow + 1)}:${a1(0, headerRow + items.length)}',
-    series: [ChartSeries(name: 'Amount', values: '${a1(3, headerRow + 1)}:${a1(3, headerRow + items.length)}')],
-    legend: LegendPosition.none, width: 500, height: 300,
-  ));
+  // footer
+  put(0, row + 1, TextCellValue('Thank you for your business!    ·    support@adventure-works.com'),
+      cs(italic: true, font: muted, fill: ExcelColor.fromHexString('FFEDF0EE'), align: HorizontalAlign.Center));
+  mergeRange(0, row + 1, 4, row + 1);
 
+  // 5×5 gutter (cells keep the margin rows' heights) + fit
   for (var r = 0; r < dr; r++) {
     s.updateCell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: r), TextCellValue(''));
   }
   fitCols(List.filled(dc, 1), 0, mX);
   fitRows(List.filled(dr, 1), 0, mY);
-  fitCols([16, 5, 9, 10], dc, wPx - mX);
-  fitRows([1.6, ...List.filled(8, 1.0), 1.2, ...List.filled(5, 1.0), 1.0, 1.0, 1.2], dr, hPx - mY);
+  fitCols([8, 24, 5, 9, 11], dc, wPx - mX); // Code, Description, Qty, Price, Amount
+  fitRows([0.5, 0.4, 2.0, 0.9, 0.4, 1.0, 1.0, 1.0, 1.0, 0.4, 1.2,
+      1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.2, 0.4, 1.1], dr, hPx - mY);
   return excel;
 }
 ''';
@@ -1261,7 +1407,7 @@ Excel buildSalesDashboard() {
     series: [ChartSeries(name: 'Internet Sales Amount',
         values: '${a1(1, srcTop)}:${a1(1, srcTop + months.length - 1)}')],
     categories: '${a1(0, srcTop)}:${a1(0, srcTop + months.length - 1)}',
-    legend: LegendPosition.bottom, width: 510, height: 300,
+    legend: LegendPosition.bottom, plotVisibleOnly: false, width: 510, height: 300,
   ));
 
   for (var r = 0; r < dr; r++) {
