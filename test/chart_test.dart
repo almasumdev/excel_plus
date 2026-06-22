@@ -327,6 +327,22 @@ void main() {
       );
     });
 
+    test('anchorTo emits a twoCellAnchor spanning the cell range', () {
+      final excel = Excel.createExcel();
+      _seed(excel).addChart(
+        Chart.column(
+          anchor: CellIndex.indexByString('A1'),
+          anchorTo: CellIndex.indexByString('E10'),
+          series: [ChartSeries(values: 'B2:B5')],
+        ),
+      );
+      final drawing = _part(_encode(excel), 'xl/drawings/drawing1.xml');
+      expect(drawing, contains('twoCellAnchor'));
+      expect(drawing, isNot(contains('oneCellAnchor')));
+      expect(drawing, contains('<xdr:col>4</xdr:col>')); // to E
+      expect(drawing, contains('<xdr:row>9</xdr:row>')); // to row 10
+    });
+
     test('a multi-series chart emits one <c:ser> per series', () {
       final excel = Excel.createExcel();
       _seed(excel).addChart(
@@ -458,6 +474,21 @@ void main() {
         ),
       );
       expect(readCharts(excel).single.plotVisibleOnly, isFalse);
+    });
+
+    test('anchorTo round-trips a two-cell anchor', () {
+      final excel = Excel.createExcel();
+      _seed(excel).addChart(
+        Chart.column(
+          anchor: CellIndex.indexByString('A1'),
+          anchorTo: CellIndex.indexByString('E10'),
+          series: [ChartSeries(values: 'B2:B5')],
+        ),
+      );
+      final c = readCharts(excel).single;
+      expect(c.anchorTo, isNotNull);
+      expect(c.anchorTo!.columnIndex, 4); // E
+      expect(c.anchorTo!.rowIndex, 9); // row 10
     });
 
     test('reading then re-saving does not duplicate the chart part', () {

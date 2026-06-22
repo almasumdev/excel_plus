@@ -19,6 +19,11 @@
   factory. Set it `false` to have the chart plot data in hidden rows and columns
   (Excel's "show data in hidden rows and columns"), e.g. when the source data is
   kept off-screen behind the chart. Writes and reads back via `plotVisOnly`.
+- **`Chart.anchorTo`** — new optional cell on every chart factory. When set, the
+  chart is written as a **two-cell anchor** spanning `anchor`..`anchorTo`, so its
+  edges line up with the cell grid and it resizes with the columns/rows instead
+  of using a fixed pixel `width`/`height`. Round-trips via the drawing's
+  `<xdr:twoCellAnchor>` (the `to` cell reads back into `anchorTo`).
 - **Pivot-table read-back** — pivots in an opened workbook are now parsed into
   `sheet.pivotTables` as `PivotTable` objects (name, anchor, source range/sheet,
   row / nested-row / column / page fields, and data fields with their aggregation

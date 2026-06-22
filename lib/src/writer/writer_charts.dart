@@ -255,8 +255,11 @@ mixin _WriterChartsMixin on _WriterBase {
         '${root.toXmlString()}';
   }
 
-  /// Builds a `<xdr:oneCellAnchor>` graphic frame referencing the chart part via
-  /// [chartRelId] (a relationship on the drawing part).
+  /// Builds the chart's drawing anchor referencing the chart part via
+  /// [chartRelId]. With [toCol]/[toRow] it emits a `<xdr:twoCellAnchor>` so the
+  /// chart spans the cell range ([col],[row])..([toCol],[toRow]) exactly and
+  /// lines up with the grid; otherwise a fixed `<xdr:oneCellAnchor>` of
+  /// [cx]×[cy] EMU anchored at ([col],[row]).
   XmlElement _buildChartAnchor({
     required int col,
     required int row,
@@ -264,6 +267,8 @@ mixin _WriterChartsMixin on _WriterBase {
     required int cy,
     required int shapeId,
     required String chartRelId,
+    int? toCol,
+    int? toRow,
   }) {
     XmlElement xdr(
       String l, [
@@ -272,41 +277,53 @@ mixin _WriterChartsMixin on _WriterBase {
     ]) => XmlElement(_xmlName(l, 'xdr'), a, c);
     XmlAttribute at(String l, String v) => XmlAttribute(_xmlName(l), v);
 
+    XmlElement marker(String tag, int c, int r) => xdr(tag, [], [
+      xdr('col', [], [XmlText('$c')]),
+      xdr('colOff', [], [XmlText('0')]),
+      xdr('row', [], [XmlText('$r')]),
+      xdr('rowOff', [], [XmlText('0')]),
+    ]);
+
+    final frame = xdr(
+      'graphicFrame',
+      [at('macro', '')],
+      [
+        xdr('nvGraphicFramePr', [], [
+          xdr('cNvPr', [at('id', '$shapeId'), at('name', 'Chart $shapeId')]),
+          xdr('cNvGraphicFramePr'),
+        ]),
+        xdr('xfrm', [], [
+          _ca('off', [at('x', '0'), at('y', '0')]),
+          _ca('ext', [at('cx', '$cx'), at('cy', '$cy')]),
+        ]),
+        _ca('graphic', [], [
+          _ca(
+            'graphicData',
+            [at('uri', _chartNS)],
+            [
+              XmlElement(_xmlName('chart', 'c'), [
+                XmlAttribute(_xmlName('c', 'xmlns'), _chartNS),
+                XmlAttribute(_xmlName('r', 'xmlns'), _relationships),
+                XmlAttribute(_xmlName('id', 'r'), chartRelId),
+              ]),
+            ],
+          ),
+        ]),
+      ],
+    );
+
+    if (toCol != null && toRow != null) {
+      return xdr('twoCellAnchor', [], [
+        marker('from', col, row),
+        marker('to', toCol, toRow),
+        frame,
+        xdr('clientData'),
+      ]);
+    }
     return xdr('oneCellAnchor', [], [
-      xdr('from', [], [
-        xdr('col', [], [XmlText('$col')]),
-        xdr('colOff', [], [XmlText('0')]),
-        xdr('row', [], [XmlText('$row')]),
-        xdr('rowOff', [], [XmlText('0')]),
-      ]),
+      marker('from', col, row),
       xdr('ext', [at('cx', '$cx'), at('cy', '$cy')]),
-      xdr(
-        'graphicFrame',
-        [at('macro', '')],
-        [
-          xdr('nvGraphicFramePr', [], [
-            xdr('cNvPr', [at('id', '$shapeId'), at('name', 'Chart $shapeId')]),
-            xdr('cNvGraphicFramePr'),
-          ]),
-          xdr('xfrm', [], [
-            _ca('off', [at('x', '0'), at('y', '0')]),
-            _ca('ext', [at('cx', '$cx'), at('cy', '$cy')]),
-          ]),
-          _ca('graphic', [], [
-            _ca(
-              'graphicData',
-              [at('uri', _chartNS)],
-              [
-                XmlElement(_xmlName('chart', 'c'), [
-                  XmlAttribute(_xmlName('c', 'xmlns'), _chartNS),
-                  XmlAttribute(_xmlName('r', 'xmlns'), _relationships),
-                  XmlAttribute(_xmlName('id', 'r'), chartRelId),
-                ]),
-              ],
-            ),
-          ]),
-        ],
-      ),
+      frame,
       xdr('clientData'),
     ]);
   }

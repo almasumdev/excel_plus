@@ -110,6 +110,14 @@ class Chart {
   /// Top-left cell the chart's frame is anchored to.
   final CellIndex anchor;
 
+  /// Bottom-right cell the chart's frame extends to (its top-left corner). When
+  /// set, the chart spans the cell range [anchor]..[anchorTo] and is sized by
+  /// those cells (a two-cell anchor), so its edges line up with the grid and it
+  /// resizes with the columns/rows; [width]/[height] then act only as a fallback
+  /// size. When `null`, the chart floats at a fixed [width]×[height] pixels from
+  /// [anchor] (a one-cell anchor).
+  final CellIndex? anchorTo;
+
   /// Chart title, or `null` for none.
   final String? title;
 
@@ -161,6 +169,7 @@ class Chart {
     this.xAxisTitle,
     this.yAxisTitle,
     this.plotVisibleOnly = true,
+    this.anchorTo,
   });
 
   /// A vertical bar (column) chart.
@@ -176,6 +185,7 @@ class Chart {
     String? xAxisTitle,
     String? yAxisTitle,
     bool plotVisibleOnly = true,
+    CellIndex? anchorTo,
   }) => Chart(
     type: ChartType.column,
     anchor: anchor,
@@ -189,6 +199,7 @@ class Chart {
     xAxisTitle: xAxisTitle,
     yAxisTitle: yAxisTitle,
     plotVisibleOnly: plotVisibleOnly,
+    anchorTo: anchorTo,
   );
 
   /// A horizontal bar chart.
@@ -204,6 +215,7 @@ class Chart {
     String? xAxisTitle,
     String? yAxisTitle,
     bool plotVisibleOnly = true,
+    CellIndex? anchorTo,
   }) => Chart(
     type: ChartType.bar,
     anchor: anchor,
@@ -217,6 +229,7 @@ class Chart {
     xAxisTitle: xAxisTitle,
     yAxisTitle: yAxisTitle,
     plotVisibleOnly: plotVisibleOnly,
+    anchorTo: anchorTo,
   );
 
   /// A line chart.
@@ -232,6 +245,7 @@ class Chart {
     String? xAxisTitle,
     String? yAxisTitle,
     bool plotVisibleOnly = true,
+    CellIndex? anchorTo,
   }) => Chart(
     type: ChartType.line,
     anchor: anchor,
@@ -245,6 +259,7 @@ class Chart {
     xAxisTitle: xAxisTitle,
     yAxisTitle: yAxisTitle,
     plotVisibleOnly: plotVisibleOnly,
+    anchorTo: anchorTo,
   );
 
   /// An area chart.
@@ -260,6 +275,7 @@ class Chart {
     String? xAxisTitle,
     String? yAxisTitle,
     bool plotVisibleOnly = true,
+    CellIndex? anchorTo,
   }) => Chart(
     type: ChartType.area,
     anchor: anchor,
@@ -273,6 +289,7 @@ class Chart {
     xAxisTitle: xAxisTitle,
     yAxisTitle: yAxisTitle,
     plotVisibleOnly: plotVisibleOnly,
+    anchorTo: anchorTo,
   );
 
   /// A pie chart (uses the first series only).
@@ -285,6 +302,7 @@ class Chart {
     int width = 480,
     int height = 288,
     bool plotVisibleOnly = true,
+    CellIndex? anchorTo,
   }) => Chart(
     type: ChartType.pie,
     anchor: anchor,
@@ -295,6 +313,7 @@ class Chart {
     width: width,
     height: height,
     plotVisibleOnly: plotVisibleOnly,
+    anchorTo: anchorTo,
   );
 
   /// A doughnut chart (uses the first series only).
@@ -307,6 +326,7 @@ class Chart {
     int width = 480,
     int height = 288,
     bool plotVisibleOnly = true,
+    CellIndex? anchorTo,
   }) => Chart(
     type: ChartType.doughnut,
     anchor: anchor,
@@ -317,6 +337,7 @@ class Chart {
     width: width,
     height: height,
     plotVisibleOnly: plotVisibleOnly,
+    anchorTo: anchorTo,
   );
 
   /// A scatter (XY) chart. Each series needs both [ChartSeries.xValues] and
@@ -331,6 +352,7 @@ class Chart {
     String? xAxisTitle,
     String? yAxisTitle,
     bool plotVisibleOnly = true,
+    CellIndex? anchorTo,
   }) => Chart(
     type: ChartType.scatter,
     anchor: anchor,
@@ -342,6 +364,7 @@ class Chart {
     xAxisTitle: xAxisTitle,
     yAxisTitle: yAxisTitle,
     plotVisibleOnly: plotVisibleOnly,
+    anchorTo: anchorTo,
   );
 
   @override

@@ -107,6 +107,8 @@ mixin _WriterDrawingsMixin on _WriterBase, _WriterChartsMixin {
           cy: chart.height * 9525,
           shapeId: nextShapeId,
           chartRelId: chartRelId,
+          toCol: chart.anchorTo?.columnIndex,
+          toRow: chart.anchorTo?.rowIndex,
         ),
       );
       nextShapeId++;

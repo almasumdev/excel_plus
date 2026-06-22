@@ -133,7 +133,13 @@ mixin _ParserDrawingsMixin on _ParserBase {
 
       final anchorEl = _ancestorAnchor(frame);
       final (w, h) = _readAnchorSize(anchorEl);
-      final chart = _chartFromDoc(cdoc, _readAnchorCell(anchorEl), w, h);
+      final chart = _chartFromDoc(
+        cdoc,
+        _readAnchorCell(anchorEl),
+        w,
+        h,
+        _readAnchorToCell(anchorEl),
+      );
       if (chart == null) continue;
       chart._written = true; // preserved as-is; do not re-author on save
       sheet._charts.add(chart);
@@ -147,6 +153,7 @@ mixin _ParserDrawingsMixin on _ParserBase {
     CellIndex anchor,
     int width,
     int height,
+    CellIndex? anchorTo,
   ) {
     final chartEl = cdoc.descendantElements
         .where((e) => e.name.local == 'chart')
@@ -244,6 +251,7 @@ mixin _ParserDrawingsMixin on _ParserBase {
       xAxisTitle: xTitle,
       yAxisTitle: yTitle,
       plotVisibleOnly: _childVal(chartEl, 'plotVisOnly') != '0',
+      anchorTo: anchorTo,
     );
   }
 
@@ -344,6 +352,24 @@ mixin _ParserDrawingsMixin on _ParserBase {
     if (from == null) {
       return CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0);
     }
+    return CellIndex.indexByColumnRow(
+      columnIndex: read('col'),
+      rowIndex: read('row'),
+    );
+  }
+
+  /// Reads the `<xdr:to>` cell of a two-cell [anchor], or `null` for a one-cell
+  /// anchor (which has no `<xdr:to>`).
+  CellIndex? _readAnchorToCell(XmlElement? anchor) {
+    final to = anchor?.childElements
+        .where((e) => e.name.local == 'to')
+        .firstOrNull;
+    if (to == null) return null;
+    int read(String tag) {
+      final el = to.childElements.where((e) => e.name.local == tag).firstOrNull;
+      return int.tryParse(el?.innerText.trim() ?? '') ?? 0;
+    }
+
     return CellIndex.indexByColumnRow(
       columnIndex: read('col'),
       rowIndex: read('row'),
