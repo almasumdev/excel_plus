@@ -80,9 +80,27 @@ class ChartSeries {
   /// For scatter charts, the x-values range. Ignored by other chart types.
   final String? xValues;
 
+  /// An explicit colour for this series, overriding the auto-assigned palette
+  /// colour. It fills the bars/area, or colours the line (line/scatter). For
+  /// pie and doughnut charts, prefer [pointColors] to colour individual slices;
+  /// `color` is ignored there. `null` uses the built-in Office palette.
+  final ExcelColor? color;
+
+  /// Per-slice colours for a pie or doughnut chart, index-aligned to the
+  /// [values]. A missing or `null` entry falls back to the palette, so a short
+  /// list colours only the leading slices. Ignored by other chart types.
+  final List<ExcelColor?>? pointColors;
+
   /// Creates a series over the [values] range, with an optional [name] and,
-  /// for scatter charts, an [xValues] range.
-  const ChartSeries({this.name, required this.values, this.xValues});
+  /// for scatter charts, an [xValues] range. Pass [color] to override the
+  /// series' palette colour, or [pointColors] to colour pie/doughnut slices.
+  const ChartSeries({
+    this.name,
+    required this.values,
+    this.xValues,
+    this.color,
+    this.pointColors,
+  });
 }
 
 /// A chart anchored to a worksheet cell, authored over data ranges.

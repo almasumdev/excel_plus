@@ -1,3 +1,13 @@
+## 2.2.0
+
+### Added
+
+- **Custom chart colours** — `ChartSeries` gains an optional `color` (an
+  `ExcelColor` that fills the bars/area or colours the line for
+  column/bar/line/area/scatter charts) and `pointColors` (per-slice colours for
+  pie/doughnut, index-aligned to the values). Both fall back to the built-in
+  Office palette wherever a colour is omitted, so existing charts are unchanged.
+
 ## 2.1.0
 
 ### Added

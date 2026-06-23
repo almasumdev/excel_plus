@@ -218,6 +218,54 @@ void main() {
       expect(chart, contains('<a:srgbClr val="FFFFFF"/>'));
     });
 
+    test('a series uses an explicit colour over the palette', () {
+      final excel = Excel.createExcel();
+      _seed(excel).addChart(
+        Chart.column(
+          anchor: CellIndex.indexByString('D2'),
+          categories: 'A2:A5',
+          series: [
+            ChartSeries(
+              name: 'Units',
+              values: 'B2:B5',
+              color: ExcelColor.fromHexString('FFFF0000'),
+            ),
+          ],
+        ),
+      );
+
+      final chart = _part(_encode(excel), 'xl/charts/chart1.xml');
+      // The custom RGB (8-digit ARGB with the alpha dropped) fills the series,
+      // replacing the index-0 palette colour (4472C4).
+      expect(chart, contains('<a:srgbClr val="FF0000"/>'));
+      expect(chart, isNot(contains('<a:srgbClr val="4472C4"/>')));
+    });
+
+    test('pie slice colours come from pointColors, then the palette', () {
+      final excel = Excel.createExcel();
+      _seed(excel).addChart(
+        Chart.pie(
+          anchor: CellIndex.indexByString('D2'),
+          categories: 'A2:A5',
+          series: ChartSeries(
+            name: 'Units',
+            values: 'B2:B5',
+            // Only the first two of four slices are coloured explicitly.
+            pointColors: [
+              ExcelColor.fromHexString('FFFF0000'),
+              ExcelColor.fromHexString('FF00FF00'),
+            ],
+          ),
+        ),
+      );
+
+      final chart = _part(_encode(excel), 'xl/charts/chart1.xml');
+      expect(chart, contains('<a:srgbClr val="FF0000"/>')); // slice 0 (custom)
+      expect(chart, contains('<a:srgbClr val="00FF00"/>')); // slice 1 (custom)
+      expect(chart, contains('<a:srgbClr val="A5A5A5"/>')); // slice 2 (palette)
+      expect(chart, contains('<a:srgbClr val="FFC000"/>')); // slice 3 (palette)
+    });
+
     test('every chart type emits its plot element and parses as XML', () {
       final cases = <ChartType, String>{
         ChartType.column: '<c:barChart>',

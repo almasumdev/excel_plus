@@ -157,6 +157,33 @@ mixin _WriterChartsMixin on _WriterBase {
 
   String _seriesColor(int i) => _seriesPalette[i % _seriesPalette.length];
 
+  /// The 6-digit RGB hex (`RRGGBB`) the chart XML wants for [c], dropping any
+  /// leading alpha, or `null` when [c] has no usable literal colour (e.g.
+  /// [ExcelColor.none]) so the caller falls back to the palette.
+  String? _colorHex(ExcelColor? c) {
+    if (c == null) return null;
+    final hex = c.colorHex;
+    if (hex.length == 8) return hex.substring(2); // AARRGGBB -> RRGGBB
+    if (hex.length == 6) return hex;
+    return null; // 'none' / empty / unexpected
+  }
+
+  /// The fill/line colour for series [index]: its explicit [ChartSeries.color]
+  /// if set, otherwise the palette colour for that index.
+  String _resolvedSeriesColor(ChartSeries s, int index) =>
+      _colorHex(s.color) ?? _seriesColor(index);
+
+  /// The colour for pie/doughnut slice [i]: the matching
+  /// [ChartSeries.pointColors] entry if present, otherwise the palette.
+  String _sliceColor(ChartSeries s, int i) {
+    final pts = s.pointColors;
+    if (pts != null && i < pts.length) {
+      final hex = _colorHex(pts[i]);
+      if (hex != null) return hex;
+    }
+    return _seriesColor(i);
+  }
+
   XmlElement _srgb(String hex) =>
       _ca('srgbClr', [XmlAttribute(_xmlName('val'), hex)]);
 
@@ -222,13 +249,13 @@ mixin _WriterChartsMixin on _WriterBase {
           _c('v', [], [XmlText(s.name!)]),
         ]),
       if (type == ChartType.line)
-        _lineSpPr(_seriesColor(index))
+        _lineSpPr(_resolvedSeriesColor(s, index))
       else if (!isPieLike)
-        _fillSpPr(_seriesColor(index)),
+        _fillSpPr(_resolvedSeriesColor(s, index)),
       if (type == ChartType.column || type == ChartType.bar)
         _cVal('invertIfNegative', '0'),
       if (isPieLike)
-        for (var i = 0; i < sliceCount; i++) _dPt(i, _seriesColor(i)),
+        for (var i = 0; i < sliceCount; i++) _dPt(i, _sliceColor(s, i)),
       if (categories != null) _c('cat', [], [_strRef(sheetName, categories)]),
       _c('val', [], [_numRef(sheetName, s.values)]),
     ];
@@ -244,7 +271,7 @@ mixin _WriterChartsMixin on _WriterBase {
         _c('tx', [], [
           _c('v', [], [XmlText(s.name!)]),
         ]),
-      _lineSpPr(_seriesColor(index)),
+      _lineSpPr(_resolvedSeriesColor(s, index)),
       _c('xVal', [], [_numRef(sheetName, s.xValues ?? s.values)]),
       _c('yVal', [], [_numRef(sheetName, s.values)]),
     ]);
