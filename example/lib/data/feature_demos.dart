@@ -3093,22 +3093,39 @@ final _charts = FeatureDemo(
   description:
       'Author charts over your data: column, bar, line, area, pie, doughnut and '
       'scatter. Each is anchored to a cell with a title, legend, multiple series '
-      'and category labels. Download the file to see the rendered chart.',
+      'and category labels — and you can colour each series, or each pie/doughnut '
+      'slice, explicitly. Download the file to see the rendered chart.',
   points: [
     'Chart.column / bar / line / area / pie / doughnut / scatter',
     'Multiple series + category labels from cell ranges',
+    'Custom colours: ChartSeries(color:) per series, pointColors: per slice',
     'Title, axis titles and legend position',
     'sheet.addChart(...) — anchored to a cell',
   ],
   snippet: '''
+// colour each series explicitly (falls back to a palette if omitted)
 sheet.addChart(Chart.column(
   anchor: CellIndex.indexByString('E2'),
   title: 'Quarterly sales',
   categories: 'A2:A5',
   series: [
-    ChartSeries(name: 'Q1', values: 'B2:B5'),
-    ChartSeries(name: 'Q2', values: 'C2:C5'),
+    ChartSeries(name: 'Q1', values: 'B2:B5',
+        color: ExcelColor.fromHexString('FF2962FF')),
+    ChartSeries(name: 'Q2', values: 'C2:C5',
+        color: ExcelColor.fromHexString('FFFF6D00')),
   ],
+));
+
+// or colour each pie slice individually
+sheet.addChart(Chart.pie(
+  anchor: CellIndex.indexByString('E20'),
+  categories: 'A2:A5',
+  series: ChartSeries(values: 'B2:B5', pointColors: [
+    ExcelColor.fromHexString('FF4285F4'),
+    ExcelColor.fromHexString('FF34A853'),
+    ExcelColor.fromHexString('FFFBBC04'),
+    ExcelColor.fromHexString('FFEA4335'),
+  ]),
 ));''',
   fullCode: r'''
 import 'package:excel_plus/excel_plus.dart';
@@ -3143,16 +3160,24 @@ Excel buildCharts() {
     title: 'Quarterly sales',
     categories: 'A2:A5',
     series: [
-      ChartSeries(name: 'Q1', values: 'B2:B5'),
-      ChartSeries(name: 'Q2', values: 'C2:C5'),
+      ChartSeries(name: 'Q1', values: 'B2:B5',
+          color: ExcelColor.fromHexString('FF2962FF')),
+      ChartSeries(name: 'Q2', values: 'C2:C5',
+          color: ExcelColor.fromHexString('FFFF6D00')),
     ],
   ));
 
+  // pie slices, each its own colour (a short list falls back to the palette)
   s.addChart(Chart.pie(
     anchor: CellIndex.indexByString('E20'),
     title: 'Q1 share',
     categories: 'A2:A5',
-    series: ChartSeries(values: 'B2:B5'),
+    series: ChartSeries(values: 'B2:B5', pointColors: [
+      ExcelColor.fromHexString('FF4285F4'),
+      ExcelColor.fromHexString('FF34A853'),
+      ExcelColor.fromHexString('FFFBBC04'),
+      ExcelColor.fromHexString('FFEA4335'),
+    ]),
   ));
   return excel;
 }
@@ -3194,8 +3219,16 @@ Excel _buildCharts() {
       title: 'Quarterly sales',
       categories: 'A2:A5',
       series: [
-        ChartSeries(name: 'Q1', values: 'B2:B5'),
-        ChartSeries(name: 'Q2', values: 'C2:C5'),
+        ChartSeries(
+          name: 'Q1',
+          values: 'B2:B5',
+          color: ExcelColor.fromHexString('FF2962FF'),
+        ),
+        ChartSeries(
+          name: 'Q2',
+          values: 'C2:C5',
+          color: ExcelColor.fromHexString('FFFF6D00'),
+        ),
       ],
       xAxisTitle: 'Region',
       yAxisTitle: 'Units',
@@ -3206,7 +3239,16 @@ Excel _buildCharts() {
       anchor: CellIndex.indexByString('E20'),
       title: 'Q1 share by region',
       categories: 'A2:A5',
-      series: ChartSeries(values: 'B2:B5'),
+      // One colour per region slice (East, West, North, South).
+      series: ChartSeries(
+        values: 'B2:B5',
+        pointColors: [
+          ExcelColor.fromHexString('FF4285F4'),
+          ExcelColor.fromHexString('FF34A853'),
+          ExcelColor.fromHexString('FFFBBC04'),
+          ExcelColor.fromHexString('FFEA4335'),
+        ],
+      ),
     ),
   );
 
