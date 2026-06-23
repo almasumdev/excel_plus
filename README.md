@@ -531,6 +531,33 @@ for (final c in sheet.charts) {
 Also `Chart.bar`, `Chart.line`, `Chart.area`, `Chart.pie`, `Chart.doughnut`,
 and `Chart.scatter`.
 
+Colour series — and individual pie/doughnut slices — explicitly; anything left
+unset uses a built-in Office palette:
+
+```dart
+// per-series colour (column/bar/line/area/scatter)
+sheet.addChart(Chart.column(
+  anchor: CellIndex.indexByString('D2'),
+  categories: 'A2:A4',
+  series: [
+    ChartSeries(name: 'Sales', values: 'B2:B4',
+        color: ExcelColor.fromHexString('FF2962FF')),
+  ],
+));
+
+// per-slice colours for pie/doughnut (index-aligned to the values;
+// a short list colours the leading slices and palettes the rest)
+sheet.addChart(Chart.pie(
+  anchor: CellIndex.indexByString('D20'),
+  categories: 'A2:A4',
+  series: ChartSeries(values: 'B2:B4', pointColors: [
+    ExcelColor.fromHexString('FF4285F4'),
+    ExcelColor.fromHexString('FF34A853'),
+    ExcelColor.fromHexString('FFFBBC04'),
+  ]),
+));
+```
+
 ### Pivot tables
 
 ```dart
