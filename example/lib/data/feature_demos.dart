@@ -2288,12 +2288,14 @@ final _conditionalFormat = FeatureDemo(
   description:
       'Format cells based on their values: colour scales (heat maps), data '
       'bars, and cellIs/formula rules that apply a style when a condition is '
-      'met. Open the exported file in Excel to see the rules render live.',
+      'met. Open the exported file in Excel to see the rules render live. Rules '
+      'in an opened file are read back into sheet.conditionalFormats.',
   points: [
     'ConditionalFormat.colorScale(min:, mid:, max:)',
     'ConditionalFormat.dataBar(color)',
     'ConditionalFormat.greaterThan / lessThan / between (with a style)',
     'ConditionalFormat.formula(expr, style:)',
+    'Read back rules via sheet.conditionalFormats (type / operator / range)',
   ],
   snippet: '''
 sheet.addConditionalFormat(

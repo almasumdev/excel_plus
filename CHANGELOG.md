@@ -17,6 +17,13 @@
   `FilterColumn.top10` (top/bottom N or N%). Applied criteria in opened files are
   read back on `sheet.autoFilterColumns` and round-trip; unmodeled filter kinds
   (dynamic/colour/icon) are still preserved untouched on save.
+- **Conditional-formatting read-back** — rules in an opened workbook are now
+  parsed into `sheet.conditionalFormats` (previously only API-added rules
+  appeared there). Each `ConditionalFormat` exposes its `type`
+  (a `ConditionalFormatType`), raw `typeName`, `operator`, `formulas`, `colors`,
+  `isThreeColor` and the `range` it applies to. Read rules are for inspection —
+  they round-trip untouched via the sheet envelope and are never re-emitted or
+  duplicated when you add new ones.
 
 ### Fixed
 

@@ -78,6 +78,11 @@ class _SheetBase {
   /// Appended on save; any rules already in an opened file are preserved as-is.
   final List<(String, ConditionalFormat)> _conditionalFormats = [];
 
+  /// Conditional-formatting rules parsed from an opened file (each tagged with
+  /// its range). Surfaced via [conditionalFormats] for inspection but never
+  /// re-written — the originals round-trip untouched in the sheet envelope.
+  final List<ConditionalFormat> _parsedConditionalFormats = [];
+
   /// Images on this sheet: those parsed from the drawing part plus any inserted
   /// via [insertImage]. Lazily populated when the sheet is parsed.
   final List<ExcelImage> _images = [];
@@ -830,12 +835,14 @@ class _SheetBase {
     _sheetProtectionChanged = true;
   }
 
-  /// The conditional-formatting rules added to this sheet via the API.
-  ///
-  /// Rules already present in an opened file are preserved on save but are not
-  /// parsed into this list.
-  List<ConditionalFormat> get conditionalFormats =>
-      List.unmodifiable(_conditionalFormats.map((e) => e.$2));
+  /// The conditional-formatting rules on this sheet — those read from an opened
+  /// file first, then any added via the API — each carrying its
+  /// [ConditionalFormat.range]. Read rules are for inspection; they round-trip
+  /// untouched in the sheet envelope and are not re-emitted from this list.
+  List<ConditionalFormat> get conditionalFormats => List.unmodifiable([
+    ..._parsedConditionalFormats,
+    ..._conditionalFormats.map((e) => e.$2._withRange(e.$1)),
+  ]);
 
   /// Adds a conditional-formatting [format] over the range from [start] to
   /// [end]. Multiple rules may target the same or overlapping ranges.

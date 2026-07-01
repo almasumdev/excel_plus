@@ -190,4 +190,130 @@ void main() {
       expect(out, contains('type="iconSet"'));
     });
   });
+
+  group('Conditional Formatting Read', () {
+    Excel decodeWithCf(String cf) => Excel.decodeBytes(
+      buildXlsx('<row r="1"><c r="A1"><v>1</v></c></row>', afterSheetData: cf),
+    );
+
+    test('reads a cellIs rule into conditionalFormats with its range', () {
+      final rule = decodeWithCf(
+        '<conditionalFormatting sqref="B2:B100">'
+        '<cfRule type="cellIs" operator="greaterThan" priority="1" dxfId="0">'
+        '<formula>50</formula>'
+        '</cfRule>'
+        '</conditionalFormatting>',
+      )['Sheet1'].conditionalFormats.single;
+      expect(rule.type, ConditionalFormatType.cellIs);
+      expect(rule.operator, 'greaterThan');
+      expect(rule.formulas, ['50']);
+      expect(rule.range, 'B2:B100');
+    });
+
+    test('reads a 3-colour scale with its colours', () {
+      final rule = decodeWithCf(
+        '<conditionalFormatting sqref="A1:A20">'
+        '<cfRule type="colorScale" priority="1"><colorScale>'
+        '<cfvo type="min"/><cfvo type="percentile" val="50"/><cfvo type="max"/>'
+        '<color rgb="FFFF0000"/><color rgb="FFFFFF00"/><color rgb="FF00FF00"/>'
+        '</colorScale></cfRule>'
+        '</conditionalFormatting>',
+      )['Sheet1'].conditionalFormats.single;
+      expect(rule.type, ConditionalFormatType.colorScale);
+      expect(rule.isThreeColor, isTrue);
+      expect(rule.colors.map((c) => c.colorHex), [
+        'FFFF0000',
+        'FFFFFF00',
+        'FF00FF00',
+      ]);
+    });
+
+    test('reads a data bar colour', () {
+      final rule = decodeWithCf(
+        '<conditionalFormatting sqref="C1:C9">'
+        '<cfRule type="dataBar" priority="1"><dataBar>'
+        '<cfvo type="min"/><cfvo type="max"/><color rgb="FF638EC6"/>'
+        '</dataBar></cfRule>'
+        '</conditionalFormatting>',
+      )['Sheet1'].conditionalFormats.single;
+      expect(rule.type, ConditionalFormatType.dataBar);
+      expect(rule.colors.single.colorHex, 'FF638EC6');
+    });
+
+    test('an icon-set rule reads as iconSet with its raw typeName', () {
+      final rule = decodeWithCf(
+        '<conditionalFormatting sqref="A1:A5">'
+        '<cfRule type="iconSet" priority="1"><iconSet>'
+        '<cfvo type="min"/><cfvo type="percent" val="33"/>'
+        '<cfvo type="percent" val="67"/>'
+        '</iconSet></cfRule>'
+        '</conditionalFormatting>',
+      )['Sheet1'].conditionalFormats.single;
+      expect(rule.type, ConditionalFormatType.iconSet);
+      expect(rule.typeName, 'iconSet');
+    });
+
+    test('multiple cfRules in one block each carry the shared range', () {
+      final rules = decodeWithCf(
+        '<conditionalFormatting sqref="A1:A9">'
+        '<cfRule type="cellIs" operator="greaterThan" priority="1">'
+        '<formula>9</formula></cfRule>'
+        '<cfRule type="cellIs" operator="lessThan" priority="2">'
+        '<formula>1</formula></cfRule>'
+        '</conditionalFormatting>',
+      )['Sheet1'].conditionalFormats;
+      expect(rules.length, 2);
+      expect(rules.every((r) => r.range == 'A1:A9'), isTrue);
+      expect(rules.map((r) => r.operator), ['greaterThan', 'lessThan']);
+    });
+
+    test('an authored rule round-trips through read-back', () {
+      final excel = Excel.createExcel();
+      excel['Sheet1'].addConditionalFormat(
+        _at('A1'),
+        _at('A10'),
+        ConditionalFormat.greaterThan(
+          100,
+          style: CellStyle(backgroundColorHex: ExcelColor.red),
+        ),
+      );
+      final rule = Excel.decodeBytes(
+        excel.encode()!,
+      )['Sheet1'].conditionalFormats.single;
+      expect(rule.type, ConditionalFormatType.cellIs);
+      expect(rule.operator, 'greaterThan');
+      expect(rule.formulas, ['100']);
+      expect(rule.range, 'A1:A10');
+    });
+
+    test('a read rule is not re-emitted when another is added', () {
+      final excel = decodeWithCf(
+        '<conditionalFormatting sqref="A1:A5">'
+        '<cfRule type="cellIs" operator="greaterThan" priority="1">'
+        '<formula>5</formula></cfRule>'
+        '</conditionalFormatting>',
+      );
+      excel['Sheet1'].addConditionalFormat(
+        _at('B1'),
+        _at('B5'),
+        ConditionalFormat.lessThan(2, style: CellStyle(bold: true)),
+      );
+      final out = excel.encode()!;
+      final ws = readPart(out, 'xl/worksheets/sheet1.xml');
+      expect(RegExp('<cfRule').allMatches(ws).length, 2);
+      expect(Excel.decodeBytes(out)['Sheet1'].conditionalFormats.length, 2);
+    });
+
+    test('the getter includes the range for an API-added rule', () {
+      final excel = Excel.createExcel();
+      excel['Sheet1'].addConditionalFormat(
+        _at('D1'),
+        _at('D3'),
+        ConditionalFormat.dataBar(ExcelColor.blue),
+      );
+      final rule = excel['Sheet1'].conditionalFormats.single;
+      expect(rule.range, 'D1:D3');
+      expect(rule.type, ConditionalFormatType.dataBar);
+    });
+  });
 }

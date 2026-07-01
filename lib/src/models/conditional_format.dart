@@ -25,6 +25,7 @@ class ConditionalFormat {
     this.style,
     List<ExcelColor> colors = const [],
     bool threeColor = false,
+    this.range,
   }) : _typeName = typeName,
        _operator = operator,
        _formulas = formulas,
@@ -39,7 +40,48 @@ class ConditionalFormat {
 
   /// The differential style applied when a `cellIs` / `formula` rule matches;
   /// `null` for colour-scale and data-bar rules.
+  ///
+  /// Note: rules **read** from an opened file expose their [type], [operator],
+  /// [formulas], [colors] and [range], but not a resolved [style] (the file's
+  /// own differential style is preserved on save regardless).
   final CellStyle? style;
+
+  /// The range the rule applies to (its `sqref`, e.g. `'B2:B100'`), or `null`
+  /// for a bare rule not yet attached to a range. Populated for rules read from
+  /// a file and for those added via [Sheet.addConditionalFormat].
+  final String? range;
+
+  /// The rule kind (a [ConditionalFormatType]; unmodeled kinds read as
+  /// [ConditionalFormatType.other] — see [typeName] for the raw value).
+  ConditionalFormatType get type => _conditionalFormatTypeFromXml(_typeName);
+
+  /// The raw OOXML `type` of the rule (e.g. `'cellIs'`, `'expression'`,
+  /// `'colorScale'`, `'dataBar'`, `'iconSet'`, `'top10'`, …).
+  String get typeName => _typeName;
+
+  /// The raw OOXML comparison `operator` for a `cellIs` rule (e.g.
+  /// `'greaterThan'`, `'between'`), or `null` when the rule has none.
+  String? get operator => _operator;
+
+  /// The rule's formula / threshold operands (0–2 entries).
+  List<String> get formulas => List.unmodifiable(_formulas);
+
+  /// The colours of a colour-scale (2 or 3) or data-bar (1) rule.
+  List<ExcelColor> get colors => List.unmodifiable(_colors);
+
+  /// Whether a colour-scale rule uses three colours (has a midpoint).
+  bool get isThreeColor => _threeColor;
+
+  /// Returns a copy of this rule tagged with [sqref] as its [range].
+  ConditionalFormat _withRange(String sqref) => ConditionalFormat._(
+    typeName: _typeName,
+    operator: _operator,
+    formulas: _formulas,
+    style: style,
+    colors: _colors,
+    threeColor: _threeColor,
+    range: sqref,
+  );
 
   static String _num(num value) => value.toString();
 
@@ -111,5 +153,63 @@ class ConditionalFormat {
       ConditionalFormat._(typeName: 'dataBar', colors: [color]);
 
   @override
-  String toString() => 'ConditionalFormat($_typeName)';
+  String toString() =>
+      'ConditionalFormat($_typeName${range != null ? ', $range' : ''})';
 }
+
+/// The kind of a [ConditionalFormat] rule. Covers the common OOXML `cfRule`
+/// types; anything else reads as [other] (its raw type is on
+/// [ConditionalFormat.typeName]).
+///
+/// {@category Worksheet}
+enum ConditionalFormatType {
+  /// A value comparison (`greaterThan` / `lessThan` / `between` / `equal` …).
+  cellIs,
+
+  /// A boolean formula rule (OOXML `expression`).
+  formula,
+
+  /// A 2- or 3-colour scale (heat map).
+  colorScale,
+
+  /// An in-cell data bar.
+  dataBar,
+
+  /// An icon set (read-only; authoring is not yet supported).
+  iconSet,
+
+  /// A top/bottom N (or N%) rule.
+  top10,
+
+  /// An above/below-average rule.
+  aboveAverage,
+
+  /// A text-content rule (contains / begins with / ends with …).
+  containsText,
+
+  /// A date/time-period rule.
+  timePeriod,
+
+  /// A duplicate- or unique-values rule.
+  duplicateValues,
+
+  /// Any other rule kind not individually modelled.
+  other,
+}
+
+ConditionalFormatType _conditionalFormatTypeFromXml(String? s) => switch (s) {
+  'cellIs' => ConditionalFormatType.cellIs,
+  'expression' => ConditionalFormatType.formula,
+  'colorScale' => ConditionalFormatType.colorScale,
+  'dataBar' => ConditionalFormatType.dataBar,
+  'iconSet' => ConditionalFormatType.iconSet,
+  'top10' => ConditionalFormatType.top10,
+  'aboveAverage' => ConditionalFormatType.aboveAverage,
+  'containsText' ||
+  'notContainsText' ||
+  'beginsWith' ||
+  'endsWith' => ConditionalFormatType.containsText,
+  'timePeriod' => ConditionalFormatType.timePeriod,
+  'duplicateValues' || 'uniqueValues' => ConditionalFormatType.duplicateValues,
+  _ => ConditionalFormatType.other,
+};

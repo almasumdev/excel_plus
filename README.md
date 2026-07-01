@@ -170,7 +170,7 @@ platform. Expand a group for details:
 
 - Hyperlinks
 - Data validation / dropdowns
-- Conditional formatting
+- Conditional formatting (author + read-back)
 - Freeze & split panes
 - Autofilter — with per-column filter criteria
 - Sheet & workbook protection
@@ -622,6 +622,11 @@ sheet.addConditionalFormat(
     max: ExcelColor.green,
   ),
 );
+
+// Inspect the rules in an opened file (type, operator, formulas, colours, range):
+for (final rule in sheet.conditionalFormats) {
+  print('${rule.type} on ${rule.range}');
+}
 ```
 
 ### Data validation (dropdown lists)

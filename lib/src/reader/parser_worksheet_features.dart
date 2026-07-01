@@ -151,6 +151,68 @@ mixin _ParserWorksheetFeaturesMixin on _ParserBase {
     return null;
   }
 
+  /// Reads `<conditionalFormatting>` rules from the worksheet envelope into the
+  /// sheet's parsed-CF list, so they surface on [Sheet.conditionalFormats] for
+  /// inspection. The originals round-trip untouched in the envelope and are not
+  /// re-emitted from this list.
+  void _parseConditionalFormatsForSheet(String sheetName) {
+    final sheet = _excel._sheetMap[sheetName];
+    final partPath = _excel._xmlSheetId[sheetName];
+    if (sheet == null || partPath == null) return;
+    final doc = _excel._xmlFiles[partPath];
+    if (doc == null) return;
+
+    for (final block in doc.findAllElements('conditionalFormatting')) {
+      final sqref = block.getAttribute('sqref');
+      if (sqref == null || sqref.isEmpty) continue;
+      for (final rule in block.findElements('cfRule')) {
+        final parsed = _parseCfRule(sqref, rule);
+        if (parsed != null) sheet._parsedConditionalFormats.add(parsed);
+      }
+    }
+  }
+
+  /// Parses one `<cfRule>` (with range [sqref]) into a [ConditionalFormat],
+  /// resolving colour-scale / data-bar colours; `null` if it has no `type`.
+  ConditionalFormat? _parseCfRule(String sqref, XmlElement rule) {
+    final type = rule.getAttribute('type');
+    if (type == null) return null;
+
+    final formulas = [
+      for (final f in rule.findElements('formula')) f.innerText,
+    ];
+    var colors = const <ExcelColor>[];
+    var threeColor = false;
+
+    final colorScale = rule.findElements('colorScale').firstOrNull;
+    if (colorScale != null) {
+      colors = [for (final c in colorScale.findElements('color')) _cfColor(c)];
+      threeColor = colorScale.findElements('cfvo').length >= 3;
+    }
+
+    final dataBar = rule.findElements('dataBar').firstOrNull;
+    final barColor = dataBar?.findElements('color').firstOrNull;
+    if (barColor != null) {
+      colors = [_cfColor(barColor)];
+    }
+
+    return ConditionalFormat._(
+      typeName: type,
+      operator: rule.getAttribute('operator'),
+      formulas: formulas,
+      colors: colors,
+      threeColor: threeColor,
+      range: sqref,
+    );
+  }
+
+  /// Resolves a CF `<color>` element to an [ExcelColor] (falling back to
+  /// [ExcelColor.none] when it carries no usable colour).
+  ExcelColor _cfColor(XmlElement el) {
+    final hex = _readColorHex(el);
+    return hex == null ? ExcelColor.none : ExcelColor.fromHexString(hex);
+  }
+
   /// Reads `<sheetProtection>` into the sheet model (the getters only; the
   /// element — and its password hash — is left untouched on save unless the API
   /// changes it).
@@ -191,13 +253,14 @@ mixin _ParserWorksheetFeaturesMixin on _ParserBase {
     final tabColor = sheetPr?.findElements('tabColor').firstOrNull;
     if (tabColor == null) return;
 
-    final hex = _readTabColorHex(tabColor);
+    final hex = _readColorHex(tabColor);
     if (hex != null) sheet._tabColor = ExcelColor.fromHexString(hex);
   }
 
-  /// Resolves a `<tabColor>` element to an ARGB hex string (rgb wins, then a
-  /// theme reference + tint, then an indexed palette entry).
-  String? _readTabColorHex(XmlElement el) {
+  /// Resolves a `<color>`-style element (tab colour, CF colour, …) to an ARGB
+  /// hex string (rgb wins, then a theme reference + tint, then an indexed
+  /// palette entry).
+  String? _readColorHex(XmlElement el) {
     final rgb = el.getAttribute('rgb');
     if (rgb != null && rgb.isNotEmpty) return _normalizeArgb(rgb);
 
