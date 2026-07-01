@@ -194,6 +194,7 @@ platform. Expand a group for details:
 <summary><b>🖼️ Objects & media</b></summary>
 
 - Charts — read & write (column, bar, line, area, pie, doughnut, scatter)
+- Sparklines — in-cell mini charts (line / column / win-loss)
 - Images
 - Comments / notes
 
@@ -560,6 +561,26 @@ for (final c in sheet.charts) {
 
 Also `Chart.bar`, `Chart.line`, `Chart.area`, `Chart.pie`, `Chart.doughnut`,
 and `Chart.scatter`.
+
+### Sparklines
+
+In-cell mini charts. Groups in an opened file read back via `sheet.sparklineGroups`.
+
+```dart
+// One sparkline per row, sharing a style.
+sheet.addSparklineGroup(SparklineGroup(
+  type: SparklineType.column, // or .line / .stacked (win-loss)
+  color: ExcelColor.fromHexString('#2962FF'),
+  high: true,
+  sparklines: [
+    Sparkline(dataRange: 'Sheet1!B2:G2', location: 'H2'),
+    Sparkline(dataRange: 'Sheet1!B3:G3', location: 'H3'),
+  ],
+));
+
+// ...or a single one.
+sheet.addSparkline(location: 'H4', dataRange: 'Sheet1!B4:G4');
+```
 
 Colour series — and individual pie/doughnut slices — explicitly; anything left
 unset uses a built-in Office palette:

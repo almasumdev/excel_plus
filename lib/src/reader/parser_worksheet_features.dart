@@ -240,6 +240,64 @@ mixin _ParserWorksheetFeaturesMixin on _ParserBase {
     return hex == null ? ExcelColor.none : ExcelColor.fromHexString(hex);
   }
 
+  /// Reads x14 `<sparklineGroup>`s from the worksheet `extLst` into the sheet's
+  /// parsed-sparkline list for inspection. The originals round-trip untouched in
+  /// the envelope and are not re-emitted from this list.
+  void _parseSparklinesForSheet(String sheetName) {
+    final sheet = _excel._sheetMap[sheetName];
+    final partPath = _excel._xmlSheetId[sheetName];
+    if (sheet == null || partPath == null) return;
+    final doc = _excel._xmlFiles[partPath];
+    if (doc == null) return;
+
+    // x14/xm elements are prefixed, so match by local name in any namespace.
+    for (final group in doc.findAllElements(
+      'sparklineGroup',
+      namespaceUri: '*',
+    )) {
+      final sparklines = <Sparkline>[];
+      for (final s in group.findAllElements('sparkline', namespaceUri: '*')) {
+        final f = s.findElements('f', namespaceUri: '*').firstOrNull?.innerText;
+        final sqref = s
+            .findElements('sqref', namespaceUri: '*')
+            .firstOrNull
+            ?.innerText;
+        if (f != null && sqref != null && f.isNotEmpty && sqref.isNotEmpty) {
+          sparklines.add(Sparkline(dataRange: f, location: sqref));
+        }
+      }
+      if (sparklines.isEmpty) continue;
+
+      ExcelColor? colorOf(String local) {
+        final el = group.findElements(local, namespaceUri: '*').firstOrNull;
+        if (el == null) return null;
+        final hex = _readColorHex(el);
+        return hex == null ? null : ExcelColor.fromHexString(hex);
+      }
+
+      sheet._parsedSparklineGroups.add(
+        SparklineGroup(
+          type: _sparklineTypeFromXml(group.getAttribute('type')),
+          color: colorOf('colorSeries'),
+          negativeColor: colorOf('colorNegative'),
+          markerColor: colorOf('colorMarkers'),
+          highColor: colorOf('colorHigh'),
+          lowColor: colorOf('colorLow'),
+          firstColor: colorOf('colorFirst'),
+          lastColor: colorOf('colorLast'),
+          markers: group.getAttribute('markers') == '1',
+          high: group.getAttribute('high') == '1',
+          low: group.getAttribute('low') == '1',
+          first: group.getAttribute('first') == '1',
+          last: group.getAttribute('last') == '1',
+          negative: group.getAttribute('negative') == '1',
+          lineWeight: double.tryParse(group.getAttribute('lineWeight') ?? ''),
+          sparklines: sparklines,
+        ),
+      );
+    }
+  }
+
   /// Reads `<sheetProtection>` into the sheet model (the getters only; the
   /// element — and its password hash — is left untouched on save unless the API
   /// changes it).

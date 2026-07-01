@@ -67,6 +67,7 @@ final featureDemos = <FeatureDemo>[
   _gradientFills,
   _tables,
   _charts,
+  _sparklines,
   _pivotTables,
 ];
 
@@ -3419,6 +3420,125 @@ Excel _buildCharts() {
   );
 
   s.setColumnWidth(0, 12);
+  return excel;
+}
+
+// ---------------------------------------------------------------------------
+// Sparklines
+// ---------------------------------------------------------------------------
+
+final _sparklines = FeatureDemo(
+  id: 'sparklines',
+  title: 'Sparklines',
+  description:
+      'Tiny in-cell charts summarising a row of data. Add a group of line, '
+      'column, or win/loss sparklines; open the file in Excel to see them drawn '
+      'in the cells. Groups in an opened file read back via sheet.sparklineGroups.',
+  points: [
+    'sheet.addSparkline(location:, dataRange:, type:, color:) — single',
+    'sheet.addSparklineGroup(SparklineGroup(…)) — shared style, many rows',
+    'SparklineType.line / column / stacked (win-loss)',
+    'high / low / first / last / negative markers with their own colours',
+  ],
+  snippet: '''
+sheet.addSparklineGroup(SparklineGroup(
+  type: SparklineType.column,
+  color: ExcelColor.fromHexString('FF2962FF'),
+  sparklines: [
+    Sparkline(dataRange: 'Data!B2:G2', location: 'H2'),
+    Sparkline(dataRange: 'Data!B3:G3', location: 'H3'),
+  ],
+));''',
+  fullCode: r'''
+import 'package:excel_plus/excel_plus.dart';
+
+Excel buildSparklines() {
+  final excel = Excel.createExcel();
+  final s = excel[excel.getDefaultSheet() ?? 'Sheet1'];
+
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+  const data = [
+    ['North', 20, 35, 28, 42, 39, 51],
+    ['South', 48, 42, 45, 30, 33, 27],
+  ];
+  for (var c = 0; c < months.length; c++) {
+    s.updateCell(CellIndex.indexByColumnRow(columnIndex: c + 1, rowIndex: 0),
+        TextCellValue(months[c]));
+  }
+  for (var r = 0; r < data.length; r++) {
+    s.updateCell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: r + 1),
+        TextCellValue(data[r][0] as String));
+    for (var c = 1; c < data[r].length; c++) {
+      s.updateCell(CellIndex.indexByColumnRow(columnIndex: c, rowIndex: r + 1),
+          IntCellValue(data[r][c] as int));
+    }
+  }
+
+  s.addSparklineGroup(SparklineGroup(
+    type: SparklineType.column,
+    color: ExcelColor.fromHexString('FF2962FF'),
+    sparklines: [
+      Sparkline(dataRange: 'Sheet1!B2:G2', location: 'H2'),
+      Sparkline(dataRange: 'Sheet1!B3:G3', location: 'H3'),
+    ],
+  ));
+  return excel;
+}
+''',
+  build: _buildSparklines,
+);
+
+Excel _buildSparklines() {
+  final excel = _book('Sparklines');
+  final s = excel['Sparklines'];
+
+  final header = _box(bold: true, fill: _headerFill, font: ExcelColor.white);
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+  _put(s, 0, 0, TextCellValue('Region'), header);
+  for (var c = 0; c < months.length; c++) {
+    _put(s, c + 1, 0, TextCellValue(months[c]), header);
+  }
+  _put(s, months.length + 1, 0, TextCellValue('Trend'), header);
+
+  const data = <(String, List<int>)>[
+    ('North', [20, 35, 28, 42, 39, 51]),
+    ('South', [48, 42, 45, 30, 33, 27]),
+    ('East', [12, 18, 24, 22, 30, 41]),
+  ];
+  for (var r = 0; r < data.length; r++) {
+    _put(s, 0, r + 1, TextCellValue(data[r].$1), _box());
+    for (var c = 0; c < data[r].$2.length; c++) {
+      _put(
+        s,
+        c + 1,
+        r + 1,
+        IntCellValue(data[r].$2[c]),
+        _box(align: HorizontalAlign.Right),
+      );
+    }
+  }
+
+  s.addSparklineGroup(
+    SparklineGroup(
+      type: SparklineType.column,
+      color: ExcelColor.fromHexString('FF2962FF'),
+      high: true,
+      highColor: ExcelColor.fromHexString('FF00C853'),
+      sparklines: [
+        for (var r = 0; r < data.length; r++)
+          Sparkline(
+            dataRange:
+                'Sparklines!${getCellId(1, r + 1)}:${getCellId(months.length, r + 1)}',
+            location: getCellId(months.length + 1, r + 1),
+          ),
+      ],
+    ),
+  );
+
+  for (var c = 0; c <= months.length; c++) {
+    s.setColumnWidth(c, c == 0 ? 12 : 6);
+  }
+  s.setColumnWidth(months.length + 1, 16);
   return excel;
 }
 

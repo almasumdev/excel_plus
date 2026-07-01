@@ -34,6 +34,7 @@ part 'src/models/auto_filter.dart';
 part 'src/models/sheet_protection.dart';
 part 'src/models/defined_name.dart';
 part 'src/models/conditional_format.dart';
+part 'src/models/sparkline.dart';
 part 'src/models/image.dart';
 part 'src/models/page_setup.dart';
 part 'src/models/comment.dart';

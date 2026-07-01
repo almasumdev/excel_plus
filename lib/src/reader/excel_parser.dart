@@ -105,6 +105,7 @@ class Parser extends _ParserBase
     _parseSheetViewForSheet(sheetName);
     _parseAutoFilterForSheet(sheetName);
     _parseConditionalFormatsForSheet(sheetName);
+    _parseSparklinesForSheet(sheetName);
     _parseSheetProtectionForSheet(sheetName);
     _parseTabColorForSheet(sheetName);
     _parsePageSetupForSheet(sheetName);

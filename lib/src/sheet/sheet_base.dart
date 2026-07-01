@@ -83,6 +83,13 @@ class _SheetBase {
   /// re-written — the originals round-trip untouched in the sheet envelope.
   final List<ConditionalFormat> _parsedConditionalFormats = [];
 
+  /// Sparkline groups added via the API (appended into the worksheet `extLst`
+  /// on save); and those parsed from an opened file (for inspection only —
+  /// preserved untouched in the envelope, never re-emitted).
+  final List<SparklineGroup> _sparklineGroups = [];
+  final List<SparklineGroup> _parsedSparklineGroups = [];
+  bool _sparklinesChanged = false;
+
   /// Images on this sheet: those parsed from the drawing part plus any inserted
   /// via [insertImage]. Lazily populated when the sheet is parsed.
   final List<ExcelImage> _images = [];
@@ -858,6 +865,36 @@ class _SheetBase {
       end.rowIndex,
     );
     _conditionalFormats.add((sqref, format));
+  }
+
+  /// The sparkline groups on this sheet — those read from an opened file first,
+  /// then any added via the API. Read groups are for inspection; they round-trip
+  /// untouched in the worksheet `extLst`.
+  List<SparklineGroup> get sparklineGroups =>
+      List.unmodifiable([..._parsedSparklineGroups, ..._sparklineGroups]);
+
+  /// Adds a [SparklineGroup] (a set of sparklines sharing one type and colour).
+  void addSparklineGroup(SparklineGroup group) {
+    _sparklineGroups.add(group);
+    _sparklinesChanged = true;
+  }
+
+  /// Convenience for a single sparkline: draws a [type] sparkline of [dataRange]
+  /// in the cell [location] (both `A1`-style strings). For several sparklines
+  /// sharing one style, prefer [addSparklineGroup].
+  void addSparkline({
+    required String location,
+    required String dataRange,
+    SparklineType type = SparklineType.line,
+    ExcelColor? color,
+  }) {
+    addSparklineGroup(
+      SparklineGroup(
+        type: type,
+        color: color,
+        sparklines: [Sparkline(dataRange: dataRange, location: location)],
+      ),
+    );
   }
 
   /// Removes protection from this sheet.

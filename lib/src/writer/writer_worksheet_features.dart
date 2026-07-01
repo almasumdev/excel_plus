@@ -267,6 +267,118 @@ mixin _WriterWorksheetFeaturesMixin on _WriterBase {
   /// Formats a filter numeric attribute, dropping a redundant trailing `.0`.
   String _filterNum(num n) => n % 1 == 0 ? n.toInt().toString() : n.toString();
 
+  /// The URI + namespaces identifying the sparkline extension block.
+  static const _sparklineExtUri = '{05C60535-1F16-4fd2-B633-F4F36F0B64E0}';
+  static const _x14Ns =
+      'http://schemas.microsoft.com/office/spreadsheetml/2009/9/main';
+  static const _xmNs = 'http://schemas.microsoft.com/office/excel/2006/main';
+
+  /// Appends API-added sparkline groups into the worksheet `extLst` (creating
+  /// the `extLst` / x14 `ext` / `sparklineGroups` container as needed). Runs
+  /// only when the API changed sparklines; sparklines read from a file
+  /// round-trip untouched in the envelope, so they are not re-emitted here.
+  void _applySparklinesForSheet(String sheetName) {
+    final sheet = _excel._sheetMap[sheetName];
+    final partPath = _excel._xmlSheetId[sheetName];
+    if (sheet == null || partPath == null) return;
+    if (!sheet._sparklinesChanged || sheet._sparklineGroups.isEmpty) return;
+    final doc = _excel._xmlFiles[partPath];
+    if (doc == null) return;
+    final worksheet = doc.findAllElements('worksheet').firstOrNull;
+    if (worksheet == null) return;
+
+    var extLst = worksheet.findElements('extLst').firstOrNull;
+    if (extLst == null) {
+      extLst = XmlElement(_xmlName('extLst'));
+      _insertWorksheetChildOrdered(worksheet, extLst);
+    }
+
+    XmlElement? ext;
+    for (final e in extLst.findElements('ext')) {
+      if (e.getAttribute('uri') == _sparklineExtUri) {
+        ext = e;
+        break;
+      }
+    }
+    final XmlElement groups;
+    if (ext == null) {
+      groups = XmlElement(_x14('sparklineGroups'), [
+        XmlAttribute(_xmlName('xm', 'xmlns'), _xmNs),
+      ]);
+      extLst.children.add(
+        XmlElement(
+          _xmlName('ext'),
+          [
+            XmlAttribute(_xmlName('x14', 'xmlns'), _x14Ns),
+            XmlAttribute(_xmlName('uri'), _sparklineExtUri),
+          ],
+          [groups],
+        ),
+      );
+    } else {
+      var existing = ext.findElements('sparklineGroups').firstOrNull;
+      if (existing == null) {
+        existing = XmlElement(_x14('sparklineGroups'), [
+          XmlAttribute(_xmlName('xm', 'xmlns'), _xmNs),
+        ]);
+        ext.children.add(existing);
+      }
+      groups = existing;
+    }
+
+    for (final g in sheet._sparklineGroups) {
+      groups.children.add(_buildSparklineGroup(g));
+    }
+  }
+
+  XmlName _x14(String local) => _xmlName(local, 'x14');
+  XmlName _xm(String local) => _xmlName(local, 'xm');
+
+  XmlElement _sparkColor(String local, ExcelColor c) => XmlElement(
+    _x14(local),
+    [XmlAttribute(_xmlName('rgb'), _normalizeArgb(c.colorHex))],
+  );
+
+  XmlElement _buildSparklineGroup(SparklineGroup g) {
+    // The <x14:sparklineGroup> element is prefixed, but its attributes are
+    // unqualified (no prefix).
+    final attrs = <XmlAttribute>[];
+    final type = _sparklineTypeToXml(g.type);
+    if (type != null) attrs.add(XmlAttribute(_xmlName('type'), type));
+    if (g.lineWeight != null) {
+      attrs.add(
+        XmlAttribute(_xmlName('lineWeight'), _filterNum(g.lineWeight!)),
+      );
+    }
+    if (g.markers) attrs.add(XmlAttribute(_xmlName('markers'), '1'));
+    if (g.high) attrs.add(XmlAttribute(_xmlName('high'), '1'));
+    if (g.low) attrs.add(XmlAttribute(_xmlName('low'), '1'));
+    if (g.first) attrs.add(XmlAttribute(_xmlName('first'), '1'));
+    if (g.last) attrs.add(XmlAttribute(_xmlName('last'), '1'));
+    if (g.negative) attrs.add(XmlAttribute(_xmlName('negative'), '1'));
+
+    // CT_SparklineGroup child order: colorSeries, colorNegative, colorAxis,
+    // colorMarkers, colorFirst, colorLast, colorHigh, colorLow, sparklines.
+    final children = <XmlElement>[
+      _sparkColor('colorSeries', g.color),
+      if (g.negativeColor != null)
+        _sparkColor('colorNegative', g.negativeColor!),
+      if (g.markerColor != null) _sparkColor('colorMarkers', g.markerColor!),
+      if (g.firstColor != null) _sparkColor('colorFirst', g.firstColor!),
+      if (g.lastColor != null) _sparkColor('colorLast', g.lastColor!),
+      if (g.highColor != null) _sparkColor('colorHigh', g.highColor!),
+      if (g.lowColor != null) _sparkColor('colorLow', g.lowColor!),
+      XmlElement(_x14('sparklines'), [], [
+        for (final s in g.sparklines)
+          XmlElement(_x14('sparkline'), [], [
+            XmlElement(_xm('f'), [], [XmlText(s.dataRange)]),
+            XmlElement(_xm('sqref'), [], [XmlText(s.location)]),
+          ]),
+      ]),
+    ];
+    return XmlElement(_x14('sparklineGroup'), attrs, children);
+  }
+
   /// Writes `<sheetProtection>` for [sheetName] only when the API changed it, so
   /// an existing element (and its password hash) is otherwise preserved by the
   /// envelope round-trip.
