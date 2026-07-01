@@ -129,8 +129,16 @@ jobs:
         run: |
           printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/firebase-sa.json"
           export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/firebase-sa.json"
-          npx --yes firebase-tools@latest deploy \
-            --only hosting --project my-pub-packages --non-interactive
+          set +e
+          out=$(npx --yes firebase-tools@latest deploy \
+            --only hosting --project my-pub-packages --non-interactive 2>&1)
+          code=$?
+          printf '%s\n' "$out"
+          if [ "$code" -ne 0 ] && printf '%s' "$out" | grep -q "is the current active version"; then
+            echo "Site already serves this build; treating as success."
+            exit 0
+          fi
+          exit "$code"
 
   # Push the tag with a PAT so it triggers the Publish workflow — a default
   # GITHUB_TOKEN push would not.
