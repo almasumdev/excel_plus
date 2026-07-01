@@ -286,6 +286,68 @@ void main() {
       expect(rule.range, 'A1:A10');
     });
 
+    test('a read cellIs rule resolves its highlight style from the dxf', () {
+      final excel = Excel.createExcel();
+      excel['Sheet1'].addConditionalFormat(
+        _at('A1'),
+        _at('A10'),
+        ConditionalFormat.greaterThan(
+          100,
+          style: CellStyle(bold: true, backgroundColorHex: ExcelColor.red),
+        ),
+      );
+      final rule = Excel.decodeBytes(
+        excel.encode()!,
+      )['Sheet1'].conditionalFormats.single;
+      expect(rule.style, isNotNull);
+      expect(rule.style!.isBold, isTrue);
+      expect(rule.style!.backgroundColor, ExcelColor.red);
+    });
+
+    test('resolves a dxf font colour and fill from an opened file', () {
+      const styles =
+          '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+          '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+          '<fonts count="1"><font><sz val="11"/><name val="Calibri"/></font></fonts>'
+          '<fills count="1"><fill><patternFill patternType="none"/></fill></fills>'
+          '<borders count="1"><border/></borders>'
+          '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
+          '<cellXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/></cellXfs>'
+          '<dxfs count="1"><dxf>'
+          '<font><i/><color rgb="FF0000FF"/></font>'
+          '<fill><patternFill><bgColor rgb="FFFFFF00"/></patternFill></fill>'
+          '</dxf></dxfs>'
+          '</styleSheet>';
+      final excel = Excel.decodeBytes(
+        buildXlsx(
+          '<row r="1"><c r="A1"><v>1</v></c></row>',
+          styles: styles,
+          afterSheetData:
+              '<conditionalFormatting sqref="A1:A5">'
+              '<cfRule type="cellIs" operator="lessThan" priority="1" dxfId="0">'
+              '<formula>3</formula></cfRule>'
+              '</conditionalFormatting>',
+        ),
+      );
+      final rule = excel['Sheet1'].conditionalFormats.single;
+      expect(rule.style, isNotNull);
+      expect(rule.style!.isItalic, isTrue);
+      expect(rule.style!.fontColor.colorHex, 'FF0000FF');
+      expect(rule.style!.backgroundColor.colorHex, 'FFFFFF00');
+    });
+
+    test('a colour-scale rule has no differential style', () {
+      final rule = decodeWithCf(
+        '<conditionalFormatting sqref="A1:A9">'
+        '<cfRule type="colorScale" priority="1"><colorScale>'
+        '<cfvo type="min"/><cfvo type="max"/>'
+        '<color rgb="FFFFFFFF"/><color rgb="FF00FF00"/>'
+        '</colorScale></cfRule>'
+        '</conditionalFormatting>',
+      )['Sheet1'].conditionalFormats.single;
+      expect(rule.style, isNull);
+    });
+
     test('a read rule is not re-emitted when another is added', () {
       final excel = decodeWithCf(
         '<conditionalFormatting sqref="A1:A5">'

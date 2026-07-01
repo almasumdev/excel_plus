@@ -72,6 +72,11 @@ class Excel {
   /// one, and surfaces read gradients on [CellStyle.gradientFill].
   List<GradientFill?> _fillGradients = [];
 
+  /// Differential styles (`<dxfs><dxf>`) parsed from `styles.xml`, index-aligned
+  /// with `dxfId`. Used to resolve a conditional-formatting rule's highlight
+  /// style on read; empty when the workbook has no `<dxfs>`.
+  List<CellStyle> _dxfStyles = [];
+
   final List<String> _mergeChangeLook = [];
   final List<String> _rtlChangeLook = [];
   List<_FontStyle> _fontStyleList = [];

@@ -66,6 +66,68 @@ mixin _ParserStylesMixin on _ParserBase {
     return GradientFill.linear(degree: degree, stops: stops);
   }
 
+  /// Parses a `<dxf>` differential style (used by conditional formatting) into a
+  /// [CellStyle]: its font (bold / italic / underline / colour / size / name)
+  /// and solid highlight fill. A best-effort representation for inspection via
+  /// [ConditionalFormat.style]; properties the dxf leaves unset take
+  /// [CellStyle] defaults.
+  CellStyle _parseDxf(XmlElement dxf) {
+    var bold = false;
+    var italic = false;
+    var underline = Underline.None;
+    var fontColor = ExcelColor.black;
+    int? fontSize;
+    String? fontFamily;
+
+    final font = dxf.findElements('font').firstOrNull;
+    if (font != null) {
+      bold = _boolToggle(font, 'b');
+      italic = _boolToggle(font, 'i');
+      if (_nodeChildren(font, 'u') != null) {
+        final val = _nodeChildren(font, 'u', attribute: 'val');
+        underline = (val == 'double' || val == 'doubleAccounting')
+            ? Underline.Double
+            : Underline.Single;
+      }
+      final colorEl = font.findElements('color').firstOrNull;
+      if (colorEl != null) {
+        final resolved = _readColorElement(colorEl);
+        if (resolved != null) fontColor = resolved;
+      }
+      final String? size = _nodeChildren(font, 'sz', attribute: 'val');
+      if (size != null) fontSize = double.parse(size).round();
+      final family = _nodeChildren(font, 'name', attribute: 'val');
+      if (family != null && family != true) fontFamily = family;
+    }
+
+    // In a dxf, a solid highlight fill's colour lives in `<bgColor>` (Excel's CF
+    // quirk); fall back to `<fgColor>` when that is all the file provides.
+    var background = ExcelColor.none;
+    final patternFill = dxf
+        .findElements('fill')
+        .firstOrNull
+        ?.findElements('patternFill')
+        .firstOrNull;
+    if (patternFill != null) {
+      final bg = patternFill.findElements('bgColor').firstOrNull;
+      final fg = patternFill.findElements('fgColor').firstOrNull;
+      final resolved =
+          (bg != null ? _readColorElement(bg) : null) ??
+          (fg != null ? _readColorElement(fg) : null);
+      if (resolved != null) background = resolved;
+    }
+
+    return CellStyle(
+      bold: bold,
+      italic: italic,
+      underline: underline,
+      fontColorHex: fontColor,
+      fontSize: fontSize,
+      fontFamily: fontFamily,
+      backgroundColorHex: background,
+    );
+  }
+
   void _parseStyles(String stylesTarget) {
     var styles = _excel._archive.findFile('xl/$stylesTarget');
     if (styles != null) {
@@ -81,6 +143,7 @@ mixin _ParserStylesMixin on _ParserBase {
       _excel._cellStyleList = <CellStyle>[];
       _excel._cellStyleIndex = null; // invalidate reverse lookup
       _excel._borderSetList = <_BorderSet>[];
+      _excel._dxfStyles = <CellStyle>[];
 
       // Custom indexed palette override (rare; mostly older files). Parsed
       // before fonts/fills/borders so their `indexed` color refs resolve to it.
@@ -187,6 +250,15 @@ mixin _ParserStylesMixin on _ParserBase {
         );
         _excel._borderSetList.add(borderSet);
       });
+
+      // Differential styles used by conditional-formatting rules, index-aligned
+      // with `dxfId` so a rule's highlight style can be resolved on read.
+      final dxfsEl = document.findAllElements('dxfs').firstOrNull;
+      if (dxfsEl != null) {
+        for (final dxf in dxfsEl.findElements('dxf')) {
+          _excel._dxfStyles.add(_parseDxf(dxf));
+        }
+      }
 
       document.findAllElements('numFmts').forEach((node1) {
         node1.findAllElements('numFmt').forEach((node) {

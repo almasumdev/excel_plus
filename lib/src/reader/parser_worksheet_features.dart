@@ -196,12 +196,20 @@ mixin _ParserWorksheetFeaturesMixin on _ParserBase {
       colors = [_cfColor(barColor)];
     }
 
+    // Resolve the rule's differential style (dxf) for cellIs / formula rules.
+    final dxfId = int.tryParse(rule.getAttribute('dxfId') ?? '');
+    final style =
+        (dxfId != null && dxfId >= 0 && dxfId < _excel._dxfStyles.length)
+        ? _excel._dxfStyles[dxfId]
+        : null;
+
     return ConditionalFormat._(
       typeName: type,
       operator: rule.getAttribute('operator'),
       formulas: formulas,
       colors: colors,
       threeColor: threeColor,
+      style: style,
       range: sqref,
     );
   }

@@ -41,9 +41,10 @@ class ConditionalFormat {
   /// The differential style applied when a `cellIs` / `formula` rule matches;
   /// `null` for colour-scale and data-bar rules.
   ///
-  /// Note: rules **read** from an opened file expose their [type], [operator],
-  /// [formulas], [colors] and [range], but not a resolved [style] (the file's
-  /// own differential style is preserved on save regardless).
+  /// For rules **read** from a file this is resolved best-effort from the rule's
+  /// `dxf` (font bold/italic/underline/colour/size and a solid highlight fill);
+  /// properties the `dxf` does not set take [CellStyle] defaults. The file's own
+  /// differential style is preserved on save regardless.
   final CellStyle? style;
 
   /// The range the rule applies to (its `sqref`, e.g. `'B2:B100'`), or `null`

@@ -21,9 +21,11 @@
   parsed into `sheet.conditionalFormats` (previously only API-added rules
   appeared there). Each `ConditionalFormat` exposes its `type`
   (a `ConditionalFormatType`), raw `typeName`, `operator`, `formulas`, `colors`,
-  `isThreeColor` and the `range` it applies to. Read rules are for inspection —
-  they round-trip untouched via the sheet envelope and are never re-emitted or
-  duplicated when you add new ones.
+  `isThreeColor`, the `range` it applies to, and — for `cellIs` / `formula`
+  rules — a best-effort `style` resolved from the rule's differential style
+  (`dxf`: font bold/italic/underline/colour/size and a solid highlight fill).
+  Read rules are for inspection — they round-trip untouched via the sheet
+  envelope and are never re-emitted or duplicated when you add new ones.
 
 ### Fixed
 
