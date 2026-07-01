@@ -123,23 +123,20 @@ jobs:
           flutter pub get
           flutter build web --release --base-href /
 
-      # Only Node 20 action left (no upstream Node 24 build yet); the harmless
-      # deprecation notice it prints clears once FirebaseExtended ships one.
       - name: Deploy to Firebase Hosting (masum-excel.web.app)
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-          channelId: live
-          projectId: my-pub-packages
-          target: masum-excel
-          disableComment: true # main-branch deploy has no PR to comment on
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/firebase-sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/firebase-sa.json"
+          npx --yes firebase-tools@latest deploy \
+            --only hosting --project my-pub-packages --non-interactive
 
   # Push the tag with a PAT so it triggers the Publish workflow — a default
   # GITHUB_TOKEN push would not.
   tag:
     name: Tag release
-    needs: [version, deploy-web]
+    needs: [version]
     if: needs.version.outputs.is_new == 'true'
     runs-on: ubuntu-latest
     steps:
