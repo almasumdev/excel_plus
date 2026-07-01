@@ -1,3 +1,14 @@
+## 2.2.1
+
+### Fixed
+
+- **Workbooks no longer open with a "repair" prompt in Excel** — the bundled
+  workbook template's `xl/theme/theme1.xml` had `http` mangled to `ht"p` in two
+  namespace declarations (a corruption introduced in 2.1.0 when the template was
+  regenerated), so every generated file carried invalid XML that Microsoft Excel
+  flagged as corrupt and offered to recover. The theme is repaired, so files open
+  cleanly. Affects 2.1.0 and 2.2.0; upgrade to 2.2.1. Thanks @gonojuarez (#1).
+
 ## 2.2.0
 
 ### Added
