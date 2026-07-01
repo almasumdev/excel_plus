@@ -19,7 +19,7 @@ class ExcelWriter extends _WriterBase
   /// [_saveToStream].
   Archive _buildArchive() {
     parser._ensureAllSheetsParsed();
-    _resetStyleSheet();
+    _restorePristineParts();
     if (_excel._styleChanges) {
       _processStylesFile();
     }
@@ -48,20 +48,26 @@ class ExcelWriter extends _WriterBase
     );
   }
 
-  /// Restores `xl/styles.xml` to its originally-parsed state before each build,
-  /// capturing that pristine snapshot on the first save. Without this the
-  /// append-based style writers ([_processStylesFile] /
-  /// [_prepareConditionalFormatDxfs]) would duplicate records on a second
-  /// `encode()`/`save()` of the same workbook.
-  void _resetStyleSheet() {
-    const path = 'xl/styles.xml';
-    final doc = _excel._xmlFiles[path];
-    if (doc == null) return;
-    final snapshot = _excel._stylesSnapshot;
-    if (snapshot == null) {
-      _excel._stylesSnapshot = doc.toString();
+  /// Restores the DOM parts the writer mutates in place — `xl/styles.xml` and
+  /// each worksheet envelope — to their originally-parsed state before each
+  /// build, capturing that pristine snapshot on the first save. Without this the
+  /// append-based writers ([_processStylesFile] / [_prepareConditionalFormatDxfs]
+  /// / [_applyConditionalFormatsForSheet] / [_applySparklinesForSheet]) would
+  /// duplicate records on a second `encode()`/`save()` of the same workbook.
+  void _restorePristineParts() {
+    final paths = <String>['xl/styles.xml', ..._excel._xmlSheetId.values];
+    final snapshots = _excel._partSnapshots;
+    if (snapshots == null) {
+      final captured = <String, String>{};
+      for (final path in paths) {
+        final doc = _excel._xmlFiles[path];
+        if (doc != null) captured[path] = doc.toString();
+      }
+      _excel._partSnapshots = captured;
     } else {
-      _excel._xmlFiles[path] = XmlDocument.parse(snapshot);
+      snapshots.forEach((path, xml) {
+        _excel._xmlFiles[path] = XmlDocument.parse(xml);
+      });
     }
   }
 
@@ -678,6 +684,9 @@ class ExcelWriter extends _WriterBase
 
       // Append conditional-formatting rules into the DOM.
       _applyConditionalFormatsForSheet(sheetName);
+
+      // Append any API-added sparkline groups into the worksheet extLst.
+      _applySparklinesForSheet(sheetName);
 
       // Build cell data as XML string (no DOM node allocation)
       String cellDataXml = _buildSheetDataXml(sheetName, sheetObject);

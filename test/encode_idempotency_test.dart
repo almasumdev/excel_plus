@@ -38,6 +38,21 @@ void main() {
       expect(third, first);
     });
 
+    test('worksheet conditionalFormatting is not duplicated across saves', () {
+      final excel = Excel.createExcel();
+      excel['Sheet1'].addConditionalFormat(
+        _at('A1'),
+        _at('A10'),
+        ConditionalFormat.greaterThan(
+          5,
+          style: CellStyle(backgroundColorHex: ExcelColor.red),
+        ),
+      );
+      excel.encode();
+      final ws = readPart(excel.encode()!, 'xl/worksheets/sheet1.xml');
+      expect(RegExp('<conditionalFormatting').allMatches(ws).length, 1);
+    });
+
     test('conditional-format dxfs are not duplicated across saves', () {
       final excel = Excel.createExcel();
       excel['Sheet1'].addConditionalFormat(

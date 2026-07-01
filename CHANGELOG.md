@@ -24,6 +24,12 @@
   a file/network sink with a much lower peak-memory footprint:
   `final s = File('out.xlsx').openWrite(); excel.encodeToStream(s.add); await s.close();`.
   The output is byte-for-byte identical to `encode()`.
+- **Sparklines** — in-cell mini charts. `sheet.addSparklineGroup(SparklineGroup(
+  …))` (or the `sheet.addSparkline(location:, dataRange:, type:, color:)`
+  convenience) authors line / column / win-loss (`stacked`) sparklines, with
+  high/low/first/last/negative markers and their colours. Groups are written to
+  the worksheet `extLst` (x14) and read back on `sheet.sparklineGroups`; existing
+  sparklines round-trip untouched.
 - **Icon-set conditional formatting** — `ConditionalFormat.iconSet(IconSetType…,
   reverse:, showValue:, thresholds:)` authors icon-set rules (3/4/5 arrows,
   traffic lights, flags, symbols, ratings, quarters…). Thresholds default to an
@@ -43,9 +49,10 @@
 
 - **`encode()` / `save()` are now idempotent** — saving the same workbook
   instance more than once (e.g. once to bytes and once to a file, or before and
-  after `encodeToStream`) no longer appends duplicate `<font>` / `<xf>` / `<dxf>`
-  records to `styles.xml` on each save. The styles part is restored to its
-  originally-parsed state before every build.
+  after `encodeToStream`) no longer appends duplicate records: `<font>` / `<xf>` /
+  `<dxf>` in `styles.xml`, nor `<conditionalFormatting>` / sparkline groups in
+  the worksheets. The mutated parts are restored to their originally-parsed state
+  before every build.
 - **Fills after a gradient no longer shift** — the styles reader now walks the
   `<fills>` children directly instead of every `<patternFill>` in the document, so
   a `<gradientFill>` (or a stray `<patternFill>` inside a `<dxf>`) can no longer
