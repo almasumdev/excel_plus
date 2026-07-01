@@ -36,6 +36,11 @@
 
 ### Fixed
 
+- **`encode()` / `save()` are now idempotent** — saving the same workbook
+  instance more than once (e.g. once to bytes and once to a file, or before and
+  after `encodeToStream`) no longer appends duplicate `<font>` / `<xf>` / `<dxf>`
+  records to `styles.xml` on each save. The styles part is restored to its
+  originally-parsed state before every build.
 - **Fills after a gradient no longer shift** — the styles reader now walks the
   `<fills>` children directly instead of every `<patternFill>` in the document, so
   a `<gradientFill>` (or a stray `<patternFill>` inside a `<dxf>`) can no longer

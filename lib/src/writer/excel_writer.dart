@@ -19,6 +19,7 @@ class ExcelWriter extends _WriterBase
   /// [_saveToStream].
   Archive _buildArchive() {
     parser._ensureAllSheetsParsed();
+    _resetStyleSheet();
     if (_excel._styleChanges) {
       _processStylesFile();
     }
@@ -45,6 +46,23 @@ class ExcelWriter extends _WriterBase
       _archiveFiles,
       excludedFiles: _removedParts,
     );
+  }
+
+  /// Restores `xl/styles.xml` to its originally-parsed state before each build,
+  /// capturing that pristine snapshot on the first save. Without this the
+  /// append-based style writers ([_processStylesFile] /
+  /// [_prepareConditionalFormatDxfs]) would duplicate records on a second
+  /// `encode()`/`save()` of the same workbook.
+  void _resetStyleSheet() {
+    const path = 'xl/styles.xml';
+    final doc = _excel._xmlFiles[path];
+    if (doc == null) return;
+    final snapshot = _excel._stylesSnapshot;
+    if (snapshot == null) {
+      _excel._stylesSnapshot = doc.toString();
+    } else {
+      _excel._xmlFiles[path] = XmlDocument.parse(snapshot);
+    }
   }
 
   List<int>? _save() => ZipEncoder().encode(_buildArchive());

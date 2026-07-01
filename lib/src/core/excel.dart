@@ -19,6 +19,13 @@ Excel _newExcel(Archive archive) {
 /// {@category Core}
 class Excel {
   bool _styleChanges = false;
+
+  /// The `xl/styles.xml` as originally parsed, captured on the first save so
+  /// repeated `encode()`/`save()` calls restart from a pristine styles part
+  /// instead of re-appending font/fill/border/xf/dxf records (keeps `encode()`
+  /// idempotent across multiple saves on one instance).
+  String? _stylesSnapshot;
+
   bool _mergeChanges = false;
   bool _rtlChanges = false;
   bool _sheetOrderChanged = false;
