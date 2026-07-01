@@ -9,6 +9,8 @@ mixin _WriterStylesMixin on _WriterBase {
     List<ExcelColor> innerPatternFill = [];
     Map<_FillStyle, int> innerFillStyleIndex = {};
     List<_FillStyle> innerFillStyle = [];
+    Map<GradientFill, int> innerGradientIndex = {};
+    List<GradientFill> innerGradient = [];
     Map<_FontStyle, int> innerFontStyleIndex = {};
     List<_FontStyle> innerFontStyle = [];
     Map<_BorderSet, int> innerBorderSetIndex = {};
@@ -43,10 +45,20 @@ mixin _WriterStylesMixin on _WriterBase {
         innerFontStyle.add(fs);
       }
 
-      // Real (non-solid) patterns take a separate lane keyed by the full fill
-      // descriptor; solid/none fills keep the existing single-colour lane so
-      // their dedup and ids are unchanged.
-      if (_isRealPattern(cellStyle.fillPattern)) {
+      // Gradient fills take a third lane keyed by the gradient itself; they
+      // win over pattern/solid. A gradient identical to one already parsed from
+      // the file is reused (its `<fill>` survives in the envelope DOM) rather
+      // than re-appended. Real (non-solid) patterns take a separate lane keyed
+      // by the full fill descriptor; solid/none fills keep the existing
+      // single-colour lane so their dedup and ids are unchanged.
+      final gradient = cellStyle.gradientFill;
+      if (gradient != null) {
+        if (!_excel._fillGradients.contains(gradient) &&
+            !innerGradientIndex.containsKey(gradient)) {
+          innerGradientIndex[gradient] = innerGradient.length;
+          innerGradient.add(gradient);
+        }
+      } else if (_isRealPattern(cellStyle.fillPattern)) {
         final fs = _FillStyle(
           cellStyle.fillPattern!,
           cellStyle.backgroundColor,
@@ -152,7 +164,8 @@ mixin _WriterStylesMixin on _WriterBase {
     final totalFills =
         _excel._patternFill.length +
         innerPatternFill.length +
-        innerFillStyle.length;
+        innerFillStyle.length +
+        innerGradient.length;
     if (fillAttribute != null) {
       fillAttribute.value = '$totalFills';
     } else {
@@ -166,6 +179,9 @@ mixin _WriterStylesMixin on _WriterBase {
     }
     for (final fs in innerFillStyle) {
       fills.children.add(_buildPatternFillElement(fs));
+    }
+    for (final gf in innerGradient) {
+      fills.children.add(_buildGradientFillElement(gf));
     }
 
     XmlElement borders = _excel._xmlFiles['xl/styles.xml']!
@@ -260,7 +276,16 @@ mixin _WriterStylesMixin on _WriterBase {
       // existing record is what keeps an authored style that reuses a font/fill/
       // border already in the file from silently reverting to the default.
       final int fillId;
-      if (_isRealPattern(cellStyle.fillPattern)) {
+      final gradient = cellStyle.gradientFill;
+      if (gradient != null) {
+        fillId = _gradientFillId(
+          gradient,
+          innerGradientIndex,
+          _excel._patternFill.length +
+              innerPatternFill.length +
+              innerFillStyle.length,
+        );
+      } else if (_isRealPattern(cellStyle.fillPattern)) {
         final fs = _FillStyle(
           cellStyle.fillPattern!,
           cellStyle.backgroundColor,
@@ -466,6 +491,50 @@ mixin _WriterStylesMixin on _WriterBase {
         XmlAttribute(_xmlName('patternType'), fs.patternType.name),
       ], children),
     ]);
+  }
+
+  /// Builds a `<fill>` wrapping a `<gradientFill>` for [gf]: the linear `degree`
+  /// (omitted when 0) or the `type="path"` inset box, plus each `<stop>`.
+  XmlElement _buildGradientFillElement(GradientFill gf) {
+    final attributes = <XmlAttribute>[];
+    if (gf.type == GradientType.path) {
+      attributes.add(XmlAttribute(_xmlName('type'), 'path'));
+      attributes.add(XmlAttribute(_xmlName('left'), _gradientNum(gf.left)));
+      attributes.add(XmlAttribute(_xmlName('right'), _gradientNum(gf.right)));
+      attributes.add(XmlAttribute(_xmlName('top'), _gradientNum(gf.top)));
+      attributes.add(XmlAttribute(_xmlName('bottom'), _gradientNum(gf.bottom)));
+    } else if (gf.degree != 0) {
+      attributes.add(XmlAttribute(_xmlName('degree'), _gradientNum(gf.degree)));
+    }
+    final stops = <XmlElement>[
+      for (final stop in gf.stops)
+        XmlElement(
+          _xmlName('stop'),
+          [
+            XmlAttribute(
+              _xmlName('position'),
+              _gradientNum(stop.position.clamp(0.0, 1.0)),
+            ),
+          ],
+          [_colorXml('color', stop.color)],
+        ),
+    ];
+    return XmlElement(_xmlName('fill'), [], [
+      XmlElement(_xmlName('gradientFill'), attributes, stops),
+    ]);
+  }
+
+  /// Formats a gradient numeric attribute, dropping a redundant trailing `.0`.
+  String _gradientNum(double d) =>
+      d == d.roundToDouble() ? d.toInt().toString() : d.toString();
+
+  /// Global `fillId` for gradient [gf]: the index of an identical gradient
+  /// already in the parsed `<fills>` (its slot survives in the DOM), else an
+  /// appended (inner) record offset past the solid/pattern lanes at [base].
+  int _gradientFillId(GradientFill gf, Map<GradientFill, int> inner, int base) {
+    final existing = _excel._fillGradients.indexOf(gf);
+    if (existing != -1) return existing;
+    return base + inner[gf]!;
   }
 
   /// Global `fontId` for [fs]: an appended (inner) record offset past the parsed

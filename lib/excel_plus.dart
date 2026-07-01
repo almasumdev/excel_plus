@@ -26,6 +26,7 @@ part 'src/models/border.dart';
 part 'src/models/header_footer.dart';
 part 'src/models/color.dart';
 part 'src/models/theme_color.dart';
+part 'src/models/gradient_fill.dart';
 part 'src/models/hyperlink.dart';
 part 'src/models/data_validation.dart';
 part 'src/models/sheet_protection.dart';

@@ -9,6 +9,7 @@ class CellStyle {
   ExcelColor _backgroundColor = ExcelColor.none;
   FillPatternType? _fillPattern;
   ExcelColor _fillBackgroundColor = ExcelColor.none;
+  GradientFill? _gradientFill;
   String? _fontFamily;
   FontScheme _fontScheme;
   HorizontalAlign _horizontalAlign = HorizontalAlign.Left;
@@ -36,6 +37,7 @@ class CellStyle {
     ExcelColor backgroundColorHex = ExcelColor.none,
     FillPatternType? fillPattern,
     ExcelColor fillBackgroundColorHex = ExcelColor.none,
+    GradientFill? gradientFill,
     int? fontSize,
     String? fontFamily,
     FontScheme? fontScheme,
@@ -68,6 +70,7 @@ class CellStyle {
        _backgroundColor = _appropriateColor(backgroundColorHex),
        _fillPattern = fillPattern,
        _fillBackgroundColor = _appropriateColor(fillBackgroundColorHex),
+       _gradientFill = gradientFill,
        _verticalAlign = verticalAlign,
        _horizontalAlign = horizontalAlign,
        _leftBorder = leftBorder ?? Border(),
@@ -84,6 +87,7 @@ class CellStyle {
     ExcelColor? backgroundColorHexVal,
     FillPatternType? fillPatternVal,
     ExcelColor? fillBackgroundColorHexVal,
+    GradientFill? gradientFillVal,
     String? fontFamilyVal,
     FontScheme? fontSchemeVal,
     HorizontalAlign? horizontalAlignVal,
@@ -109,6 +113,7 @@ class CellStyle {
       backgroundColorHex: backgroundColorHexVal ?? _backgroundColor,
       fillPattern: fillPatternVal ?? _fillPattern,
       fillBackgroundColorHex: fillBackgroundColorHexVal ?? _fillBackgroundColor,
+      gradientFill: gradientFillVal ?? _gradientFill,
       fontFamily: fontFamilyVal ?? _fontFamily,
       fontScheme: fontSchemeVal ?? _fontScheme,
       horizontalAlign: horizontalAlignVal ?? _horizontalAlign,
@@ -172,6 +177,18 @@ class CellStyle {
   /// Sets the pattern's background colour (the `bgColor`).
   set fillBackgroundColor(ExcelColor color) {
     _fillBackgroundColor = _appropriateColor(color);
+  }
+
+  /// The gradient fill applied to the cell, or `null` for a plain solid /
+  /// patterned fill. When set, it takes precedence over [backgroundColor] and
+  /// [fillPattern].
+  GradientFill? get gradientFill {
+    return _gradientFill;
+  }
+
+  /// Sets the gradient fill applied to the cell (`null` clears it).
+  set gradientFill(GradientFill? fill) {
+    _gradientFill = fill;
   }
 
   /// The horizontal alignment of the cell's content.
@@ -382,6 +399,7 @@ class CellStyle {
           other._backgroundColor == _backgroundColor &&
           other._fillPattern == _fillPattern &&
           other._fillBackgroundColor == _fillBackgroundColor &&
+          other._gradientFill == _gradientFill &&
           other._leftBorder == _leftBorder &&
           other._rightBorder == _rightBorder &&
           other._topBorder == _topBorder &&
@@ -408,6 +426,7 @@ class CellStyle {
     _backgroundColor,
     _fillPattern,
     _fillBackgroundColor,
+    _gradientFill,
     _leftBorder,
     _rightBorder,
     _topBorder,

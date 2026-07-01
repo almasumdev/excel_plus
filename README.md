@@ -147,7 +147,7 @@ platform. Expand a group for details:
 <details>
 <summary><b>🎨 Cells, styling & text</b></summary>
 
-- Cell styling — font, fill, borders, alignment, rotation, wrap
+- Cell styling — font, fills (solid, pattern & gradient), borders, alignment, rotation, wrap
 - Number formats — standard & custom
 - Rich text (read & write)
 - Theme & indexed colours
@@ -385,6 +385,29 @@ sheet.updateCell(
     backgroundColorHex: ExcelColor.fromHexString('#21A366'),
     horizontalAlign: HorizontalAlign.Center,
     verticalAlign: VerticalAlign.Center,
+  ),
+);
+```
+
+### Fill a cell with a gradient
+
+```dart
+// A linear gradient sweeping top → bottom (90°); 0° is left → right.
+sheet.cell(CellIndex.indexByString('A1')).cellStyle = CellStyle(
+  gradientFill: GradientFill.linear(
+    degree: 90,
+    stops: [
+      GradientStop(0, ExcelColor.fromHexString('#2962FF')),
+      GradientStop(1, ExcelColor.white),
+    ],
+  ),
+);
+
+// A path gradient radiating from the centre outwards.
+sheet.cell(CellIndex.indexByString('A2')).cellStyle = CellStyle(
+  gradientFill: GradientFill.path(
+    left: 0.5, right: 0.5, top: 0.5, bottom: 0.5,
+    stops: [GradientStop(0, ExcelColor.white), GradientStop(1, ExcelColor.red)],
   ),
 );
 ```

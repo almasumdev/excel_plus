@@ -67,6 +67,11 @@ class Excel {
   List<String> _fillPatternTypes = [];
   List<String?> _fillBgColors = [];
 
+  /// Per-fill gradient, index-aligned with [_patternFill] (`null` for a
+  /// pattern/solid fill). Lets an authored gradient reuse an identical parsed
+  /// one, and surfaces read gradients on [CellStyle.gradientFill].
+  List<GradientFill?> _fillGradients = [];
+
   final List<String> _mergeChangeLook = [];
   final List<String> _rtlChangeLook = [];
   List<_FontStyle> _fontStyleList = [];

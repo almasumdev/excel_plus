@@ -64,6 +64,7 @@ final featureDemos = <FeatureDemo>[
   _comments,
   _workbookProtection,
   _patternFills,
+  _gradientFills,
   _tables,
   _charts,
   _pivotTables,
@@ -2973,6 +2974,144 @@ Excel _buildPatternFills() {
 
   s.setColumnWidth(0, 18);
   s.setColumnWidth(1, 18);
+  return excel;
+}
+
+// ---------------------------------------------------------------------------
+// Gradient fills
+// ---------------------------------------------------------------------------
+
+final _gradientFills = FeatureDemo(
+  id: 'gradient_fills',
+  title: 'Gradient fills',
+  description:
+      'A cell can blend between colours with a gradient fill. Linear gradients '
+      'sweep across the cell at any angle; path gradients radiate from an inner '
+      'box out to the edges. A gradientFill takes precedence over a solid '
+      'backgroundColor or a fillPattern.',
+  points: [
+    'GradientFill.linear(degree:, stops:) — 0° left→right, 90° top→bottom',
+    'GradientFill.path(left:, right:, top:, bottom:, stops:) — radial-ish',
+    'GradientStop(position 0.0–1.0, ExcelColor) — two or more stops',
+    'Set it via CellStyle(gradientFill: …); reads back on CellStyle.gradientFill',
+  ],
+  snippet: '''
+sheet.cell(CellIndex.indexByString('A1')).cellStyle = CellStyle(
+  gradientFill: GradientFill.linear(
+    degree: 90, // top → bottom
+    stops: [
+      GradientStop(0, ExcelColor.fromHexString('FF2962FF')),
+      GradientStop(1, ExcelColor.white),
+    ],
+  ),
+);''',
+  fullCode: r'''
+import 'package:excel_plus/excel_plus.dart';
+
+Excel buildGradientFills() {
+  final excel = Excel.createExcel();
+  final s = excel[excel.getDefaultSheet() ?? 'Sheet1'];
+
+  // A horizontal (0°) linear gradient.
+  s.cell(CellIndex.indexByString('A1')).cellStyle = CellStyle(
+    gradientFill: GradientFill.linear(
+      stops: [
+        GradientStop(0, ExcelColor.fromHexString('FF2962FF')),
+        GradientStop(1, ExcelColor.fromHexString('FF00C853')),
+      ],
+    ),
+  );
+
+  // A vertical (90°) gradient fading to white.
+  s.cell(CellIndex.indexByString('A2')).cellStyle = CellStyle(
+    gradientFill: GradientFill.linear(
+      degree: 90,
+      stops: [
+        GradientStop(0, ExcelColor.fromHexString('FFFF6D00')),
+        GradientStop(1, ExcelColor.white),
+      ],
+    ),
+  );
+
+  // A path gradient radiating from the centre.
+  s.cell(CellIndex.indexByString('A3')).cellStyle = CellStyle(
+    gradientFill: GradientFill.path(
+      left: 0.5,
+      right: 0.5,
+      top: 0.5,
+      bottom: 0.5,
+      stops: [
+        GradientStop(0, ExcelColor.white),
+        GradientStop(1, ExcelColor.fromHexString('FFAA00FF')),
+      ],
+    ),
+  );
+  return excel;
+}
+''',
+  build: _buildGradientFills,
+);
+
+Excel _buildGradientFills() {
+  final excel = _book('Gradient fills');
+  final s = excel['Gradient fills'];
+
+  final header = _box(bold: true, fill: _headerFill, font: ExcelColor.white);
+  _put(s, 0, 0, TextCellValue('Gradient'), header);
+  _put(s, 1, 0, TextCellValue('Preview'), header);
+
+  final rows = <(String, GradientFill)>[
+    (
+      'linear 0° (left→right)',
+      GradientFill.linear(
+        stops: [
+          GradientStop(0, ExcelColor.fromHexString('FF2962FF')),
+          GradientStop(1, ExcelColor.fromHexString('FF00C853')),
+        ],
+      ),
+    ),
+    (
+      'linear 90° (top→bottom)',
+      GradientFill.linear(
+        degree: 90,
+        stops: [
+          GradientStop(0, ExcelColor.fromHexString('FFFF6D00')),
+          GradientStop(1, ExcelColor.white),
+        ],
+      ),
+    ),
+    (
+      'linear 3 stops',
+      GradientFill.linear(
+        stops: [
+          GradientStop(0, ExcelColor.fromHexString('FFEA4335')),
+          GradientStop(0.5, ExcelColor.fromHexString('FFFBBC04')),
+          GradientStop(1, ExcelColor.fromHexString('FF34A853')),
+        ],
+      ),
+    ),
+    (
+      'path (from centre)',
+      GradientFill.path(
+        left: 0.5,
+        right: 0.5,
+        top: 0.5,
+        bottom: 0.5,
+        stops: [
+          GradientStop(0, ExcelColor.white),
+          GradientStop(1, ExcelColor.fromHexString('FFAA00FF')),
+        ],
+      ),
+    ),
+  ];
+
+  for (var i = 0; i < rows.length; i++) {
+    _put(s, 0, i + 1, TextCellValue(rows[i].$1), _box());
+    _put(s, 1, i + 1, TextCellValue(''), CellStyle(gradientFill: rows[i].$2));
+  }
+
+  s.setColumnWidth(0, 24);
+  s.setColumnWidth(1, 22);
   return excel;
 }
 

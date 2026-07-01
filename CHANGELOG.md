@@ -1,3 +1,22 @@
+## 2.3.0
+
+### Added
+
+- **Gradient cell fills** — `CellStyle` gains an optional `gradientFill`. Author a
+  `GradientFill.linear(degree:, stops:)` (an angled sweep — `0°` left→right,
+  `90°` top→bottom) or a `GradientFill.path(left:, right:, top:, bottom:, stops:)`
+  (a rectangular gradient radiating from an inner box), each blending two or more
+  `GradientStop`s (a `position` `0.0`–`1.0` plus an `ExcelColor`). A gradient fill
+  takes precedence over a solid `backgroundColor` or a `fillPattern`. Gradients in
+  an opened workbook are read back onto `CellStyle.gradientFill`, and round-trip.
+
+### Fixed
+
+- **Fills after a gradient no longer shift** — the styles reader now walks the
+  `<fills>` children directly instead of every `<patternFill>` in the document, so
+  a `<gradientFill>` (or a stray `<patternFill>` inside a `<dxf>`) can no longer
+  misalign later fills against their `fillId` or inflate the `<fills>` count.
+
 ## 2.2.1
 
 ### Fixed

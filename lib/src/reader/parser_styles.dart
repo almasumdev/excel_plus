@@ -36,6 +36,36 @@ mixin _ParserStylesMixin on _ParserBase {
     return null;
   }
 
+  /// Parses a `<gradientFill>` element into a [GradientFill], resolving each
+  /// stop's colour. Returns `null` when the element carries no stops.
+  GradientFill? _parseGradientFill(XmlElement el) {
+    final stops = <GradientStop>[];
+    for (final stop in el.findElements('stop')) {
+      final position =
+          double.tryParse(stop.getAttribute('position') ?? '') ?? 0.0;
+      final colorEl = stop.findElements('color').firstOrNull;
+      final color =
+          (colorEl == null ? null : _readColorElement(colorEl)) ??
+          ExcelColor.none;
+      stops.add(GradientStop(position, color));
+    }
+    if (stops.isEmpty) return null;
+
+    if (el.getAttribute('type') == 'path') {
+      double inset(String name) =>
+          double.tryParse(el.getAttribute(name) ?? '') ?? 0.0;
+      return GradientFill.path(
+        stops: stops,
+        left: inset('left'),
+        right: inset('right'),
+        top: inset('top'),
+        bottom: inset('bottom'),
+      );
+    }
+    final degree = double.tryParse(el.getAttribute('degree') ?? '') ?? 0.0;
+    return GradientFill.linear(degree: degree, stops: stops);
+  }
+
   void _parseStyles(String stylesTarget) {
     var styles = _excel._archive.findFile('xl/$stylesTarget');
     if (styles != null) {
@@ -47,6 +77,7 @@ mixin _ParserStylesMixin on _ParserBase {
       _excel._patternFill = <String>[];
       _excel._fillPatternTypes = <String>[];
       _excel._fillBgColors = <String?>[];
+      _excel._fillGradients = <GradientFill?>[];
       _excel._cellStyleList = <CellStyle>[];
       _excel._cellStyleIndex = null; // invalidate reverse lookup
       _excel._borderSetList = <_BorderSet>[];
@@ -65,9 +96,28 @@ mixin _ParserStylesMixin on _ParserBase {
 
       Iterable<XmlElement> fontList = document.findAllElements('font');
 
-      document.findAllElements('patternFill').forEach((node) {
-        final patternType = node.getAttribute('patternType') ?? '';
-        final fgColor = node.findElements('fgColor').firstOrNull;
+      // Iterate the `<fills>` children directly (rather than every
+      // `<patternFill>` in the document) so each fill maps to exactly one entry
+      // — keeping the parallel lanes index-aligned with `fillId`, and letting a
+      // `<gradientFill>` occupy its slot without shifting the pattern indices.
+      final fillsEl = document.findAllElements('fills').firstOrNull;
+      final fillEls = fillsEl == null
+          ? const <XmlElement>[]
+          : fillsEl.findElements('fill');
+      for (final fill in fillEls) {
+        final gradient = fill.findElements('gradientFill').firstOrNull;
+        if (gradient != null) {
+          _excel._fillGradients.add(_parseGradientFill(gradient));
+          // Neutral placeholders keep the pattern lanes aligned with the slot.
+          _excel._patternFill.add('none');
+          _excel._fillPatternTypes.add('');
+          _excel._fillBgColors.add(null);
+          continue;
+        }
+        _excel._fillGradients.add(null);
+        final node = fill.findElements('patternFill').firstOrNull;
+        final patternType = node?.getAttribute('patternType') ?? '';
+        final fgColor = node?.findElements('fgColor').firstOrNull;
         if (fgColor != null) {
           // Resolve rgb/theme/indexed so theme-based fills aren't lost.
           _excel._patternFill.add(_readColorElement(fgColor)?.colorHex ?? '');
@@ -77,11 +127,11 @@ mixin _ParserStylesMixin on _ParserBase {
         // Parallel detail (index-aligned) so non-solid patterns + bgColor are
         // preserved without changing the legacy _patternFill above.
         _excel._fillPatternTypes.add(patternType);
-        final bgColor = node.findElements('bgColor').firstOrNull;
+        final bgColor = node?.findElements('bgColor').firstOrNull;
         _excel._fillBgColors.add(
           bgColor == null ? null : _readColorElement(bgColor)?.colorHex,
         );
-      });
+      }
 
       document.findAllElements('border').forEach((node) {
         final diagonalUp = ![
@@ -160,6 +210,7 @@ mixin _ParserStylesMixin on _ParserBase {
               backgroundColor = ExcelColor.none.colorHex;
           FillPatternType? fillPattern;
           ExcelColor fillBackgroundColor = ExcelColor.none;
+          GradientFill? gradientFill;
           String? fontFamily;
           FontScheme fontScheme = FontScheme.Unset;
           _BorderSet? borderSet;
@@ -247,6 +298,9 @@ mixin _ParserStylesMixin on _ParserBase {
               if (bgHex != null) fillBackgroundColor = bgHex.excelColor;
             }
           }
+          if (fillId >= 0 && fillId < _excel._fillGradients.length) {
+            gradientFill = _excel._fillGradients[fillId];
+          }
 
           int borderId = _getFontIndex(node, 'borderId');
           if (borderId < _excel._borderSetList.length) {
@@ -310,6 +364,7 @@ mixin _ParserStylesMixin on _ParserBase {
                 : backgroundColor.excelColor,
             fillPattern: fillPattern,
             fillBackgroundColorHex: fillBackgroundColor,
+            gradientFill: gradientFill,
             horizontalAlign: horizontalAlign,
             verticalAlign: verticalAlign,
             textWrapping: textWrapping,
