@@ -69,8 +69,9 @@ mixin _ParserWorksheetFeaturesMixin on _ParserBase {
     }
   }
 
-  /// Reads the `<autoFilter ref>` range into the sheet model (the getter only;
-  /// the element is left untouched on save unless the API changes it).
+  /// Reads the `<autoFilter ref>` range and its `<filterColumn>` criteria into
+  /// the sheet model (the getters only; the element is left untouched on save
+  /// unless the API changes it, so unmodeled filter types round-trip).
   void _parseAutoFilterForSheet(String sheetName) {
     final sheet = _excel._sheetMap[sheetName];
     final partPath = _excel._xmlSheetId[sheetName];
@@ -79,7 +80,75 @@ mixin _ParserWorksheetFeaturesMixin on _ParserBase {
     if (doc == null) return;
 
     final filter = doc.findAllElements('autoFilter').firstOrNull;
-    if (filter != null) sheet._autoFilterRef = filter.getAttribute('ref');
+    if (filter == null) return;
+    sheet._autoFilterRef = filter.getAttribute('ref');
+
+    final columns = <FilterColumn>[];
+    for (final fc in filter.findElements('filterColumn')) {
+      final colId = int.tryParse(fc.getAttribute('colId') ?? '');
+      if (colId == null) continue;
+      final parsed = _parseFilterColumn(colId, fc);
+      if (parsed != null) columns.add(parsed);
+    }
+    sheet._autoFilterColumns = columns;
+  }
+
+  /// Parses one `<filterColumn>` into a [FilterColumn], or `null` for a filter
+  /// kind not modelled (dynamic/colour/icon filters), which is preserved on
+  /// save via the untouched envelope instead.
+  FilterColumn? _parseFilterColumn(int colId, XmlElement fc) {
+    final filters = fc.findElements('filters').firstOrNull;
+    if (filters != null) {
+      final vals = [
+        for (final f in filters.findElements('filter')) ?f.getAttribute('val'),
+      ];
+      final blank = filters.getAttribute('blank') == '1';
+      if (vals.isEmpty && !blank) return null;
+      return FilterColumn.values(colId, vals, blank: blank);
+    }
+
+    final custom = fc.findElements('customFilters').firstOrNull;
+    if (custom != null) {
+      final list = custom.findElements('customFilter').toList();
+      if (list.isEmpty) return null;
+      // `and` only applies to a two-comparison filter; default a single one to
+      // the authoring default so it round-trips.
+      final matchAll = list.length > 1
+          ? custom.getAttribute('and') == '1'
+          : true;
+      final op1 = _filterOperatorFromXml(list[0].getAttribute('operator'));
+      final v1 = list[0].getAttribute('val') ?? '';
+      FilterOperator? op2;
+      String? v2;
+      if (list.length > 1) {
+        op2 = _filterOperatorFromXml(list[1].getAttribute('operator'));
+        v2 = list[1].getAttribute('val') ?? '';
+      }
+      return FilterColumn.custom(
+        colId,
+        operator: op1,
+        value: v1,
+        operator2: op2,
+        value2: v2,
+        matchAll: matchAll,
+      );
+    }
+
+    final top10 = fc.findElements('top10').firstOrNull;
+    if (top10 != null) {
+      final count = num.tryParse(top10.getAttribute('val') ?? '') ?? 10;
+      final percent = top10.getAttribute('percent') == '1';
+      // `top` defaults to "1" (top); "0" means bottom.
+      final bottom = top10.getAttribute('top') == '0';
+      return FilterColumn.top10(
+        colId,
+        count: count,
+        percent: percent,
+        bottom: bottom,
+      );
+    }
+
+    return null;
   }
 
   /// Reads `<sheetProtection>` into the sheet model (the getters only; the

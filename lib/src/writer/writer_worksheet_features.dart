@@ -172,9 +172,10 @@ mixin _WriterWorksheetFeaturesMixin on _WriterBase {
     if (value != null) el.attributes.add(XmlAttribute(_xmlName(name), value));
   }
 
-  /// Writes `<autoFilter>` for [sheetName] only when the API changed it, so any
-  /// existing element (including applied `<filterColumn>` criteria we don't
-  /// model) is otherwise preserved by the envelope round-trip.
+  /// Writes `<autoFilter>` (with any `<filterColumn>` criteria) for [sheetName]
+  /// only when the API changed it, so an untouched existing element (including
+  /// filter kinds we don't model) is otherwise preserved by the envelope
+  /// round-trip.
   void _applyAutoFilterForSheet(String sheetName) {
     final sheet = _excel._sheetMap[sheetName];
     final partPath = _excel._xmlSheetId[sheetName];
@@ -190,11 +191,81 @@ mixin _WriterWorksheetFeaturesMixin on _WriterBase {
     }
     final ref = sheet._autoFilterRef;
     if (ref == null) return;
-    _insertWorksheetChildOrdered(
-      worksheet,
-      XmlElement(_xmlName('autoFilter'), [XmlAttribute(_xmlName('ref'), ref)]),
+    final autoFilter = XmlElement(_xmlName('autoFilter'), [
+      XmlAttribute(_xmlName('ref'), ref),
+    ]);
+    for (final column in sheet._autoFilterColumns) {
+      autoFilter.children.add(_buildFilterColumn(column));
+    }
+    _insertWorksheetChildOrdered(worksheet, autoFilter);
+  }
+
+  /// Builds a `<filterColumn>` element for [column] — a value-list `<filters>`,
+  /// a `<customFilters>` pair, or a `<top10>`.
+  XmlElement _buildFilterColumn(FilterColumn column) {
+    final child = switch (column.type) {
+      FilterColumnType.valueList => _buildValueListFilter(column),
+      FilterColumnType.custom => _buildCustomFilter(column),
+      FilterColumnType.top10 => _buildTop10Filter(column),
+    };
+    return XmlElement(
+      _xmlName('filterColumn'),
+      [XmlAttribute(_xmlName('colId'), '${column.columnId}')],
+      [child],
     );
   }
+
+  XmlElement _buildValueListFilter(FilterColumn column) {
+    final filters = XmlElement(_xmlName('filters'), [
+      if (column.blank) XmlAttribute(_xmlName('blank'), '1'),
+    ]);
+    for (final v in column.values) {
+      filters.children.add(
+        XmlElement(_xmlName('filter'), [XmlAttribute(_xmlName('val'), v)]),
+      );
+    }
+    return filters;
+  }
+
+  XmlElement _buildCustomFilter(FilterColumn column) {
+    final custom = XmlElement(_xmlName('customFilters'), [
+      // `and="1"` (AND) is only meaningful with a second criterion; the default
+      // (absent) is OR.
+      if (column.operator2 != null && column.matchAll)
+        XmlAttribute(_xmlName('and'), '1'),
+    ]);
+    custom.children.add(
+      XmlElement(_xmlName('customFilter'), [
+        XmlAttribute(
+          _xmlName('operator'),
+          _filterOperatorToXml(column.operator),
+        ),
+        XmlAttribute(_xmlName('val'), column.value ?? ''),
+      ]),
+    );
+    if (column.operator2 != null) {
+      custom.children.add(
+        XmlElement(_xmlName('customFilter'), [
+          XmlAttribute(
+            _xmlName('operator'),
+            _filterOperatorToXml(column.operator2!),
+          ),
+          XmlAttribute(_xmlName('val'), column.value2 ?? ''),
+        ]),
+      );
+    }
+    return custom;
+  }
+
+  XmlElement _buildTop10Filter(FilterColumn column) =>
+      XmlElement(_xmlName('top10'), [
+        XmlAttribute(_xmlName('top'), column.bottom ? '0' : '1'),
+        XmlAttribute(_xmlName('percent'), column.percent ? '1' : '0'),
+        XmlAttribute(_xmlName('val'), _filterNum(column.count)),
+      ]);
+
+  /// Formats a filter numeric attribute, dropping a redundant trailing `.0`.
+  String _filterNum(num n) => n % 1 == 0 ? n.toInt().toString() : n.toString();
 
   /// Writes `<sheetProtection>` for [sheetName] only when the API changed it, so
   /// an existing element (and its password hash) is otherwise preserved by the

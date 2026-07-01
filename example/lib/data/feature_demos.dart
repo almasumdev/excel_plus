@@ -1821,19 +1821,24 @@ final _autoFilter = FeatureDemo(
   title: 'Autofilter',
   description:
       'Add filter dropdowns across a header row so the data below can be '
-      'sorted and filtered. Open the exported file in Excel and use the arrows '
-      'on the header to filter by category or price.',
+      'sorted and filtered — and apply the actual filter criteria so only '
+      'matching rows show when the file is opened. This demo filters Category '
+      'to Peripherals/Accessories and Price above 50.',
   points: [
     'sheet.setAutoFilter(from, to) over the table range',
-    'Dropdown arrows appear on the header row',
-    'sheet.removeAutoFilter() clears it',
-    'Applied filter criteria in opened files are preserved on save',
+    'criteria: [FilterColumn.values / .custom / .top10] applies real filters',
+    'columnId is 0-based, relative to the filter\'s first column',
+    'Read back via sheet.autoFilterColumns; sheet.removeAutoFilter() clears it',
   ],
   snippet: '''
 sheet.setAutoFilter(
   CellIndex.indexByString('A1'),
   CellIndex.indexByString('C7'),
-); // filter dropdowns across the header row''',
+  criteria: [
+    FilterColumn.values(1, ['Peripherals', 'Accessories']), // Category is one of…
+    FilterColumn.custom(2, operator: FilterOperator.greaterThan, value: '50'),
+  ],
+);''',
   fullCode: r'''
 import 'package:excel_plus/excel_plus.dart';
 
@@ -1860,10 +1865,15 @@ Excel buildAutoFilter() {
         DoubleCellValue(rows[i].$3));
   }
 
-  // Filter dropdowns across the header, spanning the data rows.
+  // Filter dropdowns across the header, spanning the data rows, with criteria
+  // that keep only Peripherals/Accessories priced above 50.
   s.setAutoFilter(
     CellIndex.indexByString('A1'),
     CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: rows.length),
+    criteria: [
+      FilterColumn.values(1, ['Peripherals', 'Accessories']),
+      FilterColumn.custom(2, operator: FilterOperator.greaterThan, value: '50'),
+    ],
   );
   return excel;
 }
@@ -1897,10 +1907,15 @@ Excel _buildAutoFilter() {
     _put(s, 2, r, DoubleCellValue(price), _box(align: HorizontalAlign.Right));
   }
 
-  // Dropdowns on the header row, spanning all data rows.
+  // Dropdowns on the header row, spanning all data rows, with applied criteria:
+  // Category in {Peripherals, Accessories} and Price > 50.
   s.setAutoFilter(
     CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0),
     CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: data.length),
+    criteria: [
+      FilterColumn.values(1, ['Peripherals', 'Accessories']),
+      FilterColumn.custom(2, operator: FilterOperator.greaterThan, value: '50'),
+    ],
   );
 
   s.setColumnWidth(0, 16);

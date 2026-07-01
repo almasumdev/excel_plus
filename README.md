@@ -172,7 +172,7 @@ platform. Expand a group for details:
 - Data validation / dropdowns
 - Conditional formatting
 - Freeze & split panes
-- Autofilter
+- Autofilter — with per-column filter criteria
 - Sheet & workbook protection
 - Defined names / named ranges
 
@@ -639,6 +639,26 @@ sheet.setDataValidation(
   DataValidation.wholeNumber(min: 1, max: 100),
   end: CellIndex.indexByString('B10'),
 );
+```
+
+### Autofilter with criteria
+
+```dart
+// Dropdowns across the header row A1:C1 (over data down to row 100), plus
+// applied filters that actually hide non-matching rows. columnId is 0-based,
+// relative to the filter's first column.
+sheet.setAutoFilter(
+  CellIndex.indexByString('A1'),
+  CellIndex.indexByString('C100'),
+  criteria: [
+    FilterColumn.values(0, ['Active', 'Pending']),                     // A is one of…
+    FilterColumn.custom(2, operator: FilterOperator.greaterThan, value: '1000'),
+  ],
+);
+
+// Read applied filters back (and clear them):
+final filters = sheet.autoFilterColumns;
+sheet.removeAutoFilter();
 ```
 
 ### Hyperlinks

@@ -46,6 +46,10 @@ class _SheetBase {
   /// Autofilter range (`<autoFilter ref>`), or `null` when there is none.
   String? _autoFilterRef;
 
+  /// Per-column filter criteria (`<filterColumn>`) applied within the
+  /// autofilter, or empty when the filter only shows dropdowns.
+  List<FilterColumn> _autoFilterColumns = const [];
+
   /// Whether the autofilter was changed via the API. When `false`, any existing
   /// `<autoFilter>` (including applied filter criteria) is preserved untouched.
   bool _autoFilterChanged = false;
@@ -763,21 +767,38 @@ class _SheetBase {
   /// The autofilter range as an `A1:D1`-style string, or `null` if none is set.
   String? get autoFilter => _autoFilterRef;
 
+  /// The applied per-column filter [FilterColumn] criteria, or an empty list
+  /// when the autofilter only shows dropdowns (or there is none).
+  List<FilterColumn> get autoFilterColumns =>
+      List.unmodifiable(_autoFilterColumns);
+
   /// Adds filter dropdowns over the header range from [from] to [to]
   /// (e.g. the header row of a table). Replaces any existing autofilter.
-  void setAutoFilter(CellIndex from, CellIndex to) {
+  ///
+  /// Pass [criteria] to also apply per-column filters that actually hide
+  /// non-matching rows (value lists, comparisons, or top/bottom N). Each
+  /// [FilterColumn]'s `columnId` is 0-based, relative to [from]'s column.
+  void setAutoFilter(
+    CellIndex from,
+    CellIndex to, {
+    List<FilterColumn>? criteria,
+  }) {
     _autoFilterRef = getSpanCellId(
       from.columnIndex,
       from.rowIndex,
       to.columnIndex,
       to.rowIndex,
     );
+    _autoFilterColumns = criteria == null
+        ? const []
+        : List.unmodifiable(criteria);
     _autoFilterChanged = true;
   }
 
   /// Removes the autofilter from this sheet.
   void removeAutoFilter() {
     _autoFilterRef = null;
+    _autoFilterColumns = const [];
     _autoFilterChanged = true;
   }
 

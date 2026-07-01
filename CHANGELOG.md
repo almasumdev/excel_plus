@@ -9,6 +9,14 @@
   `GradientStop`s (a `position` `0.0`–`1.0` plus an `ExcelColor`). A gradient fill
   takes precedence over a solid `backgroundColor` or a `fillPattern`. Gradients in
   an opened workbook are read back onto `CellStyle.gradientFill`, and round-trip.
+- **Autofilter filter criteria** — `setAutoFilter` gains an optional `criteria:`
+  of `FilterColumn`s that actually hide non-matching rows (not just show the
+  dropdown): `FilterColumn.values` (a value/checkbox list, optionally including
+  blanks), `FilterColumn.custom` (one or two `FilterOperator` comparisons combined
+  with AND/OR; wildcards give contains/begins/ends text filters), and
+  `FilterColumn.top10` (top/bottom N or N%). Applied criteria in opened files are
+  read back on `sheet.autoFilterColumns` and round-trip; unmodeled filter kinds
+  (dynamic/colour/icon) are still preserved untouched on save.
 
 ### Fixed
 

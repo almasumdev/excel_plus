@@ -29,6 +29,7 @@ part 'src/models/theme_color.dart';
 part 'src/models/gradient_fill.dart';
 part 'src/models/hyperlink.dart';
 part 'src/models/data_validation.dart';
+part 'src/models/auto_filter.dart';
 part 'src/models/sheet_protection.dart';
 part 'src/models/defined_name.dart';
 part 'src/models/conditional_format.dart';
