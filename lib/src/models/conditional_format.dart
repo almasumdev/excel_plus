@@ -221,7 +221,7 @@ enum ConditionalFormatType {
   /// An in-cell data bar.
   dataBar,
 
-  /// An icon set (read-only; authoring is not yet supported).
+  /// An icon set (arrows, traffic lights, ratings, …).
   iconSet,
 
   /// A top/bottom N (or N%) rule.

@@ -17,24 +17,6 @@
   `FilterColumn.top10` (top/bottom N or N%). Applied criteria in opened files are
   read back on `sheet.autoFilterColumns` and round-trip; unmodeled filter kinds
   (dynamic/colour/icon) are still preserved untouched on save.
-- **Streaming / sink encode** — `excel.encodeToStream(onBytes)` writes the
-  `.xlsx` to a callback chunk-by-chunk as the zip is produced, instead of
-  buffering the entire compressed file in memory like `encode()` / `save()`.
-  `onBytes` matches `IOSink.add`, so a large workbook can be written straight to
-  a file/network sink with a much lower peak-memory footprint:
-  `final s = File('out.xlsx').openWrite(); excel.encodeToStream(s.add); await s.close();`.
-  The output is byte-for-byte identical to `encode()`.
-- **Sparklines** — in-cell mini charts. `sheet.addSparklineGroup(SparklineGroup(
-  …))` (or the `sheet.addSparkline(location:, dataRange:, type:, color:)`
-  convenience) authors line / column / win-loss (`stacked`) sparklines, with
-  high/low/first/last/negative markers and their colours. Groups are written to
-  the worksheet `extLst` (x14) and read back on `sheet.sparklineGroups`; existing
-  sparklines round-trip untouched.
-- **Icon-set conditional formatting** — `ConditionalFormat.iconSet(IconSetType…,
-  reverse:, showValue:, thresholds:)` authors icon-set rules (3/4/5 arrows,
-  traffic lights, flags, symbols, ratings, quarters…). Thresholds default to an
-  even split; icon-set rules also read back on `sheet.conditionalFormats`
-  (`iconSetName`, `iconReverse`, `iconShowValue`, `iconThresholds`).
 - **Conditional-formatting read-back** — rules in an opened workbook are now
   parsed into `sheet.conditionalFormats` (previously only API-added rules
   appeared there). Each `ConditionalFormat` exposes its `type`
@@ -44,6 +26,24 @@
   (`dxf`: font bold/italic/underline/colour/size and a solid highlight fill).
   Read rules are for inspection — they round-trip untouched via the sheet
   envelope and are never re-emitted or duplicated when you add new ones.
+- **Icon-set conditional formatting** — `ConditionalFormat.iconSet(IconSetType…,
+  reverse:, showValue:, thresholds:)` authors icon-set rules (3/4/5 arrows,
+  traffic lights, flags, symbols, ratings, quarters…). Thresholds default to an
+  even split; icon-set rules also read back on `sheet.conditionalFormats`
+  (`iconSetName`, `iconReverse`, `iconShowValue`, `iconThresholds`).
+- **Sparklines** — in-cell mini charts. `sheet.addSparklineGroup(SparklineGroup(
+  …))` (or the `sheet.addSparkline(location:, dataRange:, type:, color:)`
+  convenience) authors line / column / win-loss (`stacked`) sparklines, with
+  high/low/first/last/negative markers and their colours. Groups are written to
+  the worksheet `extLst` (x14) and read back on `sheet.sparklineGroups`; existing
+  sparklines round-trip untouched.
+- **Streaming / sink encode** — `excel.encodeToStream(onBytes)` writes the
+  `.xlsx` to a callback chunk-by-chunk as the zip is produced, instead of
+  buffering the entire compressed file in memory like `encode()` / `save()`.
+  `onBytes` matches `IOSink.add`, so a large workbook can be written straight to
+  a file/network sink with a much lower peak-memory footprint:
+  `final s = File('out.xlsx').openWrite(); excel.encodeToStream(s.add); await s.close();`.
+  The output is byte-for-byte identical to `encode()`.
 
 ### Fixed
 
