@@ -630,6 +630,13 @@ sheet.addConditionalFormat(
   ),
 );
 
+// ...or an icon set (3/4/5 arrows, traffic lights, ratings, …).
+sheet.addConditionalFormat(
+  from,
+  to,
+  ConditionalFormat.iconSet(IconSetType.threeTrafficLights1),
+);
+
 // Inspect the rules in an opened file (type, operator, formulas, colours, range):
 for (final rule in sheet.conditionalFormats) {
   print('${rule.type} on ${rule.range}');

@@ -24,6 +24,11 @@
   a file/network sink with a much lower peak-memory footprint:
   `final s = File('out.xlsx').openWrite(); excel.encodeToStream(s.add); await s.close();`.
   The output is byte-for-byte identical to `encode()`.
+- **Icon-set conditional formatting** — `ConditionalFormat.iconSet(IconSetType…,
+  reverse:, showValue:, thresholds:)` authors icon-set rules (3/4/5 arrows,
+  traffic lights, flags, symbols, ratings, quarters…). Thresholds default to an
+  even split; icon-set rules also read back on `sheet.conditionalFormats`
+  (`iconSetName`, `iconReverse`, `iconShowValue`, `iconThresholds`).
 - **Conditional-formatting read-back** — rules in an opened workbook are now
   parsed into `sheet.conditionalFormats` (previously only API-added rules
   appeared there). Each `ConditionalFormat` exposes its `type`

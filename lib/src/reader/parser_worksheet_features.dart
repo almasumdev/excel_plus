@@ -203,6 +203,21 @@ mixin _ParserWorksheetFeaturesMixin on _ParserBase {
         ? _excel._dxfStyles[dxfId]
         : null;
 
+    final iconSet = rule.findElements('iconSet').firstOrNull;
+    String? iconSetName;
+    var iconReverse = false;
+    var iconShowValue = true;
+    var iconThresholds = const <double>[];
+    if (iconSet != null) {
+      iconSetName = iconSet.getAttribute('iconSet') ?? '3TrafficLights1';
+      iconReverse = iconSet.getAttribute('reverse') == '1';
+      iconShowValue = iconSet.getAttribute('showValue') != '0';
+      iconThresholds = [
+        for (final cfvo in iconSet.findElements('cfvo'))
+          double.tryParse(cfvo.getAttribute('val') ?? '') ?? 0,
+      ];
+    }
+
     return ConditionalFormat._(
       typeName: type,
       operator: rule.getAttribute('operator'),
@@ -210,6 +225,10 @@ mixin _ParserWorksheetFeaturesMixin on _ParserBase {
       colors: colors,
       threeColor: threeColor,
       style: style,
+      iconSetName: iconSetName,
+      iconReverse: iconReverse,
+      iconShowValue: iconShowValue,
+      iconThresholds: iconThresholds,
       range: sqref,
     );
   }

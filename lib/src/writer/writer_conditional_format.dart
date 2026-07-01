@@ -95,9 +95,31 @@ mixin _WriterConditionalFormatMixin on _WriterBase {
         children.add(_buildColorScale(fmt));
       case 'dataBar':
         children.add(_buildDataBar(fmt));
+      case 'iconSet':
+        children.add(_buildIconSet(fmt));
     }
     return XmlElement(_xmlName('cfRule'), attrs, children);
   }
+
+  XmlElement _buildIconSet(ConditionalFormat fmt) {
+    final attrs = <XmlAttribute>[
+      XmlAttribute(_xmlName('iconSet'), fmt.iconSetName ?? '3TrafficLights1'),
+      if (!fmt.iconShowValue) XmlAttribute(_xmlName('showValue'), '0'),
+      if (fmt.iconReverse) XmlAttribute(_xmlName('reverse'), '1'),
+    ];
+    final children = <XmlElement>[
+      for (final t in fmt.iconThresholds)
+        XmlElement(_xmlName('cfvo'), [
+          XmlAttribute(_xmlName('type'), 'percent'),
+          XmlAttribute(_xmlName('val'), _iconNum(t)),
+        ]),
+    ];
+    return XmlElement(_xmlName('iconSet'), attrs, children);
+  }
+
+  /// Formats an icon-set threshold, dropping a redundant trailing `.0`.
+  String _iconNum(double d) =>
+      d == d.roundToDouble() ? d.toInt().toString() : d.toString();
 
   XmlElement _buildColorScale(ConditionalFormat fmt) =>
       XmlElement(_xmlName('colorScale'), [], [

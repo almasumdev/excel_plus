@@ -378,4 +378,86 @@ void main() {
       expect(rule.type, ConditionalFormatType.dataBar);
     });
   });
+
+  group('Conditional Formatting Icon Sets', () {
+    test('an icon set writes the iconSet element with default thresholds', () {
+      final excel = Excel.createExcel();
+      excel['Sheet1'].addConditionalFormat(
+        _at('A1'),
+        _at('A10'),
+        ConditionalFormat.iconSet(IconSetType.threeTrafficLights1),
+      );
+      final ws = readPart(excel.encode()!, 'xl/worksheets/sheet1.xml');
+      expect(ws, contains('type="iconSet"'));
+      expect(ws, contains('<iconSet iconSet="3TrafficLights1"'));
+      expect(RegExp('<cfvo').allMatches(ws).length, 3);
+      expect(ws, contains('val="0"'));
+      expect(ws, contains('val="33"'));
+      expect(ws, contains('val="67"'));
+    });
+
+    test('reverse and showValue=false are emitted; 5-icon has 5 cfvo', () {
+      final excel = Excel.createExcel();
+      excel['Sheet1'].addConditionalFormat(
+        _at('A1'),
+        _at('A5'),
+        ConditionalFormat.iconSet(
+          IconSetType.fiveArrows,
+          reverse: true,
+          showValue: false,
+        ),
+      );
+      final ws = readPart(excel.encode()!, 'xl/worksheets/sheet1.xml');
+      expect(ws, contains('iconSet="5Arrows"'));
+      expect(ws, contains('reverse="1"'));
+      expect(ws, contains('showValue="0"'));
+      expect(RegExp('<cfvo').allMatches(ws).length, 5);
+    });
+
+    test(
+      'an icon set with custom thresholds round-trips through read-back',
+      () {
+        final excel = Excel.createExcel();
+        excel['Sheet1'].addConditionalFormat(
+          _at('B2'),
+          _at('B20'),
+          ConditionalFormat.iconSet(
+            IconSetType.fourRating,
+            thresholds: [0, 30, 60, 90],
+          ),
+        );
+        final rule = Excel.decodeBytes(
+          excel.encode()!,
+        )['Sheet1'].conditionalFormats.single;
+        expect(rule.type, ConditionalFormatType.iconSet);
+        expect(rule.iconSetName, '4Rating');
+        expect(rule.iconThresholds, [0, 30, 60, 90]);
+        expect(rule.range, 'B2:B20');
+      },
+    );
+
+    test(
+      'reads an icon set (name, reverse, showValue, thresholds) from a file',
+      () {
+        final rule = Excel.decodeBytes(
+          buildXlsx(
+            '<row r="1"><c r="A1"><v>1</v></c></row>',
+            afterSheetData:
+                '<conditionalFormatting sqref="A1:A9">'
+                '<cfRule type="iconSet" priority="1">'
+                '<iconSet iconSet="3Symbols" reverse="1" showValue="0">'
+                '<cfvo type="percent" val="0"/>'
+                '<cfvo type="percent" val="33"/>'
+                '<cfvo type="percent" val="67"/>'
+                '</iconSet></cfRule>'
+                '</conditionalFormatting>',
+          ),
+        )['Sheet1'].conditionalFormats.single;
+        expect(rule.iconSetName, '3Symbols');
+        expect(rule.iconReverse, isTrue);
+        expect(rule.iconShowValue, isFalse);
+        expect(rule.iconThresholds, [0, 33, 67]);
+      },
+    );
+  });
 }

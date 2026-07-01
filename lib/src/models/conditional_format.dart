@@ -25,6 +25,10 @@ class ConditionalFormat {
     this.style,
     List<ExcelColor> colors = const [],
     bool threeColor = false,
+    this.iconSetName,
+    this.iconReverse = false,
+    this.iconShowValue = true,
+    this.iconThresholds = const [],
     this.range,
   }) : _typeName = typeName,
        _operator = operator,
@@ -37,6 +41,20 @@ class ConditionalFormat {
   final List<String> _formulas;
   final List<ExcelColor> _colors;
   final bool _threeColor;
+
+  /// For an icon-set rule, the OOXML icon set name (e.g. `'3TrafficLights1'`);
+  /// `null` for other rule kinds.
+  final String? iconSetName;
+
+  /// For an icon-set rule, whether the icon order is reversed.
+  final bool iconReverse;
+
+  /// For an icon-set rule, whether the cell value is shown alongside the icon.
+  final bool iconShowValue;
+
+  /// For an icon-set rule, the threshold values (one per icon) at which each
+  /// icon takes over, as percentages by default (the first is `0`).
+  final List<double> iconThresholds;
 
   /// The differential style applied when a `cellIs` / `formula` rule matches;
   /// `null` for colour-scale and data-bar rules.
@@ -81,6 +99,10 @@ class ConditionalFormat {
     style: style,
     colors: _colors,
     threeColor: _threeColor,
+    iconSetName: iconSetName,
+    iconReverse: iconReverse,
+    iconShowValue: iconShowValue,
+    iconThresholds: iconThresholds,
     range: sqref,
   );
 
@@ -153,6 +175,29 @@ class ConditionalFormat {
   factory ConditionalFormat.dataBar(ExcelColor color) =>
       ConditionalFormat._(typeName: 'dataBar', colors: [color]);
 
+  /// An icon set — a small icon (arrows, traffic lights, ratings, …) drawn in
+  /// each cell according to where its value falls in the range.
+  ///
+  /// [thresholds] give the percentage cut-off for each icon (the first is
+  /// always `0`); when omitted they default to an even split for the set's icon
+  /// count. [reverse] flips the icon order (e.g. red↔green) and [showValue]
+  /// toggles whether the cell's value stays visible next to the icon.
+  factory ConditionalFormat.iconSet(
+    IconSetType iconSet, {
+    bool reverse = false,
+    bool showValue = true,
+    List<double>? thresholds,
+  }) {
+    final (name, count) = _iconSetInfo(iconSet);
+    return ConditionalFormat._(
+      typeName: 'iconSet',
+      iconSetName: name,
+      iconReverse: reverse,
+      iconShowValue: showValue,
+      iconThresholds: thresholds ?? _defaultIconThresholds(count),
+    );
+  }
+
   @override
   String toString() =>
       'ConditionalFormat($_typeName${range != null ? ', $range' : ''})';
@@ -197,6 +242,91 @@ enum ConditionalFormatType {
   /// Any other rule kind not individually modelled.
   other,
 }
+
+/// The icon set drawn by [ConditionalFormat.iconSet]. The name encodes the icon
+/// count (three / four / five icons).
+///
+/// {@category Worksheet}
+enum IconSetType {
+  /// 3 coloured arrows (up / side / down).
+  threeArrows,
+
+  /// 3 grey arrows.
+  threeArrowsGray,
+
+  /// 3 flags.
+  threeFlags,
+
+  /// 3 traffic lights (unrimmed).
+  threeTrafficLights1,
+
+  /// 3 traffic lights (rimmed).
+  threeTrafficLights2,
+
+  /// 3 signs (diamond / triangle / circle).
+  threeSigns,
+
+  /// 3 symbols (rimmed ✓ / ! / ✗).
+  threeSymbols,
+
+  /// 3 symbols (unrimmed ✓ / ! / ✗).
+  threeSymbols2,
+
+  /// 4 coloured arrows.
+  fourArrows,
+
+  /// 4 grey arrows.
+  fourArrowsGray,
+
+  /// 4 red-to-black circles.
+  fourRedToBlack,
+
+  /// 4 rating bars.
+  fourRating,
+
+  /// 4 traffic lights.
+  fourTrafficLights,
+
+  /// 5 coloured arrows.
+  fiveArrows,
+
+  /// 5 grey arrows.
+  fiveArrowsGray,
+
+  /// 5 rating bars.
+  fiveRating,
+
+  /// 5 quarter-filled circles.
+  fiveQuarters,
+}
+
+/// Maps an [IconSetType] to its OOXML `iconSet` name and its icon count.
+(String, int) _iconSetInfo(IconSetType t) => switch (t) {
+  IconSetType.threeArrows => ('3Arrows', 3),
+  IconSetType.threeArrowsGray => ('3ArrowsGray', 3),
+  IconSetType.threeFlags => ('3Flags', 3),
+  IconSetType.threeTrafficLights1 => ('3TrafficLights1', 3),
+  IconSetType.threeTrafficLights2 => ('3TrafficLights2', 3),
+  IconSetType.threeSigns => ('3Signs', 3),
+  IconSetType.threeSymbols => ('3Symbols', 3),
+  IconSetType.threeSymbols2 => ('3Symbols2', 3),
+  IconSetType.fourArrows => ('4Arrows', 4),
+  IconSetType.fourArrowsGray => ('4ArrowsGray', 4),
+  IconSetType.fourRedToBlack => ('4RedToBlack', 4),
+  IconSetType.fourRating => ('4Rating', 4),
+  IconSetType.fourTrafficLights => ('4TrafficLights', 4),
+  IconSetType.fiveArrows => ('5Arrows', 5),
+  IconSetType.fiveArrowsGray => ('5ArrowsGray', 5),
+  IconSetType.fiveRating => ('5Rating', 5),
+  IconSetType.fiveQuarters => ('5Quarters', 5),
+};
+
+/// Evenly-spaced default icon thresholds (percentages) for an [count]-icon set.
+List<double> _defaultIconThresholds(int count) => switch (count) {
+  4 => const <double>[0, 25, 50, 75],
+  5 => const <double>[0, 20, 40, 60, 80],
+  _ => const <double>[0, 33, 67],
+};
 
 ConditionalFormatType _conditionalFormatTypeFromXml(String? s) => switch (s) {
   'cellIs' => ConditionalFormatType.cellIs,

@@ -2293,6 +2293,7 @@ final _conditionalFormat = FeatureDemo(
   points: [
     'ConditionalFormat.colorScale(min:, mid:, max:)',
     'ConditionalFormat.dataBar(color)',
+    'ConditionalFormat.iconSet(IconSetType.threeTrafficLights1, …)',
     'ConditionalFormat.greaterThan / lessThan / between (with a style)',
     'ConditionalFormat.formula(expr, style:)',
     'Read back rules via sheet.conditionalFormats (type / operator / range)',
@@ -2344,12 +2345,14 @@ Excel _buildConditionalFormat() {
   final header = _box(bold: true, fill: _headerFill, font: ExcelColor.white);
   _put(s, 0, 0, TextCellValue('Score'), header);
   _put(s, 1, 0, TextCellValue('Bar'), header);
+  _put(s, 2, 0, TextCellValue('Rating'), header);
 
   const scores = [82, 45, 91, 63, 30, 77, 100, 12];
   for (var i = 0; i < scores.length; i++) {
     final r = i + 1;
     _put(s, 0, r, IntCellValue(scores[i]), _box(align: HorizontalAlign.Right));
     _put(s, 1, r, IntCellValue(scores[i]), _box(align: HorizontalAlign.Right));
+    _put(s, 2, r, IntCellValue(scores[i]), _box(align: HorizontalAlign.Right));
   }
 
   CellIndex at(String ref) => CellIndex.indexByString(ref);
@@ -2379,9 +2382,16 @@ Excel _buildConditionalFormat() {
     at('B9'),
     ConditionalFormat.dataBar(ExcelColor.blue),
   );
+  // Traffic-light icons on the Rating column.
+  s.addConditionalFormat(
+    at('C2'),
+    at('C9'),
+    ConditionalFormat.iconSet(IconSetType.threeTrafficLights1),
+  );
 
   s.setColumnWidth(0, 10);
   s.setColumnWidth(1, 18);
+  s.setColumnWidth(2, 12);
   return excel;
 }
 
