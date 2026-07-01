@@ -14,7 +14,10 @@ class ExcelWriter extends _WriterBase
         _WriterConditionalFormatMixin {
   ExcelWriter._(super.excel, super.parser);
 
-  List<int>? _save() {
+  /// Runs the full write pipeline and assembles the final [Archive] (modeled
+  /// parts merged with untouched originals). Shared by [_save] and
+  /// [_saveToStream].
+  Archive _buildArchive() {
     parser._ensureAllSheetsParsed();
     if (_excel._styleChanges) {
       _processStylesFile();
@@ -37,13 +40,19 @@ class ExcelWriter extends _WriterBase
       var content = utf8.encode(xml);
       _archiveFiles[xmlFile] = ArchiveFile(xmlFile, content.length, content);
     }
-    return ZipEncoder().encode(
-      _cloneArchive(
-        _excel._archive,
-        _archiveFiles,
-        excludedFiles: _removedParts,
-      ),
+    return _cloneArchive(
+      _excel._archive,
+      _archiveFiles,
+      excludedFiles: _removedParts,
     );
+  }
+
+  List<int>? _save() => ZipEncoder().encode(_buildArchive());
+
+  /// Encodes the workbook and forwards each output chunk to [onBytes] as the zip
+  /// is produced, so the whole `.xlsx` is never buffered in memory.
+  void _saveToStream(void Function(List<int> bytes) onBytes) {
+    ZipEncoder().encodeStream(_buildArchive(), _SinkOutputStream(onBytes));
   }
 
   void _setColumns(Sheet sheetObject, XmlDocument xmlFile) {

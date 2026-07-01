@@ -204,6 +204,7 @@ platform. Expand a group for details:
 
 - Typed exceptions — `ExcelException` + subtypes
 - Lazy per-sheet parsing & SAX streaming for large files
+- Streaming save — `encodeToStream` writes to a sink without buffering the file
 - Round-trip safety — unmodeled parts preserved byte-for-byte
 
 </details>
@@ -221,7 +222,7 @@ Planned next — direction is driven by what users request on the
 
 - ⬜ More formula functions — long-tail statistical, engineering & database (D-)
 - ⬜ Dynamic-array spilling across the grid
-- ⬜ Streaming / sink encode to cap peak memory on very large saves
+- ⬜ Async / isolate offloading for large parse & encode
 
 Shipped milestones are in the
 [changelog](https://github.com/almasumdev/excel_plus/blob/main/CHANGELOG.md).
@@ -515,6 +516,12 @@ File('output.xlsx').writeAsBytesSync(excel.save()!);
 
 // 3) Trigger a browser download on Flutter Web.
 excel.save(fileName: 'report.xlsx');
+
+// 4) Stream a large workbook straight to a sink (low peak memory) — the whole
+//    .xlsx is never buffered in memory. onBytes matches IOSink.add.
+final sink = File('big.xlsx').openWrite();
+excel.encodeToStream(sink.add);
+await sink.close();
 ```
 
 ### Flutter — read from assets, edit, and save

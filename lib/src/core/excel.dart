@@ -536,6 +536,30 @@ class Excel {
     return writer._save();
   }
 
+  /// Encodes the workbook as `.xlsx`, forwarding each chunk of the zip to
+  /// [onBytes] as it is produced instead of buffering the whole file in memory.
+  ///
+  /// Use this to save very large workbooks straight to a file or network sink
+  /// with a much lower peak memory footprint than [encode] / [save]. The output
+  /// is byte-for-byte identical to [encode]; only the delivery differs.
+  ///
+  /// [onBytes] matches an `IOSink.add`, so on the Dart VM you can write to disk
+  /// without ever holding the full file:
+  ///
+  /// ```dart
+  /// final sink = File('out.xlsx').openWrite();
+  /// excel.encodeToStream(sink.add);
+  /// await sink.close();
+  /// ```
+  ///
+  /// The caller owns [onBytes]'s sink and is responsible for closing/flushing
+  /// it. Runs synchronously. (Note: the workbook's parts are still assembled in
+  /// memory; this bounds the *output* side by not materialising the whole zip.)
+  void encodeToStream(void Function(List<int> bytes) onBytes) {
+    ExcelWriter writer = ExcelWriter._(this, parser);
+    writer._saveToStream(onBytes);
+  }
+
   /// Starts Saving the file.
   /// `On Web`
   /// ```

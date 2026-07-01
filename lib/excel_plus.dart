@@ -4,6 +4,7 @@ library;
 
 import 'dart:convert';
 import 'dart:math';
+import 'dart:typed_data';
 import 'package:archive/archive.dart';
 import 'package:xml/xml.dart';
 import 'package:xml/xml_events.dart';
@@ -75,6 +76,7 @@ part 'src/writer/writer_pivot.dart';
 part 'src/writer/writer_worksheet_features.dart';
 part 'src/writer/writer_conditional_format.dart';
 part 'src/writer/excel_writer.dart';
+part 'src/writer/sink_output_stream.dart';
 part 'src/writer/span_corrector.dart';
 
 /// Formula

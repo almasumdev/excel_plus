@@ -17,6 +17,13 @@
   `FilterColumn.top10` (top/bottom N or N%). Applied criteria in opened files are
   read back on `sheet.autoFilterColumns` and round-trip; unmodeled filter kinds
   (dynamic/colour/icon) are still preserved untouched on save.
+- **Streaming / sink encode** — `excel.encodeToStream(onBytes)` writes the
+  `.xlsx` to a callback chunk-by-chunk as the zip is produced, instead of
+  buffering the entire compressed file in memory like `encode()` / `save()`.
+  `onBytes` matches `IOSink.add`, so a large workbook can be written straight to
+  a file/network sink with a much lower peak-memory footprint:
+  `final s = File('out.xlsx').openWrite(); excel.encodeToStream(s.add); await s.close();`.
+  The output is byte-for-byte identical to `encode()`.
 - **Conditional-formatting read-back** — rules in an opened workbook are now
   parsed into `sheet.conditionalFormats` (previously only API-added rules
   appeared there). Each `ConditionalFormat` exposes its `type`
