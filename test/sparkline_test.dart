@@ -143,5 +143,23 @@ void main() {
         2,
       );
     });
+
+    test('adding a sparkline reuses the file\'s existing group container', () {
+      // Regression: the writer matched only an unprefixed <sparklineGroups>, so
+      // it missed the file's `x14:`-prefixed container and appended a second,
+      // schema-invalid one under the same <ext> — leaving two <sparklineGroups>
+      // where Excel expects one (and would drop the newly added sparkline).
+      final excel = Excel.decodeBytes(
+        buildXlsx(
+          '<row r="1"><c r="A1"><v>1</v></c></row>',
+          afterSheetData: _sparkExt,
+        ),
+      );
+      excel['Sheet1'].addSparkline(location: 'H3', dataRange: 'Sheet1!B3:G3');
+      final out = readPart(excel.encode()!, 'xl/worksheets/sheet1.xml');
+      // Both sparklines share the single, original container.
+      expect(RegExp('<x14:sparklineGroups').allMatches(out).length, 1);
+      expect(RegExp('<x14:sparkline>').allMatches(out).length, 2);
+    });
   });
 }

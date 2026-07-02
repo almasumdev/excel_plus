@@ -316,7 +316,12 @@ mixin _WriterWorksheetFeaturesMixin on _WriterBase {
         ),
       );
     } else {
-      var existing = ext.findElements('sparklineGroups').firstOrNull;
+      // The container from an opened file is `x14:`-prefixed, so match by local
+      // name in any namespace — a qualified `findElements('sparklineGroups')`
+      // misses it and would append a second (schema-invalid) container.
+      var existing = ext
+          .findElements('sparklineGroups', namespaceUri: '*')
+          .firstOrNull;
       if (existing == null) {
         existing = XmlElement(_x14('sparklineGroups'), [
           XmlAttribute(_xmlName('xm', 'xmlns'), _xmNs),

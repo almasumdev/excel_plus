@@ -1,3 +1,16 @@
+## 2.3.1
+
+### Fixed
+
+- **Adding a sparkline to a workbook that already contains sparklines no longer
+  corrupts the block** — the writer matched only an unprefixed
+  `<sparklineGroups>`, so it missed the `x14:`-prefixed container already in the
+  opened file and appended a *second* one under the same `<ext>`. Two
+  `<sparklineGroups>` where the schema allows one made Excel keep only the first
+  group and silently drop the newly added sparkline. The existing container is
+  now reused, so the original and added sparklines round-trip together in one
+  block. (Introduced in 2.3.0; fresh-authored sparklines were unaffected.)
+
 ## 2.3.0
 
 ### Added
