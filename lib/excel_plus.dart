@@ -12,6 +12,11 @@ import 'src/platform/save_stub.dart'
     if (dart.library.js_interop) 'src/platform/save_web.dart'
     as helper;
 
+/// Re-exported from `archive` so [Excel.decodeBuffer] can be called — and its
+/// [InputStream] argument built via [InputFileStream] to stream a large `.xlsx`
+/// from disk — without taking a separate `archive` dependency.
+export 'package:archive/archive.dart' show InputStream, InputFileStream;
+
 /// Core
 part 'src/core/excel.dart';
 part 'src/core/config.dart';

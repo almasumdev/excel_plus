@@ -366,6 +366,20 @@ for (final sheetName in excel.tables.keys) {
 }
 ```
 
+For a **large file on disk** (Dart VM / desktop / mobile), stream it in with
+`decodeBuffer` instead of loading the whole file into memory first — the
+read-side counterpart to `encodeToStream`. `InputFileStream` is re-exported, so
+no separate `archive` import is needed:
+
+```dart
+final excel = Excel.decodeBuffer(InputFileStream('input.xlsx'));
+```
+
+`decodeBuffer` reads a file path, so it is native-only, and it keeps the file
+open for lazy reads while the workbook is in use. Use `decodeBytes` for bytes
+from assets, the network, or the web — or when the source file must be released
+(deleted or overwritten) immediately after reading.
+
 ### Read a single cell
 
 ```dart

@@ -1,4 +1,15 @@
-## 2.3.1
+## 2.4.0
+
+### Added
+
+- **`InputStream` / `InputFileStream` are re-exported** so the existing
+  `Excel.decodeBuffer(InputStream)` can be used without adding a separate
+  `archive` dependency. Paired with `InputFileStream`, it streams and decodes a
+  large `.xlsx` straight from disk without holding the whole compressed file in
+  memory — the read-side counterpart to `encodeToStream`:
+  `Excel.decodeBuffer(InputFileStream('big.xlsx'))`. (It reads a file path, so
+  it is native/desktop/mobile; use `decodeBytes` for asset, network, or web
+  bytes.)
 
 ### Fixed
 
