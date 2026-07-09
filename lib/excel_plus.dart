@@ -11,6 +11,9 @@ import 'package:xml/xml_events.dart';
 import 'src/platform/save_stub.dart'
     if (dart.library.js_interop) 'src/platform/save_web.dart'
     as helper;
+import 'src/platform/isolate_io.dart'
+    if (dart.library.js_interop) 'src/platform/isolate_stub.dart'
+    as iso;
 
 /// Re-exported from `archive` so [Excel.decodeBuffer] can be called — and its
 /// [InputStream] argument built via [InputFileStream] to stream a large `.xlsx`

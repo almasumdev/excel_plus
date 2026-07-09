@@ -1,3 +1,18 @@
+## 2.5.0
+
+### Added
+
+- **Async decode & encode on a background isolate** —
+  `Excel.decodeBytesAsync(bytes)` and `excel.encodeAsync()` run the parse /
+  serialize + zip work via `Isolate.run`, so a Flutter app can open and save
+  large workbooks without blocking the UI thread. Results are handed back
+  without copying, the calling instance is never mutated, and errors propagate
+  with their usual types. On the web (dart2js and wasm), where isolates are not
+  available, both fall back to the main thread so shared code compiles and
+  behaves identically everywhere. (`encodeAsync` throws a clear
+  `ExcelEncodeException` for workbooks that cannot cross an isolate — e.g. one
+  opened over a live `InputFileStream` file handle — use `encode()` there.)
+
 ## 2.4.0
 
 ### Added

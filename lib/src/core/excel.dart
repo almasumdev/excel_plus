@@ -158,6 +158,21 @@ class Excel {
     return _newExcel(archive);
   }
 
+  /// Decodes an `.xlsx` file from a byte list on a **background isolate**, so
+  /// a large workbook can be opened without blocking the UI thread.
+  ///
+  /// Behaves exactly like [Excel.decodeBytes] — same result, same errors — but
+  /// the parse runs via `Isolate.run` and the decoded workbook is handed back
+  /// without copying. On the web (dart2js and wasm), where isolates are not
+  /// available, it falls back to decoding on the main thread so shared code
+  /// compiles and behaves the same everywhere.
+  ///
+  /// ```dart
+  /// final excel = await Excel.decodeBytesAsync(bytes); // no UI jank
+  /// ```
+  static Future<Excel> decodeBytesAsync(List<int> data) =>
+      iso.runIsolated(() => Excel.decodeBytes(data));
+
   /// Returns all sheets as a map of sheet names to [Sheet] objects.
   Map<String, Sheet> get tables {
     if (_sheetMap.isEmpty) {
@@ -543,6 +558,38 @@ class Excel {
   List<int>? encode() {
     ExcelWriter writer = ExcelWriter._(this, parser);
     return writer._save();
+  }
+
+  /// Encodes the workbook as `.xlsx` bytes on a **background isolate**, so a
+  /// large save (cell serialization + zip compression) does not block the UI
+  /// thread.
+  ///
+  /// The workbook is sent to the isolate and encoded there; this instance is
+  /// not mutated, and the resulting bytes are handed back without copying. On
+  /// the web (dart2js and wasm), where isolates are not available, it falls
+  /// back to encoding on the main thread.
+  ///
+  /// Throws [ExcelEncodeException] if the workbook cannot be transferred to an
+  /// isolate — e.g. it was opened with [Excel.decodeBuffer] over an
+  /// [InputFileStream] (a live file handle cannot cross isolates), or a
+  /// function registered via [formula] captures platform objects. Use [encode]
+  /// in those cases.
+  ///
+  /// ```dart
+  /// final bytes = await excel.encodeAsync();
+  /// ```
+  Future<List<int>?> encodeAsync() async {
+    try {
+      return await iso.runIsolated(encode);
+    } on ArgumentError catch (e) {
+      throw ExcelEncodeException(
+        'This workbook could not be transferred to a background isolate '
+        '(it holds an object that cannot cross isolates, such as the open '
+        'file handle behind decodeBuffer/InputFileStream). '
+        'Use encode() instead.',
+        cause: e,
+      );
+    }
   }
 
   /// Encodes the workbook as `.xlsx`, forwarding each chunk of the zip to

@@ -206,6 +206,8 @@ platform. Expand a group for details:
 - Typed exceptions — `ExcelException` + subtypes
 - Lazy per-sheet parsing & SAX streaming for large files
 - Streaming save — `encodeToStream` writes to a sink without buffering the file
+- Async decode & encode — `decodeBytesAsync` / `encodeAsync` run on a
+  background isolate (no UI jank on big files)
 - Round-trip safety — unmodeled parts preserved byte-for-byte
 
 </details>
@@ -223,7 +225,6 @@ Planned next — direction is driven by what users request on the
 
 - ⬜ More formula functions — long-tail statistical, engineering & database (D-)
 - ⬜ Dynamic-array spilling across the grid
-- ⬜ Async / isolate offloading for large parse & encode
 
 Shipped milestones are in the
 [changelog](https://github.com/almasumdev/excel_plus/blob/main/CHANGELOG.md).
@@ -379,6 +380,13 @@ final excel = Excel.decodeBuffer(InputFileStream('input.xlsx'));
 open for lazy reads while the workbook is in use. Use `decodeBytes` for bytes
 from assets, the network, or the web — or when the source file must be released
 (deleted or overwritten) immediately after reading.
+
+In a Flutter app, decode **off the UI thread** with the async variant — same
+result, parsed on a background isolate (falls back to the main thread on web):
+
+```dart
+final excel = await Excel.decodeBytesAsync(bytes); // no jank
+```
 
 ### Read a single cell
 
@@ -537,6 +545,10 @@ excel.save(fileName: 'report.xlsx');
 final sink = File('big.xlsx').openWrite();
 excel.encodeToStream(sink.add);
 await sink.close();
+
+// 5) Encode on a background isolate (no UI jank in a Flutter app; falls back
+//    to the main thread on web).
+final bytes = await excel.encodeAsync();
 ```
 
 ### Flutter — read from assets, edit, and save
