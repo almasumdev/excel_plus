@@ -12,6 +12,14 @@ abstract class _WriterBase {
   /// not ship with a content type but no relationship.
   final Set<String> _removedParts = {};
   final Map<CellStyle, int> _innerCellStyle = {};
+
+  /// Resolved `s=` id per cell-style **instance**, keyed by identity. Cells
+  /// created by value-only writes each carry their own (value-equal) CellStyle,
+  /// so resolving them through value hashing costs a ~20-field hash per cell
+  /// per pass; the styles pass resolves each instance once and the sheet pass
+  /// reads it back here.
+  final Map<CellStyle, int> _stylePosByIdentity = HashMap.identity();
+
   final Parser parser;
 
   _WriterBase(this._excel, this.parser);
@@ -112,13 +120,16 @@ abstract class _WriterBase {
         for (var colIndex = 0; colIndex < sheetObject._maxColumns; colIndex++) {
           var data = rowData[colIndex];
           if (data == null) continue;
+          // Read the style field directly: the cellStyle getter un-shares (and
+          // so clones) shared default instances, which would allocate a copy
+          // per cell on save.
           _writeCellXml(
             buf,
             sheetName,
             colIndex,
             rowIndex,
             data.value,
-            data.cellStyle?.numberFormat,
+            data._cellStyle,
           );
         }
       }
@@ -134,8 +145,9 @@ abstract class _WriterBase {
     int columnIndex,
     int rowIndex,
     CellValue? value,
-    NumFormat? numberFormat,
+    CellStyle? cellStyle,
   ) {
+    final numberFormat = cellStyle?.numberFormat;
     SharedString? sharedString;
     if (value is TextCellValue) {
       // Build from the span so rich-text runs are preserved (not flattened),
@@ -156,16 +168,15 @@ abstract class _WriterBase {
     buf.write('<c r="$rC"');
 
     // Style attribute
-    final cellStyle =
-        _excel._sheetMap[sheet]?._sheetData[rowIndex]?[columnIndex]?.cellStyle;
     if (_excel._styleChanges && cellStyle != null) {
-      int pos = _excel._cellStyleIndexOf(cellStyle);
-      if (pos == -1) {
-        int lowerPos = _innerCellStyle[cellStyle] ?? -1;
-        if (lowerPos != -1) {
-          pos = lowerPos + _excel._cellStyleList.length;
-        } else {
-          pos = 0;
+      // Identity-cached by the styles pass; the value-hash fallback covers a
+      // style instance it never visited.
+      int? pos = _stylePosByIdentity[cellStyle];
+      if (pos == null) {
+        pos = _excel._cellStyleIndexOf(cellStyle);
+        if (pos == -1) {
+          int lowerPos = _innerCellStyle[cellStyle] ?? -1;
+          pos = lowerPos != -1 ? lowerPos + _excel._cellStyleList.length : 0;
         }
       }
       buf.write(' s="$pos"');

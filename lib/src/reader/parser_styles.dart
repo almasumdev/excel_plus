@@ -464,7 +464,10 @@ mixin _ParserStylesMixin on _ParserBase {
             numberFormat: numFormat,
           );
 
-          _excel._cellStyleList.add(cellStyle);
+          // Parsed styles are shared by every cell referencing the same xf;
+          // mark them so Data.cellStyle hands out a private copy on read
+          // (mutating one cell's style must not restyle the whole file).
+          _excel._cellStyleList.add(cellStyle.._shared = true);
         });
       });
     } else {

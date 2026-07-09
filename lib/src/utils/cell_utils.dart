@@ -32,9 +32,20 @@ bool _listEquals<T>(List<T>? a, List<T>? b) {
   return true;
 }
 
+/// Column-letter memo, grown on demand — [getCellId] runs once per cell on
+/// save, so the letters must not be recomputed each call.
+final List<String> _columnLetters = [];
+
+String _columnLettersFor(int columnIndex) {
+  while (_columnLetters.length <= columnIndex) {
+    _columnLetters.add(_numericToLetters(_columnLetters.length + 1));
+  }
+  return _columnLetters[columnIndex];
+}
+
 /// @nodoc
 String getCellId(int columnIndex, int rowIndex) {
-  return '${_numericToLetters(columnIndex + 1)}${rowIndex + 1}';
+  return '${_columnLettersFor(columnIndex)}${rowIndex + 1}';
 }
 
 String _isColorAppropriate(String value) {
@@ -50,11 +61,15 @@ String _isColorAppropriate(String value) {
 
 /// Normalizes an [ExcelColor] for storage in a style. A theme/indexed reference
 /// is kept intact (its resolved hex is already canonical and the reference must
-/// survive to the writer); a literal color is run through [_isColorAppropriate]
-/// to repair `#`-prefixed or short hex forms.
-ExcelColor _appropriateColor(ExcelColor color) => color._hasReference
-    ? color
-    : _isColorAppropriate(color.colorHex).excelColor;
+/// survive to the writer); a named palette constant is already canonical; only
+/// an ad-hoc literal is run through [_isColorAppropriate] to repair
+/// `#`-prefixed or short hex forms. The fast paths matter: this runs three
+/// times per [CellStyle] construction.
+ExcelColor _appropriateColor(ExcelColor color) {
+  if (color._hasReference || color._name != null) return color;
+  if (identical(color, ExcelColor.none)) return color;
+  return _isColorAppropriate(color.colorHex).excelColor;
+}
 
 /// @nodoc
 int lettersToNumeric(String letters) {

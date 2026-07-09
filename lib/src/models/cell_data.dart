@@ -62,7 +62,15 @@ class Data {
 
   /// Sets the cell's value and updates the sheet.
   set value(CellValue? val) {
-    _sheet.updateCell(cellIndex, val);
+    // With no merged spans the full updateCell pass adds nothing over
+    // _putData for an already-materialized cell: no remap can apply, the
+    // indices were validated when this Data was created, and _putData
+    // installs an accepting default format itself.
+    if (_sheet._spanList.isEmpty) {
+      _sheet._putData(_rowIndex, _columnIndex, val);
+    } else {
+      _sheet.updateCell(cellIndex, val);
+    }
   }
 
   /// returns the value stored in this cell;
@@ -74,7 +82,14 @@ class Data {
   ///
   /// if `no` cellStyle is set then it returns `null`
   CellStyle? get cellStyle {
-    return _cellStyle;
+    final style = _cellStyle;
+    // Value-only writes point many cells at one shared default instance;
+    // un-share before exposing it so a caller mutating this cell's style
+    // cannot affect the others.
+    if (style != null && style._shared) {
+      return _cellStyle = style.copyWith();
+    }
+    return style;
   }
 
   /// sets the user defined CellStyle in this current cell

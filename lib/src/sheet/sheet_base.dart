@@ -228,27 +228,15 @@ class _SheetBase {
       _maxColumns = cellIndex.columnIndex + 1;
     }
 
-    /// if the sheetData contains the row then start putting the column
-    if (_sheetData[cellIndex.rowIndex] != null) {
-      if (_sheetData[cellIndex.rowIndex]![cellIndex.columnIndex] == null) {
-        _sheetData[cellIndex.rowIndex]![cellIndex.columnIndex] = Data.newData(
-          this as Sheet,
-          cellIndex.rowIndex,
-          cellIndex.columnIndex,
-        );
-      }
-    } else {
-      /// else put the column with map showing.
-      _sheetData[cellIndex.rowIndex] = {
-        cellIndex.columnIndex: Data.newData(
-          this as Sheet,
-          cellIndex.rowIndex,
-          cellIndex.columnIndex,
-        ),
-      };
+    var row = _sheetData[cellIndex.rowIndex];
+    if (row == null) {
+      _sheetData[cellIndex.rowIndex] = row = {};
     }
-
-    return _sheetData[cellIndex.rowIndex]![cellIndex.columnIndex]!;
+    return row[cellIndex.columnIndex] ??= Data.newData(
+      this as Sheet,
+      cellIndex.rowIndex,
+      cellIndex.columnIndex,
+    );
   }
 
   /// Evaluates the formula at [index] and returns the computed [CellValue].
@@ -340,8 +328,10 @@ class _SheetBase {
     }
 
     cell._value = value;
-    cell._cellStyle = CellStyle(numberFormat: NumFormat.defaultFor(value));
-    if (cell._cellStyle?.numberFormat != NumFormat.standard_0) {
+    final format = NumFormat.defaultFor(value);
+    cell._cellStyle = _excel._sharedDefaultStyle(format);
+    // defaultFor returns const instances, so identity substitutes for ==.
+    if (!identical(format, NumFormat.standard_0)) {
       _excel._styleChanges = true;
     }
 

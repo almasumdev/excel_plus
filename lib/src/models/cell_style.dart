@@ -31,6 +31,17 @@ class CellStyle {
   /// The number format applied to this cell.
   NumFormat numberFormat;
 
+  /// Shared no-border default. [Border] is immutable, so every style without
+  /// an explicit border can point at one instance instead of allocating five
+  /// per construction.
+  static final Border _noBorder = Border();
+
+  /// True on the canonical per-format default instances that value-only cell
+  /// writes share (see `Excel._sharedDefaultStyle`). [Data.cellStyle] replaces
+  /// a shared style with a private copy before handing it out, so mutating a
+  /// style obtained from one cell can never leak into the others.
+  bool _shared = false;
+
   /// Creates a [CellStyle] with the given formatting properties.
   CellStyle({
     ExcelColor fontColorHex = ExcelColor.black,
@@ -73,11 +84,11 @@ class CellStyle {
        _gradientFill = gradientFill,
        _verticalAlign = verticalAlign,
        _horizontalAlign = horizontalAlign,
-       _leftBorder = leftBorder ?? Border(),
-       _rightBorder = rightBorder ?? Border(),
-       _topBorder = topBorder ?? Border(),
-       _bottomBorder = bottomBorder ?? Border(),
-       _diagonalBorder = diagonalBorder ?? Border(),
+       _leftBorder = leftBorder ?? _noBorder,
+       _rightBorder = rightBorder ?? _noBorder,
+       _topBorder = topBorder ?? _noBorder,
+       _bottomBorder = bottomBorder ?? _noBorder,
+       _diagonalBorder = diagonalBorder ?? _noBorder,
        _diagonalBorderUp = diagonalBorderUp,
        _diagonalBorderDown = diagonalBorderDown;
 
@@ -410,30 +421,19 @@ class CellStyle {
           other.numberFormat == numberFormat;
 
   @override
-  int get hashCode => Object.hashAll([
+  // A discriminating subset of the fields compared by == (valid: equal styles
+  // still hash equal). The full 24-field hash — five borders and three colours
+  // deep — runs once per styled cell on save, which made it a measurable slice
+  // of encode time.
+  int get hashCode => Object.hash(
     _bold,
-    _rotation,
-    _indent,
     _italic,
     _underline,
     _fontSize,
     _fontFamily,
-    _fontScheme,
-    _textWrapping,
-    _verticalAlign,
     _horizontalAlign,
     _fontColor,
     _backgroundColor,
-    _fillPattern,
-    _fillBackgroundColor,
-    _gradientFill,
-    _leftBorder,
-    _rightBorder,
-    _topBorder,
-    _bottomBorder,
-    _diagonalBorder,
-    _diagonalBorderUp,
-    _diagonalBorderDown,
     numberFormat,
-  ]);
+  );
 }

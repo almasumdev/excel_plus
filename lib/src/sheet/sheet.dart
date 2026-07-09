@@ -220,7 +220,10 @@ class Sheet extends _SheetBase with _SheetRowColumnMixin, _SheetMergeMixin {
           numberFormat: NumFormat.defaultFor(value),
         );
       }
-    } else {
+    } else if (newRowIndex != rowIndex || newColumnIndex != columnIndex) {
+      // Only reachable after a merged-cell remap: _putData just installed an
+      // accepting default at the target, so for the unmapped (common) case
+      // this read-back could never change anything.
       final cellStyleBefore =
           _sheetData[cellIndex.rowIndex]?[cellIndex.columnIndex]?.cellStyle;
       if (cellStyleBefore != null &&

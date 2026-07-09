@@ -2,6 +2,7 @@
 /// Excel `.xlsx` files in Dart and Flutter.
 library;
 
+import 'dart:collection';
 import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';

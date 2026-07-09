@@ -47,17 +47,28 @@ mixin _WriterStylesMixin on _WriterBase {
     Map<_BorderSet, int> innerBorderSetIndex = {};
     List<_BorderSet> innerBorderSet = [];
 
+    final parsedCount = _excel._cellStyleList.length;
     _excel._sheetMap.forEach((sheetName, sheetObject) {
       sheetObject._sheetData.forEach((_, columnMap) {
         columnMap.forEach((_, dataObject) {
-          final style = dataObject.cellStyle;
-          // A style equal to a parsed xf resolves to that xf per cell (see
-          // _getCellStyleId), so appending it here would only write an
-          // unreferenced duplicate record — a decode → encode round-trip used
-          // to double every font/xf this way.
-          if (style != null && _excel._cellStyleIndexOf(style) == -1) {
-            _innerCellStyle.putIfAbsent(style, () => _innerCellStyle.length);
+          // Field access, not the getter — the getter un-shares (clones)
+          // shared default instances, one per cell.
+          final style = dataObject._cellStyle;
+          if (style == null || _stylePosByIdentity.containsKey(style)) return;
+          // A style equal to a parsed xf resolves to that xf (so appending it
+          // would only write an unreferenced duplicate record — a decode →
+          // encode round-trip used to double every font/xf this way); anything
+          // else gets an appended record past the parsed ones.
+          var pos = _excel._cellStyleIndexOf(style);
+          if (pos == -1) {
+            pos =
+                parsedCount +
+                _innerCellStyle.putIfAbsent(
+                  style,
+                  () => _innerCellStyle.length,
+                );
           }
+          _stylePosByIdentity[style] = pos;
         });
       });
     });

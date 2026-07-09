@@ -2111,6 +2111,10 @@ class ExcelColor {
   static final Map<String, ExcelColor> _byHex = {
     for (final v in values) v.colorHex: v,
   };
+  // colorHex/colorInt are pure functions of _color, so they are omitted here:
+  // _color equality already implies theirs, and computing them per comparison
+  // re-validates and re-parses the hex string — far too hot for a field that
+  // is hashed once per styled cell on save.
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -2120,21 +2124,11 @@ class ExcelColor {
           other._type == _type &&
           other._themeIndex == _themeIndex &&
           other._indexedIndex == _indexedIndex &&
-          other._tint == _tint &&
-          other.colorHex == colorHex &&
-          other.colorInt == colorInt;
+          other._tint == _tint;
 
   @override
-  int get hashCode => Object.hash(
-    _name,
-    _color,
-    _type,
-    _themeIndex,
-    _indexedIndex,
-    _tint,
-    colorHex,
-    colorInt,
-  );
+  int get hashCode =>
+      Object.hash(_name, _color, _type, _themeIndex, _indexedIndex, _tint);
 }
 
 /// Color type category.

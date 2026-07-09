@@ -15,13 +15,28 @@
 
 ### Performance
 
-- **Cell writes ~30× faster, plain-file decode ~15× faster** — every
-  `CellStyle` construction (one per cell write, and per parsed format on
-  decode) normalized its colours through `ExcelColor.valuesAsMap`, a getter
-  that rebuilt the entire ~300-entry palette list *and* map on each access
-  (~46 µs per style). The palette lookup is now a cached map built once.
-  Writing 100k cells drops from ~5.1 s to ~0.16 s and decoding them from
-  ~5.7 s to ~0.37 s. (`valuesAsMap` itself still returns a fresh copy.)
+- **Cell writes ~55× faster, plain-file decode ~18× faster, saves ~5× faster,
+  and roughly a third less peak memory on large workbooks.** The compounding
+  fixes:
+  - Every `CellStyle` construction normalized its colours through
+    `ExcelColor.valuesAsMap` — a getter that rebuilt the entire ~300-entry
+    palette list *and* map on each access (~46 µs per style). The lookup is
+    now a cached map built once (`valuesAsMap` still returns a fresh copy),
+    colour normalization short-circuits for palette constants, and the five
+    default `Border`s per style are one shared immutable instance.
+  - Value-only cell writes now share one canonical default `CellStyle` per
+    number format instead of allocating (and later value-hashing) a fresh
+    equal instance per cell — cutting save-time style resolution to a single
+    identity lookup per cell and ~190 MB of peak memory on a 1M-cell workbook.
+    `Data.cellStyle` hands out a private copy of a shared style on first read,
+    so mutating one cell's style still affects only that cell.
+  - `ExcelColor`/`CellStyle` equality and hashing dropped derived fields that
+    re-validated and re-parsed hex strings per comparison; the cell writer no
+    longer re-fetches each cell's style through three map hops; column letters
+    are memoized; `Data.value=` and `Sheet.cell()` skip redundant passes.
+  - Writing 100k mixed cells: build ~5.1 s → ~0.09 s, encode ~0.9 s → ~0.13 s,
+    decode ~5.7 s → ~0.31 s. A 1M-cell build+encode+decode cycle: ~18 s →
+    ~3.8 s with ~720 MB peak RSS (was ~1.16 GB mid-series).
 - **Style-heavy files decode ~8× faster (and scale linearly)** — the styles
   parser resolved each cell format's font by calling `length`/`elementAt` on a
   lazy XML query, re-walking the whole styles tree for every `<xf>`
@@ -43,6 +58,11 @@
   the first save after opening a file, so each open/save cycle roughly doubled
   a style-heavy workbook's `styles.xml`. Styles equal to a parsed record are
   now skipped, so an untouched round-trip keeps `styles.xml` the same size.
+- **Mutating one cell's style no longer restyles every cell sharing its
+  format** — in a decoded file all cells referencing the same `xf` shared one
+  `CellStyle` object, so editing the style obtained from `cell.cellStyle`
+  silently changed all of them. The getter now returns the cell's own private
+  copy on first access.
 
 ## 2.4.0
 

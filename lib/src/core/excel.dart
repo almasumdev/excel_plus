@@ -48,6 +48,29 @@ class Excel {
   /// after the built-in library.
   final Map<String, ExcelFunction> _customFunctions = {};
 
+  /// Canonical default [CellStyle] per number format, shared by every
+  /// value-only cell write instead of allocating (and later value-hashing) a
+  /// fresh equal instance per cell. Instances are marked `_shared`;
+  /// [Data.cellStyle] un-shares before exposing one.
+  final Map<NumFormat, CellStyle> _defaultStyles = {};
+
+  // Last-format memo: this runs per cell write and consecutive cells usually
+  // share a value type, so the identical-check dodges a NumFormat hash per
+  // cell ([NumFormat.defaultFor] returns const instances).
+  NumFormat? _lastDefaultFormat;
+  CellStyle? _lastDefaultStyle;
+
+  CellStyle _sharedDefaultStyle(NumFormat format) {
+    if (identical(format, _lastDefaultFormat)) return _lastDefaultStyle!;
+    final style = _defaultStyles.putIfAbsent(
+      format,
+      () => CellStyle(numberFormat: format).._shared = true,
+    );
+    _lastDefaultFormat = format;
+    _lastDefaultStyle = style;
+    return style;
+  }
+
   Archive _archive;
 
   final Map<String, XmlNode> _sheets = {};
