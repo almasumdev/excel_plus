@@ -13,6 +13,21 @@
   `ExcelEncodeException` for workbooks that cannot cross an isolate — e.g. one
   opened over a live `InputFileStream` file handle — use `encode()` there.)
 
+### Performance
+
+- **Style-heavy files decode ~8× faster (and scale linearly)** — the styles
+  parser resolved each cell format's font by calling `length`/`elementAt` on a
+  lazy XML query, re-walking the whole styles tree for every `<xf>`
+  (O(formats × tree)); a 2,500-style workbook took ~12 s to open and grew
+  quadratically. The font list is now materialized once and indexed directly
+  (~1.4 s for the same file), and it is scoped to the `<fonts>` container so an
+  out-of-range `fontId` can no longer accidentally read a `<dxf>`'s font.
+  Font dedup in the same loop now uses a hash set instead of a linear scan.
+- **Saving into a heavily-styled opened file no longer linear-scans its
+  records** — resolving each authored style against the file's existing fills /
+  gradients / borders now goes through O(1) reverse indexes (first-occurrence
+  semantics preserved), replacing O(authored × parsed) scans on every save.
+
 ## 2.4.0
 
 ### Added

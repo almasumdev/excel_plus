@@ -259,10 +259,3 @@ String getColumnAlphabet(int columnIndex) {
 int getColumnIndex(String columnAlphabet) {
   return _cellCoordsFromCellId(columnAlphabet).$2;
 }
-
-///
-///Checks if the fontStyle is already present in the list or not
-///
-int _fontStyleIndex(List<_FontStyle> list, _FontStyle fontStyle) {
-  return list.indexOf(fontStyle);
-}

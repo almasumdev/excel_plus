@@ -157,7 +157,15 @@ mixin _ParserStylesMixin on _ParserBase {
                 c.getAttribute('rgb'),
             ];
 
-      Iterable<XmlElement> fontList = document.findAllElements('font');
+      // Materialized once: the per-xf loop below indexes into this by fontId,
+      // and calling length/elementAt on the lazy findAllElements iterable would
+      // re-walk the whole styles tree per xf — O(xfs × tree). Scoped to the
+      // <fonts> container so a <dxf>'s <font> can never be picked up by an
+      // out-of-range fontId.
+      final fontsEl = document.findAllElements('fonts').firstOrNull;
+      final List<XmlElement> fontList = fontsEl == null
+          ? const []
+          : fontsEl.findElements('font').toList();
 
       // Iterate the `<fills>` children directly (rather than every
       // `<patternFill>` in the document) so each fill maps to exactly one entry
@@ -273,6 +281,10 @@ mixin _ParserStylesMixin on _ParserBase {
         });
       });
 
+      // O(1) font dedup for the per-xf loop below — a list.indexOf scan here is
+      // O(xfs × unique fonts) and dominates decode time on style-heavy files.
+      final seenFontStyles = Set<_FontStyle>.of(_excel._fontStyleList);
+
       document.findAllElements('cellXfs').forEach((node1) {
         node1.findAllElements('xf').forEach((node) {
           final numFmtId = _getFontIndex(node, 'numFmtId');
@@ -298,8 +310,8 @@ mixin _ParserStylesMixin on _ParserBase {
           int fontId = _getFontIndex(node, 'fontId');
           _FontStyle fontStyle = _FontStyle();
 
-          if (fontId < fontList.length) {
-            XmlElement font = fontList.elementAt(fontId);
+          if (fontId >= 0 && fontId < fontList.length) {
+            XmlElement font = fontList[fontId];
 
             final fontColorEl = font.findElements('color').firstOrNull;
             if (fontColorEl != null) {
@@ -347,7 +359,7 @@ mixin _ParserStylesMixin on _ParserBase {
             fontStyle._fontColorHex = fontColor.excelColor;
           }
 
-          if (_fontStyleIndex(_excel._fontStyleList, fontStyle) == -1) {
+          if (seenFontStyles.add(fontStyle)) {
             _excel._fontStyleList.add(fontStyle);
           }
 

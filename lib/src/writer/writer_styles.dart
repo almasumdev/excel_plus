@@ -2,8 +2,38 @@ part of '../../excel_plus.dart';
 
 /// Mixin providing style processing for [ExcelWriter].
 mixin _WriterStylesMixin on _WriterBase {
+  /// O(1) reverse indexes over the **parsed** style records (first occurrence
+  /// wins, matching `indexOf` semantics). Rebuilt at the start of every
+  /// [_processStylesFile] so resolving each authored style against the opened
+  /// file's records doesn't linear-scan them — O(authored × parsed) otherwise.
+  Map<String, int> _parsedFillIndex = const {};
+  Map<GradientFill, int> _parsedGradientIndex = const {};
+  Map<_BorderSet, int> _parsedBorderIndex = const {};
+
+  void _indexParsedStyleRecords() {
+    final fills = <String, int>{};
+    for (var i = 0; i < _excel._patternFill.length; i++) {
+      fills.putIfAbsent(_excel._patternFill[i], () => i);
+    }
+    _parsedFillIndex = fills;
+
+    final gradients = <GradientFill, int>{};
+    for (var i = 0; i < _excel._fillGradients.length; i++) {
+      final g = _excel._fillGradients[i];
+      if (g != null) gradients.putIfAbsent(g, () => i);
+    }
+    _parsedGradientIndex = gradients;
+
+    final borders = <_BorderSet, int>{};
+    for (var i = 0; i < _excel._borderSetList.length; i++) {
+      borders.putIfAbsent(_excel._borderSetList[i], () => i);
+    }
+    _parsedBorderIndex = borders;
+  }
+
   /// Writing Font Color in [xl/styles.xml] from the Cells of the sheets.
   void _processStylesFile() {
+    _indexParsedStyleRecords();
     _innerCellStyle.clear();
     Map<ExcelColor, int> innerPatternFillIndex = {};
     List<ExcelColor> innerPatternFill = [];
@@ -53,7 +83,7 @@ mixin _WriterStylesMixin on _WriterBase {
       // single-colour lane so their dedup and ids are unchanged.
       final gradient = cellStyle.gradientFill;
       if (gradient != null) {
-        if (!_excel._fillGradients.contains(gradient) &&
+        if (!_parsedGradientIndex.containsKey(gradient) &&
             !innerGradientIndex.containsKey(gradient)) {
           innerGradientIndex[gradient] = innerGradient.length;
           innerGradient.add(gradient);
@@ -78,7 +108,7 @@ mixin _WriterStylesMixin on _WriterBase {
       }
 
       final bs = _createBorderSetFromCellStyle(cellStyle);
-      if (!_excel._borderSetList.contains(bs) &&
+      if (!_parsedBorderIndex.containsKey(bs) &&
           !innerBorderSetIndex.containsKey(bs)) {
         innerBorderSetIndex[bs] = innerBorderSet.length;
         innerBorderSet.add(bs);
@@ -441,7 +471,7 @@ mixin _WriterStylesMixin on _WriterBase {
   /// reference is always treated as new so its `theme`/`indexed` attribute is
   /// written (it must not collapse onto a literal of the same resolved color).
   bool _fillExistsLiterally(ExcelColor c) =>
-      !c._hasReference && _excel._patternFill.contains(c.colorHex);
+      !c._hasReference && _parsedFillIndex.containsKey(c.colorHex);
 
   /// Builds a `<fill>` for an authored background: a solid fill for any real
   /// color (literal or theme/indexed reference), or a bare pattern fill for the
@@ -532,8 +562,8 @@ mixin _WriterStylesMixin on _WriterBase {
   /// already in the parsed `<fills>` (its slot survives in the DOM), else an
   /// appended (inner) record offset past the solid/pattern lanes at [base].
   int _gradientFillId(GradientFill gf, Map<GradientFill, int> inner, int base) {
-    final existing = _excel._fillGradients.indexOf(gf);
-    if (existing != -1) return existing;
+    final existing = _parsedGradientIndex[gf];
+    if (existing != null) return existing;
     return base + inner[gf]!;
   }
 
@@ -552,8 +582,8 @@ mixin _WriterStylesMixin on _WriterBase {
     final i = inner[c];
     if (i != null) return i + _excel._patternFill.length;
     if (!c._hasReference) {
-      final existing = _excel._patternFill.indexOf(c.colorHex);
-      if (existing != -1) return existing;
+      final existing = _parsedFillIndex[c.colorHex];
+      if (existing != null) return existing;
     }
     return 0;
   }
@@ -563,8 +593,7 @@ mixin _WriterStylesMixin on _WriterBase {
   int _borderIdFor(_BorderSet bs, Map<_BorderSet, int> inner) {
     final i = inner[bs];
     if (i != null) return i + _excel._borderSetList.length;
-    final existing = _excel._borderSetList.indexOf(bs);
-    return existing == -1 ? 0 : existing;
+    return _parsedBorderIndex[bs] ?? 0;
   }
 }
 
