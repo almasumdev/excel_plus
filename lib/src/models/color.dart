@@ -2102,8 +2102,15 @@ class ExcelColor {
   ];
 
   /// The predefined [ExcelColor] constants keyed by their hex string.
-  static Map<String, ExcelColor> get valuesAsMap =>
-      values.asMap().map((_, v) => MapEntry(v.colorHex, v));
+  static Map<String, ExcelColor> get valuesAsMap => Map.of(_byHex);
+
+  /// Cached hex → constant lookup. [values] and [valuesAsMap] are getters that
+  /// rebuild the whole ~300-entry palette on every access, so any per-cell path
+  /// (e.g. [CellStyle]'s color normalization) must resolve through this map,
+  /// never through those getters.
+  static final Map<String, ExcelColor> _byHex = {
+    for (final v in values) v.colorHex: v,
+  };
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||

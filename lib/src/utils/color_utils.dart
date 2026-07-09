@@ -78,6 +78,6 @@ extension StringExt on String {
   ExcelColor get excelColor => this == 'none'
       ? ExcelColor.none
       : _assertHexString(this)
-      ? ExcelColor.valuesAsMap[this] ?? ExcelColor._(this)
+      ? ExcelColor._byHex[this] ?? ExcelColor._(this)
       : ExcelColor.black;
 }

@@ -50,11 +50,13 @@ mixin _WriterStylesMixin on _WriterBase {
     _excel._sheetMap.forEach((sheetName, sheetObject) {
       sheetObject._sheetData.forEach((_, columnMap) {
         columnMap.forEach((_, dataObject) {
-          if (dataObject.cellStyle != null) {
-            _innerCellStyle.putIfAbsent(
-              dataObject.cellStyle!,
-              () => _innerCellStyle.length,
-            );
+          final style = dataObject.cellStyle;
+          // A style equal to a parsed xf resolves to that xf per cell (see
+          // _getCellStyleId), so appending it here would only write an
+          // unreferenced duplicate record — a decode → encode round-trip used
+          // to double every font/xf this way.
+          if (style != null && _excel._cellStyleIndexOf(style) == -1) {
+            _innerCellStyle.putIfAbsent(style, () => _innerCellStyle.length);
           }
         });
       });

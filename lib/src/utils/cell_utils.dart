@@ -40,9 +40,9 @@ String getCellId(int columnIndex, int rowIndex) {
 String _isColorAppropriate(String value) {
   switch (value.length) {
     case 7:
-      return value.replaceAll(RegExp(r'#'), 'FF');
+      return value.replaceAll('#', 'FF');
     case 9:
-      return value.replaceAll(RegExp(r'#'), '');
+      return value.replaceAll('#', '');
     default:
       return value;
   }
