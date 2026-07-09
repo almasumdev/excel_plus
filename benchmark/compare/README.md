@@ -42,17 +42,19 @@ so the create / encode / decode / peak-RSS lines are directly comparable.
 
 ## Sample results
 
-Same machine, back to back. Each cell shows `excel` 4.0.6 → excel_plus 0.0.5.
+Same machine, back to back. Each cell shows `excel` 4.0.6 → excel_plus 2.5.0.
 
 | Workload | Create | Encode | Decode | Peak RSS |
 |---|---|---|---|---|
-| 5,000,000 cells | 3.83 s → 3.86 s | 48.85 s → 9.21 s | 56.83 s → 19.50 s | 12338 MB → 2689 MB |
-| 1,000,000 cells | 0.89 s → 0.82 s | 9.44 s → 1.64 s | 10.90 s → 3.68 s | 2556 MB → 727 MB |
-| 10,000 cells | 71 ms → 75 ms | 184 ms → 41 ms | 141 ms → 75 ms | 289 MB → 285 MB |
-| 500 cells | 58 ms → 60 ms | 54 ms → 16 ms | 32 ms → 19 ms | 245 MB → 247 MB |
+| 5,000,000 cells | 4.35 s → 1.25 s | 56.94 s → 7.57 s | 57.16 s → 17.53 s | 12332 MB → 2706 MB |
+| 1,000,000 cells | 0.83 s → 0.28 s | 9.52 s → 1.45 s | 10.59 s → 3.18 s | 2554 MB → 750 MB |
+| 10,000 cells | 70 ms → 70 ms | 180 ms → 48 ms | 138 ms → 72 ms | 286 MB → 308 MB |
+| 500 cells | 55 ms → 63 ms | 52 ms → 24 ms | 34 ms → 19 ms | 245 MB → 271 MB |
 
-Encode and decode are faster at every size; the memory win shows once the sheet is
-large enough to dwarf the Dart VM baseline (~250 MB); cell creation is a tie.
+Encode and decode are faster at every size, and create pulls ahead ~3–3.5× once
+real volume is involved (below ~100k cells it is dominated by decoding the embedded
+workbook template, so it reads as a tie). The memory win shows once the sheet is
+large enough to dwarf the Dart VM baseline (~250 MB).
 
 > Timings vary by hardware. Run both on the same machine, back to back, for a fair
 > comparison.

@@ -64,6 +64,12 @@
   silently changed all of them. The getter now returns the cell's own private
   copy on first access.
 
+### Documentation
+
+- README benchmarks re-measured against `excel` 4.0.6 with this release's
+  performance work (encode 6.5–7.5×, decode 3.3×, create 3–3.5× at 1M/5M
+  cells); raw numbers in `benchmark/compare/` updated to match.
+
 ## 2.4.0
 
 ### Added

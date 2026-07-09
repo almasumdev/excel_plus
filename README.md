@@ -64,14 +64,16 @@ same workload:
 
 | Workload | Encode (`excel` → excel_plus) | Decode | Peak memory | Create |
 |---|---|---|---|---|
-| **5,000,000 cells** | 48.8 s → 9.2 s · **5.3×** | 56.8 s → 19.5 s · **2.9×** | 12.0 GB → 2.6 GB · **4.6×** | ≈ equal |
-| **1,000,000 cells** | 9.4 s → 1.6 s · **5.8×** | 10.9 s → 3.7 s · **3.0×** | 2.5 GB → 0.7 GB · **3.5×** | ≈ equal |
-| **10,000 cells** | 184 ms → 41 ms · **4.5×** | 141 ms → 75 ms · **1.9×** | ≈ equal* | ≈ equal |
-| **500 cells** | 54 ms → 16 ms · **3.3×** | 32 ms → 19 ms · **1.7×** | ≈ equal* | ≈ equal |
+| **5,000,000 cells** | 56.9 s → 7.6 s · **7.5×** | 57.2 s → 17.5 s · **3.3×** | 12.0 GB → 2.6 GB · **4.6×** | 4.4 s → 1.2 s · **3.5×** |
+| **1,000,000 cells** | 9.5 s → 1.5 s · **6.5×** | 10.6 s → 3.2 s · **3.3×** | 2.5 GB → 0.7 GB · **3.4×** | 0.8 s → 0.3 s · **3.0×** |
+| **10,000 cells** | 180 ms → 48 ms · **3.8×** | 138 ms → 72 ms · **1.9×** | ≈ equal* | ≈ equal* |
+| **500 cells** | 52 ms → 24 ms · **2.2×** | 34 ms → 19 ms · **1.8×** | ≈ equal* | ≈ equal* |
 
 <sub>* Below ~100k cells peak memory is dominated by the Dart VM baseline (~250 MB), so
-it is comparable; the gap widens with size (3.5× at 1M → **4.6× at 5M**, where `excel`
-needed ~12 GB RAM). Create time is within noise — both build cells the same way.</sub>
+it is comparable; the gap widens with size (3.4× at 1M → **4.6× at 5M**, where `excel`
+needed ~12 GB RAM). Small-workbook create time is dominated by decoding the embedded
+template, so it is comparable too; at 1M+ cells excel_plus writes cells **3–3.5×**
+faster (one shared default style instead of a per-cell allocation).</sub>
 
 The two libraries pin conflicting `archive`/`xml` majors, so they can't run in one
 program; each harness lives in its own package under
@@ -803,9 +805,9 @@ excel_plus is a performance-focused fork of the
 | Public API | **Source-compatible** drop-in | — (the original) |
 | Platforms | VM, Web (JS & WASM), Android, iOS, desktop | VM, Web, mobile |
 
-On a 1,000,000-cell sheet this measured **~5× faster encoding, ~3× faster
-decoding, and ~3.5× less peak memory** — see [Performance](#performance) for the
-reproducible head-to-head.
+On a 1,000,000-cell sheet this measured **~6.5× faster encoding, ~3.3× faster
+decoding, ~3× faster cell writes, and ~3.4× less peak memory** — see
+[Performance](#performance) for the reproducible head-to-head.
 
 > Live pub score and likes are shown in the badges at the top.
 
