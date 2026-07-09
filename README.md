@@ -1,6 +1,6 @@
 <p align="center">
   <img src="https://raw.githubusercontent.com/almasumdev/excel_plus/main/images/banner.png"
-       alt="excel_plus — fast, low-memory Excel (.xlsx) library for Dart and Flutter" width="100%"/>
+       alt="excel_plus: a fast, low-memory Excel (.xlsx) library for Dart and Flutter" width="100%"/>
 </p>
 
 <p align="center">
@@ -22,12 +22,12 @@
 editing, and styling Microsoft Excel `.xlsx` spreadsheets**. It works in plain
 Dart and in Flutter apps, on the VM, Web (JS & WASM), and mobile. excel_plus is a
 source-compatible **drop-in replacement for the [`excel`](https://pub.dev/packages/excel)
-package** — change one import and your existing code keeps working, with far more
+package**: change one import and your existing code keeps working, with far more
 features, better performance on large workbooks, and active maintenance.
 
 > ⭐ **Find this useful?** [Star it on GitHub](https://github.com/almasumdev/excel_plus)
-> and 👍 [like it on pub.dev](https://pub.dev/packages/excel_plus) — it helps other
-> Dart & Flutter developers discover a maintained, full-featured Excel library.
+> and 👍 [like it on pub.dev](https://pub.dev/packages/excel_plus). Stars and likes
+> help other Dart & Flutter developers find a maintained, full-featured Excel library.
 
 ## Overview
 
@@ -40,7 +40,7 @@ and it reuses untouched parts of a workbook byte-for-byte when saving.
 
 - Read and parse existing `.xlsx` files, or create new Excel workbooks from scratch.
 - Edit cells, rows, columns, and multiple sheets, then save back to `.xlsx`.
-- Style spreadsheets — fonts, colors, fills, borders, alignment, number formats, and merged cells.
+- Style spreadsheets with fonts, colors, fills, borders, alignment, number formats, and merged cells.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/almasumdev/excel_plus/main/images/preview.png"
@@ -53,32 +53,32 @@ excel_plus is built for large workbooks: a streaming **SAX** parser instead of
 full-DOM parsing, **lazy** per-sheet loading, O(1) reverse indexes for styles and
 shared strings, and byte-for-byte reuse of untouched workbook parts on save.
 
-It comfortably handles workbooks with **millions of cells**. Here is a head-to-head
-against the original [`excel`](https://pub.dev/packages/excel) package — same machine,
-same workload:
+It scales to workbooks with **millions of cells**. The numbers below are a
+head-to-head against the original [`excel`](https://pub.dev/packages/excel)
+package, measured on the same machine with the same workload:
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/almasumdev/excel_plus/main/images/benchmark.svg"
-       alt="excel_plus vs excel — encode, decode and peak memory at 1M and 5M cells" width="100%">
+       alt="Benchmark chart of excel_plus vs excel: encode time, decode time, and peak memory at 1 million and 5 million cells" width="100%">
 </p>
 
-| Workload | Encode (`excel` → excel_plus) | Decode | Peak memory | Create |
+| Workload | Encode (`excel` vs excel_plus) | Decode | Peak memory | Create |
 |---|---|---|---|---|
-| **5,000,000 cells** | 56.9 s → 7.6 s · **7.5×** | 57.2 s → 17.5 s · **3.3×** | 12.0 GB → 2.6 GB · **4.6×** | 4.4 s → 1.2 s · **3.5×** |
-| **1,000,000 cells** | 9.5 s → 1.5 s · **6.5×** | 10.6 s → 3.2 s · **3.3×** | 2.5 GB → 0.7 GB · **3.4×** | 0.8 s → 0.3 s · **3.0×** |
-| **10,000 cells** | 180 ms → 48 ms · **3.8×** | 138 ms → 72 ms · **1.9×** | ≈ equal* | ≈ equal* |
-| **500 cells** | 52 ms → 24 ms · **2.2×** | 34 ms → 19 ms · **1.8×** | ≈ equal* | ≈ equal* |
+| **5,000,000 cells** | 56.9 s vs 7.6 s (**7.5×**) | 57.2 s vs 17.5 s (**3.3×**) | 12.0 GB vs 2.6 GB (**4.6×**) | 4.4 s vs 1.2 s (**3.5×**) |
+| **1,000,000 cells** | 9.5 s vs 1.5 s (**6.5×**) | 10.6 s vs 3.2 s (**3.3×**) | 2.5 GB vs 0.7 GB (**3.4×**) | 0.8 s vs 0.3 s (**3.0×**) |
+| **10,000 cells** | 180 ms vs 48 ms (**3.8×**) | 138 ms vs 72 ms (**1.9×**) | ≈ equal* | ≈ equal* |
+| **500 cells** | 52 ms vs 24 ms (**2.2×**) | 34 ms vs 19 ms (**1.8×**) | ≈ equal* | ≈ equal* |
 
 <sub>* Below ~100k cells peak memory is dominated by the Dart VM baseline (~250 MB), so
-it is comparable; the gap widens with size (3.4× at 1M → **4.6× at 5M**, where `excel`
-needed ~12 GB RAM). Small-workbook create time is dominated by decoding the embedded
-template, so it is comparable too; at 1M+ cells excel_plus writes cells **3–3.5×**
-faster (one shared default style instead of a per-cell allocation).</sub>
+it is comparable; the gap widens with size (3.4× at 1M becomes **4.6× at 5M**, where
+`excel` needed ~12 GB RAM). Small-workbook create time is dominated by decoding the
+embedded template, so it is comparable too; at 1M+ cells excel_plus writes cells
+**3–3.5×** faster (one shared default style instead of a per-cell allocation).</sub>
 
 The two libraries pin conflicting `archive`/`xml` majors, so they can't run in one
 program; each harness lives in its own package under
 [`benchmark/compare/`](https://github.com/almasumdev/excel_plus/tree/main/benchmark/compare).
-Timings vary by hardware — reproduce both on your own machine:
+Timings vary by hardware, so reproduce both on your own machine:
 
 ```sh
 cd benchmark/compare/excel_baseline   && dart pub get && dart run bin/benchmark.dart
@@ -103,7 +103,7 @@ cd ../excel_plus_bench                && dart pub get && dart run bin/benchmark.
     - [Add formulas](#add-formulas)
     - [Read an existing Excel file](#read-an-existing-excel-file)
     - [Read a single cell](#read-a-single-cell)
-    - [Style a cell — font, color, fill, alignment](#style-a-cell--font-color-fill-alignment)
+    - [Style a cell: font, color, fill, alignment](#style-a-cell-font-color-fill-alignment)
     - [Add borders](#add-borders)
     - [Apply number formats](#apply-number-formats)
     - [Merge and unmerge cells](#merge-and-unmerge-cells)
@@ -113,7 +113,7 @@ cd ../excel_plus_bench                && dart pub get && dart run bin/benchmark.
     - [Work with multiple sheets](#work-with-multiple-sheets)
     - [Find and replace](#find-and-replace)
     - [Save the workbook](#save-the-workbook)
-    - [Flutter — read from assets, edit, and save](#flutter--read-from-assets-edit-and-save)
+    - [Flutter: read from assets, edit, and save](#flutter-read-from-assets-edit-and-save)
     - [Charts](#charts)
     - [Pivot tables](#pivot-tables)
     - [Conditional formatting](#conditional-formatting)
@@ -132,16 +132,16 @@ cd ../excel_plus_bench                && dart pub get && dart run bin/benchmark.
 
 ## Key features
 
-A complete read / create / edit toolkit for `.xlsx`, on every Dart & Flutter
-platform. Expand a group for details:
+Everything you need to read, create, and edit `.xlsx` files, on every Dart &
+Flutter platform. Expand a group for details:
 
 <details>
 <summary><b>📄 Core & platform</b></summary>
 
 - Read, create & edit `.xlsx`
-- Multiple sheets — create, copy, rename, delete
-- All cell types — text, int, double, bool, date, time, datetime, formula
-- Cross-platform — VM, web (`dart2js` + `wasm`) & Flutter mobile
+- Multiple sheets: create, copy, rename, delete
+- All cell types: text, int, double, bool, date, time, datetime, formula
+- Cross-platform: VM, web (`dart2js` + `wasm`) & Flutter mobile
 - Source-compatible drop-in for the `excel` package
 
 </details>
@@ -149,8 +149,8 @@ platform. Expand a group for details:
 <details>
 <summary><b>🎨 Cells, styling & text</b></summary>
 
-- Cell styling — font, fills (solid, pattern & gradient), borders, alignment, rotation, wrap
-- Number formats — standard & custom
+- Cell styling: font, fills (solid, pattern & gradient), borders, alignment, rotation, wrap
+- Number formats: standard & custom
 - Rich text (read & write)
 - Theme & indexed colours
 - Merge & unmerge
@@ -174,7 +174,7 @@ platform. Expand a group for details:
 - Data validation / dropdowns
 - Conditional formatting (author + read-back)
 - Freeze & split panes
-- Autofilter — with per-column filter criteria
+- Autofilter with per-column filter criteria
 - Sheet & workbook protection
 - Defined names / named ranges
 
@@ -183,11 +183,11 @@ platform. Expand a group for details:
 <details>
 <summary><b>📊 Formulas & data tools</b></summary>
 
-- Formula-evaluation engine — ~130 functions
+- Formula-evaluation engine with ~130 functions
   ([function reference](https://github.com/almasumdev/excel_plus/blob/main/doc/functions.md)),
   plus `registerFunction` for your own
 - Excel tables (ListObjects)
-- Pivot tables — read & write (row / column / page / nested fields + measures)
+- Pivot tables: read & write (row / column / page / nested fields + measures)
 - Find & replace
 
 </details>
@@ -195,8 +195,8 @@ platform. Expand a group for details:
 <details>
 <summary><b>🖼️ Objects & media</b></summary>
 
-- Charts — read & write (column, bar, line, area, pie, doughnut, scatter)
-- Sparklines — in-cell mini charts (line / column / win-loss)
+- Charts: read & write (column, bar, line, area, pie, doughnut, scatter)
+- Sparklines: in-cell mini charts (line / column / win-loss)
 - Images
 - Comments / notes
 
@@ -205,12 +205,12 @@ platform. Expand a group for details:
 <details>
 <summary><b>🛡️ Reliability & performance</b></summary>
 
-- Typed exceptions — `ExcelException` + subtypes
+- Typed exceptions: `ExcelException` + subtypes
 - Lazy per-sheet parsing & SAX streaming for large files
-- Streaming save — `encodeToStream` writes to a sink without buffering the file
-- Async decode & encode — `decodeBytesAsync` / `encodeAsync` run on a
+- Streaming save: `encodeToStream` writes to a sink without buffering the file
+- Async decode & encode: `decodeBytesAsync` / `encodeAsync` run on a
   background isolate (no UI jank on big files)
-- Round-trip safety — unmodeled parts preserved byte-for-byte
+- Round-trip safety: unmodeled parts preserved byte-for-byte
 
 </details>
 
@@ -222,10 +222,10 @@ platform. Expand a group for details:
 
 ## Roadmap
 
-Planned next — direction is driven by what users request on the
+What ships next is driven by user requests on the
 [issue tracker](https://github.com/almasumdev/excel_plus/issues):
 
-- ⬜ More formula functions — long-tail statistical, engineering & database (D-)
+- ⬜ More formula functions: long-tail statistical, engineering & database (D-)
 - ⬜ Dynamic-array spilling across the grid
 
 Shipped milestones are in the
@@ -235,8 +235,8 @@ Shipped milestones are in the
 
 Opening or saving a file throws a typed, catchable
 [`ExcelException`](https://pub.dev/documentation/excel_plus/latest/). Catch the
-base type for any failure, or narrow to a specific kind — each carries a
-`message`, an optional `part` (the package part involved), and an optional
+base type for any failure, or narrow to a specific kind. Each exception carries
+a `message`, an optional `part` (the package part involved), and an optional
 `cause`:
 
 ```dart
@@ -258,8 +258,8 @@ try {
 
 Invalid *arguments* you pass to the API (a negative cell index, an empty table
 name, an out-of-range row) throw `ArgumentError`, the standard Dart type for
-programming errors — they are not `ExcelException`s. A malformed formula is not
-thrown either: it evaluates to an `#ERROR!` cell value.
+programming errors; they are not `ExcelException`s. A malformed formula does not
+throw either: it evaluates to an `#ERROR!` cell value.
 
 ## Example
 
@@ -269,8 +269,8 @@ thrown either: it evaluates to an `#ERROR!` cell value.
   </a>
 </p>
 
-> **[▶ Try the live demo](https://masum-excel.web.app)** — build, style and
-> export real `.xlsx` files right in your browser. No install needed.
+> **[▶ Try the live demo](https://masum-excel.web.app)**: build, style, and
+> export real `.xlsx` files right in your browser. Nothing to install.
 
 A complete, runnable sample lives in the
 [`example/`](https://github.com/almasumdev/excel_plus/tree/main/example) directory.
@@ -370,7 +370,7 @@ for (final sheetName in excel.tables.keys) {
 ```
 
 For a **large file on disk** (Dart VM / desktop / mobile), stream it in with
-`decodeBuffer` instead of loading the whole file into memory first — the
+`decodeBuffer` instead of loading the whole file into memory first; it is the
 read-side counterpart to `encodeToStream`. `InputFileStream` is re-exported, so
 no separate `archive` import is needed:
 
@@ -380,11 +380,11 @@ final excel = Excel.decodeBuffer(InputFileStream('input.xlsx'));
 
 `decodeBuffer` reads a file path, so it is native-only, and it keeps the file
 open for lazy reads while the workbook is in use. Use `decodeBytes` for bytes
-from assets, the network, or the web — or when the source file must be released
+from assets, the network, or the web, or when the source file must be released
 (deleted or overwritten) immediately after reading.
 
-In a Flutter app, decode **off the UI thread** with the async variant — same
-result, parsed on a background isolate (falls back to the main thread on web):
+In a Flutter app, decode **off the UI thread** with the async variant. Same
+result, parsed on a background isolate (it falls back to the main thread on web):
 
 ```dart
 final excel = await Excel.decodeBytesAsync(bytes); // no jank
@@ -397,7 +397,7 @@ final cell = excel['Sheet1'].cell(CellIndex.indexByString('B2'));
 print(cell.value); // a typed CellValue: TextCellValue, IntCellValue, ...
 ```
 
-### Style a cell — font, color, fill, alignment
+### Style a cell: font, color, fill, alignment
 
 ```dart
 sheet.updateCell(
@@ -418,7 +418,7 @@ sheet.updateCell(
 ### Fill a cell with a gradient
 
 ```dart
-// A linear gradient sweeping top → bottom (90°); 0° is left → right.
+// A linear gradient sweeping from top to bottom (90°); 0° runs left to right.
 sheet.cell(CellIndex.indexByString('A1')).cellStyle = CellStyle(
   gradientFill: GradientFill.linear(
     degree: 90,
@@ -522,7 +522,7 @@ excel.setDefaultSheet('Revenue');
 ### Find and replace
 
 ```dart
-// Within one sheet — returns the number of replacements made.
+// Within one sheet; returns the number of replacements made.
 final count = excel['Sheet1'].findAndReplace('draft', 'final');
 
 // Across a named sheet via the workbook.
@@ -542,8 +542,8 @@ File('output.xlsx').writeAsBytesSync(excel.save()!);
 // 3) Trigger a browser download on Flutter Web.
 excel.save(fileName: 'report.xlsx');
 
-// 4) Stream a large workbook straight to a sink (low peak memory) — the whole
-//    .xlsx is never buffered in memory. onBytes matches IOSink.add.
+// 4) Stream a large workbook straight to a sink; the whole .xlsx is never
+//    buffered in memory. onBytes matches IOSink.add.
 final sink = File('big.xlsx').openWrite();
 excel.encodeToStream(sink.add);
 await sink.close();
@@ -553,7 +553,7 @@ await sink.close();
 final bytes = await excel.encodeAsync();
 ```
 
-### Flutter — read from assets, edit, and save
+### Flutter: read from assets, edit, and save
 
 ```dart
 import 'package:flutter/services.dart';
@@ -610,8 +610,8 @@ sheet.addSparklineGroup(SparklineGroup(
 sheet.addSparkline(location: 'H4', dataRange: 'Sheet1!B4:G4');
 ```
 
-Colour series — and individual pie/doughnut slices — explicitly; anything left
-unset uses a built-in Office palette:
+You can colour series, and individual pie or doughnut slices, explicitly;
+anything left unset uses a built-in Office palette:
 
 ```dart
 // per-series colour (column/bar/line/area/scatter)
@@ -679,7 +679,7 @@ sheet.addConditionalFormat(
   ),
 );
 
-// ...or an icon set (3/4/5 arrows, traffic lights, ratings, …).
+// ...or an icon set (3/4/5 arrows, traffic lights, ratings, and more).
 sheet.addConditionalFormat(
   from,
   to,
@@ -719,7 +719,7 @@ sheet.setAutoFilter(
   CellIndex.indexByString('A1'),
   CellIndex.indexByString('C100'),
   criteria: [
-    FilterColumn.values(0, ['Active', 'Pending']),                     // A is one of…
+    FilterColumn.values(0, ['Active', 'Pending']),         // column A is one of these
     FilterColumn.custom(2, operator: FilterOperator.greaterThan, value: '1000'),
   ],
 );
@@ -801,12 +801,12 @@ excel_plus is a performance-focused fork of the
 |---|---|---|
 | XML parsing | Streaming **SAX** (`parseEvents`) | Full-DOM (standard) |
 | Sheet loading | **Lazy**, per sheet on first access | Eager |
-| Large-file memory | **Low** — untouched parts reused byte-for-byte on save | Higher |
-| Public API | **Source-compatible** drop-in | — (the original) |
+| Large-file memory | **Low**; untouched parts are reused byte-for-byte on save | Higher |
+| Public API | **Source-compatible** drop-in | (the original) |
 | Platforms | VM, Web (JS & WASM), Android, iOS, desktop | VM, Web, mobile |
 
 On a 1,000,000-cell sheet this measured **~6.5× faster encoding, ~3.3× faster
-decoding, ~3× faster cell writes, and ~3.4× less peak memory** — see
+decoding, ~3× faster cell writes, and ~3.4× less peak memory**. See
 [Performance](#performance) for the reproducible head-to-head.
 
 > Live pub score and likes are shown in the badges at the top.
@@ -821,14 +821,15 @@ import 'package:excel/excel.dart';
 import 'package:excel_plus/excel_plus.dart';
 ```
 
-No other code changes needed for typical usage — excel_plus mirrors the `excel`
-package's public API.
+No other code changes are needed for typical usage; excel_plus mirrors the
+`excel` package's public API.
 
 ## FAQ
 
 **Is excel_plus a drop-in replacement for the `excel` package?**
-Yes. The classes, methods, and enums match the `excel` package — change the import
-to `package:excel_plus/excel_plus.dart` and your existing code keeps working.
+Yes. The classes, methods, and enums match the `excel` package. Change the
+import to `package:excel_plus/excel_plus.dart` and your existing code keeps
+working.
 
 **Which platforms are supported?**
 Dart VM, Web (both JavaScript and WebAssembly), and mobile (Android & iOS) via
@@ -836,11 +837,12 @@ Flutter, as well as desktop. It is a pure-Dart package with no `dart:io` in the
 public path.
 
 **Can it read and write large `.xlsx` files efficiently?**
-Yes — sheets are parsed with a streaming SAX reader and loaded lazily, and
-untouched parts of the workbook are reused byte-for-byte on save, keeping memory low.
+Yes. Sheets are parsed with a streaming SAX reader and loaded lazily, and
+untouched parts of the workbook are reused byte-for-byte on save, which keeps
+memory low.
 
 **Does it support formulas, styling, and merged cells?**
-Yes — formula cells, full cell styling (fonts, colors, fills, borders, alignment,
+Yes. Formula cells, full cell styling (fonts, colors, fills, borders, alignment,
 number formats), and merging/unmerging with custom values are all supported.
 
 **Is it Flutter-only?**
@@ -852,7 +854,7 @@ No. excel_plus is a pure Dart library; it works in plain Dart and in Flutter app
   [issue tracker](https://github.com/almasumdev/excel_plus/issues).
 - Questions and ideas are welcome via
   [GitHub Discussions](https://github.com/almasumdev/excel_plus/discussions).
-- Pull requests are welcome — see the repository for contribution guidelines.
+- Pull requests are welcome; see the repository for contribution guidelines.
 
 ## About
 
@@ -865,10 +867,10 @@ excel_plus is created and owned by **Nurullah Al Masum**.
 
 ### Contributors
 
-excel_plus grows with its community — every contributor is listed here:
+excel_plus grows with its community. Every contributor is listed here:
 
 <a href="https://github.com/almasumdev/excel_plus/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=almasumdev/excel_plus" alt="excel_plus contributors"/>
 </a>
 
-Want to help? Pull requests are welcome — see [Support and feedback](#support-and-feedback).
+Want to help? Pull requests are welcome; start at [Support and feedback](#support-and-feedback).

@@ -14,7 +14,7 @@
 
   <!-- Header -->
   <text x="44" y="52" fill="#EAF0F7" font-size="27" font-weight="700">Benchmark &#183; excel_plus vs excel</text>
-  <text x="45" y="78" fill="#8A9BB4" font-size="14">Encode / decode time and peak memory at 1M and 5M cells &#8212; same machine, lower is better.</text>
+  <text x="45" y="78" fill="#8A9BB4" font-size="14">Encode / decode time and peak memory at 1M and 5M cells. Same machine, lower is better.</text>
 
   <!-- Legend -->
   <rect x="980" y="40" width="14" height="14" rx="2" fill="url(#gPlus)"/>
