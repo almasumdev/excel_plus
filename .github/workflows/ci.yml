@@ -44,6 +44,25 @@ jobs:
           flutter analyze
           flutter test
 
+  web-compile:
+    name: Web compile gate (js + wasm)
+    needs: checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - run: dart pub get
+
+      - name: Compile with dart2js
+        run: dart compile js tool/web_smoke.dart -o "$RUNNER_TEMP/smoke.js"
+
+      - name: Compile with wasm
+        run: dart compile wasm tool/web_smoke.dart -o "$RUNNER_TEMP/smoke.wasm"
+
   pana:
     name: Pana score gate
     needs: checks
@@ -80,7 +99,7 @@ jobs:
 
   version:
     name: Resolve version
-    needs: pana
+    needs: [pana, web-compile]
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     outputs:
