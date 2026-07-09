@@ -4,6 +4,13 @@ scripts/
 tool/
 docs/
 doc/api/
+# Local-only working files. .pubignore *replaces* .gitignore when publishing,
+# so everything gitignored-but-present locally must also be excluded here.
+.tmp/
+.claude/
+build/
+pubspec.lock
+*.code-workspace
 example/android/
 example/ios/
 example/linux/
