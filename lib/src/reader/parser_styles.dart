@@ -281,9 +281,9 @@ mixin _ParserStylesMixin on _ParserBase {
         });
       });
 
-      // O(1) font dedup for the per-xf loop below — a list.indexOf scan here is
-      // O(xfs × unique fonts) and dominates decode time on style-heavy files.
-      final seenFontStyles = Set<_FontStyle>.of(_excel._fontStyleList);
+      // Mirrors _fontStyleList so the per-xf dedup below stays O(1); a linear
+      // list scan here would be O(xfs × unique fonts).
+      final seenFontStyles = <_FontStyle>{};
 
       document.findAllElements('cellXfs').forEach((node1) {
         node1.findAllElements('xf').forEach((node) {

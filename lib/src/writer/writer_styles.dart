@@ -2,10 +2,11 @@ part of '../../excel_plus.dart';
 
 /// Mixin providing style processing for [ExcelWriter].
 mixin _WriterStylesMixin on _WriterBase {
-  /// O(1) reverse indexes over the **parsed** style records (first occurrence
-  /// wins, matching `indexOf` semantics). Rebuilt at the start of every
-  /// [_processStylesFile] so resolving each authored style against the opened
-  /// file's records doesn't linear-scan them — O(authored × parsed) otherwise.
+  /// O(1) reverse indexes over the parsed style records, so authored styles
+  /// resolve against the opened file's fills/gradients/borders without a
+  /// per-style linear scan. When a file holds duplicate records, the first
+  /// occurrence wins — its id is the one existing cells already reference.
+  /// Rebuilt at the start of every [_processStylesFile].
   Map<String, int> _parsedFillIndex = const {};
   Map<GradientFill, int> _parsedGradientIndex = const {};
   Map<_BorderSet, int> _parsedBorderIndex = const {};
