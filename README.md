@@ -32,11 +32,9 @@ features, better performance on large workbooks, and active maintenance.
 ## Overview
 
 excel_plus reads and writes the Office Open XML `.xlsx` format used by Microsoft
-Excel, Google Sheets, and LibreOffice Calc, and it also opens legacy binary
-`.xls` workbooks (Excel 97–2003) and converts them to `.xlsx` on save. It parses
-workbooks with a streaming (SAX) reader and loads each sheet lazily, so memory
-stays low even on large files, and it reuses untouched parts of a workbook
-byte-for-byte when saving.
+Excel, Google Sheets, and LibreOffice Calc. It parses workbooks with a streaming
+(SAX) reader and loads each sheet lazily, so memory stays low even on large files,
+and it reuses untouched parts of a workbook byte-for-byte when saving.
 
 **What you can do with it:**
 
@@ -141,7 +139,6 @@ Flutter platform. Expand a group for details:
 <summary><b>📄 Core & platform</b></summary>
 
 - Read, create & edit `.xlsx`
-- Opens legacy `.xls` (Excel 97–2003): auto-detected, converts to `.xlsx` on save
 - Multiple sheets: create, copy, rename, delete
 - All cell types: text, int, double, bool, date, time, datetime, formula
 - Cross-platform: VM, web (`dart2js` + `wasm`) & Flutter mobile
@@ -391,17 +388,6 @@ result, parsed on a background isolate (it falls back to the main thread on web)
 
 ```dart
 final excel = await Excel.decodeBytesAsync(bytes); // no jank
-```
-
-**Legacy `.xls` files (Excel 97–2003) open through the same call** — the format
-is detected from the file's bytes, so nothing changes in your code. The old
-binary workbook is read into the same model (values, dates, styles, merged
-cells), and saving produces a modern `.xlsx`, which makes converting a legacy
-file two lines:
-
-```dart
-final excel = Excel.decodeBytes(File('legacy.xls').readAsBytesSync());
-File('modern.xlsx').writeAsBytesSync(excel.save()!);
 ```
 
 ### Read a single cell
@@ -859,12 +845,6 @@ memory low.
 Yes. Formula cells, full cell styling (fonts, colors, fills, borders, alignment,
 number formats), and merging/unmerging with custom values are all supported.
 
-**Can it open old `.xls` files (Excel 97–2003)?**
-Yes, for reading. `Excel.decodeBytes` detects the legacy binary format
-automatically and imports values, dates, styles, and merged cells; saving
-produces a modern `.xlsx` file. Password-protected `.xls` files are not
-supported.
-
 **Is it Flutter-only?**
 No. excel_plus is a pure Dart library; it works in plain Dart and in Flutter apps alike.
 
@@ -887,10 +867,10 @@ excel_plus is created and owned by **Nurullah Al Masum**.
 
 ### Contributors
 
-excel_plus grows with its community. Every contributor is listed here:
+excel_plus grows with its community — every contributor is listed here:
 
 <a href="https://github.com/almasumdev/excel_plus/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=almasumdev/excel_plus" alt="excel_plus contributors"/>
 </a>
 
-Want to help? Pull requests are welcome; start at [Support and feedback](#support-and-feedback).
+Want to help? Pull requests are welcome — see [Support and feedback](#support-and-feedback).
