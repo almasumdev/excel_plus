@@ -153,8 +153,24 @@ class Excel {
     return Excel.decodeBytes(Base64Decoder().convert(_newSheet));
   }
 
-  /// Decodes an `.xlsx` file from a byte list.
+  /// Decodes an `.xlsx` — or legacy binary `.xls` — file from a byte list.
+  ///
+  /// The format is detected from the file's magic bytes, so both kinds of
+  /// spreadsheet open through this one call. A legacy `.xls` (BIFF8,
+  /// Excel 97–2003) workbook is decoded **read-only** into the same model:
+  /// values, dates, merged cells, styles, and sheet layout are imported, and
+  /// formula cells carry their last-calculated result. Saving always produces
+  /// a modern `.xlsx` file, which makes this the migration path for old
+  /// spreadsheets:
+  ///
+  /// ```dart
+  /// final excel = Excel.decodeBytes(File('legacy.xls').readAsBytesSync());
+  /// File('modern.xlsx').writeAsBytesSync(excel.save()!);
+  /// ```
   factory Excel.decodeBytes(List<int> data) {
+    if (_XlsParser.isCompoundFile(data)) {
+      return _XlsParser.decode(data);
+    }
     final Archive archive;
     try {
       archive = ZipDecoder().decodeBytes(data);
@@ -168,6 +184,9 @@ class Excel {
   }
 
   /// Decodes an `.xlsx` file from an [InputStream].
+  ///
+  /// Streams the zip container, so it only accepts `.xlsx`; open a legacy
+  /// binary `.xls` file with [Excel.decodeBytes], which detects the format.
   factory Excel.decodeBuffer(InputStream input) {
     final Archive archive;
     try {

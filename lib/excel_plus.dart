@@ -73,6 +73,10 @@ part 'src/reader/parser_tables.dart';
 part 'src/reader/parser_worksheet_features.dart';
 part 'src/reader/parser_styles.dart';
 part 'src/reader/excel_parser.dart';
+part 'src/reader/xls_compound.dart';
+part 'src/reader/xls_records.dart';
+part 'src/reader/xls_styles.dart';
+part 'src/reader/xls_parser.dart';
 
 /// Writer
 part 'src/writer/writer_base.dart';

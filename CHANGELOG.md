@@ -1,3 +1,28 @@
+## 2.6.0
+
+### Added
+
+- **Legacy `.xls` (Excel 97–2003) files can now be opened** — the first pure
+  Dart reader for the binary BIFF8 format. `Excel.decodeBytes` (and
+  `decodeBytesAsync`) detect the format from the file's magic bytes, so both
+  `.xls` and `.xlsx` open through the same call with no new API. The workbook
+  is decoded read-only into the regular model: cell values (text, numbers,
+  booleans, errors), dates and times in both the 1900 and 1904 epoch systems,
+  shared strings (including CONTINUE-split and UTF-16 strings), merged cells,
+  sheet order and tab visibility, number formats (built-in and custom), fonts,
+  fills, borders, alignment, and column widths / row heights. Formula cells
+  surface their last-calculated result. Saving always produces a modern
+  `.xlsx`, so migrating an old file is two lines:
+
+  ```dart
+  final excel = Excel.decodeBytes(File('legacy.xls').readAsBytesSync());
+  File('modern.xlsx').writeAsBytesSync(excel.save()!);
+  ```
+
+  Password-protected and pre-BIFF8 (Excel 5.0/95) files are rejected with
+  clear typed errors. Works on every platform, including the web — the parser
+  is pure Dart with no new dependencies.
+
 ## 2.5.0
 
 ### Added

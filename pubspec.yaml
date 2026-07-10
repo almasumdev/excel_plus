@@ -1,14 +1,14 @@
 name: excel_plus
-description: Fast, low-memory Excel (.xlsx) library for Dart and Flutter to read, create, edit, and style spreadsheets. A drop-in replacement for the excel package.
-version: 2.5.0
+description: Fast, low-memory Excel (.xlsx) library for Dart and Flutter to read, create, edit, and style spreadsheets. Opens legacy .xls. Drop-in for the excel package.
+version: 2.6.0
 homepage: https://github.com/almasumdev/excel_plus
 repository: https://github.com/almasumdev/excel_plus
 issue_tracker: https://github.com/almasumdev/excel_plus/issues
 topics:
   - excel
   - xlsx
+  - xls
   - spreadsheet
-  - office
   - workbook
 
 screenshots:
