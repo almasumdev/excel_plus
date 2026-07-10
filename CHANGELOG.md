@@ -2,658 +2,449 @@
 
 ### Added
 
-- **Legacy `.xls` (Excel 97–2003) files can now be opened** — the first pure
-  Dart reader for the binary BIFF8 format. `Excel.decodeBytes` (and
-  `decodeBytesAsync`) detect the format from the file's magic bytes, so both
-  `.xls` and `.xlsx` open through the same call with no new API. The workbook
-  is decoded read-only into the regular model: cell values (text, numbers,
-  booleans, errors), dates and times in both the 1900 and 1904 epoch systems,
-  shared strings (including CONTINUE-split and UTF-16 strings), merged cells,
-  sheet order and tab visibility, number formats (built-in and custom), fonts,
-  fills, borders, alignment, and column widths / row heights. Formula cells
-  surface their last-calculated result. Saving always produces a modern
-  `.xlsx`, so migrating an old file is two lines:
-
-  ```dart
-  final excel = Excel.decodeBytes(File('legacy.xls').readAsBytesSync());
-  File('modern.xlsx').writeAsBytesSync(excel.save()!);
-  ```
-
-  Password-protected and pre-BIFF8 (Excel 5.0/95) files are rejected with
-  clear typed errors. Works on every platform, including the web — the parser
-  is pure Dart with no new dependencies.
+- **Legacy `.xls` (Excel 97-2003) files can now be opened.** `Excel.decodeBytes`
+  and `decodeBytesAsync` detect the binary BIFF8 format from the file's magic
+  bytes, so `.xls` and `.xlsx` open through the same call. The workbook is
+  decoded read-only into the regular model: cell values, dates and times in
+  both the 1900 and 1904 epoch systems, shared strings (including split and
+  UTF-16 strings), merged cells, sheet order and tab visibility, built-in and
+  custom number formats, fonts, fills, borders, alignment, and column widths
+  and row heights. Formula cells carry their last-calculated result. Saving
+  always produces a modern `.xlsx`, so opening an old file and saving it is a
+  complete migration. Password-protected and pre-BIFF8 (Excel 5.0/95) files
+  are rejected with clear typed errors. Pure Dart, no new dependencies, and
+  works on every platform including the web.
 
 ### Fixed
 
-- **Custom number-format codes are now classified case-insensitively and
-  ignore bracket prefixes** — a custom format written as `M/D/YYYY` (uppercase
-  date tokens, as several writers emit) was treated as numeric, so date cells
-  using it decoded as plain serial numbers; and the `d` in a `[Red]` color
-  prefix made currency formats like `[Red]-#,##0.00` masquerade as dates.
-  Both fixed for `.xlsx` and `.xls` alike; elapsed-time brackets (`[h]:mm:ss`)
-  still classify as time formats.
+- **Custom number-format codes are classified case-insensitively and bracket
+  prefixes are ignored.** A format written as `M/D/YYYY` was treated as
+  numeric, so its date cells decoded as plain serial numbers, and the `d` in a
+  `[Red]` color prefix made currency formats such as `[Red]-#,##0.00` classify
+  as dates. Both are fixed for `.xlsx` and `.xls`; elapsed-time brackets like
+  `[h]:mm:ss` still classify as time.
 
 ## 2.5.0
 
 ### Added
 
-- **Async decode & encode on a background isolate** —
-  `Excel.decodeBytesAsync(bytes)` and `excel.encodeAsync()` run the parse /
-  serialize + zip work via `Isolate.run`, so a Flutter app can open and save
-  large workbooks without blocking the UI thread. Results are handed back
-  without copying, the calling instance is never mutated, and errors propagate
-  with their usual types. On the web (dart2js and wasm), where isolates are not
-  available, both fall back to the main thread so shared code compiles and
-  behaves identically everywhere. (`encodeAsync` throws a clear
-  `ExcelEncodeException` for workbooks that cannot cross an isolate — e.g. one
-  opened over a live `InputFileStream` file handle — use `encode()` there.)
+- **Async decode and encode on a background isolate.**
+  `Excel.decodeBytesAsync(bytes)` and `excel.encodeAsync()` run the parse and
+  the serialize-plus-zip work via `Isolate.run`, so a Flutter app can open and
+  save large workbooks without blocking the UI thread. Results return without
+  copying, the calling instance is never mutated, and errors keep their types.
+  On the web, where isolates are unavailable, both fall back to the main
+  thread so shared code behaves identically. `encodeAsync` throws a clear
+  `ExcelEncodeException` for workbooks that cannot cross an isolate, such as
+  one opened over a live `InputFileStream`; use `encode()` there.
 
 ### Performance
 
-- **Cell writes ~55× faster, plain-file decode ~18× faster, saves ~5× faster,
-  and roughly a third less peak memory on large workbooks.** The compounding
-  fixes:
-  - Every `CellStyle` construction normalized its colours through
-    `ExcelColor.valuesAsMap` — a getter that rebuilt the entire ~300-entry
-    palette list *and* map on each access (~46 µs per style). The lookup is
-    now a cached map built once (`valuesAsMap` still returns a fresh copy),
-    colour normalization short-circuits for palette constants, and the five
-    default `Border`s per style are one shared immutable instance.
-  - Value-only cell writes now share one canonical default `CellStyle` per
-    number format instead of allocating (and later value-hashing) a fresh
-    equal instance per cell — cutting save-time style resolution to a single
-    identity lookup per cell and ~190 MB of peak memory on a 1M-cell workbook.
-    `Data.cellStyle` hands out a private copy of a shared style on first read,
-    so mutating one cell's style still affects only that cell.
-  - `ExcelColor`/`CellStyle` equality and hashing dropped derived fields that
-    re-validated and re-parsed hex strings per comparison; the cell writer no
-    longer re-fetches each cell's style through three map hops; column letters
-    are memoized; `Data.value=` and `Sheet.cell()` skip redundant passes.
-  - Writing 100k mixed cells: build ~5.1 s → ~0.09 s, encode ~0.9 s → ~0.13 s,
-    decode ~5.7 s → ~0.31 s. A 1M-cell build+encode+decode cycle: ~18 s →
-    ~3.8 s with ~720 MB peak RSS (was ~1.16 GB mid-series).
-- **Style-heavy files decode ~8× faster (and scale linearly)** — the styles
-  parser resolved each cell format's font by calling `length`/`elementAt` on a
-  lazy XML query, re-walking the whole styles tree for every `<xf>`
-  (O(formats × tree)); a 2,500-style workbook took ~12 s to open and grew
-  quadratically. The font list is now materialized once and indexed directly
-  (~1.4 s for the same file), and it is scoped to the `<fonts>` container so an
-  out-of-range `fontId` can no longer accidentally read a `<dxf>`'s font.
-  Font dedup in the same loop now uses a hash set instead of a linear scan.
-- **Saving into a heavily-styled opened file no longer linear-scans its
-  records** — resolving each authored style against the file's existing fills /
-  gradients / borders now goes through O(1) reverse indexes (first-occurrence
-  semantics preserved), replacing O(authored × parsed) scans on every save.
+- **Cell writes are about 55x faster, plain-file decode about 18x faster,
+  saves about 5x faster, and peak memory is roughly a third lower on large
+  workbooks.** Color lookups now go through a map built once instead of
+  rebuilding the full palette on every access; value-only writes share one
+  canonical default `CellStyle` per number format instead of allocating a
+  fresh instance per cell (the style is copied privately on first read, so
+  editing one cell never affects another); equality and hashing dropped
+  derived fields that re-parsed hex strings per comparison; and the writer
+  resolves each style once instead of re-fetching it per cell. Writing 100k
+  mixed cells went from 5.1 s to 0.09 s, encode from 0.9 s to 0.13 s, and
+  decode from 5.7 s to 0.31 s. A 1M-cell build, encode, and decode cycle went
+  from about 18 s to 3.8 s, with peak memory down from 1.16 GB to 0.72 GB.
+- **Style-heavy files decode about 8x faster and now scale linearly.** The
+  styles parser re-walked the whole styles tree for every cell format; the
+  font list is now materialized once and indexed directly, scoped to the
+  `<fonts>` container so an out-of-range font id can no longer read an
+  unrelated element. A 2,500-style workbook that took 12 s to open now opens
+  in well under a second.
+- **Saving into a heavily styled file no longer linear-scans its records.**
+  Authored styles resolve against the file's existing fills, gradients, and
+  borders through O(1) reverse indexes, with first-occurrence semantics
+  preserved.
 
 ### Fixed
 
-- **A decode → encode round-trip no longer doubles the style records** — every
-  parsed cell style was re-appended to `styles.xml` as a fresh (and
-  unreferenced — cells already resolve to the parsed record) `<xf>`/`<font>` on
-  the first save after opening a file, so each open/save cycle roughly doubled
-  a style-heavy workbook's `styles.xml`. Styles equal to a parsed record are
-  now skipped, so an untouched round-trip keeps `styles.xml` the same size.
-- **Mutating one cell's style no longer restyles every cell sharing its
-  format** — in a decoded file all cells referencing the same `xf` shared one
-  `CellStyle` object, so editing the style obtained from `cell.cellStyle`
-  silently changed all of them. The getter now returns the cell's own private
-  copy on first access.
+- **A decode and encode round-trip no longer doubles the style records.**
+  Every parsed cell style was re-appended to `styles.xml` as a fresh,
+  unreferenced record on the first save, roughly doubling a style-heavy
+  workbook's styles part per open-and-save cycle. Styles equal to a parsed
+  record are now skipped.
+- **Editing one cell's style no longer restyles every cell that shares its
+  format.** In a decoded file all cells referencing the same format record
+  shared one `CellStyle` object, so a change through `cell.cellStyle` silently
+  applied to all of them. The getter now returns the cell's own private copy.
 
 ### Documentation
 
 - README benchmarks re-measured against `excel` 4.0.6 with this release's
-  performance work (encode 6.5–7.5×, decode 3.3×, create 3–3.5× at 1M/5M
-  cells); raw numbers in `benchmark/compare/` updated to match.
+  performance work: encode 6.5x to 7.5x, decode 3.3x, and create 3x to 3.5x
+  faster at 1M and 5M cells. The raw numbers in `benchmark/compare/` match.
 
 ## 2.4.0
 
 ### Added
 
-- **`InputStream` / `InputFileStream` are re-exported** so the existing
-  `Excel.decodeBuffer(InputStream)` can be used without adding a separate
-  `archive` dependency. Paired with `InputFileStream`, it streams and decodes a
-  large `.xlsx` straight from disk without holding the whole compressed file in
-  memory — the read-side counterpart to `encodeToStream`:
-  `Excel.decodeBuffer(InputFileStream('big.xlsx'))`. (It reads a file path, so
-  it is native/desktop/mobile; use `decodeBytes` for asset, network, or web
-  bytes.)
+- **`InputStream` and `InputFileStream` are re-exported**, so
+  `Excel.decodeBuffer(InputFileStream('big.xlsx'))` streams a large `.xlsx`
+  straight from disk without holding the whole compressed file in memory and
+  without adding a separate `archive` dependency. It reads a file path, so it
+  is for native platforms; use `decodeBytes` for asset, network, or web bytes.
 
 ### Fixed
 
-- **Adding a sparkline to a workbook that already contains sparklines no longer
-  corrupts the block** — the writer matched only an unprefixed
-  `<sparklineGroups>`, so it missed the `x14:`-prefixed container already in the
-  opened file and appended a *second* one under the same `<ext>`. Two
-  `<sparklineGroups>` where the schema allows one made Excel keep only the first
-  group and silently drop the newly added sparkline. The existing container is
-  now reused, so the original and added sparklines round-trip together in one
-  block. (Introduced in 2.3.0; fresh-authored sparklines were unaffected.)
+- **Adding a sparkline to a workbook that already contains sparklines no
+  longer corrupts the block.** The writer missed the prefixed container
+  already present in the opened file and appended a second one, which made
+  Excel keep only the first group and drop the newly added sparkline. The
+  existing container is now reused, so original and added sparklines
+  round-trip together. Introduced in 2.3.0; freshly authored sparklines were
+  unaffected.
 
 ## 2.3.0
 
 ### Added
 
-- **Gradient cell fills** — `CellStyle` gains an optional `gradientFill`. Author a
-  `GradientFill.linear(degree:, stops:)` (an angled sweep — `0°` left→right,
-  `90°` top→bottom) or a `GradientFill.path(left:, right:, top:, bottom:, stops:)`
-  (a rectangular gradient radiating from an inner box), each blending two or more
-  `GradientStop`s (a `position` `0.0`–`1.0` plus an `ExcelColor`). A gradient fill
-  takes precedence over a solid `backgroundColor` or a `fillPattern`. Gradients in
-  an opened workbook are read back onto `CellStyle.gradientFill`, and round-trip.
-- **Autofilter filter criteria** — `setAutoFilter` gains an optional `criteria:`
-  of `FilterColumn`s that actually hide non-matching rows (not just show the
-  dropdown): `FilterColumn.values` (a value/checkbox list, optionally including
-  blanks), `FilterColumn.custom` (one or two `FilterOperator` comparisons combined
-  with AND/OR; wildcards give contains/begins/ends text filters), and
-  `FilterColumn.top10` (top/bottom N or N%). Applied criteria in opened files are
-  read back on `sheet.autoFilterColumns` and round-trip; unmodeled filter kinds
-  (dynamic/colour/icon) are still preserved untouched on save.
-- **Conditional-formatting read-back** — rules in an opened workbook are now
-  parsed into `sheet.conditionalFormats` (previously only API-added rules
-  appeared there). Each `ConditionalFormat` exposes its `type`
-  (a `ConditionalFormatType`), raw `typeName`, `operator`, `formulas`, `colors`,
-  `isThreeColor`, the `range` it applies to, and — for `cellIs` / `formula`
-  rules — a best-effort `style` resolved from the rule's differential style
-  (`dxf`: font bold/italic/underline/colour/size and a solid highlight fill).
-  Read rules are for inspection — they round-trip untouched via the sheet
-  envelope and are never re-emitted or duplicated when you add new ones.
-- **Icon-set conditional formatting** — `ConditionalFormat.iconSet(IconSetType…,
-  reverse:, showValue:, thresholds:)` authors icon-set rules (3/4/5 arrows,
-  traffic lights, flags, symbols, ratings, quarters…). Thresholds default to an
-  even split; icon-set rules also read back on `sheet.conditionalFormats`
-  (`iconSetName`, `iconReverse`, `iconShowValue`, `iconThresholds`).
-- **Sparklines** — in-cell mini charts. `sheet.addSparklineGroup(SparklineGroup(
-  …))` (or the `sheet.addSparkline(location:, dataRange:, type:, color:)`
-  convenience) authors line / column / win-loss (`stacked`) sparklines, with
-  high/low/first/last/negative markers and their colours. Groups are written to
-  the worksheet `extLst` (x14) and read back on `sheet.sparklineGroups`; existing
-  sparklines round-trip untouched.
-- **Streaming / sink encode** — `excel.encodeToStream(onBytes)` writes the
-  `.xlsx` to a callback chunk-by-chunk as the zip is produced, instead of
-  buffering the entire compressed file in memory like `encode()` / `save()`.
-  `onBytes` matches `IOSink.add`, so a large workbook can be written straight to
-  a file/network sink with a much lower peak-memory footprint:
-  `final s = File('out.xlsx').openWrite(); excel.encodeToStream(s.add); await s.close();`.
-  The output is byte-for-byte identical to `encode()`.
+- **Gradient cell fills.** `CellStyle` gains an optional `gradientFill`:
+  `GradientFill.linear(degree:, stops:)` for an angled sweep or
+  `GradientFill.path(...)` for a gradient radiating from an inner box, each
+  blending two or more `GradientStop`s. A gradient takes precedence over a
+  solid background or pattern. Gradients in opened workbooks read back onto
+  `CellStyle.gradientFill` and round-trip.
+- **Autofilter filter criteria.** `setAutoFilter` gains a `criteria:` list of
+  `FilterColumn`s that actually hide non-matching rows: `FilterColumn.values`
+  (a checkbox list, optionally including blanks), `FilterColumn.custom` (one
+  or two comparisons combined with AND/OR, with wildcard text matching), and
+  `FilterColumn.top10`. Applied criteria read back on
+  `sheet.autoFilterColumns` and round-trip; unmodeled filter kinds are
+  preserved untouched.
+- **Conditional-formatting read-back.** Rules in an opened workbook are parsed
+  into `sheet.conditionalFormats`, exposing type, operator, formulas, colors,
+  range, and a best-effort `style` for cell-is and formula rules. Read rules
+  are for inspection; they round-trip untouched and are never duplicated.
+- **Icon-set conditional formatting.** `ConditionalFormat.iconSet(...)`
+  authors 3, 4, and 5-icon rules (arrows, traffic lights, flags, ratings, and
+  more) with optional reverse order, hidden values, and custom thresholds.
+  Icon-set rules also read back.
+- **Sparklines.** In-cell mini charts via
+  `sheet.addSparklineGroup(SparklineGroup(...))` or the single-cell
+  `sheet.addSparkline(...)`: line, column, and win-loss types with
+  high/low/first/last/negative markers and colors. Groups read back on
+  `sheet.sparklineGroups`; existing sparklines round-trip untouched.
+- **Streaming save.** `excel.encodeToStream(onBytes)` writes the `.xlsx` to a
+  callback chunk by chunk as the zip is produced instead of buffering the
+  whole file, cutting peak memory for large workbooks. `onBytes` matches
+  `IOSink.add`, and the output is byte-for-byte identical to `encode()`.
 
 ### Fixed
 
-- **`encode()` / `save()` are now idempotent** — saving the same workbook
-  instance more than once (e.g. once to bytes and once to a file, or before and
-  after `encodeToStream`) no longer appends duplicate records: `<font>` / `<xf>` /
-  `<dxf>` in `styles.xml`, nor `<conditionalFormatting>` / sparkline groups in
-  the worksheets. The mutated parts are restored to their originally-parsed state
-  before every build.
-- **Fills after a gradient no longer shift** — the styles reader now walks the
-  `<fills>` children directly instead of every `<patternFill>` in the document, so
-  a `<gradientFill>` (or a stray `<patternFill>` inside a `<dxf>`) can no longer
-  misalign later fills against their `fillId` or inflate the `<fills>` count.
+- **`encode()` and `save()` are idempotent.** Saving the same workbook
+  instance more than once no longer appends duplicate font, format, or rule
+  records; mutated parts are restored to their originally parsed state before
+  every build.
+- **Fills after a gradient no longer shift.** The styles reader walks the
+  `<fills>` children directly, so a gradient fill (or a stray pattern inside a
+  differential style) can no longer misalign later fills against their ids.
 
 ## 2.2.1
 
 ### Fixed
 
-- **Workbooks no longer open with a "repair" prompt in Excel** — the bundled
-  workbook template's `xl/theme/theme1.xml` had `http` mangled to `ht"p` in two
-  namespace declarations (a corruption introduced in 2.1.0 when the template was
-  regenerated), so every generated file carried invalid XML that Microsoft Excel
-  flagged as corrupt and offered to recover. The theme is repaired, so files open
-  cleanly. Affects 2.1.0 and 2.2.0; upgrade to 2.2.1. Thanks @gonojuarez (#1).
+- **Workbooks no longer open with a repair prompt in Excel.** The bundled
+  template's theme part carried invalid XML (introduced in 2.1.0 when the
+  template was regenerated), so every generated file was flagged as corrupt.
+  The theme is repaired; affects 2.1.0 and 2.2.0. Thanks @gonojuarez (#1).
 
 ## 2.2.0
 
 ### Added
 
-- **Custom chart colours** — `ChartSeries` gains an optional `color` (an
-  `ExcelColor` that fills the bars/area or colours the line for
-  column/bar/line/area/scatter charts) and `pointColors` (per-slice colours for
-  pie/doughnut, index-aligned to the values). Both fall back to the built-in
-  Office palette wherever a colour is omitted, so existing charts are unchanged.
+- **Custom chart colors.** `ChartSeries` gains `color` (fills the bars or
+  area, or colors the line) and `pointColors` (per-slice colors for pie and
+  doughnut charts, aligned to the values). Anything omitted falls back to the
+  built-in Office palette, so existing charts are unchanged.
 
 ## 2.1.0
 
 ### Added
 
-- **Split panes** — `sheet.splitPanes(xSplit:, ySplit:, topLeftCell:)` creates
-  independently-scrolling split panes (positions in twips, 1/20 pt), complementing
-  the existing `freezePanes`. Read them back via `sheet.splitX` / `sheet.splitY`;
-  splits round-trip and are mutually exclusive with frozen panes. `unfreezePanes`
-  clears either.
-- **More formula functions** — `MAXIFS`, `MINIFS`, `DATEDIF`, `REPLACE`,
+- **Split panes.** `sheet.splitPanes(xSplit:, ySplit:, topLeftCell:)` creates
+  independently scrolling panes (positions in twips), complementing
+  `freezePanes`. Read back via `sheet.splitX` and `sheet.splitY`; splits
+  round-trip and are mutually exclusive with frozen panes.
+- **More formula functions:** `MAXIFS`, `MINIFS`, `DATEDIF`, `REPLACE`,
   `MROUND`, `ISEVEN`, `ISODD`.
-- **`XLOOKUP` enhancements** — match mode `2` (wildcard match) and search mode
-  `-2` (reverse scan).
-- **Chart read-back** — charts in an opened workbook are now parsed into
-  `sheet.charts` as `Chart` objects (type, title, series, categories, grouping,
-  legend, axis titles, anchor). Previously charts were authoring-only; existing
-  charts still round-trip untouched and are not duplicated on save.
-- **`Chart.plotVisibleOnly`** — new option (default `true`) on every chart
-  factory. Set it `false` to have the chart plot data in hidden rows and columns
-  (Excel's "show data in hidden rows and columns"), e.g. when the source data is
-  kept off-screen behind the chart. Writes and reads back via `plotVisOnly`.
-- **`Chart.anchorTo`** — new optional cell on every chart factory. When set, the
-  chart is written as a **two-cell anchor** spanning `anchor`..`anchorTo`, so its
-  edges line up with the cell grid and it resizes with the columns/rows instead
-  of using a fixed pixel `width`/`height`. Round-trips via the drawing's
-  `<xdr:twoCellAnchor>` (the `to` cell reads back into `anchorTo`).
-- **Pivot-table read-back** — pivots in an opened workbook are now parsed into
-  `sheet.pivotTables` as `PivotTable` objects (name, anchor, source range/sheet,
-  row / nested-row / column / page fields, and data fields with their aggregation
-  function and caption). Previously pivots were authoring-only; existing pivots
-  still round-trip untouched and are not duplicated on save. A pivot whose shape
-  isn't modelled (no row or data field, or a non-worksheet cache source) is
-  preserved on save but omitted from the list.
+- **`XLOOKUP` enhancements:** wildcard match mode and reverse search mode.
+- **Chart read-back.** Charts in an opened workbook are parsed into
+  `sheet.charts` (type, title, series, categories, grouping, legend, axis
+  titles, anchor). Existing charts still round-trip untouched.
+- **`Chart.plotVisibleOnly`.** Set it to `false` to plot data kept in hidden
+  rows and columns.
+- **`Chart.anchorTo`.** When set, the chart is written as a two-cell anchor
+  spanning `anchor` to `anchorTo`, so it lines up with the grid and resizes
+  with the columns and rows instead of using a fixed pixel size.
+- **Pivot-table read-back.** Pivots in an opened workbook are parsed into
+  `sheet.pivotTables` (name, anchor, source range, row, column, page, and
+  nested fields, and data fields with their aggregation). Existing pivots
+  still round-trip untouched; an unmodeled pivot shape is preserved on save
+  but omitted from the list.
 
 ### Fixed
 
-- **Left-aligned cell padding (`indent`) no longer dropped** — an indented
-  left-aligned cell was written under Excel's `general` alignment (which ignores
-  `indent`), so text sat flush left. Such cells now emit an explicit
-  `horizontal="left"` and keep their padding.
-- **No more orphaned drawing part** — the blank-workbook template shipped an empty
-  `xl/drawings/drawing1.xml`, so the first chart/image created `drawing2.xml` and
-  left `drawing1.xml` stranded (a dangling part stricter importers like Google
-  Sheets could mishandle). The template no longer carries a drawing, so a fresh
-  chart/image lands in a single clean `drawing1.xml`; blank workbooks are smaller.
-- **Authored charts bake in cached values** — series were written with only a
-  formula reference and no `<c:numCache>`/`<c:strCache>`, so consumers that don't
-  re-evaluate (notably LibreOffice, and charts over hidden rows) drew empty plots.
-  Series now embed the resolved values and category labels; charts read from a
-  file still round-trip untouched.
-- **Authored chart series have explicit colours** — series had no `<c:spPr>`, so
-  LibreOffice rendered them with no fill (invisible bars/lines/areas). Each series
-  (and pie/doughnut slice) now gets an explicit Office-accent colour; bar charts
-  also gain a `gapWidth`, axes a `crosses`, and the chart a `dispBlanksAs`.
-- **Explicit column widths no longer written as `bestFit`** — every `<col>` was
-  stamped `bestFit="1"` even for a width set via `setColumnWidth`. `bestFit` means
-  "auto-sized, never set by the user", so content-honouring apps (notably Google
-  Sheets) ignored the width and re-fit the column to its contents — collapsing
-  content-less columns and skewing merged layouts. A set width now omits `bestFit`;
-  only `setColumnAutoFit` columns keep it.
-- **Worksheet `<dimension>` reflects the real used range** — the writer never
-  updated the template's `<dimension ref="A1"/>`, so every authored sheet shipped
-  claiming a single-cell used range. Consumers that trust it (notably Google
-  Sheets) then treated columns outside that range as empty and dropped their
-  custom widths. The dimension is now recomputed from the true used range (cells,
-  merges, explicit widths/heights, and grouping).
-- **Authored charts get an explicit background** — neither `<c:chartSpace>` nor
-  `<c:plotArea>` carried a `<c:spPr>`, so LibreOffice rendered the chart and plot
-  areas transparent (Excel/Sheets synthesise a default). Both now get an explicit
-  white fill so charts read the same everywhere.
+- **Left-aligned cell padding (`indent`) is no longer dropped.** Indented
+  left-aligned cells now emit an explicit left alignment so the padding
+  applies.
+- **No more orphaned drawing part.** The blank-workbook template shipped an
+  empty drawing, so the first chart or image left a stranded part that
+  stricter importers could mishandle. Fresh charts and images now land in a
+  single clean drawing part, and blank workbooks are smaller.
+- **Authored charts bake in cached values.** Series embed their resolved
+  values and category labels, so consumers that do not re-evaluate (notably
+  LibreOffice, and charts over hidden rows) no longer draw empty plots.
+- **Authored chart series have explicit colors.** LibreOffice rendered
+  color-less series as invisible; each series and slice now gets an explicit
+  Office accent color, and charts gain sensible gap, axis, and blank-handling
+  defaults.
+- **Explicit column widths are no longer written as best-fit.** Width-honoring
+  apps (notably Google Sheets) re-fit such columns to their contents,
+  collapsing empty columns and skewing merged layouts. A width set through the
+  API now writes as a fixed width; only auto-fit columns keep the flag.
+- **The worksheet dimension reflects the real used range** instead of the
+  template's single-cell claim, so consumers that trust it no longer drop
+  custom widths outside it.
+- **Authored charts get an explicit white background**, so the chart and plot
+  areas no longer render transparent in LibreOffice.
 
 ## 2.0.0
 
 ### Breaking
 
-- **Typed exception hierarchy.** Failures now throw a sealed
-  [`ExcelException`](https://pub.dev/documentation/excel_plus/latest/) instead of
-  the generic `Error`/`Exception` types used before. Catch the base type to
-  handle any excel_plus failure, or narrow to a specific kind:
-  - `ExcelArchiveException` — the bytes are not a readable `.xlsx` container (not
-    a valid ZIP, or missing a required part such as `xl/workbook.xml` or
-    `[Content_Types].xml`). **Replaces the old `UnsupportedError`/`ArgumentError`
-    thrown for unreadable files.**
-  - `ExcelFormatException` — the archive is a valid ZIP but its XML is malformed
-    or inconsistent (e.g. a worksheet missing `</sheetData>`, a corrupt styles
-    part). **Replaces the old `ArgumentError`.**
-  - `ExcelEncodeException` — a workbook could not be encoded back to `.xlsx` on
-    `save()`/`encode()`.
-  - `FormulaParseException` — raised internally by the formula parser; it
-    `implements FormatException`, so existing `on FormatException` handlers keep
-    working. (Through the public API a bad formula still surfaces as an
-    `#ERROR!` cell value, never thrown.)
+- **Typed exception hierarchy.** Failures now throw a sealed `ExcelException`
+  instead of the generic error types used before:
+  - `ExcelArchiveException`: the bytes are not a readable `.xlsx` container.
+    Replaces the old `UnsupportedError` and `ArgumentError` for unreadable
+    files.
+  - `ExcelFormatException`: a valid archive with malformed or inconsistent
+    XML. Replaces the old `ArgumentError`.
+  - `ExcelEncodeException`: the workbook could not be encoded on save.
+  - `FormulaParseException`: raised inside the formula parser; it implements
+    `FormatException`, so existing handlers keep working. Through the public
+    API a bad formula still surfaces as an `#ERROR!` cell value.
 
-  Each carries a human-readable `message`, an optional `part` (the package part
-  involved), and an optional `cause` (the wrapped underlying error), with a
-  descriptive `toString()`.
-
-  **Why it is breaking:** corrupt-file failures were previously subclasses of
-  `Error` (`ArgumentError`, `UnsupportedError`) — Dart's signal for *programming
-  bugs you should not catch*. Bad input is an expected runtime condition, so it
-  now throws an `Exception` you are meant to catch. Genuine argument validation
-  (a negative cell index, an empty table/pivot name, an out-of-range row) is
-  unchanged: those still throw `ArgumentError`.
-
-  **Migration:** if you caught corrupt-file errors, update the handler — replace
-  `on ArgumentError` / `on UnsupportedError` / `on Error` around
-  `Excel.decodeBytes` / `decodeBuffer` with `on ExcelException` (or a specific
-  subtype). Argument-validation `catch`es need no change.
-
-  ```dart
-  try {
-    final excel = Excel.decodeBytes(bytes);
-    // ...
-  } on ExcelArchiveException catch (e) {
-    print('Not a usable .xlsx: ${e.message}');
-  } on ExcelException catch (e) {
-    print('Could not process workbook: ${e.message}');
-  }
-  ```
+  Each carries a `message`, an optional `part`, and an optional `cause`.
+  Corrupt input was previously signalled with `Error` subtypes, which Dart
+  reserves for programming bugs; bad input is an expected runtime condition,
+  so it now throws an `Exception` you are meant to catch. Genuine argument
+  validation still throws `ArgumentError`. To migrate, replace
+  `on ArgumentError`, `on UnsupportedError`, or `on Error` around decode
+  calls with `on ExcelException` or a specific subtype.
 
 ### Fixed
 
-- **Pivot `<pivotCaches>` workbook ordering** — it was written before
-  `<oleSize>`/`<customWorkbookViews>`, an invalid `CT_Workbook` order that made
-  Excel offer to "repair" files already containing those elements. It is now
-  ordered after them.
-- **Formula serialization round-trip** — expanding a shared formula re-serializes
-  the parsed expression; embedded quotes in string literals are now re-doubled
-  (`"a""b"`) and sheet names that aren't bare identifiers are single-quoted, so
-  such shared formulas no longer fail to re-parse.
-- **Criteria wildcards** — `COUNTIF`/`SUMIF`/`COUNTIFS`/`SUMIFS`/`AVERAGEIFS`
-  text criteria now honor Excel's `*` and `?` wildcards (with `~` as the literal
-  escape).
-- **`WEEKDAY`** — now supports return types `11`–`17` and returns `#NUM!` for an
-  unsupported return type.
-- **`INDEX`** — `INDEX(range, 0, c)` / `INDEX(range, r, 0)` now return the whole
-  column / row (as an array) instead of `#REF!`.
-- **Approximate `VLOOKUP`/`HLOOKUP`/`MATCH`/`LOOKUP`** — a sorted (approximate)
-  match now compares within a value type, so a number is never treated as "≤" a
-  text key.
-- **Unary operators broadcast over arrays** — `-A1:A3` (and a `%` postfix) now
-  apply element-wise, matching the binary operators.
-- **`TEXT` scaling commas** — a comma after the last digit placeholder
-  (`"0,"`, `"0.0,,"`) now scales the value by 1000 per comma, distinct from a
-  grouping comma.
-- **Input validation & cleanup** — `addPivotTable` rejects field indices outside
-  the source range (instead of crashing on save), `addChart` rejects a chart
-  with no series, and `removeTable` now deletes the orphaned table part and its
-  content-type entry rather than leaving them in the package.
+- **Pivot `<pivotCaches>` workbook ordering.** It was written in an invalid
+  position that made Excel offer to repair files containing certain optional
+  elements; it is now ordered correctly.
+- **Formula serialization round-trip.** Re-serialized shared formulas now
+  re-double embedded quotes and single-quote non-identifier sheet names, so
+  they parse back correctly.
+- **Criteria wildcards.** `COUNTIF`, `SUMIF`, and their multi-criteria
+  variants honor `*` and `?` wildcards, with `~` as the literal escape.
+- **`WEEKDAY`** supports return types 11 to 17 and returns `#NUM!` for an
+  unsupported type.
+- **`INDEX`** with a zero row or column returns the whole column or row as an
+  array instead of `#REF!`.
+- **Approximate `VLOOKUP`, `HLOOKUP`, `MATCH`, and `LOOKUP`** compare within a
+  value type, so a number is never matched against a text key.
+- **Unary operators broadcast over arrays**, matching the binary operators.
+- **`TEXT` scaling commas.** A comma after the last digit placeholder scales
+  the value by 1000 per comma, distinct from a grouping comma.
+- **Input validation and cleanup.** `addPivotTable` rejects field indices
+  outside the source range instead of crashing on save, `addChart` rejects a
+  chart with no series, and `removeTable` deletes the orphaned table part and
+  its content-type entry.
 
 ### Internal
 
-- Replaced literal NUL bytes used as map-key delimiters with Unicode escapes so
-  the affected source files are plain text again; added `*.xlsx` to `.pubignore`.
+- Replaced literal NUL bytes used as map-key delimiters with Unicode escapes
+  so the affected source files are plain text again; added `*.xlsx` to
+  `.pubignore`.
 
 ## 1.1.0
 
 ### Added
 
-- **Images (read + write)** — embed pictures with
-  `sheet.insertImage(bytes, anchor: CellIndex, width:, height:)` and read them
-  back via `sheet.images` (each an `ExcelImage` with `bytes`, `extension`,
-  `anchor`, and pixel `width`/`height`). PNG, JPEG and GIF are supported; the
-  format and intrinsic size are detected from the bytes (override the rendered
-  size with `width`/`height`). A picture is anchored with its top-left corner at
-  the given cell. Inserted images are written into the worksheet's drawing
-  (creating the drawing part, its relationships, the media part, and the
-  content-types entries as needed); images already present in an opened file are
-  preserved, and new pictures are appended alongside them.
-- **Page & print setup (read + write)** — control how a sheet prints via
-  `sheet.pageSetup = PageSetup(...)` (orientation, paper size, scale,
-  fit-to-page width/height, horizontal/vertical centering, print gridlines &
-  headings, and `PageMargins` with `normal`/`wide`/`narrow` presets); read it
-  back from `sheet.pageSetup`.
-- **Print area** — `sheet.setPrintArea(from, to)` / `sheet.printArea` /
-  `sheet.removePrintArea()` (stored as the built-in `_xlnm.Print_Area` name).
-- **Print titles** — `sheet.setPrintTitleRows(from, to)` /
-  `setPrintTitleColumns(from, to)` to repeat header rows/columns on every
-  printed page, with `printTitleRows` / `printTitleColumns` getters and
-  `removePrintTitles()`.
-- **Manual page breaks** — `sheet.insertRowPageBreak(row)` /
-  `insertColumnPageBreak(column)`, `rowPageBreaks` / `columnPageBreaks`,
-  `removeRowPageBreak` / `removeColumnPageBreak`, and `clearPageBreaks()`.
-
-  The page-setup features are change-gated: a file you open keeps its existing
-  page setup, print area, titles, and breaks byte-for-byte unless you change
-  them through the API (and editing `pageSetup` preserves `<pageSetup>`
-  attributes the model does not cover, such as a printer-settings `r:id`).
-- **Row & column grouping / outline (read + write)** — make rows or columns
-  collapsible with `sheet.groupRows(from, to, collapsed:)` /
-  `sheet.groupColumns(from, to, collapsed:)` and `ungroupRows` / `ungroupColumns`
-  (each call nests one outline level deeper). Read levels with
-  `rowOutlineLevel` / `columnOutlineLevel`, and show/hide rows or columns
-  directly via `setRowHidden` / `setColumnHidden` / `isRowHidden` /
-  `isColumnHidden`. Outline levels, hidden state, and collapsed summary markers
-  round-trip on `<row>` / `<col>`.
-- **Cell comments / notes (read + write)** — attach classic comments with
-  `sheet.setComment(index, Comment('text', author: '…'))` or
-  `cell.comment = Comment(...)`, and read them back via `sheet.getComment` /
-  `cell.comment` / `sheet.comments`. Authoring writes the comments part, the
-  legacy VML note shapes, the worksheet relationships, the `<legacyDrawing>`
-  element, and the content-types entries; comments already in an opened file are
-  read into the model and preserved on save.
-- **Workbook protection (read + write)** — lock the workbook structure and/or
-  windows with `excel.protectWorkbook(password:, lockStructure:, lockWindows:)`
-  / `excel.unprotectWorkbook()`, and read the state via `isWorkbookProtected` /
-  `workbookStructureLocked` / `workbookWindowsLocked`. The optional password
-  uses Excel's legacy hash.
-- **Pattern fills (read + write)** — `CellStyle.fillPattern` (a `FillPatternType`
-  such as `gray125`, `darkGrid`, `lightUp`, …) draws a hatch/shade using
-  `backgroundColor` as the pattern colour over an optional `fillBackgroundColor`.
-  Non-solid patterns and their `bgColor` now also survive a read round-trip.
-  Plain solid fills are unchanged.
-- **Formula evaluation engine (opt-in)** — compute formula results without a
-  spreadsheet app. `sheet.evaluate(cell)` returns the computed `CellValue`;
-  `excel.recalculate()` recomputes every formula cell and stores each result as
-  its cached `<v>` (with the correct cell type) so a saved file shows results.
-  Includes a tokenizer → precedence-climbing parser (AST-cached) and a
-  tree-walking evaluator with lazy, memoised, cycle-detecting (`#CIRC`)
-  resolution of cell/range/cross-sheet/defined-name references, plus element-wise
-  array broadcasting in operators (so `A1:A5>2` yields an array). ~130 built-in
-  functions across math, statistics (STDEV/VAR/PERCENTILE/QUARTILE/CORREL/MODE/
-  LARGE/SMALL/RANK), criteria (SUMIF(S)/COUNTIF(S)/AVERAGEIF(S)/COUNTBLANK),
-  logical & information (incl. SWITCH), text (incl. TEXT formatting), lookup &
-  reference (VLOOKUP/HLOOKUP/INDEX/MATCH/XLOOKUP/CHOOSE/LOOKUP/OFFSET/INDIRECT/
-  ROW/COLUMN/ROWS/COLUMNS), financial (PMT/FV/PV/NPER/NPV/IRR/RATE), date/time,
-  and dynamic arrays (FILTER/SORT/UNIQUE/SEQUENCE — usable inside other
-  functions). Register your own with `excel.formula.registerFunction(name, fn)`.
-  Shared formulas (`<f t="shared">`) are expanded on read by shifting relative
-  references. Nothing here runs during normal read/write, so plain workbooks pay
-  no cost. `recalculate()` also **spills** an array result (a dynamic-array
-  function or a range like `=A1:A3`): the anchor keeps the formula as
-  `<f t="array" ref="…">` and the rest of the spill range receives the computed
-  values (existing formula cells in the range are left untouched). `evaluate()`
-  remains scalar (returns the top-left cell).
-- **Excel tables / ListObjects (read + write)** — turn a range into a named
-  table with `sheet.addTable(ExcelTable(name:, from:, to:, style:))`; read them
-  via `sheet.tables` / `getTable`, and remove with `removeTable`. Writes the
-  table part (`xl/tables/tableN.xml`), its worksheet relationship, the
-  `<tableParts>` element, and the content-type, with a workbook-unique table id.
-  Column names come from the header row (empty header cells are filled in so the
-  file opens cleanly) or from an explicit `columns:` list, de-duplicated as Excel
-  requires; the header row gets an autofilter. Built-in styles via `TableStyle`
-  (e.g. `TableStyleMedium9`). Existing tables round-trip untouched unless changed
-  through the API.
-- **Charts (authoring)** — add charts over data ranges with
-  `sheet.addChart(Chart.column(...))` and the `Chart.bar` / `line` / `area` /
-  `pie` / `doughnut` / `scatter` constructors. Each supports multiple
-  `ChartSeries` (values + optional name; x-values for scatter), category labels,
-  a title and axis titles, a legend position, grouping (clustered/stacked), and a
-  pixel size, anchored to a cell. Written as `xl/charts/chartN.xml` drawn through
-  the sheet's drawing part (shared with images), with the drawing relationship,
-  content-type, and graphic-frame anchor. Bare ranges (`'B2:B5'`) are qualified
-  with the chart's sheet. Charts already in an opened file round-trip untouched
-  (typed read-back is not yet modeled).
-- **Pivot tables (authoring)** — summarise a range with
-  `sheet.addPivotTable(PivotTable(...))`: one row (grouping) field plus one or
-  more `PivotDataField` measures (sum/count/average/max/min/product). Writes the
-  pivot-cache definition + records, the pivot-table definition, and the full
-  workbook/worksheet wiring (`<pivotCaches>`, rels, content-types) with a
-  workbook-unique `cacheId`. The cache is marked `refreshOnLoad`, so Excel
-  rebuilds it from the source range on open. Existing pivots round-trip
-  untouched. A `columnField` produces a row×column matrix (with one measure),
-  `pageFields` add report filters, and `subRowFields` nest extra row levels
-  (compact outline `rowItems`). `sheet.pivotTables` lists only API-added pivots;
-  typed read-back of existing pivots is not yet modeled (they round-trip
-  untouched).
+- **Images (read and write).** Embed pictures with
+  `sheet.insertImage(bytes, anchor:, width:, height:)` and read them back via
+  `sheet.images`. PNG, JPEG, and GIF are supported; format and intrinsic size
+  are detected from the bytes. Existing images are preserved and new ones are
+  appended alongside them.
+- **Page and print setup (read and write).** `sheet.pageSetup = PageSetup(...)`
+  controls orientation, paper size, scaling, fit-to-page, centering, printed
+  gridlines and headings, and margins with normal, wide, and narrow presets.
+- **Print area, print titles, and manual page breaks.**
+  `setPrintArea`, `setPrintTitleRows` and `setPrintTitleColumns` for repeated
+  headers, and `insertRowPageBreak` and `insertColumnPageBreak`, each with
+  matching getters and removers. All page-setup features are change-gated: an
+  opened file keeps its existing setup byte-for-byte unless changed through
+  the API.
+- **Row and column grouping (read and write).** `groupRows`, `groupColumns`,
+  and their ungroup counterparts nest outline levels; read levels and control
+  visibility with `setRowHidden`, `setColumnHidden`, and their getters.
+  Outline state round-trips.
+- **Cell comments (read and write).** `sheet.setComment(index, Comment(...))`
+  or `cell.comment` attach classic notes; authoring writes the comments part
+  and its legacy plumbing, and existing comments are read and preserved.
+- **Workbook protection (read and write).** `excel.protectWorkbook(...)` locks
+  the workbook structure and windows, with matching getters and
+  `unprotectWorkbook()`. The optional password uses Excel's legacy hash.
+- **Pattern fills (read and write).** `CellStyle.fillPattern` draws a hatch or
+  shade using the background color as the pattern color over an optional fill
+  background. Non-solid patterns now survive a read round-trip.
+- **Formula evaluation engine (opt-in).** `sheet.evaluate(cell)` computes a
+  formula's value, and `excel.recalculate()` recomputes every formula cell
+  and stores the results so a saved file shows them. Around 130 built-in
+  functions across math, statistics, criteria, logic, text, lookup,
+  financial, and date and time, plus dynamic arrays (`FILTER`, `SORT`,
+  `UNIQUE`, `SEQUENCE`). References resolve lazily with memoization and cycle
+  detection; shared formulas are expanded on read; array results spill into
+  their range on recalculate. Register custom functions with
+  `excel.formula.registerFunction`. Nothing runs during normal read or write.
+- **Excel tables (read and write).** `sheet.addTable(ExcelTable(...))` turns a
+  range into a named table with a styled header and autofilter; read via
+  `sheet.tables` and remove with `removeTable`. Column names come from the
+  header row or an explicit list, de-duplicated as Excel requires. Existing
+  tables round-trip untouched.
+- **Charts (authoring).** `sheet.addChart(Chart.column(...))` plus bar, line,
+  area, pie, doughnut, and scatter constructors, each supporting multiple
+  series, category labels, titles, legend position, grouping, and a pixel
+  size anchored to a cell. Charts already in a file round-trip untouched.
+- **Pivot tables (authoring).** `sheet.addPivotTable(PivotTable(...))`
+  summarises a range with a row field and one or more measures; column
+  fields, page fields, and nested row fields are supported. The cache is
+  marked refresh-on-load so Excel rebuilds it on open. Existing pivots
+  round-trip untouched.
 
 ### Fixed
 
-- **Unmodeled parts now survive a save.** `_cloneArchive` reused decoded zip
-  entries directly, which the `archive` encoder re-wrote with a mismatched
-  compression flag — corrupting any untouched part (worksheet `_rels`, embedded
-  media, `printerSettings`, …) that was later re-read. Such parts are now carried
-  across by value and re-compressed cleanly, so they round-trip intact.
+- **Unmodeled parts survive a save.** The archive cloner reused decoded zip
+  entries directly, which the encoder re-wrote with a mismatched compression
+  flag, corrupting untouched parts such as embedded media and printer
+  settings. Parts are now carried across by value and re-compressed cleanly.
 
 ## 1.0.0
 
-First major release. A broad set of worksheet features built on the
-performance-focused engine (SAX streaming, lazy per-sheet loading, byte-for-byte
-archive reuse), with a single, contained breaking change. excel_plus remains a
-source-compatible drop-in for the `excel` package.
+First major release: a broad set of worksheet features built on the
+performance-focused engine, with a single contained breaking change.
+excel_plus remains a source-compatible drop-in for the `excel` package.
 
-### Breaking changes
+### Breaking
 
-- `CellValue` is now `sealed` and gains a `CellErrorValue` member. The only code
-  affected is an *exhaustive* `switch` over a `CellValue` (it must now handle
-  `CellErrorValue`). No other public type, method, or signature changed.
-
-### Migration
-
-- **Most projects need no changes.** Cell read/write, styling, number formats,
-  layout, and every existing colour API are source-compatible — recompile and go.
-- **If you `switch` exhaustively over a `CellValue`**, add a `CellErrorValue`
-  case, or replace the switch with `value.isError` / `value.asError`. Error cells
-  that previously surfaced as text are now this typed value.
-- **Colour authoring is additive.** Existing literal colours
-  (`ExcelColor.fromHexString`, named constants, `fromInt`) behave exactly as
-  before; theme/indexed authoring is opt-in via the new `ExcelColor.theme` /
-  `ExcelColor.indexed`. `CellStyle` and `Border` now hold an `ExcelColor`
-  internally rather than a hex string, but their constructors, getters, and
-  setters are unchanged.
-- **Generated `styles.xml` is now more canonical** for styled workbooks (theme/
-  indexed references where you author them, plus `applyFont`/`applyFill`/
-  `applyBorder` flags). Files open identically in Excel/Sheets; only update
-  byte-exact snapshots of the output if you keep any.
+- `CellValue` is now sealed and gains a `CellErrorValue` member. The only code
+  affected is an exhaustive `switch` over a `CellValue`, which must now handle
+  `CellErrorValue`. No other public type, method, or signature changed. Colour
+  authoring is additive and existing literal colors behave exactly as before.
 
 ### Added
 
-- **Theme colour reading** — `<color theme="N" tint="X"/>` references in font,
-  fill, and border colours resolve to real ARGB from `xl/theme/theme1.xml` (with
-  Excel's light/dark index swap and HSL tint) instead of falling back to black.
-  The theme part round-trips on save.
-- **Indexed (palette) colour reading** — legacy `<color indexed="N"/>` references
-  resolve via the standard 64-colour palette, honouring a workbook's
-  `<indexedColors>` override when present; the automatic system indices (64/65)
-  fall back to the default colour.
-- **Theme & indexed colour authoring** — `ExcelColor.theme(ThemeColor.accentN,
-  tint: x)` and `ExcelColor.indexed(n)` write real `<color theme="N" tint="X"/>`
-  / `<color indexed="N"/>` references for font, fill, and border colours, so
-  authored colours stay linked to the document theme instead of baking in literal
-  RGB. They resolve against the standard Office palette for display (`colorHex`),
-  compare distinctly from a literal of the same ARGB, and round-trip.
-- **Hyperlinks (read + write)** — external URLs / `mailto:` (`Hyperlink.url`,
-  `Hyperlink.email`) and internal `'Sheet'!A1` jumps (`Hyperlink.location`), each
-  with optional display text and tooltip. Set via `sheet.setHyperlink(cell, link)`
-  or `cell.hyperlink = …`. External links manage the worksheet `_rels`
-  automatically (allocating rIds and preserving any existing relationships).
-- **Data validation (read + write)** — dropdown lists (`DataValidation.list` /
-  `.listFromRange`), numeric and length bounds (`DataValidation.wholeNumber`,
-  `.decimal`, `.textLength` with an operator), and custom-formula rules
-  (`DataValidation.custom`), each with an optional input prompt and error message.
-  Apply to a cell or range via `sheet.setDataValidation(start, rule, end:)` or
-  `cell.dataValidation = …`.
-- **Sheet-view settings (read + write)** — freeze panes
-  (`sheet.freezePanes(rows:, columns:)` / `unfreezePanes`), gridline and
-  row/column-header visibility (`sheet.showGridLines`, `sheet.showRowColHeaders`),
-  and zoom (`sheet.zoom`). These now also survive a round-trip instead of being
-  dropped on save.
-- **Autofilter (read + write)** — `sheet.setAutoFilter(from, to)` adds header
-  filter dropdowns over a range, `sheet.removeAutoFilter()` clears it, and
-  `sheet.autoFilter` reads the range. Files opened with applied filter criteria
-  keep them on save.
-- **Sheet protection (read + write)** — `sheet.protect(password:, allow:)` locks
-  editing while permitting the actions you list (`SheetProtectionOption`),
-  `sheet.unprotect()` removes it, and `sheet.isProtected` /
-  `sheet.protectionAllowed` read the state. Passwords use Excel's legacy hash
-  (deters edits, not strong encryption); an opened file's existing hash is
-  preserved on save.
-- **Sheet tab colour and visibility (read + write)** — `sheet.tabColor` (an
-  `ExcelColor`, resolving rgb/theme/indexed on read) and `sheet.visibility`
-  (`SheetVisibility.visible` / `hidden` / `veryHidden`). An untouched
-  theme/indexed tab colour round-trips as a reference rather than being
-  down-converted.
-- **Sheet reordering** — `excel.moveSheet(name, toIndex:)` reorders the worksheet
-  tabs, and `excel.sheetOrder` reads the current order.
-- **Defined names / named ranges (read + write)** —
-  `excel.setDefinedName(name, refersTo, localSheetId:)` (global or sheet-scoped),
-  `excel.removeDefinedName(...)`, and `excel.definedNames`. Names can be used by
-  `FormulaCellValue`.
-- **Conditional formatting (authoring)** —
-  `sheet.addConditionalFormat(start, end, rule)` with
-  `ConditionalFormat.greaterThan` / `.lessThan` / `.equalTo` / `.between` /
-  `.formula` (each applying a `CellStyle` via an auto-managed `<dxf>`), plus
-  `.colorScale` (2/3-colour) and `.dataBar`. Rules already present in an opened
-  file are preserved on save.
-- **`CellErrorValue`** — error cells (`#DIV/0!`, `#N/A`, `#REF!`, `#VALUE!`,
-  `#NAME?`, `#NUM!`, `#NULL!`) read from `t="e"` cells as a typed value and
-  written back, instead of being coerced to text. Detect with `CellValue.isError`
-  / `CellValue.asError`. (This is the source of the breaking change above.)
-- **`FormulaCellValue.cachedValue`** — a formula's last cached result (`<v>`) is
-  preserved on read and re-emitted on save (fixing the previously empty `<v>`), so
-  formula cells keep a value until the app recalculates. Equality still compares
-  the formula only.
-- **`CellStyle.indent`** — alignment-side cell padding (OOXML
-  `<alignment indent="N">`), with full read/write round-trip; negative values
-  clamp to zero.
+- **Theme color reading.** Theme and tint color references resolve to real
+  ARGB values from the workbook theme instead of falling back to black; the
+  theme part round-trips.
+- **Indexed color reading.** Legacy palette references resolve via the
+  standard 64-color palette, honoring a workbook's palette override.
+- **Theme and indexed color authoring.** `ExcelColor.theme(...)` and
+  `ExcelColor.indexed(n)` write real references for font, fill, and border
+  colors, so authored colors stay linked to the document theme.
+- **Hyperlinks (read and write).** `Hyperlink.url`, `Hyperlink.email`, and
+  internal `Hyperlink.location` jumps, each with optional display text and
+  tooltip, set via `sheet.setHyperlink` or `cell.hyperlink`.
+- **Data validation (read and write).** Dropdown lists, numeric and length
+  bounds, and custom-formula rules, each with optional prompt and error
+  message, applied to a cell or range.
+- **Sheet view settings (read and write).** Freeze panes, gridline and header
+  visibility, and zoom now round-trip instead of being dropped on save.
+- **Autofilter (read and write).** `setAutoFilter` adds header dropdowns over
+  a range; files opened with applied criteria keep them.
+- **Sheet protection (read and write).** `sheet.protect(password:, allow:)`
+  with typed permission options; passwords use Excel's legacy hash and an
+  opened file's existing hash is preserved.
+- **Sheet tab color and visibility (read and write)**, including very-hidden
+  sheets; untouched theme and indexed tab colors round-trip as references.
+- **Sheet reordering** with `excel.moveSheet` and `excel.sheetOrder`.
+- **Defined names (read and write)**, global or sheet-scoped, usable from
+  formulas.
+- **Conditional formatting (authoring).** Greater-than, less-than, equal,
+  between, and formula rules that apply a `CellStyle`, plus two and
+  three-color scales and data bars. Existing rules are preserved on save.
+- **`CellErrorValue`.** Error cells such as `#DIV/0!` and `#N/A` read as a
+  typed value and write back, instead of being coerced to text.
+- **`FormulaCellValue.cachedValue`.** A formula's last cached result is
+  preserved on read and re-emitted on save, so formula cells keep a value
+  until the app recalculates.
+- **`CellStyle.indent`** for alignment-side cell padding, with a full
+  round-trip.
 
 ### Fixed
 
-- **Rich-text write preservation** — multi-run cells built with
-  `TextCellValue.span` (bold/italic/underline/colour/size/font per run) are now
-  written as `<r>` runs instead of being flattened to plain text, so in-cell
-  formatting survives a read → save round-trip. Two runs with identical plain text
-  but different styling also stay distinct.
-- **Authored styles that reuse an existing record** — an authored style whose
-  font/fill/border already exists in the opened file no longer reverts to the
-  default (the appended `<xf>` resolves to the correct record), and
-  `applyFont`/`applyFill`/`applyBorder` are emitted when the part is non-default.
-- Illegal XML 1.0 control characters in cell text are stripped on save, so files
-  no longer open as "corrupt" in Excel.
+- **Rich-text preservation on write.** Multi-run cells built with
+  `TextCellValue.span` are written as styled runs instead of being flattened
+  to plain text.
+- **Authored styles that reuse an existing record** no longer revert to the
+  default style.
+- Illegal XML control characters in cell text are stripped on save, so files
+  no longer open as corrupt.
 - `Excel.findAndReplace` returns the actual replacement count and accepts
-  non-`String` targets without throwing.
-- On the web, `save()` triggers the browser download under wasm builds
-  (`flutter build web --wasm`), not only the JS compiler — the conditional import
-  uses `dart.library.js_interop`, and the download `Blob` is constructed correctly
-  for `dart:js_interop`.
-- Underline styles read `single` vs `double` correctly, and `bold`/`italic`
-  honour `val="0"` (explicitly-off) instead of always reading as enabled.
-- The parser no longer crashes on out-of-range shared-string or style indexes,
-  ISO-8601 (`t="d"`) date cells, or namespace-prefixed worksheet XML (`x:row`,
-  `x:c`).
-- Cells without an explicit `r` reference are positioned by column order, and
-  inline strings made of multiple runs keep all of their text.
-- `getColumnWidth` / `getRowHeight` return Excel's defaults instead of throwing
-  when a sheet defines no defaults.
-- `headerFooter` is written in the schema-correct position (before `drawing`), so
+  non-string targets.
+- On the web, `save()` triggers the browser download under wasm builds as
+  well as JS builds.
+- Underline styles distinguish single from double, and explicitly disabled
+  bold and italic flags are honored.
+- The parser no longer crashes on out-of-range shared-string or style
+  indexes, ISO-8601 date cells, or namespace-prefixed worksheet XML.
+- Cells without an explicit reference are positioned by column order, and
+  multi-run inline strings keep all of their text.
+- `getColumnWidth` and `getRowHeight` return Excel's defaults instead of
+  throwing when a sheet defines none.
+- The header and footer element is written in its schema-correct position, so
   Excel no longer prompts to repair the file.
 
 ### Improved
 
-- More robust style parsing — malformed `numFmt`/border entries degrade
-  gracefully instead of failing.
+- Malformed number-format and border entries degrade gracefully instead of
+  failing the whole parse.
 
 ## 0.0.4
 
-- Upgraded the `xml` dependency to `^7.0.1` and updated internal XML name handling for compatibility.
-- Reworked the example app into a real workbook demo with import, inline editing, styling, sheet tools, and export flows.
-- Added a dedicated Validation Lab screen, bundled workbook sample, and safer temp-directory fallback when platform storage plugins are unavailable.
-- Improved the example web bootstrap so debug runs use a compatible renderer while wasm builds still opt into `skwasm`.
+- Upgraded the `xml` dependency to `^7.0.1` and updated internal XML name
+  handling for compatibility.
+- Reworked the example app into a real workbook demo with import, inline
+  editing, styling, sheet tools, and export flows.
+- Added a Validation Lab screen, a bundled workbook sample, and a safer
+  temp-directory fallback when platform storage plugins are unavailable.
+- Improved the example web bootstrap so debug runs use a compatible renderer
+  while wasm builds still opt into `skwasm`.
 
 ## 0.0.3
 
-- Organized API docs into 5 categories: Core, Cell Values, Styling, Number Formats, Layout.
-- Hidden internal APIs (Parser, ExcelWriter, FastList, etc.) from public documentation.
+- Organized API docs into five categories: Core, Cell Values, Styling, Number
+  Formats, Layout.
+- Hid internal APIs from the public documentation.
 - Improved dartdoc comments across all public classes and methods.
-- Cleaned up Excel class method docs with proper one-line summaries.
 
 ## 0.0.2
 
-- Removed `collection` and `equatable` dependencies — reduced to 3 deps (`archive`, `xml`, `web`).
-- Codebase cleanup: removed dead code, duplicate utilities, and redundant comments.
-- Consolidated XML escaping into a single shared utility.
-- Extracted common date/time fraction calculation helper.
-- Fixed minimum `xml` constraint to `^6.3.0` for downgrade compatibility.
+- Removed the `collection` and `equatable` dependencies, reducing the package
+  to three runtime dependencies: `archive`, `xml`, `web`.
+- Cleaned up dead code, duplicate utilities, and redundant comments.
+- Consolidated XML escaping into a single shared utility and extracted a
+  common date and time fraction helper.
+- Fixed the minimum `xml` constraint to `^6.3.0` for downgrade compatibility.
 
 ## 0.0.1
 
-- Initial release.
-- Performance-optimized fork of [excel](https://pub.dev/packages/excel) v5.0.0.
-- SAX-based streaming parser replaces full DOM parsing for cell data and shared strings.
-- Lazy sheet loading — sheets are parsed on first access, not at file open.
-- O(1) cell style lookup via cached reverse index.
-- Smart archive cloning — reuses unmodified ZIP entries instead of copying.
-- Fixed-point span correction algorithm with early termination.
-- 100% API compatible — drop-in replacement for the `excel` package.
-- 76 unit tests + 13 integration tests on Android emulator.
+- Initial release: a performance-optimized fork of the `excel` package.
+- SAX-based streaming parser replaces full DOM parsing for cell data and
+  shared strings.
+- Lazy sheet loading: sheets are parsed on first access, not at file open.
+- O(1) cell style lookup via a cached reverse index, smart archive cloning,
+  and a fixed-point span correction algorithm with early termination.
+- Fully API-compatible drop-in replacement for the `excel` package.
