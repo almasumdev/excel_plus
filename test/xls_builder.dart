@@ -24,6 +24,8 @@ class XlsBuilder {
   final List<List<int>> _formats = [];
   final List<List<int>> _xfs = [];
   final List<List<int>> _sstBlocks = [];
+  final List<List<int>> _names = [];
+  final List<(int, int)> _externSheets = [];
   final List<XlsSheetBuilder> _sheets = [];
 
   /// Adds a FONT record and returns the `ifnt` a cell XF should reference.
@@ -125,6 +127,28 @@ class XlsBuilder {
   /// each further block becomes a CONTINUE record — for split-string tests.
   void addSstBlocks(List<List<int>> blocks) => _sstBlocks.addAll(blocks);
 
+  /// Adds an Lbl (defined name) record and returns the 1-based `ilbl` a
+  /// `ptgName` token should reference.
+  int addDefinedName(String name) {
+    _names.add([
+      ...u16(0), // grbit
+      0, // chKey
+      name.length,
+      ...u16(0), // cce (no formula body needed by the reader)
+      ...u16(0), // reserved
+      ...u16(0), // itab (0 = workbook scope)
+      0, 0, 0, 0, // menu/description/help/status text lengths
+      0, // string flags (compressed)
+      ...name.codeUnits,
+    ]);
+    return _names.length;
+  }
+
+  /// Registers the workbook's self-referencing SUPBOOK plus an EXTERNSHEET
+  /// whose entries are (itabFirst, itabLast) BOUNDSHEET-index pairs; a
+  /// `ptgRef3d`'s `ixti` is the pair's position in [ranges].
+  void addExternSheets(List<(int, int)> ranges) => _externSheets.addAll(ranges);
+
   XlsSheetBuilder sheet(String name, {int visibility = 0, int type = 0}) {
     final builder = XlsSheetBuilder._(name, visibility, type);
     _sheets.add(builder);
@@ -169,6 +193,22 @@ class XlsBuilder {
     }
     for (final xf in _xfs) {
       globals.add(record(0xE0, xf));
+    }
+    if (_externSheets.isNotEmpty) {
+      globals.add(record(0x1AE, [...u16(_sheets.length), ...u16(0x0401)]));
+      globals.add(
+        record(0x17, [
+          ...u16(_externSheets.length),
+          for (final (first, last) in _externSheets) ...[
+            ...u16(0), // the self SUPBOOK above
+            ...u16(first),
+            ...u16(last),
+          ],
+        ]),
+      );
+    }
+    for (final name in _names) {
+      globals.add(record(0x18, name));
     }
     if (_sstBlocks.isNotEmpty) {
       globals.add(record(0xFC, _sstBlocks.first));
@@ -292,45 +332,120 @@ class XlsSheetBuilder {
   void errorCell(int row, int col, int code, {int ixfe = 15}) =>
       _cell(0x205, row, col, ixfe, [code, 1]);
 
-  void formulaNumber(int row, int col, double cached, {int ixfe = 15}) => _cell(
-    0x06,
-    row,
-    col,
-    ixfe,
-    [...f64(cached), ...u16(0), ...u32(0), ...u16(0)],
-  );
+  List<int> _formulaTail(List<int> rgce, List<int> rgcb) => [
+    ...u16(0), // grbit
+    ...u32(0), // chn
+    ...u16(rgce.length),
+    ...rgce,
+    ...rgcb,
+  ];
 
-  void formulaBool(int row, int col, bool cached, {int ixfe = 15}) =>
-      _cell(0x06, row, col, ixfe, [
-        1,
-        0,
-        cached ? 1 : 0,
-        0,
-        0,
-        0,
-        0xFF,
-        0xFF,
-        ...u16(0),
-        ...u32(0),
-        ...u16(0),
-      ]);
+  void formulaNumber(
+    int row,
+    int col,
+    double cached, {
+    int ixfe = 15,
+    List<int> rgce = const [],
+    List<int> rgcb = const [],
+  }) => _cell(0x06, row, col, ixfe, [
+    ...f64(cached),
+    ..._formulaTail(rgce, rgcb),
+  ]);
 
-  void formulaString(int row, int col, String cached, {int ixfe = 15}) {
+  void formulaBool(
+    int row,
+    int col,
+    bool cached, {
+    int ixfe = 15,
+    List<int> rgce = const [],
+  }) => _cell(0x06, row, col, ixfe, [
+    1, 0, cached ? 1 : 0, 0, 0, 0, 0xFF, 0xFF, //
+    ..._formulaTail(rgce, const []),
+  ]);
+
+  void formulaError(
+    int row,
+    int col,
+    int code, {
+    int ixfe = 15,
+    List<int> rgce = const [],
+  }) => _cell(0x06, row, col, ixfe, [
+    2, 0, code, 0, 0, 0, 0xFF, 0xFF, //
+    ..._formulaTail(rgce, const []),
+  ]);
+
+  void formulaString(
+    int row,
+    int col,
+    String cached, {
+    int ixfe = 15,
+    List<int> rgce = const [],
+  }) {
     _cell(0x06, row, col, ixfe, [
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0xFF,
-      0xFF,
-      ...u16(0),
-      ...u32(0),
-      ...u16(0),
+      0, 0, 0, 0, 0, 0, 0xFF, 0xFF, //
+      ..._formulaTail(rgce, const []),
     ]);
     _records.add(record(0x207, unicodeString(cached)));
   }
+
+  /// A shared/array-formula member: its rgce is a lone `tExp` pointing at the
+  /// SHRFMLA/ARRAY master range's top-left cell.
+  void formulaExp(
+    int row,
+    int col,
+    int masterRow,
+    int masterCol, {
+    double cached = 0,
+    int ixfe = 15,
+  }) => formulaNumber(
+    row,
+    col,
+    cached,
+    ixfe: ixfe,
+    rgce: [0x01, ...u16(masterRow), ...u16(masterCol)],
+  );
+
+  /// The SHRFMLA record carrying the token stream `formulaExp` members share.
+  void shrFmla(
+    int rowFirst,
+    int rowLast,
+    int colFirst,
+    int colLast,
+    List<int> rgce,
+  ) => _records.add(
+    record(0x4BC, [
+      ...u16(rowFirst),
+      ...u16(rowLast),
+      colFirst,
+      colLast,
+      0, // reserved
+      2, // cUse
+      ...u16(rgce.length),
+      ...rgce,
+    ]),
+  );
+
+  /// The ARRAY record holding a CSE array formula's token stream.
+  void arrayFormula(
+    int rowFirst,
+    int rowLast,
+    int colFirst,
+    int colLast,
+    List<int> rgce, {
+    List<int> rgcb = const [],
+  }) => _records.add(
+    record(0x221, [
+      ...u16(rowFirst),
+      ...u16(rowLast),
+      colFirst,
+      colLast,
+      ...u16(0), // grbit
+      ...u32(0), // chn
+      ...u16(rgce.length),
+      ...rgce,
+      ...rgcb,
+    ]),
+  );
 
   void merge(int rowFirst, int rowLast, int colFirst, int colLast) =>
       _records.add(
@@ -374,6 +489,149 @@ class XlsSheetBuilder {
 
   void raw(int opcode, List<int> payload) =>
       _records.add(record(opcode, payload));
+}
+
+// rgce (parsed expression) token encoders. Operand tokens default to the
+// class byte real writers most often use; pass [ptg] to exercise the other
+// classes (REF 0x2n / VALUE 0x4n / ARRAY 0x6n decode identically).
+
+const ptgAdd = [0x03];
+const ptgSub = [0x04];
+const ptgMul = [0x05];
+const ptgDiv = [0x06];
+const ptgPower = [0x07];
+const ptgConcat = [0x08];
+const ptgGT = [0x0D];
+const ptgUminus = [0x13];
+const ptgPercent = [0x14];
+const ptgParen = [0x15];
+const ptgMissArg = [0x16];
+const ptgAttrSum = [0x19, 0x10, 0x00, 0x00];
+
+List<int> ptgInt(int value) => [0x1E, ...u16(value)];
+
+List<int> ptgNum(double value) => [0x1F, ...f64(value)];
+
+List<int> ptgStr(String text) => [0x17, text.length, 0, ...text.codeUnits];
+
+List<int> ptgBool(bool value) => [0x1D, value ? 1 : 0];
+
+List<int> ptgErr(int code) => [0x1C, code];
+
+/// tAttrIf/tAttrGoto: evaluator jump hints with no display text.
+List<int> ptgAttrJump(int grbit, int distance) => [
+  0x19,
+  grbit,
+  ...u16(distance),
+];
+
+/// tAttrChoose with a zeroed [cases]+1 entry jump table.
+List<int> ptgAttrChoose(int cases) => [
+  0x19,
+  0x04,
+  ...u16(cases),
+  for (var i = 0; i <= cases; i++) ...u16(0),
+];
+
+List<int> _colFlags(int col, bool rowRel, bool colRel) =>
+    u16((col & 0xFF) | (colRel ? 0x4000 : 0) | (rowRel ? 0x8000 : 0));
+
+List<int> ptgRef(
+  int row,
+  int col, {
+  bool rowRel = true,
+  bool colRel = true,
+  int ptg = 0x44,
+}) => [ptg, ...u16(row), ..._colFlags(col, rowRel, colRel)];
+
+List<int> ptgArea(
+  int rowFirst,
+  int rowLast,
+  int colFirst,
+  int colLast, {
+  bool rel = true,
+  int ptg = 0x25,
+}) => [
+  ptg,
+  ...u16(rowFirst),
+  ...u16(rowLast),
+  ..._colFlags(colFirst, rel, rel),
+  ..._colFlags(colLast, rel, rel),
+];
+
+/// tRefN: signed row/column offsets, as stored inside shared formulas.
+List<int> ptgRefN(
+  int rowOffset,
+  int colOffset, {
+  bool rowRel = true,
+  bool colRel = true,
+  int ptg = 0x4C,
+}) => [
+  ptg,
+  ...u16(rowOffset & 0xFFFF),
+  ..._colFlags(colOffset & 0xFF, rowRel, colRel),
+];
+
+List<int> ptgFunc(int iftab, {int ptg = 0x41}) => [ptg, ...u16(iftab)];
+
+List<int> ptgFuncVar(int iftab, int argCount, {int ptg = 0x42}) => [
+  ptg,
+  argCount,
+  ...u16(iftab),
+];
+
+List<int> ptgName(int ilbl) => [0x23, ...u16(ilbl), ...u16(0)];
+
+List<int> ptgRef3d(
+  int ixti,
+  int row,
+  int col, {
+  bool rowRel = true,
+  bool colRel = true,
+  int ptg = 0x5A,
+}) => [ptg, ...u16(ixti), ...u16(row), ..._colFlags(col, rowRel, colRel)];
+
+List<int> ptgArea3d(
+  int ixti,
+  int rowFirst,
+  int rowLast,
+  int colFirst,
+  int colLast, {
+  bool rel = true,
+  int ptg = 0x3B,
+}) => [
+  ptg,
+  ...u16(ixti),
+  ...u16(rowFirst),
+  ...u16(rowLast),
+  ..._colFlags(colFirst, rel, rel),
+  ..._colFlags(colLast, rel, rel),
+];
+
+/// tArray: the token itself; pair it with [serArray] bytes passed as `rgcb`.
+List<int> ptgArray({int ptg = 0x60}) => [ptg, 0, 0, 0, 0, 0, 0, 0];
+
+/// The rgcb constant block for a tArray token: rows of numbers, strings,
+/// booleans, or error codes (as `int` wrapped in [SerErr]).
+List<int> serArray(List<List<Object>> rows) => [
+  rows.first.length - 1,
+  ...u16(rows.length - 1),
+  for (final row in rows)
+    for (final value in row)
+      ...switch (value) {
+        final double n => [0x01, ...f64(n)],
+        final int n => [0x01, ...f64(n.toDouble())],
+        final String s => [0x02, ...u16(s.length), 0, ...s.codeUnits],
+        final bool b => [0x04, b ? 1 : 0, 0, 0, 0, 0, 0, 0, 0],
+        final SerErr e => [0x10, e.code, 0, 0, 0, 0, 0, 0, 0],
+        _ => throw ArgumentError('Unsupported array constant: $value'),
+      },
+];
+
+/// Marks an array-constant element as a BIFF error code for [serArray].
+class SerErr {
+  final int code;
+  const SerErr(this.code);
 }
 
 List<int> u16(int v) => [v & 0xFF, (v >> 8) & 0xFF];

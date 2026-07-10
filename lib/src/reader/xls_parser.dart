@@ -7,13 +7,19 @@ part of '../../excel_plus.dart';
 /// saving it produces a modern `.xlsx` file — the natural migration path for
 /// legacy spreadsheets. Values, dates (both 1900 and 1904 epochs), merged
 /// cells, sheet order/visibility, number formats, fonts, fills, borders,
-/// alignment, and column/row sizing are mapped; formula cells surface their
-/// last-calculated result.
+/// alignment, and column/row sizing are mapped. Formula token streams are
+/// decoded back to formula text (including shared and array formulas), with
+/// the last-calculated result kept as the cached value; a stream the decoder
+/// does not model degrades to that cached result alone.
 class _XlsParser {
   final Uint8List _stream;
   final Excel _excel;
   final _XlsStyles _styles;
   final List<String> _sst = [];
+  final _XlsFormulaContext _formulaContext = _XlsFormulaContext();
+  final List<_XlsPendingFormula> _pendingFormulas = [];
+  final Map<(int, int), (Uint8List, Uint8List)> _sharedFormulas = {};
+  final Map<(int, int), (Uint8List, Uint8List)> _arrayFormulas = {};
   bool _date1904 = false;
 
   _XlsParser._(this._stream, this._excel) : _styles = _XlsStyles(_excel);
@@ -49,6 +55,8 @@ class _XlsParser {
     final reader = _BiffReader(_stream);
     final sheets = <_XlsBoundSheet>[];
     _readGlobals(reader, sheets);
+    // 3-D references index the full BOUNDSHEET order (chart sheets included).
+    _formulaContext.sheetNames.addAll(sheets.map((s) => s.name));
 
     final worksheets = sheets.where((s) => s.isWorksheet).toList();
     if (worksheets.isEmpty) {
@@ -118,6 +126,22 @@ class _XlsParser {
           _styles.readPalette(record);
         case 0xFC: // SST
           _readSst(reader.continued(record));
+        case 0x17: // EXTERNSHEET — the sheet-range table 3-D formulas index
+          final cursor = reader.continued(record);
+          final count = cursor.readU16();
+          for (var i = 0; i < count; i++) {
+            _formulaContext.externSheets.add((
+              cursor.readU16(),
+              cursor.readU16(),
+              cursor.readU16(),
+            ));
+          }
+        case 0x1AE: // SUPBOOK — self-reference marker vs external workbook
+          _formulaContext.supBookSelf.add(
+            record.data.length == 4 && record.u16(2) == 0x0401,
+          );
+        case 0x18: // LBL — defined name (tName tokens index this list)
+          _readDefinedName(record);
         case 0x85: // BOUNDSHEET
           final cursor = _BiffCursor([record.data])..skip(6);
           sheets.add(
@@ -146,6 +170,27 @@ class _XlsParser {
     }
   }
 
+  /// Registers a defined name from an Lbl record. Built-in names are stored
+  /// as a one-character code and expand to their display form (Print_Area,
+  /// _FilterDatabase, …). A malformed record still appends a placeholder so
+  /// `ilbl` indexes of later names stay aligned.
+  void _readDefinedName(_BiffRecord record) {
+    var name = '';
+    if (record.data.length >= 15) {
+      try {
+        final cursor = _BiffCursor([record.data])..skip(14);
+        final wide = (cursor.readU8() & 0x01) != 0;
+        name = cursor.readChars(record.u8(3), wide);
+        if ((record.u16(0) & 0x20) != 0 && name.length == 1) {
+          name = _xlsBuiltinNames[name.codeUnitAt(0)] ?? name;
+        }
+      } on ExcelFormatException {
+        name = '';
+      }
+    }
+    _formulaContext.definedNames.add(name);
+  }
+
   void _parseSheet(Sheet sheet, int position) {
     if (position < 0 || position + 4 > _stream.length) {
       throw ExcelFormatException(
@@ -160,6 +205,7 @@ class _XlsParser {
       final record = reader.next();
       switch (record.opcode) {
         case 0x0A: // EOF — end of this sheet's substream
+          _resolvePendingFormulas(sheet);
           return;
         case 0x201: // BLANK
           _put(sheet, record.u16(0), record.u16(2), record.u16(4), null);
@@ -229,8 +275,11 @@ class _XlsParser {
                 ? BoolCellValue(raw != 0)
                 : CellErrorValue(_errorText(raw)),
           );
-        case 0x06: // FORMULA — only the cached result is recoverable
-          _putFormulaResult(sheet, record, reader);
+        case 0x06: // FORMULA
+          _putFormula(sheet, record, reader);
+        case 0x4BC: // SHRFMLA — token stream shared by a range of cells
+        case 0x221: // ARRAY — token stream of a CSE array-formula range
+          _captureSharedTokens(record);
         case 0xE5: // MERGEDCELLS
           final count = record.u16(0);
           for (var i = 0; i < count && 10 + i * 8 <= record.data.length; i++) {
@@ -261,6 +310,8 @@ class _XlsParser {
           }
       }
     }
+    // Stream ended without an EOF record — still settle deferred formulas.
+    _resolvePendingFormulas(sheet);
   }
 
   void _put(Sheet sheet, int row, int col, int ixfe, CellValue? value) {
@@ -306,35 +357,174 @@ class _XlsParser {
     return (rk & 0x01) != 0 ? value / 100 : value;
   }
 
-  void _putFormulaResult(Sheet sheet, _BiffRecord record, _BiffReader reader) {
+  void _putFormula(Sheet sheet, _BiffRecord record, _BiffReader reader) {
     final row = record.u16(0);
     final col = record.u16(2);
     final ixfe = record.u16(4);
+
+    // The cached result, in both the raw string form FormulaCellValue keeps
+    // (like `<v>` in xlsx) and the typed value used when the token stream
+    // cannot be reconstructed.
+    String? cachedRaw;
+    CellValue? fallback;
+    var numeric = false;
+    var number = 0.0;
     if (record.u16(12) == 0xFFFF) {
       switch (record.u8(6)) {
         case 0: // string result: carried by the STRING record that follows
-          _put(sheet, row, col, ixfe, TextCellValue(_followingString(reader)));
+          final text = _followingString(reader);
+          cachedRaw = text.isEmpty ? null : text;
+          fallback = TextCellValue(text);
         case 1:
-          _put(sheet, row, col, ixfe, BoolCellValue(record.u8(8) != 0));
+          final flag = record.u8(8) != 0;
+          cachedRaw = flag ? '1' : '0';
+          fallback = BoolCellValue(flag);
         case 2:
-          _put(sheet, row, col, ixfe, CellErrorValue(_errorText(record.u8(8))));
-        case 3:
-          _put(sheet, row, col, ixfe, TextCellValue(''));
+          cachedRaw = _errorText(record.u8(8));
+          fallback = CellErrorValue(cachedRaw);
+        default: // 3 — the empty-string result
+          fallback = TextCellValue('');
       }
     } else {
-      _putNumber(sheet, row, col, ixfe, record.f64(6));
+      number = record.f64(6);
+      cachedRaw = _rawNumber(number);
+      numeric = true;
+    }
+
+    final data = record.data;
+    final cce = data.length >= 22 ? record.u16(20) : 0;
+    final hasTokens = cce > 0 && 22 + cce <= data.length;
+    if (hasTokens && cce == 5 && data[22] == 0x01) {
+      // tExp: a shared/array-formula member. Its tokens live in a SHRFMLA or
+      // ARRAY record that may not have been read yet — resolve at sheet end.
+      _pendingFormulas.add(
+        _XlsPendingFormula(
+          row,
+          col,
+          ixfe,
+          record.u16(23),
+          record.u16(25),
+          cachedRaw,
+          fallback,
+          numeric,
+          number,
+        ),
+      );
+      return;
+    }
+    final text = hasTokens
+        ? _XlsFormulaDecoder.tryDecode(
+            Uint8List.sublistView(data, 22, 22 + cce),
+            Uint8List.sublistView(data, 22 + cce),
+            _formulaContext,
+          )
+        : null;
+    _putDecodedFormula(
+      sheet,
+      row,
+      col,
+      ixfe,
+      text,
+      cachedRaw,
+      fallback,
+      numeric,
+      number,
+    );
+  }
+
+  void _putDecodedFormula(
+    Sheet sheet,
+    int row,
+    int col,
+    int ixfe,
+    String? text,
+    String? cachedRaw,
+    CellValue? fallback,
+    bool numeric,
+    double number,
+  ) {
+    if (text != null) {
+      _put(
+        sheet,
+        row,
+        col,
+        ixfe,
+        FormulaCellValue(text, cachedValue: cachedRaw),
+      );
+    } else if (numeric) {
+      _putNumber(sheet, row, col, ixfe, number);
+    } else {
+      _put(sheet, row, col, ixfe, fallback);
     }
   }
 
+  /// Stores a SHRFMLA/ARRAY record's token stream keyed by the range's
+  /// top-left cell — the coordinate member tExp tokens point back at.
+  void _captureSharedTokens(_BiffRecord record) {
+    final isShared = record.opcode == 0x4BC;
+    final headerLength = isShared ? 10 : 14;
+    if (record.data.length < headerLength) return;
+    final cce = record.u16(headerLength - 2);
+    if (headerLength + cce > record.data.length) return;
+    (isShared ? _sharedFormulas : _arrayFormulas)[(
+      record.u16(0),
+      record.u8(4),
+    )] = (
+      Uint8List.sublistView(record.data, headerLength, headerLength + cce),
+      Uint8List.sublistView(record.data, headerLength + cce),
+    );
+  }
+
+  /// Decodes the cells that deferred to a SHRFMLA/ARRAY token stream. Shared
+  /// tokens store relative references as offsets, so each member decodes
+  /// against its own coordinates; a member whose master range never appeared
+  /// (e.g. a what-if TABLE cell) keeps its cached result.
+  void _resolvePendingFormulas(Sheet sheet) {
+    for (final pending in _pendingFormulas) {
+      final key = (pending.masterRow, pending.masterCol);
+      final shared = _sharedFormulas[key];
+      final tokens = shared ?? _arrayFormulas[key];
+      final text = tokens == null
+          ? null
+          : _XlsFormulaDecoder.tryDecode(
+              tokens.$1,
+              tokens.$2,
+              _formulaContext,
+              baseRow: pending.row,
+              baseCol: pending.col,
+              shared: shared != null,
+            );
+      _putDecodedFormula(
+        sheet,
+        pending.row,
+        pending.col,
+        pending.ixfe,
+        text,
+        pending.cachedRaw,
+        pending.fallback,
+        pending.numeric,
+        pending.number,
+      );
+    }
+    _pendingFormulas.clear();
+    _sharedFormulas.clear();
+    _arrayFormulas.clear();
+  }
+
   /// Reads the STRING record holding a formula's cached text result. A
-  /// SHRFMLA/ARRAY/TABLE record may sit between the FORMULA and its STRING.
+  /// SHRFMLA/ARRAY/TABLE record may sit between the FORMULA and its STRING;
+  /// shared/array token streams found on the way are captured, not skipped.
   String _followingString(_BiffReader reader) {
     while (reader.hasNext) {
       final opcode = reader.peekOpcode();
       if (opcode == 0x207) {
         return reader.continued(reader.next()).readUnicodeString();
       }
-      if (opcode == 0x4BC || opcode == 0x221 || opcode == 0x236) {
+      if (opcode == 0x4BC || opcode == 0x221) {
+        _captureSharedTokens(reader.next());
+        continue;
+      }
+      if (opcode == 0x236) {
         reader.next();
         continue;
       }
@@ -397,4 +587,31 @@ class _XlsBoundSheet {
   _XlsBoundSheet(this.position, this.visibility, this.type, this.name);
 
   bool get isWorksheet => type == 0;
+}
+
+/// A formula cell whose rgce was a tExp pointer into a SHRFMLA/ARRAY record,
+/// parked until the sheet substream has been fully read. Carries the cached
+/// result so the cell can still degrade gracefully if the master is missing.
+class _XlsPendingFormula {
+  final int row;
+  final int col;
+  final int ixfe;
+  final int masterRow;
+  final int masterCol;
+  final String? cachedRaw;
+  final CellValue? fallback;
+  final bool numeric;
+  final double number;
+
+  _XlsPendingFormula(
+    this.row,
+    this.col,
+    this.ixfe,
+    this.masterRow,
+    this.masterCol,
+    this.cachedRaw,
+    this.fallback,
+    this.numeric,
+    this.number,
+  );
 }

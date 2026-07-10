@@ -246,7 +246,7 @@ void main() {
       expect(style.backgroundColor, ExcelColor.none);
     });
 
-    test('surfaces formula cells as their cached results', () {
+    test('surfaces cached results when a formula has no token stream', () {
       final builder = XlsBuilder();
       builder.sheet('Sheet1')
         ..formulaNumber(0, 0, 30)
@@ -393,8 +393,10 @@ void main() {
       expect(style.horizontalAlignment, HorizontalAlign.Center);
       expect(style.bottomBorder.borderStyle, BorderStyle.Thin);
 
-      // xlwt writes formulas without cached results (the empty-string kind).
-      expect(v('A5'), TextCellValue(''));
+      // xlwt compiles formula text with its own independent BIFF8 encoder;
+      // the tokens must decode back to the text it was given.
+      expect(v('A5'), FormulaCellValue('1+2'));
+      expect((v('A5') as FormulaCellValue).cachedValue, isNull);
       expect(v('A6'), TextCellValue('Merged'));
       expect(sheet.spannedItems, contains('A6:C7'));
       expect(sheet.getColumnWidth(0), closeTo(20, 0.01));

@@ -9,11 +9,16 @@
   both the 1900 and 1904 epoch systems, shared strings (including split and
   UTF-16 strings), merged cells, sheet order and tab visibility, built-in and
   custom number formats, fonts, fills, borders, alignment, and column widths
-  and row heights. Formula cells carry their last-calculated result. Saving
-  always produces a modern `.xlsx`, so opening an old file and saving it is a
-  complete migration. Password-protected and pre-BIFF8 (Excel 5.0/95) files
-  are rejected with clear typed errors. Pure Dart, no new dependencies, and
-  works on every platform including the web.
+  and row heights. Formulas are decoded from their binary token streams back
+  to real formula text (`FormulaCellValue`), covering the full operator set,
+  the built-in function table, absolute and relative references, shared and
+  array formulas, cross-sheet references, defined names, and constant arrays;
+  the last-calculated result is kept as the cached value, and any token the
+  decoder does not model degrades to that cached result instead of failing.
+  Saving always produces a modern `.xlsx`, so opening an old file and saving
+  it is a complete migration. Password-protected and pre-BIFF8 (Excel 5.0/95)
+  files are rejected with clear typed errors. Pure Dart, no new dependencies,
+  and works on every platform including the web.
 
 ### Fixed
 

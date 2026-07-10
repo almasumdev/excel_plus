@@ -159,7 +159,9 @@ class Excel {
   /// spreadsheet open through this one call. A legacy `.xls` (BIFF8,
   /// Excel 97–2003) workbook is decoded **read-only** into the same model:
   /// values, dates, merged cells, styles, and sheet layout are imported, and
-  /// formula cells carry their last-calculated result. Saving always produces
+  /// formulas are decoded from their binary token streams back to
+  /// [FormulaCellValue] text (shared and array formulas included), keeping
+  /// the last-calculated result as the cached value. Saving always produces
   /// a modern `.xlsx` file, which makes this the migration path for old
   /// spreadsheets:
   ///
