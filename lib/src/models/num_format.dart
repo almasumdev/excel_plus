@@ -353,6 +353,9 @@ const Map<int, NumFormat> _standardNumFormats = {
   49: NumFormat.standard_49,
 };
 
+/// Elapsed-time bracket tokens: `[h]`, `[hh]`, `[mm]`, `[ss]`, …
+final _elapsedTimeToken = RegExp(r'^(h+|m+|s+)$');
+
 bool _formatCodeLooksLikeDateTime(String formatCode) {
   // for comparison, remove any character that is quoted or escaped
   var inEscape = false;
@@ -375,8 +378,24 @@ bool _formatCodeLooksLikeDateTime(String formatCode) {
       inQuotes = true;
       continue;
     }
+    if (c == '[') {
+      // A bracket section is a color ([Red]), condition ([>100]) or locale
+      // ([$-409]) prefix, none of which make the format temporal — the letters
+      // inside must not be mistaken for date tokens. The exception is the
+      // elapsed-time tokens ([h], [mm], [ss]), which are time formats.
+      final end = formatCode.indexOf(']', i + 1);
+      if (end < 0) return false;
+      if (_elapsedTimeToken.hasMatch(
+        formatCode.substring(i + 1, end).toLowerCase(),
+      )) {
+        return true;
+      }
+      i = end;
+      continue;
+    }
 
-    switch (c) {
+    // Date/time tokens are case-insensitive in Excel ('M/D/YYYY' == 'm/d/yyyy').
+    switch (c.toLowerCase()) {
       case 'y':
       case 'm':
       case 'd':

@@ -1,6 +1,7 @@
 import 'package:excel_plus/excel_plus.dart';
 import 'package:test/test.dart';
 
+import 'test_helper.dart';
 import 'xls_builder.dart';
 
 CellValue? valueOf(Excel excel, String sheet, String ref) =>
@@ -363,6 +364,44 @@ void main() {
       expect(
         () => Excel.decodeBytes(builder.build()),
         throwsA(isA<ExcelArchiveException>()),
+      );
+    });
+
+    test('decodes a real BIFF8 file from an independent encoder', () {
+      // test_resources/legacy_biff8.xls was written by Python's xlwt — a
+      // separate BIFF8 implementation — so this guards against the reader and
+      // the in-memory test builder sharing a misreading of the format.
+      final excel = Excel.decodeBytes(loadResource('legacy_biff8.xls'));
+
+      expect(excel.tables.keys.toList(), ['First', 'Second']);
+      final sheet = excel['First'];
+      CellValue? v(String ref) =>
+          sheet.cell(CellIndex.indexByString(ref)).value;
+
+      expect(v('A1'), TextCellValue('Hello'));
+      expect(v('B1'), TextCellValue('Grüße 日本'));
+      expect(v('A2'), IntCellValue(42));
+      expect(v('B2'), DoubleCellValue(3.14));
+      expect(v('A3'), DateCellValue(year: 2023, month: 3, day: 15));
+
+      final style = sheet.cell(CellIndex.indexByString('A4')).cellStyle!;
+      expect(style.isBold, isTrue);
+      expect(style.fontSize, 14);
+      expect(style.fontFamily, 'Verdana');
+      expect(style.fontColor.colorHex, 'FFFF0000');
+      expect(style.backgroundColor.colorHex, 'FFFFFF00');
+      expect(style.horizontalAlignment, HorizontalAlign.Center);
+      expect(style.bottomBorder.borderStyle, BorderStyle.Thin);
+
+      // xlwt writes formulas without cached results (the empty-string kind).
+      expect(v('A5'), TextCellValue(''));
+      expect(v('A6'), TextCellValue('Merged'));
+      expect(sheet.spannedItems, contains('A6:C7'));
+      expect(sheet.getColumnWidth(0), closeTo(20, 0.01));
+      expect(sheet.getRowHeight(8), closeTo(31, 0.01));
+      expect(
+        excel['Second'].cell(CellIndex.indexByString('A1')).value,
+        TextCellValue('two'),
       );
     });
 

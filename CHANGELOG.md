@@ -23,6 +23,16 @@
   clear typed errors. Works on every platform, including the web — the parser
   is pure Dart with no new dependencies.
 
+### Fixed
+
+- **Custom number-format codes are now classified case-insensitively and
+  ignore bracket prefixes** — a custom format written as `M/D/YYYY` (uppercase
+  date tokens, as several writers emit) was treated as numeric, so date cells
+  using it decoded as plain serial numbers; and the `d` in a `[Red]` color
+  prefix made currency formats like `[Red]-#,##0.00` masquerade as dates.
+  Both fixed for `.xlsx` and `.xls` alike; elapsed-time brackets (`[h]:mm:ss`)
+  still classify as time formats.
+
 ## 2.5.0
 
 ### Added

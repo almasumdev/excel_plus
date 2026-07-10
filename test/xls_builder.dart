@@ -24,7 +24,6 @@ class XlsBuilder {
   final List<List<int>> _formats = [];
   final List<List<int>> _xfs = [];
   final List<List<int>> _sstBlocks = [];
-  final List<List<int>> _extraGlobals = [];
   final List<XlsSheetBuilder> _sheets = [];
 
   /// Adds a FONT record and returns the `ifnt` a cell XF should reference.
@@ -126,10 +125,6 @@ class XlsBuilder {
   /// each further block becomes a CONTINUE record — for split-string tests.
   void addSstBlocks(List<List<int>> blocks) => _sstBlocks.addAll(blocks);
 
-  /// Adds a raw workbook-globals record.
-  void addGlobalRecord(int opcode, List<int> payload) =>
-      _extraGlobals.add(record(opcode, payload));
-
   XlsSheetBuilder sheet(String name, {int visibility = 0, int type = 0}) {
     final builder = XlsSheetBuilder._(name, visibility, type);
     _sheets.add(builder);
@@ -174,9 +169,6 @@ class XlsBuilder {
     }
     for (final xf in _xfs) {
       globals.add(record(0xE0, xf));
-    }
-    for (final record in _extraGlobals) {
-      globals.add(record);
     }
     if (_sstBlocks.isNotEmpty) {
       globals.add(record(0xFC, _sstBlocks.first));

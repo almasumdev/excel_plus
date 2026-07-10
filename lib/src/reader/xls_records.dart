@@ -20,8 +20,6 @@ class _BiffReader {
 
   _BiffReader(this._stream, [this._pos = 0]);
 
-  int get position => _pos;
-
   bool get hasNext => _pos + 4 <= _stream.length;
 
   /// The opcode of the next record without consuming it, or `-1` at the end.
@@ -69,11 +67,6 @@ class _BiffCursor {
 
   int get _remainingInSegment =>
       _segment < _segments.length ? _segments[_segment].length - _offset : 0;
-
-  bool get atEnd {
-    _normalize();
-    return _segment >= _segments.length;
-  }
 
   void _normalize() {
     while (_segment < _segments.length &&
