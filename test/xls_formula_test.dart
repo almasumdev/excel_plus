@@ -377,7 +377,7 @@ void main() {
 
     test('decodes formulas compiled by an independent BIFF8 encoder', () {
       // test_resources/legacy_formulas.xls was written by Python's xlwt, whose
-      // formula compiler produced these token streams — decoding must give
+      // formula compiler produced these token streams, so decoding must give
       // back the exact text it was fed. The battery covers tAttr jump tokens
       // inside IF, the one-argument SUM attribute, a real SUPBOOK/EXTERNSHEET
       // pair behind the cross-sheet reference, absolute areas, fixed-arity

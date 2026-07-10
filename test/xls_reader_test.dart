@@ -368,8 +368,8 @@ void main() {
     });
 
     test('decodes a real BIFF8 file from an independent encoder', () {
-      // test_resources/legacy_biff8.xls was written by Python's xlwt — a
-      // separate BIFF8 implementation — so this guards against the reader and
+      // test_resources/legacy_biff8.xls was written by Python's xlwt, a
+      // separate BIFF8 implementation, so this guards against the reader and
       // the in-memory test builder sharing a misreading of the format.
       final excel = Excel.decodeBytes(loadResource('legacy_biff8.xls'));
 

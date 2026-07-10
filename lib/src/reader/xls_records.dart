@@ -56,7 +56,7 @@ class _BiffReader {
 /// BIFF strings interact with the boundaries in a format-specific way: when
 /// **character data** crosses into a CONTINUE record, the continuation begins
 /// with a fresh compression-flag byte, while non-character bytes (formatting
-/// runs, extended data) continue raw — so plain reads and string reads cross
+/// runs, extended data) continue raw, so plain reads and string reads cross
 /// segments differently.
 class _BiffCursor {
   final List<Uint8List> _segments;
@@ -110,7 +110,7 @@ class _BiffCursor {
   /// Reads [cch] characters that start with compression flag [highByte]
   /// (`true` = UTF-16LE, `false` = one byte per character). Each time the
   /// character data crosses into a new segment, a fresh flag byte is read
-  /// first — the continuation may switch between compressed and wide.
+  /// first; the continuation may switch between compressed and wide.
   String readChars(int cch, bool highByte) {
     if (cch == 0) return '';
     final units = <int>[];

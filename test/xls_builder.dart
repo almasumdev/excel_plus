@@ -1,6 +1,6 @@
 import 'dart:typed_data';
 
-/// In-memory writer for minimal — but structurally valid — legacy `.xls`
+/// In-memory writer for minimal but structurally valid legacy `.xls`
 /// files (BIFF8 records inside an OLE2 compound container), so the reader can
 /// be exercised without binary fixtures. Only used by `xls_reader_test.dart`;
 /// kept out of `test_helper.dart` to keep that file xlsx-focused.
@@ -16,7 +16,7 @@ class XlsBuilder {
   int bofVersion = 0x0600;
   String streamName = 'Workbook';
 
-  /// Pads the Workbook stream to at least this many bytes — set to 4096+ to
+  /// Pads the Workbook stream to at least this many bytes; set to 4096+ to
   /// force the regular-sector CFB layout instead of the mini stream.
   int minStreamBytes = 0;
 
@@ -124,7 +124,7 @@ class XlsBuilder {
   }
 
   /// Supplies a pre-encoded SST: the first block is the SST record payload and
-  /// each further block becomes a CONTINUE record — for split-string tests.
+  /// each further block becomes a CONTINUE record, for split-string tests.
   void addSstBlocks(List<List<int>> blocks) => _sstBlocks.addAll(blocks);
 
   /// Adds an Lbl (defined name) record and returns the 1-based `ilbl` a
@@ -217,7 +217,7 @@ class XlsBuilder {
       }
     }
     // BOUNDSHEET stream positions are only known after the globals substream
-    // is complete — record where each one's payload lands and patch below.
+    // is complete, so record where each one's payload lands and patch below.
     final boundsheetPayloadOffsets = <int>[];
     for (final sheet in _sheets) {
       boundsheetPayloadOffsets.add(globals.length + 4);

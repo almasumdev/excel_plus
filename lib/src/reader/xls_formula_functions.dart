@@ -1,6 +1,7 @@
 part of '../../excel_plus.dart';
 
-/// The BIFF built-in sheet-function table: `iftab` → (name, argument count).
+/// The BIFF built-in sheet-function table, mapping `iftab` to a (name,
+/// argument count) pair.
 ///
 /// A count of `-1` marks a variable-argument function; those are always
 /// encoded as `tFuncVar`, which carries its own count. Fixed-count entries are

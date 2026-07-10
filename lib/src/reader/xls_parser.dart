@@ -1,10 +1,10 @@
 part of '../../excel_plus.dart';
 
-/// Decodes a legacy binary `.xls` workbook (BIFF8, Excel 97–2003) into the
+/// Decodes a legacy binary `.xls` workbook (BIFF8, Excel 97-2003) into the
 /// same [Excel] model produced for `.xlsx` files.
 ///
 /// Read-only by design: the workbook is rebuilt as authored content, so
-/// saving it produces a modern `.xlsx` file — the natural migration path for
+/// saving it produces a modern `.xlsx` file, the natural migration path for
 /// legacy spreadsheets. Values, dates (both 1900 and 1904 epochs), merged
 /// cells, sheet order/visibility, number formats, fonts, fills, borders,
 /// alignment, and column/row sizing are mapped. Formula token streams are
@@ -107,7 +107,7 @@ class _XlsParser {
     while (reader.hasNext) {
       final record = reader.next();
       switch (record.opcode) {
-        case 0x0A: // EOF — end of the globals substream
+        case 0x0A: // EOF: end of the globals substream
           return;
         case 0x2F: // FILEPASS
           throw ExcelFormatException(
@@ -126,7 +126,7 @@ class _XlsParser {
           _styles.readPalette(record);
         case 0xFC: // SST
           _readSst(reader.continued(record));
-        case 0x17: // EXTERNSHEET — the sheet-range table 3-D formulas index
+        case 0x17: // EXTERNSHEET: the sheet-range table 3-D formulas index
           final cursor = reader.continued(record);
           final count = cursor.readU16();
           for (var i = 0; i < count; i++) {
@@ -136,11 +136,11 @@ class _XlsParser {
               cursor.readU16(),
             ));
           }
-        case 0x1AE: // SUPBOOK — self-reference marker vs external workbook
+        case 0x1AE: // SUPBOOK: self-reference marker vs external workbook
           _formulaContext.supBookSelf.add(
             record.data.length == 4 && record.u16(2) == 0x0401,
           );
-        case 0x18: // LBL — defined name (tName tokens index this list)
+        case 0x18: // LBL: defined name (tName tokens index this list)
           _readDefinedName(record);
         case 0x85: // BOUNDSHEET
           final cursor = _BiffCursor([record.data])..skip(6);
@@ -172,7 +172,7 @@ class _XlsParser {
 
   /// Registers a defined name from an Lbl record. Built-in names are stored
   /// as a one-character code and expand to their display form (Print_Area,
-  /// _FilterDatabase, …). A malformed record still appends a placeholder so
+  /// _FilterDatabase, and so on). A malformed record still appends a placeholder so
   /// `ilbl` indexes of later names stay aligned.
   void _readDefinedName(_BiffRecord record) {
     var name = '';
@@ -204,7 +204,7 @@ class _XlsParser {
     while (reader.hasNext) {
       final record = reader.next();
       switch (record.opcode) {
-        case 0x0A: // EOF — end of this sheet's substream
+        case 0x0A: // EOF: end of this sheet's substream
           _resolvePendingFormulas(sheet);
           return;
         case 0x201: // BLANK
@@ -277,8 +277,8 @@ class _XlsParser {
           );
         case 0x06: // FORMULA
           _putFormula(sheet, record, reader);
-        case 0x4BC: // SHRFMLA — token stream shared by a range of cells
-        case 0x221: // ARRAY — token stream of a CSE array-formula range
+        case 0x4BC: // SHRFMLA: token stream shared by a range of cells
+        case 0x221: // ARRAY: token stream of a CSE array-formula range
           _captureSharedTokens(record);
         case 0xE5: // MERGEDCELLS
           final count = record.u16(0);
@@ -310,7 +310,7 @@ class _XlsParser {
           }
       }
     }
-    // Stream ended without an EOF record — still settle deferred formulas.
+    // Stream ended without an EOF record; still settle deferred formulas.
     _resolvePendingFormulas(sheet);
   }
 
@@ -382,7 +382,7 @@ class _XlsParser {
         case 2:
           cachedRaw = _errorText(record.u8(8));
           fallback = CellErrorValue(cachedRaw);
-        default: // 3 — the empty-string result
+        default: // 3: the empty-string result
           fallback = TextCellValue('');
       }
     } else {
@@ -396,7 +396,7 @@ class _XlsParser {
     final hasTokens = cce > 0 && 22 + cce <= data.length;
     if (hasTokens && cce == 5 && data[22] == 0x01) {
       // tExp: a shared/array-formula member. Its tokens live in a SHRFMLA or
-      // ARRAY record that may not have been read yet — resolve at sheet end.
+      // ARRAY record that may not have been read yet, so resolve at sheet end.
       _pendingFormulas.add(
         _XlsPendingFormula(
           row,
@@ -459,7 +459,7 @@ class _XlsParser {
   }
 
   /// Stores a SHRFMLA/ARRAY record's token stream keyed by the range's
-  /// top-left cell — the coordinate member tExp tokens point back at.
+  /// top-left cell, the coordinate member tExp tokens point back at.
   void _captureSharedTokens(_BiffRecord record) {
     final isShared = record.opcode == 0x4BC;
     final headerLength = isShared ? 10 : 14;

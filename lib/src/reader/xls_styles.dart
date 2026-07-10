@@ -1,6 +1,6 @@
 part of '../../excel_plus.dart';
 
-/// The BIFF8 default color palette, `icv` 8–63 (MS-XLS 2.5.161). A PALETTE
+/// The BIFF8 default color palette, `icv` 8-63 (MS-XLS 2.5.161). A PALETTE
 /// record replaces it.
 const List<String> _xlsDefaultPalette = [
   '000000',
@@ -117,7 +117,7 @@ class _XlsFont {
   );
 
   /// Whether this is the stock body font of a default workbook (regular,
-  /// 10 pt, automatic color) — the one unstyled cells reference.
+  /// 10 pt, automatic color), the one unstyled cells reference.
   bool get isDefaultLike =>
       !bold &&
       !italic &&
@@ -193,7 +193,7 @@ class _XlsStyles {
   /// The palette color for [icv], or `null` for automatic/system colors.
   ExcelColor? _colorFor(int icv) {
     final table = _palette ?? _xlsDefaultPalette;
-    // 0–7 mirror the first eight palette entries.
+    // 0-7 mirror the first eight palette entries.
     final index = icv >= 8 ? icv - 8 : icv;
     if (icv <= 63 && index < table.length) {
       return ExcelColor.fromHexString('FF${table[index].toUpperCase()}');

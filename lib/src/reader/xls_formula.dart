@@ -42,7 +42,7 @@ class _XlsFormulaUnsupported implements Exception {
   const _XlsFormulaUnsupported();
 }
 
-/// Reconstructs a formula's display text from its BIFF8 parsed expression —
+/// Reconstructs a formula's display text from its BIFF8 parsed expression,
 /// the `rgce` RPN token stream of FORMULA/SHRFMLA/ARRAY records.
 ///
 /// The stream is replayed against a string stack; `tParen` tokens mark where
@@ -91,7 +91,7 @@ class _XlsFormulaDecoder {
     } on _XlsFormulaUnsupported {
       return null;
     } on RangeError {
-      return null; // truncated operand data — degrade to the cached result
+      return null; // truncated operand data: degrade to the cached result
     }
   }
 
@@ -134,7 +134,7 @@ class _XlsFormulaDecoder {
         _stack.add('${_pop()}%');
       case 0x15: // tParen
         _stack.add('(${_pop()})');
-      case 0x16: // tMissArg — an omitted argument between separators
+      case 0x16: // tMissArg: an omitted argument between separators
         _stack.add('');
       case 0x17: // tStr
         _stack.add('"${_readShortString().replaceAll('"', '""')}"');
@@ -168,10 +168,10 @@ class _XlsFormulaDecoder {
 
   void _classedToken(int base) {
     switch (base) {
-      case 0x00: // tArray — constants live in the trailing rgcb block
+      case 0x00: // tArray: constants live in the trailing rgcb block
         _skip(7);
         _stack.add(_arrayLiteral());
-      case 0x01: // tFunc — fixed argument count from the function table
+      case 0x01: // tFunc: fixed argument count from the function table
         final function = _xlsFunctions[_u16()];
         if (function == null || function.$2 < 0) _unsupported();
         _pushCall(function.$1, function.$2);
@@ -198,7 +198,7 @@ class _XlsFormulaDecoder {
         _stack.add(_ref(_u16(), _u16()));
       case 0x05: // tArea
         _stack.add(_area());
-      case 0x06: // tMemArea — precomputed extent; the real refs follow inline
+      case 0x06: // tMemArea: precomputed extent; the real refs follow inline
         _skip(6);
         _skipCb(2 + _cb16Peek() * 8);
       case 0x07: // tMemErr

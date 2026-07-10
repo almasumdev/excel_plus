@@ -153,11 +153,11 @@ class Excel {
     return Excel.decodeBytes(Base64Decoder().convert(_newSheet));
   }
 
-  /// Decodes an `.xlsx` — or legacy binary `.xls` — file from a byte list.
+  /// Decodes an `.xlsx` or legacy binary `.xls` file from a byte list.
   ///
   /// The format is detected from the file's magic bytes, so both kinds of
   /// spreadsheet open through this one call. A legacy `.xls` (BIFF8,
-  /// Excel 97–2003) workbook is decoded **read-only** into the same model:
+  /// Excel 97-2003) workbook is decoded **read-only** into the same model:
   /// values, dates, merged cells, styles, and sheet layout are imported, and
   /// formulas are decoded from their binary token streams back to
   /// [FormulaCellValue] text (shared and array formulas included), keeping
