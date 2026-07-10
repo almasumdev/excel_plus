@@ -62,11 +62,14 @@
       <path d="M419 240V336M606 240V336" stroke="#10603A" stroke-width="5"/>
       <!-- sheen on the header -->
       <rect x="232" y="240" width="560" height="46" fill="#FFFFFF" opacity="0.10"/>
+      <!-- format names as cell content -->
+      <text x="325" y="496" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="46" font-weight="700" letter-spacing="3" fill="#14603A">XLS</text>
+      <text x="512" y="496" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="46" font-weight="700" letter-spacing="2" fill="#FFFFFF">XLSX</text>
     </g>
     <rect x="232" y="240" width="560" height="480" rx="44" fill="none" stroke="#2CA363" stroke-width="4"/>
 
     <!-- plus mark -->
-    <g transform="translate(-84 -160)">
+    <g transform="translate(-23 -136) scale(0.92)">
       <path d="M700 640h84a18 18 0 0 1 18 18v66h66a18 18 0 0 1 18 18v84a18 18 0 0 1-18 18h-66v66a18 18 0 0 1-18 18h-84a18 18 0 0 1-18-18v-66h-66a18 18 0 0 1-18-18v-84a18 18 0 0 1 18-18h66v-66a18 18 0 0 1 18-18z"
             fill="#58E07C" stroke="#58E07C" stroke-width="36" opacity="0.7" filter="url(#soft2)"/>
       <path d="M700 640h84a18 18 0 0 1 18 18v66h66a18 18 0 0 1 18 18v84a18 18 0 0 1-18 18h-66v66a18 18 0 0 1-18 18h-84a18 18 0 0 1-18-18v-66h-66a18 18 0 0 1-18-18v-84a18 18 0 0 1 18-18h66v-66a18 18 0 0 1 18-18z"
@@ -74,16 +77,6 @@
       <path d="M700 640h84a18 18 0 0 1 18 18v66h66a18 18 0 0 1 18 18v84a18 18 0 0 1-18 18h-66v66a18 18 0 0 1-18 18h-84a18 18 0 0 1-18-18v-66h-66a18 18 0 0 1-18-18v-84a18 18 0 0 1 18-18h66v-66a18 18 0 0 1 18-18z"
             fill="url(#gloss)" stroke="#E7F7E8" stroke-width="13"/>
       <path d="M706 664h72v88h88v72" fill="none" stroke="#C4F3A4" stroke-width="10" opacity="0.55" filter="url(#soft3)"/>
-    </g>
-
-    <!-- file-format tags -->
-    <g>
-      <rect x="256" y="706" width="130" height="64" rx="32" fill="#0E2117" opacity="0.45" filter="url(#soft3)"/>
-      <rect x="250" y="696" width="130" height="64" rx="32" fill="#14603A" stroke="#2CA363" stroke-width="3"/>
-      <text x="315" y="740" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="38" font-weight="700" letter-spacing="2" fill="#FFFFFF">XLS</text>
-      <rect x="402" y="706" width="168" height="64" rx="32" fill="#0E2117" opacity="0.45" filter="url(#soft3)"/>
-      <rect x="396" y="696" width="168" height="64" rx="32" fill="url(#gloss)" stroke="#E7F7E8" stroke-width="3"/>
-      <text x="480" y="740" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="38" font-weight="700" letter-spacing="2" fill="#0B4A29">XLSX</text>
     </g>
   </g>
 </svg>
