@@ -33,7 +33,7 @@
   </defs>
 
   <rect width="1024" height="1024" fill="url(#bg)"/>
-  <ellipse cx="285" cy="640" rx="240" ry="290" fill="#FFFFFF" opacity="0.42" filter="url(#soft)"/>
+  <ellipse cx="262" cy="545" rx="185" ry="235" fill="#FFFFFF" opacity="0.34" filter="url(#soft)"/>
   <ellipse cx="720" cy="400" rx="320" ry="290" fill="#37D877" opacity="0.30" filter="url(#soft)"/>
 
   <g transform="rotate(8 512 490)">
