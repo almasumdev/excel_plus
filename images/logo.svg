@@ -75,5 +75,15 @@
             fill="url(#gloss)" stroke="#E7F7E8" stroke-width="13"/>
       <path d="M706 664h72v88h88v72" fill="none" stroke="#C4F3A4" stroke-width="10" opacity="0.55" filter="url(#soft3)"/>
     </g>
+
+    <!-- file-format tags -->
+    <g>
+      <rect x="256" y="706" width="130" height="64" rx="32" fill="#0E2117" opacity="0.45" filter="url(#soft3)"/>
+      <rect x="250" y="696" width="130" height="64" rx="32" fill="#14603A" stroke="#2CA363" stroke-width="3"/>
+      <text x="315" y="740" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="38" font-weight="700" letter-spacing="2" fill="#FFFFFF">XLS</text>
+      <rect x="402" y="706" width="168" height="64" rx="32" fill="#0E2117" opacity="0.45" filter="url(#soft3)"/>
+      <rect x="396" y="696" width="168" height="64" rx="32" fill="url(#gloss)" stroke="#E7F7E8" stroke-width="3"/>
+      <text x="480" y="740" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="38" font-weight="700" letter-spacing="2" fill="#0B4A29">XLSX</text>
+    </g>
   </g>
 </svg>
