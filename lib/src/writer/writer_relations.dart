@@ -4,7 +4,7 @@ part of '../../excel_plus.dart';
 mixin _WriterRelationsMixin on _WriterBase {
   /// Rebuilds the `<hyperlinks>` element of [sheetName] from its model and, when
   /// there are external links (or foreign hyperlink rels to drop), (re)writes
-  /// the worksheet `_rels` part — keeping non-hyperlink relationships and
+  /// the worksheet `_rels` part, keeping non-hyperlink relationships and
   /// allocating fresh rIds for the links.
   void _applyHyperlinksForSheet(String sheetName) {
     final sheet = _excel._sheetMap[sheetName];

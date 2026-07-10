@@ -1,6 +1,6 @@
 part of '../../excel_plus.dart';
 
-/// Internal evaluation value — the runtime result of a formula sub-expression.
+/// Internal evaluation value, the runtime result of a formula sub-expression.
 ///
 /// Kept separate from the public [CellValue] hierarchy so the evaluator can
 /// model blanks, arrays, and errors uniformly; converted back with

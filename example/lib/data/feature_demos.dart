@@ -127,8 +127,8 @@ final _values = FeatureDemo(
   id: 'values',
   title: 'Values & types',
   description:
-      'Every cell value type excel_plus supports — text, integers, doubles, '
-      'booleans, dates, times, date-times and formulas — each written with its '
+      'Every cell value type excel_plus supports: text, integers, doubles, '
+      'booleans, dates, times, date-times and formulas, each written with its '
       'natural Dart type.',
   points: [
     'TextCellValue, IntCellValue, DoubleCellValue, BoolCellValue',
@@ -211,7 +211,7 @@ final _fonts = FeatureDemo(
   title: 'Fonts & text',
   description:
       'Style the text itself: weight, slant, underline, size, colour and font '
-      'family — alone or combined.',
+      'family, alone or combined.',
   points: [
     'bold, italic, underline',
     'fontSize and fontFamily',
@@ -309,7 +309,7 @@ final _fills = FeatureDemo(
       'hex string, with a matching font colour.',
   points: [
     'backgroundColorHex on any cell',
-    'Named colours (green, blue, amber…) or ExcelColor.fromHexString',
+    'Named colours (green, blue, amber...) or ExcelColor.fromHexString',
     'Pair with a contrasting fontColorHex',
   ],
   snippet: '''
@@ -397,11 +397,11 @@ final _borders = FeatureDemo(
   id: 'borders',
   title: 'Borders',
   description:
-      'Per-side borders with independent line styles and colours — from hair '
+      'Per-side borders with independent line styles and colours, from hair '
       'lines to thick, double and dashed.',
   points: [
     'leftBorder / rightBorder / topBorder / bottomBorder',
-    'BorderStyle: Thin, Medium, Thick, Double, Dashed, Dotted…',
+    'BorderStyle: Thin, Medium, Thick, Double, Dashed, Dotted...',
     'Custom borderColorHex per side',
   ],
   snippet: '''
@@ -620,12 +620,12 @@ final _numberFormats = FeatureDemo(
   id: 'formats',
   title: 'Number formats',
   description:
-      'Standard and custom number formats — integers, decimals, thousands, '
+      'Standard and custom number formats: integers, decimals, thousands, '
       'currency, percent, scientific, dates and times.',
   points: [
     'NumFormat.standard_* for the common Excel formats',
     "NumFormat.custom(formatCode: r'\$#,##0.00')",
-    'Applied via CellStyle(numberFormat: …)',
+    'Applied via CellStyle(numberFormat: ...)',
   ],
   snippet: '''
 sheet.updateCell(
@@ -830,7 +830,7 @@ final _formulas = FeatureDemo(
   points: [
     'FormulaCellValue(\'SUM(A1:A5)\')',
     'Reference cells, ranges and other sheets',
-    'Arithmetic, SUM, AVERAGE, MIN, MAX, …',
+    'Arithmetic, SUM, AVERAGE, MIN, MAX, ...',
   ],
   snippet: '''
 sheet.updateCell(
@@ -956,7 +956,7 @@ final _formulaEval = FeatureDemo(
   id: 'formula_eval',
   title: 'Formula evaluation',
   description:
-      'Compute formula results in pure Dart — no spreadsheet app needed. '
+      'Compute formula results in pure Dart, no spreadsheet app needed. '
       'evaluate() returns a single cell\'s value; recalculate() fills every '
       'formula\'s cached result. ~130 built-in functions plus your own.',
   points: [
@@ -1241,7 +1241,7 @@ Excel buildMultiSheet() {
 // ---------------------------------------------------------------------------
 
 /// Display labels for the references stored in [themeIndexedSampleBase64],
-/// in the same order as cells A1–A9 of that sample.
+/// in the same order as cells A1-A9 of that sample.
 const _colorRefs = <String>[
   'theme 4 · Accent 1',
   'theme 4 · tint −25%',
@@ -1259,7 +1259,7 @@ final _colorsRead = FeatureDemo(
   title: 'Theme & indexed colours (read)',
   description:
       'Excel and Google Sheets store most colours as a theme reference plus a '
-      'tint, or a legacy palette index — not literal RGB. excel_plus resolves '
+      'tint, or a legacy palette index, not literal RGB. excel_plus resolves '
       'them to real ARGB on read. This demo decodes a workbook that uses such '
       'references and shows the colour each one resolved to.',
   points: [
@@ -1283,7 +1283,7 @@ import 'package:excel_plus/excel_plus.dart';
 
 /// Reads the resolved font colour of every cell in the first column.
 /// Theme references (<color theme="N" tint="X"/>) and legacy indexed
-/// references (<color indexed="N"/>) are resolved to ARGB automatically —
+/// references (<color indexed="N"/>) are resolved to ARGB automatically;
 /// no extra work needed at the call site.
 List<String> readColours(List<int> xlsxBytes) {
   final excel = Excel.decodeBytes(xlsxBytes);
@@ -1381,7 +1381,7 @@ Excel buildThemeColours() {
   final excel = Excel.createExcel();
   final s = excel[excel.getDefaultSheet() ?? 'Sheet1'];
 
-  // Font + fill in a theme colour — both written as theme references and so
+  // Font + fill in a theme colour, both written as theme references and so
   // they track the document's colour scheme rather than a fixed RGB value.
   s.updateCell(
     CellIndex.indexByString('A1'),
@@ -1474,10 +1474,10 @@ final _hyperlinks = FeatureDemo(
   description:
       'Attach clickable links to cells: external web / mailto URLs and internal '
       'jumps to another cell or sheet. Each can carry display text and a hover '
-      'tooltip, and they survive a read → save round-trip.',
+      'tooltip, and they survive a read/save round-trip.',
   points: [
-    'Hyperlink.url(…) for web and file links',
-    'Hyperlink.email(address, subject: …) for mailto links',
+    'Hyperlink.url(...) for web and file links',
+    'Hyperlink.email(address, subject: ...) for mailto links',
     "Hyperlink.location(\"'Sheet'!A1\") for internal jumps",
     'sheet.setHyperlink(cell, link) or cell.hyperlink = link',
   ],
@@ -1591,7 +1591,7 @@ final _dataValidation = FeatureDemo(
   title: 'Data validation',
   description:
       'Constrain what a cell accepts: dropdown lists, whole-number and decimal '
-      'ranges, text length and custom formulas — each with an optional input '
+      'ranges, text length and custom formulas, each with an optional input '
       'prompt and error message. Open the exported file in Excel to use the '
       'dropdowns and see the rules enforced.',
   points: [
@@ -1676,7 +1676,7 @@ Excel _buildDataValidation() {
       'Discount',
       DoubleCellValue(0.1),
       'Decimal between 0 and 1',
-      DataValidation.decimal(min: 0, max: 1, error: 'Use a fraction 0–1'),
+      DataValidation.decimal(min: 0, max: 1, error: 'Use a fraction 0-1'),
     ),
     (
       'Code',
@@ -1728,7 +1728,7 @@ final _sheetView = FeatureDemo(
     'sheet.freezePanes(rows: 1, columns: 1)',
     'sheet.showGridLines = false',
     'sheet.zoom = 120 (percent)',
-    'All survive a read → save round-trip',
+    'All survive a read/save round-trip',
   ],
   snippet: '''
 sheet.freezePanes(rows: 1, columns: 1); // keep header row + first column
@@ -1822,7 +1822,7 @@ final _autoFilter = FeatureDemo(
   title: 'Autofilter',
   description:
       'Add filter dropdowns across a header row so the data below can be '
-      'sorted and filtered — and apply the actual filter criteria so only '
+      'sorted and filtered, and apply the actual filter criteria so only '
       'matching rows show when the file is opened. This demo filters Category '
       'to Peripherals/Accessories and Price above 50.',
   points: [
@@ -1836,7 +1836,7 @@ sheet.setAutoFilter(
   CellIndex.indexByString('A1'),
   CellIndex.indexByString('C7'),
   criteria: [
-    FilterColumn.values(1, ['Peripherals', 'Accessories']), // Category is one of…
+    FilterColumn.values(1, ['Peripherals', 'Accessories']), // Category is one of...
     FilterColumn.custom(2, operator: FilterOperator.greaterThan, value: '50'),
   ],
 );''',
@@ -1937,7 +1937,7 @@ final _sheetProtection = FeatureDemo(
       'password, while still allowing chosen actions like sorting and using '
       'filters. Open the exported file in Excel and try to edit a cell.',
   points: [
-    'sheet.protect(password: …, allow: {…})',
+    'sheet.protect(password: ..., allow: {...})',
     'SheetProtectionOption controls what stays permitted',
     'sheet.unprotect() removes it',
     'Opened files keep their existing password hash on save',
@@ -2089,7 +2089,7 @@ Excel _buildSheetTabs() {
   _put(q2, 0, 0, TextCellValue('Q2 revenue'), _box(bold: true));
   _put(q2, 1, 0, DoubleCellValue(148500), _box(align: HorizontalAlign.Right));
 
-  // A hidden helper sheet — present in the file but not shown as a tab.
+  // A hidden helper sheet, present in the file but not shown as a tab.
   final notes = excel['Notes'];
   notes.visibility = SheetVisibility.hidden;
   _put(notes, 0, 0, TextCellValue('Internal notes (hidden tab)'), _box());
@@ -2179,8 +2179,8 @@ final _richText = FeatureDemo(
   title: 'Rich text',
   description:
       'Mix several styles within a single cell using TextCellValue.span and a '
-      'TextSpan tree of runs — bold, italic, colour, size and font per segment. '
-      'Runs are preserved through a read → save round-trip.',
+      'TextSpan tree of runs: bold, italic, colour, size and font per segment. '
+      'Runs are preserved through a read/save round-trip.',
   points: [
     'TextCellValue.span(TextSpan(children: [...]))',
     'Each run carries its own CellStyle',
@@ -2294,7 +2294,7 @@ final _conditionalFormat = FeatureDemo(
   points: [
     'ConditionalFormat.colorScale(min:, mid:, max:)',
     'ConditionalFormat.dataBar(color)',
-    'ConditionalFormat.iconSet(IconSetType.threeTrafficLights1, …)',
+    'ConditionalFormat.iconSet(IconSetType.threeTrafficLights1, ...)',
     'ConditionalFormat.greaterThan / lessThan / between (with a style)',
     'ConditionalFormat.formula(expr, style:)',
     'Read back rules via sheet.conditionalFormats (type / operator / range)',
@@ -2404,14 +2404,14 @@ final _cellErrors = FeatureDemo(
   id: 'cell_errors',
   title: 'Error values',
   description:
-      'Read and write Excel error literals (#DIV/0!, #N/A, #REF! …) as typed '
+      'Read and write Excel error literals (#DIV/0!, #N/A, #REF! ...) as typed '
       'CellErrorValue cells. Cells stored as t="e" round-trip, and you can test '
       'any value with cell.value?.isError.',
   points: [
-    'CellErrorValue.divisionByZero / notAvailable / reference / …',
+    'CellErrorValue.divisionByZero / notAvailable / reference / ...',
     'cell.value.isError and .asError to detect errors',
     'Formula cells keep a cached <v> result (FormulaCellValue.cachedValue)',
-    'Round-trips read → save',
+    'Round-trips read/save',
   ],
   snippet: '''
 sheet.updateCell(
@@ -2479,7 +2479,7 @@ final _images = FeatureDemo(
       'back via sheet.images, and any already in an opened file are preserved. '
       'Open the exported file in Excel/Sheets to see the pictures.',
   points: [
-    'sheet.insertImage(bytes, anchor: CellIndex…)',
+    'sheet.insertImage(bytes, anchor: CellIndex...)',
     'width / height override the intrinsic pixel size',
     'sheet.images reads pictures back (bytes + anchor + size)',
     'PNG, JPEG and GIF supported',
@@ -2560,7 +2560,7 @@ final _pageSetup = FeatureDemo(
       'print area, repeating print titles, and manual page breaks. Open the '
       'exported file and use Print Preview to see the layout.',
   points: [
-    'sheet.pageSetup = PageSetup(orientation, fitToWidth, margins…)',
+    'sheet.pageSetup = PageSetup(orientation, fitToWidth, margins...)',
     'sheet.setPrintArea(from, to)',
     'sheet.setPrintTitleRows(0, 0) repeats the header on every page',
     'sheet.insertRowPageBreak(row) / insertColumnPageBreak(col)',
@@ -2673,7 +2673,7 @@ sheet.groupRows(1, 4, collapsed: true);
 
 // Nest a deeper level inside another group:
 sheet.groupRows(1, 8);
-sheet.groupRows(2, 5);   // rows 3–6 become outline level 2
+sheet.groupRows(2, 5);   // rows 3-6 become outline level 2
 
 // Group columns, or just hide one:
 sheet.groupColumns(1, 3);
@@ -2758,7 +2758,7 @@ final _comments = FeatureDemo(
       'Hover the little red triangle in Excel/Sheets to read the note. Comments '
       'already in an opened file are read back and preserved on save.',
   points: [
-    "sheet.setComment(index, Comment('text', author: '…'))",
+    "sheet.setComment(index, Comment('text', author: '...'))",
     'cell.comment = Comment(...)',
     'sheet.getComment(index) / sheet.comments to read',
     'sheet.removeComment(index) to clear',
@@ -2817,7 +2817,7 @@ Excel _buildComments() {
   _put(s, 0, 2, TextCellValue('Forecast'), _box());
   _put(s, 1, 2, IntCellValue(140000), _box());
   s.cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: 2)).comment =
-      Comment('Estimate only — revise after Q1', author: 'Finance');
+      Comment('Estimate only, revise after Q1', author: 'Finance');
 
   _put(
     s,
@@ -2844,7 +2844,7 @@ final _workbookProtection = FeatureDemo(
       'moved, or hidden in Excel. An optional password (legacy hash) is required '
       'to unprotect. This protects the workbook, not individual cells.',
   points: [
-    'excel.protectWorkbook(password: "…")',
+    'excel.protectWorkbook(password: "...")',
     'lockStructure: locks add/delete/rename/move sheets',
     'lockWindows: locks window size & position',
     'excel.unprotectWorkbook() to clear',
@@ -2923,10 +2923,10 @@ final _patternFills = FeatureDemo(
   description:
       'Beyond solid fills, cells can use a hatch/shade pattern. backgroundColor '
       'is the pattern colour, drawn over an optional fillBackgroundColor. Unlike '
-      'workbook protection, fills render everywhere — Excel, Google Sheets, and '
+      'workbook protection, fills render everywhere: Excel, Google Sheets, and '
       'LibreOffice.',
   points: [
-    'CellStyle(fillPattern: FillPatternType.darkGrid, …)',
+    'CellStyle(fillPattern: FillPatternType.darkGrid, ...)',
     'backgroundColor = the pattern (foreground) colour',
     'fillBackgroundColor = the colour behind the pattern',
     'FillPatternType.solid (or null) = a plain solid fill',
@@ -2938,7 +2938,7 @@ sheet.cell(CellIndex.indexByString('A1')).cellStyle = CellStyle(
   fillBackgroundColorHex: ExcelColor.white,                 // behind it
 );
 
-// gray125 / lightUp / darkTrellis … all supported; solid is the default.''',
+// gray125 / lightUp / darkTrellis ... all supported; solid is the default.''',
   fullCode: r'''
 import 'package:excel_plus/excel_plus.dart';
 
@@ -3018,15 +3018,15 @@ final _gradientFills = FeatureDemo(
       'box out to the edges. A gradientFill takes precedence over a solid '
       'backgroundColor or a fillPattern.',
   points: [
-    'GradientFill.linear(degree:, stops:) — 0° left→right, 90° top→bottom',
-    'GradientFill.path(left:, right:, top:, bottom:, stops:) — radial-ish',
-    'GradientStop(position 0.0–1.0, ExcelColor) — two or more stops',
-    'Set it via CellStyle(gradientFill: …); reads back on CellStyle.gradientFill',
+    'GradientFill.linear(degree:, stops:), 0° left to right, 90° top to bottom',
+    'GradientFill.path(left:, right:, top:, bottom:, stops:), radial-ish',
+    'GradientStop(position 0.0-1.0, ExcelColor), two or more stops',
+    'Set it via CellStyle(gradientFill: ...); reads back on CellStyle.gradientFill',
   ],
   snippet: '''
 sheet.cell(CellIndex.indexByString('A1')).cellStyle = CellStyle(
   gradientFill: GradientFill.linear(
-    degree: 90, // top → bottom
+    degree: 90, // top to bottom
     stops: [
       GradientStop(0, ExcelColor.fromHexString('FF2962FF')),
       GradientStop(1, ExcelColor.white),
@@ -3090,7 +3090,7 @@ Excel _buildGradientFills() {
 
   final rows = <(String, GradientFill)>[
     (
-      'linear 0° (left→right)',
+      'linear 0° (left to right)',
       GradientFill.linear(
         stops: [
           GradientStop(0, ExcelColor.fromHexString('FF2962FF')),
@@ -3099,7 +3099,7 @@ Excel _buildGradientFills() {
       ),
     ),
     (
-      'linear 90° (top→bottom)',
+      'linear 90° (top to bottom)',
       GradientFill.linear(
         degree: 90,
         stops: [
@@ -3260,14 +3260,14 @@ final _charts = FeatureDemo(
   description:
       'Author charts over your data: column, bar, line, area, pie, doughnut and '
       'scatter. Each is anchored to a cell with a title, legend, multiple series '
-      'and category labels — and you can colour each series, or each pie/doughnut '
+      'and category labels, and you can colour each series, or each pie/doughnut '
       'slice, explicitly. Download the file to see the rendered chart.',
   points: [
     'Chart.column / bar / line / area / pie / doughnut / scatter',
     'Multiple series + category labels from cell ranges',
     'Custom colours: ChartSeries(color:) per series, pointColors: per slice',
     'Title, axis titles and legend position',
-    'sheet.addChart(...) — anchored to a cell',
+    'sheet.addChart(...), anchored to a cell',
   ],
   snippet: '''
 // colour each series explicitly (falls back to a palette if omitted)
@@ -3435,8 +3435,8 @@ final _sparklines = FeatureDemo(
       'column, or win/loss sparklines; open the file in Excel to see them drawn '
       'in the cells. Groups in an opened file read back via sheet.sparklineGroups.',
   points: [
-    'sheet.addSparkline(location:, dataRange:, type:, color:) — single',
-    'sheet.addSparklineGroup(SparklineGroup(…)) — shared style, many rows',
+    'sheet.addSparkline(location:, dataRange:, type:, color:), single',
+    'sheet.addSparklineGroup(SparklineGroup(...)), shared style, many rows',
     'SparklineType.line / column / stacked (win-loss)',
     'high / low / first / last / negative markers with their own colours',
   ],
@@ -3551,7 +3551,7 @@ final _pivotTables = FeatureDemo(
   title: 'Pivot tables',
   description:
       'Summarise a range with a pivot table: group by one column and aggregate '
-      'one or more measures (sum, count, average, …). The cache refreshes on '
+      'one or more measures (sum, count, average, ...). The cache refreshes on '
       'open, so Excel rebuilds it from the source. Download to view it live.',
   points: [
     'sheet.addPivotTable(PivotTable(...))',

@@ -32,7 +32,7 @@ bool _listEquals<T>(List<T>? a, List<T>? b) {
   return true;
 }
 
-/// Column-letter memo, grown on demand — [getCellId] runs once per cell on
+/// Column-letter memo, grown on demand; [getCellId] runs once per cell on
 /// save, so the letters must not be recomputed each call.
 final List<String> _columnLetters = [];
 
@@ -171,7 +171,7 @@ void _damagedExcel({String text = '', String? part}) {
 }
 
 ///
-/// Thrown when the bytes are not a readable `.xlsx` container — not a valid ZIP
+/// Thrown when the bytes are not a readable `.xlsx` container: not a valid ZIP
 /// archive, or missing a required package part.
 ///
 void _corruptArchive({String text = '', String? part, Object? cause}) {

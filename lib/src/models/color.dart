@@ -2104,7 +2104,7 @@ class ExcelColor {
   /// The predefined [ExcelColor] constants keyed by their hex string.
   static Map<String, ExcelColor> get valuesAsMap => Map.of(_byHex);
 
-  /// Cached hex → constant lookup. [values] and [valuesAsMap] are getters that
+  /// Cached hex to constant lookup. [values] and [valuesAsMap] are getters that
   /// rebuild the whole ~300-entry palette on every access, so any per-cell path
   /// (e.g. [CellStyle]'s color normalization) must resolve through this map,
   /// never through those getters.
@@ -2113,7 +2113,7 @@ class ExcelColor {
   };
   // colorHex/colorInt are pure functions of _color, so they are omitted here:
   // _color equality already implies theirs, and computing them per comparison
-  // re-validates and re-parses the hex string — far too hot for a field that
+  // re-validates and re-parses the hex string, far too hot for a field that
   // is hashed once per styled cell on save.
   @override
   bool operator ==(Object other) =>
@@ -2151,39 +2151,39 @@ enum ColorType {
 ///
 /// {@category Styling}
 enum ThemeColor {
-  /// `theme="0"` — the first light/background color (usually white).
+  /// `theme="0"`: the first light/background color (usually white).
   background1,
 
-  /// `theme="1"` — the first dark/text color (usually black).
+  /// `theme="1"`: the first dark/text color (usually black).
   text1,
 
-  /// `theme="2"` — the second light/background color.
+  /// `theme="2"`: the second light/background color.
   background2,
 
-  /// `theme="3"` — the second dark/text color.
+  /// `theme="3"`: the second dark/text color.
   text2,
 
-  /// `theme="4"` — accent 1.
+  /// `theme="4"`: accent 1.
   accent1,
 
-  /// `theme="5"` — accent 2.
+  /// `theme="5"`: accent 2.
   accent2,
 
-  /// `theme="6"` — accent 3.
+  /// `theme="6"`: accent 3.
   accent3,
 
-  /// `theme="7"` — accent 4.
+  /// `theme="7"`: accent 4.
   accent4,
 
-  /// `theme="8"` — accent 5.
+  /// `theme="8"`: accent 5.
   accent5,
 
-  /// `theme="9"` — accent 6.
+  /// `theme="9"`: accent 6.
   accent6,
 
-  /// `theme="10"` — hyperlink color.
+  /// `theme="10"`: hyperlink color.
   hyperlink,
 
-  /// `theme="11"` — followed-hyperlink color.
+  /// `theme="11"`: followed-hyperlink color.
   followedHyperlink,
 }

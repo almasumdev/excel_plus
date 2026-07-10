@@ -272,7 +272,7 @@ abstract class _WriterBase {
   }
 
   /// Serializes [rels] to the `_rels` part for [partPath] (overwriting it).
-  /// Works for any part (worksheet, drawing, …); the path is derived via
+  /// Works for any part (worksheet, drawing, ...); the path is derived via
   /// [_relsPathFor].
   void _writeWorksheetRels(String partPath, List<_Relationship> rels) {
     final root = XmlElement(
@@ -309,7 +309,7 @@ abstract class _WriterBase {
   }
 
   /// Relative target from a worksheet (`xl/worksheets/sheetN.xml`) to [partPath]
-  /// under `xl/` — i.e. one directory up.
+  /// under `xl/`, i.e. one directory up.
   String _worksheetRelTarget(String partPath) =>
       partPath.startsWith('xl/') ? '../${partPath.substring(3)}' : partPath;
 

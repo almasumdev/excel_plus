@@ -80,11 +80,11 @@ class _SheetBase {
 
   /// Conditional-formatting rules parsed from an opened file (each tagged with
   /// its range). Surfaced via [conditionalFormats] for inspection but never
-  /// re-written — the originals round-trip untouched in the sheet envelope.
+  /// re-written, the originals round-trip untouched in the sheet envelope.
   final List<ConditionalFormat> _parsedConditionalFormats = [];
 
   /// Sparkline groups added via the API (appended into the worksheet `extLst`
-  /// on save); and those parsed from an opened file (for inspection only —
+  /// on save); and those parsed from an opened file (for inspection only:
   /// preserved untouched in the envelope, never re-emitted).
   final List<SparklineGroup> _sparklineGroups = [];
   final List<SparklineGroup> _parsedSparklineGroups = [];
@@ -137,7 +137,7 @@ class _SheetBase {
   /// Whether page breaks were changed via the API (gates rewriting them).
   bool _pageBreaksChanged = false;
 
-  /// Outline (grouping) level per row index (1–7); absent means level 0.
+  /// Outline (grouping) level per row index (1-7); absent means level 0.
   final Map<int, int> _rowOutlineLevel = {};
 
   /// Row indices that are hidden (collapsed groups or [setRowHidden]).
@@ -146,7 +146,7 @@ class _SheetBase {
   /// Summary-row indices marked collapsed (the `<row collapsed="1">` flag).
   final Set<int> _rowCollapsed = {};
 
-  /// Outline (grouping) level per column index (1–7); absent means level 0.
+  /// Outline (grouping) level per column index (1-7); absent means level 0.
   final Map<int, int> _columnOutlineLevel = {};
 
   /// Column indices that are hidden (collapsed groups or [setColumnHidden]).
@@ -242,7 +242,7 @@ class _SheetBase {
   /// Evaluates the formula at [index] and returns the computed [CellValue].
   ///
   /// A cell holding a literal value is returned unchanged; an empty cell returns
-  /// `null`. This is **opt-in** — nothing here runs during normal read/write,
+  /// `null`. This is **opt-in**; nothing here runs during normal read/write,
   /// so plain workbooks pay no cost. References to other cells (including other
   /// sheets), ranges, defined names, and the built-in function library are
   /// resolved on demand.
@@ -553,7 +553,7 @@ class _SheetBase {
     _imagesChanged = true;
   }
 
-  /// The charts on this sheet — both those added via [addChart] and those read
+  /// The charts on this sheet, both those added via [addChart] and those read
   /// from an opened file. Read-only.
   ///
   /// Charts read from a file are reconstructed from their chart part (type,
@@ -584,7 +584,7 @@ class _SheetBase {
     _chartsChanged = true;
   }
 
-  /// The pivot tables on this sheet — both those added via [addPivotTable] and
+  /// The pivot tables on this sheet, both those added via [addPivotTable] and
   /// those read from an opened file. Read-only.
   ///
   /// Pivots read from a file are reconstructed from their definition and cache
@@ -703,7 +703,7 @@ class _SheetBase {
   bool get showRowColHeaders => _showRowColHeaders;
   set showRowColHeaders(bool value) => _showRowColHeaders = value;
 
-  /// The zoom level as a percentage (Excel supports 10–400), or `null` for the
+  /// The zoom level as a percentage (Excel supports 10-400), or `null` for the
   /// default. Non-positive values are treated as unset.
   int? get zoom => _zoomScale;
   set zoom(int? value) =>
@@ -814,7 +814,7 @@ class _SheetBase {
   /// Protects the sheet, locking every action except selecting cells and any
   /// listed in [allow].
   ///
-  /// An optional [password] is stored using Excel's legacy hash — it deters
+  /// An optional [password] is stored using Excel's legacy hash; it deters
   /// edits when the file is opened in Excel but is **not** strong encryption.
   ///
   /// ```dart
@@ -832,8 +832,8 @@ class _SheetBase {
     _sheetProtectionChanged = true;
   }
 
-  /// The conditional-formatting rules on this sheet — those read from an opened
-  /// file first, then any added via the API — each carrying its
+  /// The conditional-formatting rules on this sheet, those read from an opened
+  /// file first, then any added via the API, each carrying its
   /// [ConditionalFormat.range]. Read rules are for inspection; they round-trip
   /// untouched in the sheet envelope and are not re-emitted from this list.
   List<ConditionalFormat> get conditionalFormats => List.unmodifiable([
@@ -857,7 +857,7 @@ class _SheetBase {
     _conditionalFormats.add((sqref, format));
   }
 
-  /// The sparkline groups on this sheet — those read from an opened file first,
+  /// The sparkline groups on this sheet, those read from an opened file first,
   /// then any added via the API. Read groups are for inspection; they round-trip
   /// untouched in the worksheet `extLst`.
   List<SparklineGroup> get sparklineGroups =>
@@ -941,7 +941,7 @@ class _SheetBase {
   List<int> get columnPageBreaks => _colBreaks.toList()..sort();
 
   /// Inserts a manual page break above [rowIndex] (0-based) so that row begins a
-  /// new printed page. Indices `<= 0` are ignored — there is no page above the
+  /// new printed page. Indices `<= 0` are ignored; there is no page above the
   /// first row.
   void insertRowPageBreak(int rowIndex) {
     if (rowIndex <= 0) return;
@@ -998,13 +998,13 @@ class _SheetBase {
   /// The repeating title columns as a cleaned `A:A`-style range, or `null`.
   String? get printTitleColumns => _printTitlesHalf(rows: false);
 
-  /// Repeats rows [fromRow]–[toRow] (0-based, inclusive) at the top of every
+  /// Repeats rows [fromRow]-[toRow] (0-based, inclusive) at the top of every
   /// printed page. Preserves any repeating columns already set.
   void setPrintTitleRows(int fromRow, int toRow) => _setPrintTitles(
     rowsRef: '$_quotedSheetName!\$${fromRow + 1}:\$${toRow + 1}',
   );
 
-  /// Repeats columns [fromColumn]–[toColumn] (0-based, inclusive) at the left of
+  /// Repeats columns [fromColumn]-[toColumn] (0-based, inclusive) at the left of
   /// every printed page. Preserves any repeating rows already set.
   void setPrintTitleColumns(int fromColumn, int toColumn) => _setPrintTitles(
     colsRef:
@@ -1018,10 +1018,10 @@ class _SheetBase {
     localSheetId: _localSheetId,
   );
 
-  /// The outline (grouping) level of [rowIndex] — `0` when not grouped, up to 7.
+  /// The outline (grouping) level of [rowIndex], `0` when not grouped, up to 7.
   int rowOutlineLevel(int rowIndex) => _rowOutlineLevel[rowIndex] ?? 0;
 
-  /// The outline (grouping) level of [columnIndex] — `0` when not grouped.
+  /// The outline (grouping) level of [columnIndex], `0` when not grouped.
   int columnOutlineLevel(int columnIndex) =>
       _columnOutlineLevel[columnIndex] ?? 0;
 
@@ -1051,14 +1051,14 @@ class _SheetBase {
     }
   }
 
-  /// Groups rows [fromRow]–[toRow] (0-based, inclusive) into a collapsible
+  /// Groups rows [fromRow]-[toRow] (0-based, inclusive) into a collapsible
   /// outline. Each call nests one level deeper (Excel's "Group", max 7). When
   /// [collapsed] is true the rows are hidden and the summary row just below the
   /// group is flagged collapsed (Excel's default "summary below" layout).
   ///
   /// ```dart
-  /// sheet.groupRows(1, 4);                 // collapsible detail rows 2–5
-  /// sheet.groupRows(1, 4, collapsed: true); // …starting collapsed
+  /// sheet.groupRows(1, 4);                 // collapsible detail rows 2-5
+  /// sheet.groupRows(1, 4, collapsed: true); // ...starting collapsed
   /// ```
   void groupRows(int fromRow, int toRow, {bool collapsed = false}) {
     if (fromRow < 0 || toRow < fromRow) return;
@@ -1070,7 +1070,7 @@ class _SheetBase {
     if (collapsed) _rowCollapsed.add(toRow + 1);
   }
 
-  /// Removes one outline level from rows [fromRow]–[toRow] and un-hides them.
+  /// Removes one outline level from rows [fromRow]-[toRow] and un-hides them.
   void ungroupRows(int fromRow, int toRow) {
     if (fromRow < 0 || toRow < fromRow) return;
     for (var r = fromRow; r <= toRow; r++) {
@@ -1085,7 +1085,7 @@ class _SheetBase {
     _rowCollapsed.remove(toRow + 1);
   }
 
-  /// Groups columns [fromColumn]–[toColumn] (0-based, inclusive) into a
+  /// Groups columns [fromColumn]-[toColumn] (0-based, inclusive) into a
   /// collapsible outline. Each call nests one level deeper (max 7). When
   /// [collapsed] is true the columns are hidden and the summary column just to
   /// the right is flagged collapsed.
@@ -1099,7 +1099,7 @@ class _SheetBase {
     if (collapsed) _columnCollapsed.add(toColumn + 1);
   }
 
-  /// Removes one outline level from columns [fromColumn]–[toColumn] and
+  /// Removes one outline level from columns [fromColumn]-[toColumn] and
   /// un-hides them.
   void ungroupColumns(int fromColumn, int toColumn) {
     if (fromColumn < 0 || toColumn < fromColumn) return;

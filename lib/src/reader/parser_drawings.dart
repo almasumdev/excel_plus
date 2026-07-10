@@ -57,7 +57,7 @@ mixin _ParserDrawingsMixin on _ParserBase {
     try {
       doc = XmlDocument.parse(utf8.decode(file.content));
     } catch (_) {
-      return; // malformed drawing — degrade gracefully
+      return; // malformed drawing: degrade gracefully
     }
 
     // Map the drawing's own relationship ids to target part paths (media for
@@ -128,7 +128,7 @@ mixin _ParserDrawingsMixin on _ParserBase {
       try {
         cdoc = XmlDocument.parse(utf8.decode(file.content));
       } catch (_) {
-        continue; // malformed chart part — degrade gracefully
+        continue; // malformed chart part: degrade gracefully
       }
 
       final anchorEl = _ancestorAnchor(frame);
@@ -277,7 +277,7 @@ mixin _ParserDrawingsMixin on _ParserBase {
       .map((e) => e.innerText)
       .join();
 
-  /// The reference/text inside `ser > [tag] > … > <c:f>` (or a `<c:v>` literal
+  /// The reference/text inside `ser > [tag] > ... > <c:f>` (or a `<c:v>` literal
   /// when [leaf] is `'v'`), or `null`.
   String? _refText(XmlElement ser, String tag, {String leaf = 'f'}) {
     final box = ser.childElements.where((e) => e.name.local == tag).firstOrNull;
@@ -321,7 +321,7 @@ mixin _ParserDrawingsMixin on _ParserBase {
         }
       }
     } catch (_) {
-      // malformed rels — no images resolve
+      // malformed rels: no images resolve
     }
     return result;
   }

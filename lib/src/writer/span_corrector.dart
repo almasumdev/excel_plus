@@ -30,7 +30,7 @@ void _selfCorrectSpanMap(Excel excel) {
             _Span? b = spanList[j];
             if (b == null) continue;
 
-            // Quick overlap check — if bounding boxes don't overlap, skip.
+            // Quick overlap check: if bounding boxes don't overlap, skip.
             if (sRow > b.rowSpanEnd ||
                 eRow < b.rowSpanStart ||
                 sCol > b.columnSpanEnd ||

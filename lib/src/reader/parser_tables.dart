@@ -22,7 +22,7 @@ mixin _ParserTablesMixin on _ParserBase {
       try {
         doc = XmlDocument.parse(utf8.decode(file.content));
       } catch (_) {
-        continue; // malformed table part — degrade gracefully
+        continue; // malformed table part: degrade gracefully
       }
       final el = doc.findAllElements('table').firstOrNull;
       if (el == null) continue;

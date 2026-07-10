@@ -42,7 +42,7 @@ class Sparkline {
   int get hashCode => Object.hash(dataRange, location);
 }
 
-/// A group of [Sparkline]s that share one type and colour scheme — the unit
+/// A group of [Sparkline]s that share one type and colour scheme, the unit
 /// Excel stores sparklines in.
 ///
 /// Add one with [Sheet.addSparklineGroup] (or the [Sheet.addSparkline]

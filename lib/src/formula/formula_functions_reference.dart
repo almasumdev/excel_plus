@@ -1,6 +1,6 @@
 part of '../../excel_plus.dart';
 
-/// `#CALC!` — a dynamic-array function produced an empty result.
+/// `#CALC!`: a dynamic-array function produced an empty result.
 const _calcError = CellErrorValue('#CALC!');
 
 /// The inclusive 0-based bounding box `(sheet, c1, r1, c2, r2)` of a plain
@@ -64,7 +64,7 @@ String _evalKey(_EvalValue v) {
 ///
 /// The dynamic-array functions return a full [_ArrayVal]; they compose inside
 /// other functions (e.g. `SUM(FILTER(...))`) but do not yet *spill* across the
-/// grid — a top-level dynamic-array formula evaluates to its first cell.
+/// grid, a top-level dynamic-array formula evaluates to its first cell.
 void _registerReferenceFunctions(Map<String, _FormulaFn> r) {
   r['ROW'] = _guard((a) {
     if (a.length == 0) {

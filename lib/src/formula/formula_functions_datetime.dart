@@ -85,7 +85,7 @@ void _registerDateTimeFunctions(Map<String, _FormulaFn> r) {
         return _NumVal((mondayBased - 1).toDouble());
       default:
         // Types 12..16: a 1..7 week whose start day shifts (12 = Tuesday-based,
-        // … 16 = Saturday-based). Any other type is invalid → #NUM!.
+        // ... 16 = Saturday-based). Any other type is invalid: #NUM!.
         if (type >= 12 && type <= 16) {
           final startDay = type - 10; // 2 (Tue) .. 6 (Sat)
           return _NumVal((((mondayBased - startDay + 7) % 7) + 1).toDouble());

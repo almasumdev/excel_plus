@@ -1,6 +1,6 @@
 part of '../../excel_plus.dart';
 
-/// A classic cell comment (note) — the little pop-up box anchored to a cell.
+/// A classic cell comment (note), the little pop-up box anchored to a cell.
 ///
 /// Attach one with [Sheet.setComment] or `cell.comment = Comment(...)`, and read
 /// it back from [Sheet.getComment] / `cell.comment`.
@@ -33,5 +33,5 @@ class Comment {
 
   @override
   String toString() =>
-      'Comment(${author == null ? '' : '$author: '}${text.length > 30 ? '${text.substring(0, 30)}…' : text})';
+      'Comment(${author == null ? '' : '$author: '}${text.length > 30 ? '${text.substring(0, 30)}...' : text})';
 }

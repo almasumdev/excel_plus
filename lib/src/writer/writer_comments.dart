@@ -11,8 +11,8 @@ const _commentsNamespace =
 ///
 /// Only runs when comments changed via the API; an opened file's comments
 /// round-trip untouched otherwise (the parts ride `_cloneArchive`). Existing
-/// comment parts are regenerated from the full model — read comments plus any
-/// added — so adding to a file that already has comments keeps them all.
+/// comment parts are regenerated from the full model, read comments plus any
+/// added, so adding to a file that already has comments keeps them all.
 mixin _WriterCommentsMixin on _WriterBase {
   void _applyCommentsForSheet(String sheetName) {
     final sheet = _excel._sheetMap[sheetName];

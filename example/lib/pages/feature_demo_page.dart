@@ -80,7 +80,7 @@ class _FeatureDemoPageState extends State<FeatureDemoPage> {
               if (sheetCount > 1) ...[
                 const SizedBox(height: 8),
                 Text(
-                  'Workbook has $sheetCount sheets — previewing "$_sheetName".',
+                  'Workbook has $sheetCount sheets, previewing "$_sheetName".',
                   style: const TextStyle(
                     color: AppColors.muted,
                     fontSize: 12,
@@ -110,7 +110,7 @@ class _FeatureDemoPageState extends State<FeatureDemoPage> {
                             ),
                           )
                         : const Icon(Icons.download_outlined),
-                    label: Text(_busy ? 'Exporting…' : 'Export .xlsx'),
+                    label: Text(_busy ? 'Exporting...' : 'Export .xlsx'),
                     style: FilledButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 20,

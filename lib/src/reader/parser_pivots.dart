@@ -26,7 +26,7 @@ mixin _ParserPivotsMixin on _ParserBase {
       try {
         doc = XmlDocument.parse(utf8.decode(file.content));
       } catch (_) {
-        continue; // malformed pivot definition — degrade gracefully
+        continue; // malformed pivot definition: degrade gracefully
       }
 
       final pivot = _pivotFromDoc(pivotPath, doc);
@@ -134,7 +134,7 @@ mixin _ParserPivotsMixin on _ParserBase {
         .firstOrNull;
     if (ws == null) return null;
     final range = _parseRefRange(_attrByLocal(ws, 'ref'));
-    if (range == null) return null; // named-range / table source — not modeled
+    if (range == null) return null; // named-range / table source: not modeled
     return _PivotSource(
       from: range.$1,
       to: range.$2,
@@ -158,13 +158,13 @@ mixin _ParserPivotsMixin on _ParserBase {
         }
       }
     } catch (_) {
-      // malformed rels — fall through to the workbook mapping
+      // malformed rels: fall through to the workbook mapping
     }
     return null;
   }
 
   /// The cache-definition part path for [cacheId], via the workbook's
-  /// `<pivotCaches>` → workbook relationship chain.
+  /// `<pivotCaches>` to workbook relationship chain.
   String? _cacheDefFromWorkbook(int cacheId) {
     final wb = _excel._xmlFiles['xl/workbook.xml'];
     if (wb == null) return null;

@@ -57,9 +57,9 @@ void _registerLookupFunctions(Map<String, _FormulaFn> r) {
       selCol = colNum;
     } else if (nRows == 1) {
       selRow = 1;
-      selCol = rowNum; // single row → the index is the column
+      selCol = rowNum; // single row: the index is the column
     } else if (nCols == 1) {
-      selRow = rowNum; // single column → the index is the row
+      selRow = rowNum; // single column: the index is the row
       selCol = 1;
     } else {
       // 2-D array with a single selector is ambiguous unless it is 0.

@@ -114,8 +114,8 @@ void main() {
     });
 
     test('the worksheet dimension reflects the true used range', () {
-      // A stale dimension (the template's "A1") makes some consumers — notably
-      // Google Sheets — treat columns outside it as empty and drop their widths.
+      // A stale dimension (the template's "A1") makes some consumers, notably
+      // Google Sheets, treat columns outside it as empty and drop their widths.
       final excel = Excel.createExcel();
       final sheet = excel['Sheet1'];
       sheet.updateCell(CellIndex.indexByString('A1'), TextCellValue('a'));

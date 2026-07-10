@@ -52,7 +52,7 @@ void main() {
     });
 
     test('every part matches the buffered encode() byte-for-byte', () {
-      // Two fresh, identically-built workbooks — each encoded once — so the
+      // Two fresh, identically-built workbooks, each encoded once, so the
       // comparison isn't confused by encode()'s (pre-existing) non-idempotency
       // when called twice on one instance.
       final buffered = _sample().encode()!;

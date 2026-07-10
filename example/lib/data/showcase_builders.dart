@@ -40,7 +40,7 @@ Showcase? showcaseById(String id) {
 // phone-fit geometry
 // ---------------------------------------------------------------------------
 
-/// Target preview size, in CSS pixels — a portrait phone viewport. Each sheet's
+/// Target preview size, in CSS pixels: a portrait phone viewport. Each sheet's
 /// used range (A1 to its last cell, margin included) is sized to fill exactly
 /// this, so a screenshot of the used range is a phone-shaped image.
 const phoneWidthPx = 570.0;
@@ -54,8 +54,8 @@ const _marginCells = 5;
 
 // Excel renders the default Calibri-11 / 96-DPI grid as (the same conversion
 // xlsxwriter / openpyxl use):
-//   column:  px = chars * 7 + 5      → chars  = (px - 5) / 7
-//   row:     px = points * 96 / 72   → points = px * 0.75
+//   column:  px = chars * 7 + 5,    so chars  = (px - 5) / 7
+//   row:     px = points * 96 / 72,   so points = px * 0.75
 double _colCharsForPx(double px) => (px - 5) / 7;
 double _rowPointsForPx(double px) => px * 0.75;
 
@@ -65,8 +65,8 @@ List<double> _split(List<double> weights, double totalPx) {
 }
 
 /// Sizes columns `first..first+weights.length-1` so they together span exactly
-/// [totalPx] (default the whole frame), divided in proportion to [weights] —
-/// use each column's natural content width. The per-column 5px padding cancels
+/// [totalPx] (default the whole frame), divided in proportion to [weights]
+/// instead of each column's natural content width. The per-column 5px padding cancels
 /// in the sum, so the rendered total is exact regardless of the column count.
 void _fitColumns(
   Sheet s,
@@ -81,8 +81,8 @@ void _fitColumns(
 }
 
 /// Sizes rows `first..first+weights.length-1` so they together span exactly
-/// [totalPx]. Every row in the range must contain at least one cell — Excel
-/// drops the height of a truly empty row — so spacer rows carry a blank.
+/// [totalPx]. Every row in the range must contain at least one cell (Excel
+/// drops the height of a truly empty row), so spacer rows carry a blank.
 void _fitRows(Sheet s, List<double> weights, {int first = 0, double? totalPx}) {
   final px = _split(weights, totalPx ?? phoneHeightPx);
   for (var i = 0; i < px.length; i++) {
@@ -168,7 +168,7 @@ final _invoice = Showcase(
   id: 'invoice',
   title: 'Invoice',
   subtitle:
-      'A complete billing document — an accent bar, a merged title, a bill-to '
+      'A complete billing document: an accent bar, a merged title, a bill-to '
       'block beside aligned invoice meta, a zebra-striped itemised table, and a '
       'Subtotal / Tax / TOTAL stack. Offset 5×5 for a margin, and its used range '
       'is sized to fill a 570×795 portrait phone frame exactly.',
@@ -200,7 +200,7 @@ Excel _buildInvoice() {
 
   // Every cell is vertically centred; left/right cells get an indent so text
   // never touches a border, and the generous column widths keep the other side
-  // clear too — decent padding on both sides. (Centred cells need no indent.)
+  // clear too, with decent padding on both sides. (Centred cells need no indent.)
   CellStyle cs({
     bool bold = false,
     bool italic = false,
@@ -356,7 +356,7 @@ Excel _buildInvoice() {
     );
   }
 
-  // Totals stack — label merged across C:D, amount under the Amount column (E).
+  // Totals stack: label merged across C:D, amount under the Amount column (E).
   final tax = subtotal * 0.0825;
   final grand = subtotal + tax;
   var row = headerRow + items.length + 1;
@@ -497,7 +497,7 @@ Excel _buildTimesheet() {
   put(
     0,
     0,
-    TextCellValue('Timesheet — June 2026'),
+    TextCellValue('Timesheet - June 2026'),
     CellStyle(
       bold: true,
       fontSize: 15,
@@ -617,8 +617,8 @@ Excel _buildTimesheet() {
   );
 
   // A real clustered column chart of planned vs actual hours (renders in Excel).
-  // A two-cell anchor spans the chart area exactly — full table width (cols 0..3)
-  // by the 8 blank rows — so its edges line up with the title and table.
+  // A two-cell anchor spans the chart area exactly, full table width (cols 0..3)
+  // by the 8 blank rows, so its edges line up with the title and table.
   s.addChart(
     Chart.column(
       anchor: CellIndex.indexByColumnRow(columnIndex: dc, rowIndex: 1 + dr),
@@ -719,7 +719,7 @@ Excel _buildYearlySales() {
 
   // Seed a style-only cell into every column a merge spans. merge() strips the
   // covered cells, so a title/card that is purely a merge leaves its inner
-  // columns with no cell at all — and Google Sheets re-fits cell-less columns
+  // columns with no cell at all, and Google Sheets re-fits cell-less columns
   // to content, collapsing them (the right-hand cards shrink to one column).
   // A backing cell per column keeps the explicit <col> width; Excel and
   // LibreOffice still show only the anchor's text.
@@ -862,8 +862,8 @@ Excel _buildYearlySales() {
   }
 
   // plotVisibleOnly:false so the zero-height source rows plot regardless of how
-  // a viewer treats them. A two-cell anchor spans the chart area exactly — full
-  // width (cols 0..5) by the 8 blank rows — so it lines up with the title bar
+  // a viewer treats them. A two-cell anchor spans the chart area exactly, full
+  // width (cols 0..5) by the 8 blank rows, so it lines up with the title bar
   // and sits flush above the KPI cards.
   s.addChart(
     Chart.column(
@@ -1073,8 +1073,8 @@ Excel _buildEventExpenses() {
     ),
   );
 
-  // A two-cell anchor spans the chart area exactly — full table width (cols 0..3)
-  // by the 8 blank rows — so the pie lines up with the title and table.
+  // A two-cell anchor spans the chart area exactly, full table width (cols 0..3)
+  // by the 8 blank rows, so the pie lines up with the title and table.
   s.addChart(
     Chart.pie(
       anchor: CellIndex.indexByColumnRow(columnIndex: dc, rowIndex: 1 + dr),
@@ -1310,7 +1310,7 @@ Excel buildTimesheet() {
           indent: 1, leftBorder: edge(), rightBorder: edge(), topBorder: edge(), bottomBorder: edge());
 
   // title bar
-  put(0, 0, TextCellValue('Timesheet — June 2026'), CellStyle(bold: true, fontSize: 15,
+  put(0, 0, TextCellValue('Timesheet - June 2026'), CellStyle(bold: true, fontSize: 15,
       fontColorHex: ExcelColor.white, backgroundColorHex: slate,
       horizontalAlign: HorizontalAlign.Center, verticalAlign: VerticalAlign.Center));
   mergeRange(0, 0, 3, 0);

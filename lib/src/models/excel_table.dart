@@ -22,7 +22,7 @@ abstract final class TableStyle {
   static const dark1 = 'TableStyleDark1';
 }
 
-/// An Excel table (a "ListObject") over a rectangular range — a named region
+/// An Excel table (a "ListObject") over a rectangular range, a named region
 /// with a header row, banded styling, and a filter.
 ///
 /// Add one with [Sheet.addTable]; read existing tables via [Sheet.tables].
@@ -70,7 +70,7 @@ class ExcelTable {
   final bool showColumnStripes;
 
   /// Explicit column names. When omitted, names come from the header row (or are
-  /// generated as `Column1`, `Column2`, … when there is no header).
+  /// generated as `Column1`, `Column2`, ... when there is no header).
   final List<String>? columns;
 
   /// The table id from the source file (set on read; reused on write).

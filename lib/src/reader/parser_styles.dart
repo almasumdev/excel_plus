@@ -159,7 +159,7 @@ mixin _ParserStylesMixin on _ParserBase {
 
       // Materialized once: the per-xf loop below indexes into this by fontId,
       // and calling length/elementAt on the lazy findAllElements iterable would
-      // re-walk the whole styles tree per xf — O(xfs × tree). Scoped to the
+      // re-walk the whole styles tree per xf: O(xfs × tree). Scoped to the
       // <fonts> container so a <dxf>'s <font> can never be picked up by an
       // out-of-range fontId.
       final fontsEl = document.findAllElements('fonts').firstOrNull;
@@ -168,8 +168,8 @@ mixin _ParserStylesMixin on _ParserBase {
           : fontsEl.findElements('font').toList();
 
       // Iterate the `<fills>` children directly (rather than every
-      // `<patternFill>` in the document) so each fill maps to exactly one entry
-      // — keeping the parallel lanes index-aligned with `fillId`, and letting a
+      // `<patternFill>` in the document) so each fill maps to exactly one
+      // entry, keeping the parallel lanes index-aligned with `fillId`, and letting a
       // `<gradientFill>` occupy its slot without shifting the pattern indices.
       final fillsEl = document.findAllElements('fills').firstOrNull;
       final fillEls = fillsEl == null

@@ -10,7 +10,7 @@ void main() {
   group('Cell style roundtrip', () {
     test('a style-only cell (no value) is still written as a cell', () {
       // Styling a cell without giving it a value must emit a <c r s> element so
-      // the column counts as used — what merged-card layouts rely on to keep
+      // the column counts as used, which is what merged-card layouts rely on to keep
       // their column widths in Google Sheets.
       final excel = Excel.createExcel();
       excel['Sheet1'].cell(CellIndex.indexByString('B2')).cellStyle = CellStyle(

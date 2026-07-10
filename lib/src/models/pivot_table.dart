@@ -105,7 +105,7 @@ class PivotTable {
   int? _cacheId;
   bool _written = false;
 
-  /// Creates a pivot table over the source range [sourceFrom]–[sourceTo],
+  /// Creates a pivot table over the source range [sourceFrom]-[sourceTo],
   /// grouped by [rowField] and summarised by [dataFields], placed at [anchor].
   PivotTable({
     required this.name,

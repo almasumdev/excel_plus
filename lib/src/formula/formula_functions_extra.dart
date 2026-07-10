@@ -345,7 +345,7 @@ void _registerExtraFunctions(Map<String, _FormulaFn> r) {
     return _TextVal(_substitute(text, oldT, newT, instance));
   });
   r['REPLACE'] = _guard((a) {
-    // REPLACE(old_text, start_num, num_chars, new_text) — 1-based start.
+    // REPLACE(old_text, start_num, num_chars, new_text); 1-based start.
     final text = _coerceText(a.evalScalar(0));
     final start = _coerceNum(a.evalScalar(1)).toInt();
     final count = _coerceNum(a.evalScalar(2)).toInt();

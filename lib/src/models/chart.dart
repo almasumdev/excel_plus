@@ -165,7 +165,7 @@ class Chart {
 
   /// Whether the chart plots only data in visible cells. When `false`, the chart
   /// also plots cells in hidden rows and columns (Excel's "show data in hidden
-  /// rows and columns" option) — useful when the source data is kept off-screen.
+  /// rows and columns" option), useful when the source data is kept off-screen.
   /// Defaults to `true`.
   final bool plotVisibleOnly;
 
@@ -173,7 +173,7 @@ class Chart {
   bool _written = false;
 
   /// Creates a chart of the given [type]; prefer the named factories
-  /// ([Chart.column], [Chart.line], [Chart.pie], …) for the common kinds.
+  /// ([Chart.column], [Chart.line], [Chart.pie], ...) for the common kinds.
   Chart({
     required this.type,
     required this.anchor,

@@ -422,8 +422,8 @@ class CellStyle {
 
   @override
   // A discriminating subset of the fields compared by == (valid: equal styles
-  // still hash equal). The full 24-field hash — five borders and three colours
-  // deep — runs once per styled cell on save, which made it a measurable slice
+  // still hash equal). The full 24-field hash, five borders and three colours
+  // deep, runs once per styled cell on save, which made it a measurable slice
   // of encode time.
   int get hashCode => Object.hash(
     _bold,

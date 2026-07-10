@@ -9,7 +9,7 @@ import 'package:archive/archive.dart';
 ///  * One suite per cohesive source module or feature, named `<feature>_test.dart`.
 ///  * `group(...)` names are Title Case noun phrases naming the area under test.
 ///  * `test(...)` names are lowercase-first sentences stating the behavior that
-///    must hold — what is verified, not just which method is exercised.
+///    must hold, what is verified, not just which method is exercised.
 ///
 /// This file intentionally has no `_test` suffix so the runner does not treat
 /// it as a suite.
@@ -149,7 +149,7 @@ String readPart(List<int> xlsxBytes, String partName) {
 }
 
 /// Decodes [xlsxBytes] and returns the raw (decompressed) bytes of the named
-/// zip part — for binary parts such as `xl/media/*` that aren't UTF-8.
+/// zip part, for binary parts such as `xl/media/*` that aren't UTF-8.
 List<int> readPartBytes(List<int> xlsxBytes, String partName) {
   final archive = ZipDecoder().decodeBytes(xlsxBytes);
   final file = archive.findFile(partName)!;

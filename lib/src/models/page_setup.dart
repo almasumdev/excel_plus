@@ -13,28 +13,28 @@ enum PageOrientation {
 /// (ECMA-376 §18.3.1.63). Only the common sizes are named; any other code can
 /// still be set via [PageSetup.paperSize] as a raw `int`.
 abstract final class PaperSize {
-  /// US Letter — 8.5" × 11".
+  /// US Letter: 8.5" × 11".
   static const int letter = 1;
 
-  /// US Legal — 8.5" × 14".
+  /// US Legal: 8.5" × 14".
   static const int legal = 5;
 
-  /// Tabloid / Ledger — 11" × 17".
+  /// Tabloid / Ledger: 11" × 17".
   static const int tabloid = 3;
 
-  /// A3 — 297mm × 420mm.
+  /// A3: 297mm × 420mm.
   static const int a3 = 8;
 
-  /// A4 — 210mm × 297mm.
+  /// A4: 210mm × 297mm.
   static const int a4 = 9;
 
-  /// A5 — 148mm × 210mm.
+  /// A5: 148mm × 210mm.
   static const int a5 = 11;
 
-  /// B4 (JIS) — 257mm × 364mm.
+  /// B4 (JIS): 257mm × 364mm.
   static const int b4 = 12;
 
-  /// B5 (JIS) — 182mm × 257mm.
+  /// B5 (JIS): 182mm × 257mm.
   static const int b5 = 13;
 }
 
@@ -135,7 +135,7 @@ class PageMargins {
 /// what to print, and page margins.
 ///
 /// Set it via [Sheet.pageSetup]; read it back from the same getter. Every field
-/// is optional — only the ones you set are written, so a value of `null` (or
+/// is optional; only the ones you set are written, so a value of `null` (or
 /// `false`) leaves Excel's default in place.
 ///
 /// ```dart
@@ -150,7 +150,7 @@ class PageMargins {
 ///
 /// Print area, repeating print titles, and manual page breaks are set through
 /// the dedicated [Sheet] methods ([Sheet.setPrintArea],
-/// [Sheet.setPrintTitleRows], [Sheet.insertRowPageBreak], …) rather than here.
+/// [Sheet.setPrintTitleRows], [Sheet.insertRowPageBreak], ...) rather than here.
 ///
 /// {@category Worksheet}
 class PageSetup {
@@ -174,7 +174,7 @@ class PageSetup {
   /// Paper size code (see [PaperSize]), or `null` for the printer default.
   final int? paperSize;
 
-  /// Print scale as a percentage (10–400), or `null` for 100%. Ignored by Excel
+  /// Print scale as a percentage (10-400), or `null` for 100%. Ignored by Excel
   /// when [fitToWidth] / [fitToHeight] are in effect.
   final int? scale;
 
@@ -196,7 +196,7 @@ class PageSetup {
   /// Print cell gridlines.
   final bool printGridLines;
 
-  /// Print row and column headings (1, 2, 3… / A, B, C…).
+  /// Print row and column headings (1, 2, 3... / A, B, C...).
   final bool printHeadings;
 
   /// Page margins, or `null` to leave the file's margins untouched.

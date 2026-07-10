@@ -5,7 +5,7 @@ mixin _WriterStylesMixin on _WriterBase {
   /// O(1) reverse indexes over the parsed style records, so authored styles
   /// resolve against the opened file's fills/gradients/borders without a
   /// per-style linear scan. When a file holds duplicate records, the first
-  /// occurrence wins — its id is the one existing cells already reference.
+  /// occurrence wins; its id is the one existing cells already reference.
   /// Rebuilt at the start of every [_processStylesFile].
   Map<String, int> _parsedFillIndex = const {};
   Map<GradientFill, int> _parsedGradientIndex = const {};
@@ -51,12 +51,12 @@ mixin _WriterStylesMixin on _WriterBase {
     _excel._sheetMap.forEach((sheetName, sheetObject) {
       sheetObject._sheetData.forEach((_, columnMap) {
         columnMap.forEach((_, dataObject) {
-          // Field access, not the getter — the getter un-shares (clones)
+          // Field access, not the getter; the getter un-shares (clones)
           // shared default instances, one per cell.
           final style = dataObject._cellStyle;
           if (style == null || _stylePosByIdentity.containsKey(style)) return;
           // A style equal to a parsed xf resolves to that xf (so appending it
-          // would only write an unreferenced duplicate record — a decode →
+          // would only write an unreferenced duplicate record; a decode/
           // encode round-trip used to double every font/xf this way); anything
           // else gets an appended record past the parsed ones.
           var pos = _excel._cellStyleIndexOf(style);
@@ -389,7 +389,7 @@ mixin _WriterStylesMixin on _WriterBase {
         }
 
         // Excel applies `indent` only when `horizontal` is explicitly left /
-        // right / distributed — a `general` (omitted) alignment ignores it. So
+        // right / distributed; a `general` (omitted) alignment ignores it. So
         // emit `horizontal="left"` for an indented left-aligned cell too, or its
         // padding is silently dropped and the text sits flush against the edge.
         if (horizontalAlign != HorizontalAlign.Left || indent > 0) {
@@ -611,7 +611,7 @@ mixin _WriterStylesMixin on _WriterBase {
   }
 }
 
-/// Internal value type identifying a non-solid pattern fill — used as a dedup
+/// Internal value type identifying a non-solid pattern fill, used as a dedup
 /// key when appending patterned `<fill>` records (mirrors `_FontStyle` /
 /// `_BorderSet`).
 class _FillStyle {

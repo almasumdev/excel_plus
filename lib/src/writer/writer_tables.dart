@@ -32,7 +32,7 @@ mixin _WriterTablesMixin on _WriterBase {
         .toList();
 
     if (sheet._tables.isEmpty) {
-      // Every existing table part is now orphaned — drop the parts so they
+      // Every existing table part is now orphaned; drop the parts so they
       // don't ride _cloneArchive with a content type but no relationship.
       for (final rel in existingTableRels) {
         _removePart(_resolveRelTarget(partPath, rel.target));

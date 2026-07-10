@@ -1,11 +1,11 @@
 part of '../../excel_plus.dart';
 
 /// Signature for a custom formula function registered via
-/// [Excel.formula] → [FormulaApi.registerFunction].
+/// [Excel.formula] to [FormulaApi.registerFunction].
 ///
 /// Arguments arrive already evaluated, in order; a range argument is flattened
 /// to its cells in row-major order. An empty cell is `null`. Return a
-/// [CellValue] — use a [CellErrorValue] to signal an error.
+/// [CellValue]; use a [CellErrorValue] to signal an error.
 typedef ExcelFunction = CellValue Function(List<CellValue?> args);
 
 /// The formula subsystem of a workbook: register custom functions that

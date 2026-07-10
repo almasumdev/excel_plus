@@ -97,7 +97,7 @@ void main() {
       expect(second, first);
     });
 
-    test('a decode → encode round-trip does not grow the style records', () {
+    test('a decode/encode round-trip does not grow the style records', () {
       // Regression: every parsed cell style used to be re-appended as a fresh
       // (unreferenced) <xf>/<font> on the first save after decode, doubling
       // styles.xml per open/save cycle on style-heavy files.

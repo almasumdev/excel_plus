@@ -5,15 +5,15 @@ A small, modular Flutter app that demonstrates the major features of the
 
 ## Screens
 
-- **Export showcases** — three polished, ready-to-export workbooks shown as a
+- **Export showcases**: three polished, ready-to-export workbooks shown as a
   compact row of cards on the home page: an **Invoice**, a **Yearly Sales**
   dashboard and a monthly **Timesheet**. Each card has a **Download .xlsx** and
-  a **Copy code** button — no in-app preview; open the exported file in
+  a **Copy code** button, with no in-app preview; open the exported file in
   Excel/Sheets to view it. Each sheet is offset 5×5 for a margin and its used
   range is sized so the sheet fills a **570×795 px portrait phone frame**
-  exactly — a screenshot of the used range is phone-shaped, ready to drop into a
-  preview/store listing.
-- **Feature gallery** — one page per capability (values & types, fonts, fills,
+  exactly, so a screenshot of the used range is phone-shaped, ready to drop into
+  a preview/store listing.
+- **Feature gallery**: one page per capability (values & types, fonts, fills,
   borders, alignment, number formats, merged cells, formulas, sizing and
   multiple sheets). Each builds a small workbook, renders a faithful live
   preview, shows a snippet (with **Copy code**), and exports that demo.
@@ -50,5 +50,5 @@ lib/
 
 All spreadsheet-authoring code lives in
 [`lib/data/showcase_builders.dart`](lib/data/showcase_builders.dart) and
-[`lib/data/feature_demos.dart`](lib/data/feature_demos.dart) — they import only
+[`lib/data/feature_demos.dart`](lib/data/feature_demos.dart); they import only
 excel_plus (no Flutter), so they read cleanly as library usage references.

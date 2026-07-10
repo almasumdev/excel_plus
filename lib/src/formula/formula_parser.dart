@@ -210,7 +210,7 @@ class _FormulaParser {
   }
 
   /// Parses one call argument, allowing an omitted one (between commas or before
-  /// the closing paren) → a [_MissingNode].
+  /// the closing paren): a [_MissingNode].
   _FNode _parseArg() {
     final k = _peek?.kind;
     if (k == _TokKind.comma || k == _TokKind.rparen) {

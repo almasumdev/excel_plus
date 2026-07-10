@@ -20,7 +20,7 @@ class DefinedName {
   /// The name, e.g. `Tax` or a built-in like `_xlnm.Print_Area`.
   final String name;
 
-  /// What the name refers to — a range/formula such as `'Sheet1'!$A$1:$B$2`,
+  /// What the name refers to: a range/formula such as `'Sheet1'!$A$1:$B$2`,
   /// or a constant.
   final String refersTo;
 

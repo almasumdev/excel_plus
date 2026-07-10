@@ -6,7 +6,7 @@ import 'test_helper.dart';
 Sheet _firstSheet(Excel excel) => excel.tables.values.first;
 
 /// Encodes [excel], decodes the result, and returns the first sheet of the
-/// reopened workbook — the canonical read → save → re-decode round-trip.
+/// reopened workbook, the canonical read, save, re-decode round-trip.
 Sheet _roundTrip(Excel excel) =>
     _firstSheet(Excel.decodeBytes(excel.encode()!));
 

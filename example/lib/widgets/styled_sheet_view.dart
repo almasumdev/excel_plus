@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 
 import '../app/theme.dart';
 
-/// Renders a decoded [xls.Sheet] faithfully — fills, font colour / weight /
-/// size, alignment, rotation, borders, number formats and merged cells — so the
+/// Renders a decoded [xls.Sheet] faithfully (fills, font colour / weight /
+/// size, alignment, rotation, borders, number formats and merged cells) so the
 /// on-screen preview matches the exported `.xlsx` for every feature demo.
 class StyledSheetView extends StatelessWidget {
   const StyledSheetView({super.key, required this.sheet});

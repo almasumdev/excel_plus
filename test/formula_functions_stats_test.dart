@@ -35,7 +35,7 @@ String? _err(CellValue? v) => v is CellErrorValue ? v.value : null;
 void main() {
   group('Spread Functions', () {
     test('STDEV and STDEVP use sample vs population denominators', () {
-      // values 2,4,4,4,5,5,7,9 → population sd 2, sample sd ~2.138.
+      // values 2,4,4,4,5,5,7,9: population sd 2, sample sd ~2.138.
       const data = [2, 4, 4, 4, 5, 5, 7, 9];
       expect(_num(_evalWith('STDEVP(A1:A8)', colA: data)), closeTo(2, 1e-9));
       expect(

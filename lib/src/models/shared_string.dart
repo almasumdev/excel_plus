@@ -1,10 +1,10 @@
 part of '../../excel_plus.dart';
 
 class _SharedStringsMaintainer {
-  /// Ordered list: index → SharedString + reference count.
+  /// Ordered list: index to SharedString + reference count.
   final List<_SharedStringEntry> _entries = [];
 
-  /// Reverse lookup: string value → index in [_entries].
+  /// Reverse lookup: string value to index in [_entries].
   final Map<String, int> _stringIndex = {};
 
   _SharedStringsMaintainer._();
@@ -96,7 +96,7 @@ class SharedString {
   String get _dedupKey => _isRichText ? toXmlString() : _cachedValue;
 
   /// Builds a shared string from a [TextSpan], preserving rich-text runs as
-  /// `<r><rPr>…</rPr><t>…</t></r>` rather than flattening them to plain text.
+  /// `<r><rPr>...</rPr><t>...</t></r>` rather than flattening them to plain text.
   static SharedString _fromSpan(TextSpan span) {
     final runs = <(String, CellStyle?)>[];
     _collectRuns(span, runs);

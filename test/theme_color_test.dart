@@ -83,7 +83,7 @@ String _oneFontStyles(String fontXml) =>
 
 const _oneCell = '<row r="1"><c r="A1" s="1"><v>1</v></c></row>';
 
-/// Styles exercising legacy `indexed="N"` references. No theme part is needed —
+/// Styles exercising legacy `indexed="N"` references. No theme part is needed -
 /// the standard built-in palette resolves these.
 const _indexedStyles =
     '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>

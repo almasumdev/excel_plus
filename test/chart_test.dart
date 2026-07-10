@@ -82,7 +82,7 @@ void main() {
       // add a chart WITHOUT forcing a full parse first. This is the path that
       // used to strand the template's empty drawing1.xml as an orphan (the
       // chart went to drawing2.xml while drawing1.xml kept a dangling
-      // content-type Override) — which strict importers like Google Sheets
+      // content-type Override), which strict importers like Google Sheets
       // mishandle.
       final excel = Excel.createExcel();
       excel.rename(excel.getDefaultSheet() ?? 'Sheet1', 'Data');
@@ -102,7 +102,7 @@ void main() {
           .toList();
       expect(drawings, ['xl/drawings/drawing1.xml']);
       expect(_part(a, 'xl/drawings/drawing1.xml'), contains('graphicFrame'));
-      // Exactly one drawing content-type Override — no orphaned declaration.
+      // Exactly one drawing content-type Override; no orphaned declaration.
       final overrides = RegExp(
         r'/xl/drawings/drawing\d+\.xml',
       ).allMatches(_part(a, '[Content_Types].xml')).length;
@@ -192,7 +192,7 @@ void main() {
       );
 
       final chart = _part(_encode(excel), 'xl/charts/chart1.xml');
-      // 4 values → 4 coloured <c:dPt> slices.
+      // 4 values: 4 coloured <c:dPt> slices.
       expect(RegExp(r'<c:dPt>').allMatches(chart).length, 4);
       expect(chart, contains('<a:srgbClr val="4472C4"/>'));
       expect(chart, contains('<a:srgbClr val="ED7D31"/>'));

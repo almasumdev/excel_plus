@@ -94,8 +94,8 @@ mixin _WriterChartsMixin on _WriterBase {
       (n == n.roundToDouble() && n.abs() < 1e15) ? '${n.toInt()}' : '$n';
 
   /// A `<c:numRef>` (formula + a `<c:numCache>` of the actual values) for [ref].
-  /// The cache lets consumers that don't re-evaluate the reference — or that
-  /// skip hidden source rows (e.g. LibreOffice) — still draw the data.
+  /// The cache lets consumers that don't re-evaluate the reference, or that
+  /// skip hidden source rows (e.g. LibreOffice), still draw the data.
   XmlElement _numRef(String hostSheet, String ref) {
     final children = <XmlNode>[
       _c('f', [], [XmlText(_chartRef(hostSheet, ref))]),
@@ -148,7 +148,7 @@ mixin _WriterChartsMixin on _WriterBase {
 
   /// Office accent palette used to colour series (and pie/doughnut slices).
   /// Excel and Google auto-colour an uncoloured series from the theme, but
-  /// LibreOffice leaves an imported series with no `<c:spPr>` unfilled — i.e.
+  /// LibreOffice leaves an imported series with no `<c:spPr>` unfilled, i.e.
   /// invisible bars. Emitting an explicit fill makes charts render everywhere.
   static const _seriesPalette = <String>[
     '4472C4', 'ED7D31', 'A5A5A5', 'FFC000', '5B9BD5', '70AD47', //
@@ -239,7 +239,7 @@ mixin _WriterChartsMixin on _WriterBase {
     String? categories,
   ) {
     final isPieLike = type == ChartType.pie || type == ChartType.doughnut;
-    // Pie/doughnut: one coloured slice per value — resolve the count once.
+    // Pie/doughnut: one coloured slice per value, resolve the count once.
     final sliceCount = isPieLike ? _refValues(sheetName, s.values).length : 0;
     final children = <XmlNode>[
       _cVal('idx', '$index'),
@@ -431,7 +431,7 @@ mixin _WriterChartsMixin on _WriterBase {
       _cVal('autoTitleDeleted', chart.title == null ? '1' : '0'),
       // A white plot-area background. LibreOffice leaves a fill-less imported
       // plot area transparent (Excel/Sheets synthesise a default), so author it
-      // explicitly. Per CT_PlotArea the `<c:spPr>` must be the LAST child —
+      // explicitly. Per CT_PlotArea the `<c:spPr>` must be the LAST child,
       // after the chart group and axes that `_plotElements` emits.
       _c('plotArea', [], [
         _c('layout'),
@@ -462,7 +462,7 @@ mixin _WriterChartsMixin on _WriterBase {
       [
         _c('chart', [], chartChildren),
         // A white chart-area background, a sibling of (and after) `<c:chart>`
-        // per CT_ChartSpace — same reason as the plot area: keep LibreOffice
+        // per CT_ChartSpace, same reason as the plot area: keep LibreOffice
         // from rendering the chart transparent.
         _fillSpPr('FFFFFF'),
       ],

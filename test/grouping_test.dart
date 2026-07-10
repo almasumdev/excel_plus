@@ -54,8 +54,8 @@ void main() {
       final excel = Excel.createExcel();
       final sheet = _firstSheet(excel);
       _fillRows(sheet, 8);
-      sheet.groupRows(1, 6); // level 1 over 2–7
-      sheet.groupRows(2, 5); // level 2 over 3–6
+      sheet.groupRows(1, 6); // level 1 over 2-7
+      sheet.groupRows(2, 5); // level 2 over 3-6
 
       final reopened = _roundTrip(excel);
       expect(reopened.rowOutlineLevel(1), 1);

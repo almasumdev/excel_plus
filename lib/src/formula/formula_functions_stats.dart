@@ -1,7 +1,7 @@
 part of '../../excel_plus.dart';
 
 /// Collects the numeric values from a single evaluated argument (a scalar or a
-/// range/array), skipping text/blank cells inside ranges — the input shape for
+/// range/array), skipping text/blank cells inside ranges, the input shape for
 /// LARGE, SMALL, RANK and the statistical functions.
 List<double> _numbersOf(_EvalValue v) {
   final out = <double>[];
@@ -44,7 +44,7 @@ bool _allCriteriaMatch(List<_Criterion> crits, int i) {
   return true;
 }
 
-/// Parses the `(range, criteria, range, criteria, …)` tail of an *IFS call into
+/// Parses the `(range, criteria, range, criteria, ...)` tail of an *IFS call into
 /// criterion pairs, starting at argument [from].
 List<_Criterion> _collectCriteria(_FuncArgs a, int from) {
   final crits = <_Criterion>[];

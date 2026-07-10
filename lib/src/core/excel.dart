@@ -24,7 +24,7 @@ class Excel {
   /// and each worksheet envelope), captured on the first save. Restored before
   /// every subsequent build so repeated `encode()`/`save()` calls restart from
   /// a pristine state instead of re-appending records (fonts/fills/xfs/dxfs, and
-  /// worksheet `<conditionalFormatting>` / sparkline groups) — keeping
+  /// worksheet `<conditionalFormatting>` / sparkline groups), keeping
   /// `encode()` idempotent across multiple saves on one instance.
   Map<String, String>? _partSnapshots;
 
@@ -94,7 +94,7 @@ class Excel {
   List<String> _patternFill = [];
 
   /// Per-fill `patternType` and `bgColor` (hex), index-aligned with
-  /// [_patternFill] — read-side pattern-fill detail layered on top of the
+  /// [_patternFill], read-side pattern-fill detail layered on top of the
   /// legacy single-colour [_patternFill] without changing it.
   List<String> _fillPatternTypes = [];
   List<String?> _fillBgColors = [];
@@ -205,7 +205,7 @@ class Excel {
   /// Decodes an `.xlsx` file from a byte list on a **background isolate**, so
   /// a large workbook can be opened without blocking the UI thread.
   ///
-  /// Behaves exactly like [Excel.decodeBytes] — same result, same errors — but
+  /// Behaves exactly like [Excel.decodeBytes] (same result, same errors) but
   /// the parse runs via `Isolate.run` and the decoded workbook is handed back
   /// without copying. On the web (dart2js and wasm), where isolates are not
   /// available, it falls back to decoding on the main thread so shared code
@@ -238,21 +238,21 @@ class Excel {
     return Map<String, Sheet>.from(_sheetMap);
   }
 
-  /// The formula subsystem — register custom functions for [Sheet.evaluate].
+  /// The formula subsystem: register custom functions for [Sheet.evaluate].
   late final FormulaApi formula = FormulaApi._(this);
 
   /// Recomputes every formula cell in the workbook and stores each result as the
   /// formula's cached value (its `<v>`), so a saved file shows results without
   /// the spreadsheet app having to recalculate.
   ///
-  /// Opt-in — nothing here runs during normal read/write. Dependencies (incl.
+  /// Opt-in; nothing here runs during normal read/write. Dependencies (incl.
   /// across sheets), ranges, defined names, and custom functions resolve on
   /// demand, and each cell is computed once. A self-referential formula resolves
   /// to `#CIRC`; an unparseable one to `#ERROR!`.
   ///
   /// A formula whose result is an array (a dynamic-array function such as
   /// `FILTER`/`SEQUENCE`, or a range like `=A1:A3`) **spills**: the anchor cell
-  /// keeps the formula (written as `<f t="array" ref="…">`) and the remaining
+  /// keeps the formula (written as `<f t="array" ref="...">`) and the remaining
   /// cells of the spill range receive the computed values. Existing formulas in
   /// the spill range are left untouched.
   void recalculate() {
@@ -560,7 +560,7 @@ class Excel {
   /// Whether the workbook is protected (its structure and/or windows locked).
   bool get isWorkbookProtected => _workbookProtected;
 
-  /// Whether the workbook **structure** is locked — sheets cannot be added,
+  /// Whether the workbook **structure** is locked: sheets cannot be added,
   /// deleted, renamed, moved, hidden, or unhidden in Excel.
   bool get workbookStructureLocked =>
       _workbookProtected && _workbookLockStructure;
@@ -571,7 +571,7 @@ class Excel {
   /// Protects the workbook, locking its [lockStructure] (sheet add/delete/
   /// rename/move/hide) and/or [lockWindows] (window size & position).
   ///
-  /// An optional [password] is stored using Excel's legacy hash — it deters
+  /// An optional [password] is stored using Excel's legacy hash; it deters
   /// changes when the file is opened in Excel but is **not** strong encryption.
   ///
   /// ```dart
@@ -614,7 +614,7 @@ class Excel {
   /// back to encoding on the main thread.
   ///
   /// Throws [ExcelEncodeException] if the workbook cannot be transferred to an
-  /// isolate — e.g. it was opened with [Excel.decodeBuffer] over an
+  /// isolate, e.g. it was opened with [Excel.decodeBuffer] over an
   /// [InputFileStream] (a live file handle cannot cross isolates), or a
   /// function registered via [formula] captures platform objects. Use [encode]
   /// in those cases.

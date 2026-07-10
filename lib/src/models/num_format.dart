@@ -353,7 +353,7 @@ const Map<int, NumFormat> _standardNumFormats = {
   49: NumFormat.standard_49,
 };
 
-/// Elapsed-time bracket tokens: `[h]`, `[hh]`, `[mm]`, `[ss]`, …
+/// Elapsed-time bracket tokens: `[h]`, `[hh]`, `[mm]`, `[ss]`, ...
 final _elapsedTimeToken = RegExp(r'^(h+|m+|s+)$');
 
 bool _formatCodeLooksLikeDateTime(String formatCode) {
@@ -380,7 +380,7 @@ bool _formatCodeLooksLikeDateTime(String formatCode) {
     }
     if (c == '[') {
       // A bracket section is a color ([Red]), condition ([>100]) or locale
-      // ([$-409]) prefix, none of which make the format temporal — the letters
+      // ([$-409]) prefix, none of which make the format temporal, the letters
       // inside must not be mistaken for date tokens. The exception is the
       // elapsed-time tokens ([h], [mm], [ss]), which are time formats.
       final end = formatCode.indexOf(']', i + 1);

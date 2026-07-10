@@ -18,7 +18,7 @@ String? _err(CellValue? v) => v is CellErrorValue ? v.value : null;
 void main() {
   group('Time Value Of Money', () {
     test('PMT computes the periodic payment of a loan', () {
-      // \$10,000 loan, 5%/yr over 12 months → ~ -856.07 / month.
+      // \$10,000 loan, 5%/yr over 12 months: ~ -856.07 / month.
       expect(_num(_eval('PMT(0.05/12,12,10000)')), closeTo(-856.0748, 1e-3));
     });
 

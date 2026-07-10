@@ -63,7 +63,7 @@ mixin _ParserRelationsMixin on _ParserBase {
         );
       }
     } catch (_) {
-      // Malformed rels — degrade to none rather than crashing.
+      // Malformed rels: degrade to none rather than crashing.
     }
     sheet._worksheetRels = rels;
   }

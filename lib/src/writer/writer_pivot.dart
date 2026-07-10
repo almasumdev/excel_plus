@@ -4,8 +4,8 @@ part of '../../excel_plus.dart';
 /// definition, and all the workbook/worksheet wiring (rels, `<pivotCaches>`,
 /// content types).
 ///
-/// Authors a focused shape — one row field plus one or more data fields, no
-/// column fields — and marks the cache `refreshOnLoad` so Excel rebuilds it from
+/// Authors a focused shape, one row field plus one or more data fields, no
+/// column fields, and marks the cache `refreshOnLoad` so Excel rebuilds it from
 /// the source range on open. Existing (unmodeled) pivots round-trip untouched.
 mixin _WriterPivotMixin on _WriterBase {
   void _applyPivotTablesForSheet(String sheetName) {
@@ -370,7 +370,7 @@ mixin _WriterPivotMixin on _WriterBase {
         : 0;
     final pageFields = pivot.pageFields;
 
-    // pivotFields — one per source column.
+    // pivotFields, one per source column.
     final pivotFields = <XmlElement>[];
     for (var j = 0; j < model.fields.length; j++) {
       if (rowFieldCols.contains(j)) {

@@ -71,18 +71,18 @@ class ConditionalFormat {
   final String? range;
 
   /// The rule kind (a [ConditionalFormatType]; unmodeled kinds read as
-  /// [ConditionalFormatType.other] — see [typeName] for the raw value).
+  /// [ConditionalFormatType.other], see [typeName] for the raw value).
   ConditionalFormatType get type => _conditionalFormatTypeFromXml(_typeName);
 
   /// The raw OOXML `type` of the rule (e.g. `'cellIs'`, `'expression'`,
-  /// `'colorScale'`, `'dataBar'`, `'iconSet'`, `'top10'`, …).
+  /// `'colorScale'`, `'dataBar'`, `'iconSet'`, `'top10'`, ...).
   String get typeName => _typeName;
 
   /// The raw OOXML comparison `operator` for a `cellIs` rule (e.g.
   /// `'greaterThan'`, `'between'`), or `null` when the rule has none.
   String? get operator => _operator;
 
-  /// The rule's formula / threshold operands (0–2 entries).
+  /// The rule's formula / threshold operands (0-2 entries).
   List<String> get formulas => List.unmodifiable(_formulas);
 
   /// The colours of a colour-scale (2 or 3) or data-bar (1) rule.
@@ -175,7 +175,7 @@ class ConditionalFormat {
   factory ConditionalFormat.dataBar(ExcelColor color) =>
       ConditionalFormat._(typeName: 'dataBar', colors: [color]);
 
-  /// An icon set — a small icon (arrows, traffic lights, ratings, …) drawn in
+  /// An icon set, a small icon (arrows, traffic lights, ratings, ...) drawn in
   /// each cell according to where its value falls in the range.
   ///
   /// [thresholds] give the percentage cut-off for each icon (the first is
@@ -209,7 +209,7 @@ class ConditionalFormat {
 ///
 /// {@category Worksheet}
 enum ConditionalFormatType {
-  /// A value comparison (`greaterThan` / `lessThan` / `between` / `equal` …).
+  /// A value comparison (`greaterThan` / `lessThan` / `between` / `equal` ...).
   cellIs,
 
   /// A boolean formula rule (OOXML `expression`).
@@ -221,7 +221,7 @@ enum ConditionalFormatType {
   /// An in-cell data bar.
   dataBar,
 
-  /// An icon set (arrows, traffic lights, ratings, …).
+  /// An icon set (arrows, traffic lights, ratings, ...).
   iconSet,
 
   /// A top/bottom N (or N%) rule.
@@ -230,7 +230,7 @@ enum ConditionalFormatType {
   /// An above/below-average rule.
   aboveAverage,
 
-  /// A text-content rule (contains / begins with / ends with …).
+  /// A text-content rule (contains / begins with / ends with ...).
   containsText,
 
   /// A date/time-period rule.

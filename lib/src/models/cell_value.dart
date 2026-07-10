@@ -37,7 +37,7 @@ class FormulaCellValue extends CellValue {
   final String? _cachedType;
 
   /// The spill range (e.g. `"A1:A3"`) when this is the anchor of a recalculated
-  /// dynamic-/array-formula result; emitted as `<f t="array" ref="…">`. Set by
+  /// dynamic-/array-formula result; emitted as `<f t="array" ref="...">`. Set by
   /// [Excel.recalculate]; not part of equality.
   final String? _arrayRef;
 
@@ -125,10 +125,10 @@ class DateCellValue extends CellValue {
   /// The year component.
   final int year;
 
-  /// The month component (1–12).
+  /// The month component (1-12).
   final int month;
 
-  /// The day component (1–31).
+  /// The day component (1-31).
   final int day;
 
   /// Creates a date cell value from [year], [month], and [day].
@@ -230,16 +230,16 @@ class TimeCellValue extends CellValue {
   /// Hours component.
   final int hour;
 
-  /// Minutes component (0–60).
+  /// Minutes component (0-60).
   final int minute;
 
-  /// Seconds component (0–60).
+  /// Seconds component (0-60).
   final int second;
 
-  /// Milliseconds component (0–1000).
+  /// Milliseconds component (0-1000).
   final int millisecond;
 
-  /// Microseconds component (0–1000).
+  /// Microseconds component (0-1000).
   final int microsecond;
 
   /// Creates a time cell value.
@@ -322,25 +322,25 @@ class DateTimeCellValue extends CellValue {
   /// The year component.
   final int year;
 
-  /// The month component (1–12).
+  /// The month component (1-12).
   final int month;
 
-  /// The day component (1–31).
+  /// The day component (1-31).
   final int day;
 
-  /// The hour component (0–24).
+  /// The hour component (0-24).
   final int hour;
 
-  /// The minute component (0–60).
+  /// The minute component (0-60).
   final int minute;
 
-  /// The second component (0–60).
+  /// The second component (0-60).
   final int second;
 
-  /// The millisecond component (0–1000).
+  /// The millisecond component (0-1000).
   final int millisecond;
 
-  /// The microsecond component (0–1000).
+  /// The microsecond component (0-1000).
   final int microsecond;
 
   /// Creates a date-time cell value.
@@ -446,25 +446,25 @@ class CellErrorValue extends CellValue {
   /// Creates a cell error value from its literal [value] (e.g. `'#VALUE!'`).
   const CellErrorValue(this.value);
 
-  /// `#DIV/0!` — division by zero.
+  /// `#DIV/0!`: division by zero.
   static const divisionByZero = CellErrorValue('#DIV/0!');
 
-  /// `#N/A` — value not available.
+  /// `#N/A`: value not available.
   static const notAvailable = CellErrorValue('#N/A');
 
-  /// `#NAME?` — unrecognised name.
+  /// `#NAME?`: unrecognised name.
   static const name = CellErrorValue('#NAME?');
 
-  /// `#NULL!` — empty intersection of two ranges.
+  /// `#NULL!`: empty intersection of two ranges.
   static const nullError = CellErrorValue('#NULL!');
 
-  /// `#NUM!` — invalid numeric value.
+  /// `#NUM!`: invalid numeric value.
   static const number = CellErrorValue('#NUM!');
 
-  /// `#REF!` — invalid cell reference.
+  /// `#REF!`: invalid cell reference.
   static const reference = CellErrorValue('#REF!');
 
-  /// `#VALUE!` — wrong type of argument.
+  /// `#VALUE!`: wrong type of argument.
   static const valueError = CellErrorValue('#VALUE!');
 
   @override

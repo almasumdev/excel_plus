@@ -19,8 +19,8 @@ part of '../../excel_plus.dart';
 /// This type is `sealed`: you can catch it, but it is not meant to be
 /// subclassed outside the package.
 ///
-/// Note: invalid *arguments* you pass to the API — a negative cell index, an
-/// empty table name, an out-of-range row — still throw [ArgumentError], the
+/// Note: invalid *arguments* you pass to the API (a negative cell index, an
+/// empty table name, an out-of-range row) still throw [ArgumentError], the
 /// standard Dart type for programming errors. Those are bugs in the calling
 /// code, not [ExcelException]s.
 ///
@@ -104,8 +104,8 @@ final class ExcelEncodeException extends ExcelException {
 /// engine.
 ///
 /// Through the public API a malformed formula is reported as an `#ERROR!` cell
-/// value — [Sheet.evaluate] and [Excel.recalculate] catch parse failures and
-/// never rethrow them — so you do not normally catch this type. It exists so
+/// value, [Sheet.evaluate] and [Excel.recalculate] catch parse failures and
+/// never rethrow them, so you do not normally catch this type. It exists so
 /// the engine can distinguish parse failures from other errors, and it
 /// implements [FormatException] so any `on FormatException` handler keeps
 /// working unchanged.

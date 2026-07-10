@@ -136,7 +136,7 @@ abstract class _ParserBase {
       '<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="0" uniqueCount="0"/>',
     );
 
-    // SAX-parse shared strings — no full DOM tree created.
+    // SAX-parse shared strings, no full DOM tree created.
     _saxParseSharedStrings(xmlStr);
   }
 
@@ -148,7 +148,7 @@ abstract class _ParserBase {
     bool inSi = false;
     bool inR = false; // inside <r> (rich text run)
     bool inT = false;
-    bool inRPh = false; // inside <rPh> (phonetic run — ignore text)
+    bool inRPh = false; // inside <rPh> (phonetic run, ignore text)
     bool hasRichContent = false;
     StringBuffer textBuf = StringBuffer();
     StringBuffer? richXmlBuf; // collects raw XML for rich <si> elements
@@ -173,7 +173,7 @@ abstract class _ParserBase {
                 richXmlBuf = StringBuffer();
                 richXmlBuf.write('<si>');
                 // If there was a preceding text we already collected, that's
-                // part of the <si> too — but for simple parsing we'll just
+                // part of the <si> too, but for simple parsing we'll just
                 // start the rich XML buffer now.
               }
               inR = true;
@@ -208,7 +208,7 @@ abstract class _ParserBase {
                 // different styling remain distinct entries.
                 _excel._sharedStrings.add(ss, ss._dedupKey);
               } else {
-                // Simple string — no DOM needed
+                // Simple string, no DOM needed
                 final val = textBuf.toString();
                 _excel._sharedStrings.add(SharedString._fromText(val), val);
               }

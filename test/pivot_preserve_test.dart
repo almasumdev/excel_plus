@@ -4,7 +4,7 @@ import 'package:test/test.dart';
 import 'test_helper.dart';
 
 /// excel_plus does not yet model pivot tables, but the envelope + `_cloneArchive`
-/// design must carry their (unmodeled) parts through a read → edit → save cycle
+/// design must carry their (unmodeled) parts through a read, edit, save cycle
 /// untouched, so opening and re-saving a workbook never drops a pivot table.
 void main() {
   group('Pivot Table Preservation', () {
@@ -30,7 +30,7 @@ void main() {
       },
     );
 
-    test('pivot parts survive a read → save round-trip byte-equivalently', () {
+    test('pivot parts survive a read/save round-trip byte-equivalently', () {
       final saved = Excel.decodeBytes(withPivot()).encode()!;
       expect(readPart(saved, pivotTablePart), pivotTableXml);
       expect(readPart(saved, pivotCachePart), pivotCacheXml);

@@ -3,7 +3,7 @@ part of '../../excel_plus.dart';
 /// Holds the state for one evaluation pass: the workbook, a per-cell memo, and a
 /// set of cells currently being evaluated (for cycle detection).
 ///
-/// Reads are non-mutating — cells are looked up directly in `_sheetData` so
+/// Reads are non-mutating: cells are looked up directly in `_sheetData` so
 /// evaluating a range never materializes empty cells or grows the used bounds.
 class _FormulaContext {
   final Excel _excel;
@@ -353,7 +353,7 @@ int _rank(_EvalValue v) {
 }
 
 /// Whether [cell] and the [lookup] key are the same value kind. Approximate
-/// (sorted) lookups match within a type only — Excel never treats a number as
+/// (sorted) lookups match within a type only; Excel never treats a number as
 /// "≤" a text key just because numbers sort before text.
 bool _sameKind(_EvalValue cell, _EvalValue lookup) =>
     _rank(cell) == _rank(lookup);

@@ -48,8 +48,8 @@ class ExcelWriter extends _WriterBase
     );
   }
 
-  /// Restores the DOM parts the writer mutates in place — `xl/styles.xml` and
-  /// each worksheet envelope — to their originally-parsed state before each
+  /// Restores the DOM parts the writer mutates in place, `xl/styles.xml` and
+  /// each worksheet envelope, to their originally-parsed state before each
   /// build, capturing that pristine snapshot on the first save. Without this the
   /// append-based writers ([_processStylesFile] / [_prepareConditionalFormatDxfs]
   /// / [_applyConditionalFormatsForSheet] / [_applySparklinesForSheet]) would
@@ -157,7 +157,7 @@ class ExcelWriter extends _WriterBase
   ///
   /// The blank-sheet template hardcodes `ref="A1"` and the writer otherwise
   /// never updates it, so an authored sheet would ship claiming a single-cell
-  /// used range. Some consumers trust `<dimension>` — notably Google Sheets,
+  /// used range. Some consumers trust `<dimension>`: notably Google Sheets,
   /// which treats columns outside it as empty and drops their custom widths.
   /// [Sheet.maxRows]/[Sheet.maxColumns] already extend across cells, explicit
   /// row heights / column widths, and merges, so they bound the used range.
@@ -167,7 +167,7 @@ class ExcelWriter extends _WriterBase
 
     // maxColumns/maxRows track cells and merges but not columns/rows that exist
     // only for an explicit width/height or a grouping flag (those setters don't
-    // bump the counts), so fold them in — mirroring how _setColumns and
+    // bump the counts), so fold them in, mirroring how _setColumns and
     // _buildSheetDataXml extend their own bounds.
     void coverCol(Iterable<int> keys) {
       for (final k in keys) {
@@ -533,7 +533,7 @@ class ExcelWriter extends _WriterBase
     var uniqueCount = 0;
     var count = 0;
 
-    // Build shared strings XML as string — avoid DOM node allocation.
+    // Build shared strings XML as string; avoids DOM node allocation.
     StringBuffer ssBuf = StringBuffer();
     _excel._sharedStrings.forEach((sharedString, refCount) {
       uniqueCount += 1;
@@ -700,7 +700,7 @@ class ExcelWriter extends _WriterBase
         '<sheetData>$cellDataXml</sheetData>',
       );
 
-      // Store directly as archive file — skip the later DOM serialization loop
+      // Store directly as archive file; skips the later DOM serialization loop
       var xmlSheetId = _excel._xmlSheetId[sheetName]!;
       var bytes = utf8.encode(sheetXml);
       _archiveFiles[xmlSheetId] = ArchiveFile(xmlSheetId, bytes.length, bytes);

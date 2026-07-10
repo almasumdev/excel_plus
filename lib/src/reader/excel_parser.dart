@@ -197,7 +197,7 @@ class Parser extends _ParserBase
     // Parse envelope as DOM for writer; SAX-parse sheetData for cells.
     final sheetDataStart = xmlStr.indexOf('<sheetData');
     if (sheetDataStart == -1) {
-      // No sheetData at all — parse as DOM fallback
+      // No sheetData at all: parse as DOM fallback
       var content = XmlDocument.parse(xmlStr);
       _excel._xmlFiles['xl/$target'] = content;
       _excel._xmlSheetId[name] = 'xl/$target';
@@ -227,7 +227,7 @@ class Parser extends _ParserBase
           '${xmlStr.substring(0, sheetDataStart)}<sheetData/>${xmlStr.substring(sheetDataEnd + '</sheetData>'.length)}';
     }
 
-    // Parse the lightweight envelope DOM (no cell data — just worksheet structure)
+    // Parse the lightweight envelope DOM (no cell data, just worksheet structure)
     var content = XmlDocument.parse(envelopeXml);
     var worksheet = content.findElements('worksheet').first;
 
@@ -239,7 +239,7 @@ class Parser extends _ParserBase
       sheetObject.isRTL = rtl != null && rtl == '1';
     }
 
-    // SAX-parse cell data — zero DOM allocation for cells
+    // SAX-parse cell data, zero DOM allocation for cells
     if (sheetDataXml.isNotEmpty) {
       _saxParseSheetData(sheetDataXml, sheetObject, name);
     }
@@ -344,7 +344,7 @@ class Parser extends _ParserBase
               }
             }
           case 't':
-            // inline string <is><t>text</t></is> — may contain multiple runs,
+            // inline string <is><t>text</t></is>, may contain multiple runs,
             // so accumulate (do not clear) across <t> elements.
             if (cellType == 'inlineStr') {
               currentElement = 't';
@@ -639,7 +639,7 @@ class Parser extends _ParserBase
             ),
           ]),
         );
-    // Set sheetData reference directly — don't re-parse via _parseTable
+    // Set sheetData reference directly; don't re-parse via _parseTable
     // which would overwrite user-set properties (isRTL, headerFooter, etc.)
     var sheetData = document.findAllElements('sheetData').first;
     _excel._sheets[newSheet] = sheetData;

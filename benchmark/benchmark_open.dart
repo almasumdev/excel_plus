@@ -25,7 +25,7 @@ void main(List<String> args) {
     '[DISK READ] ${readFileMs}ms | ${(bytes.length / (1024 * 1024)).toStringAsFixed(1)} MB',
   );
 
-  // --- DECODE (metadata only — lazy loading) ---
+  // --- DECODE (metadata only, lazy loading) ---
   sw.reset();
   var excel = Excel.decodeBytes(bytes);
   final decodeMs = sw.elapsedMilliseconds;

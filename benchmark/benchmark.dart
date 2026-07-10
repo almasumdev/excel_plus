@@ -3,7 +3,7 @@ import 'package:excel_plus/excel_plus.dart';
 
 /// Reproducible self-benchmark for excel_plus.
 ///
-/// Builds a large workbook, then measures create → encode → decode wall-clock
+/// Builds a large workbook, then measures create, encode, and decode wall-clock
 /// time, the resulting file size, and peak resident memory (RSS).
 ///
 /// Reproduce:
@@ -14,7 +14,7 @@ void main(List<String> args) {
   final cols = args.length > 1 ? int.parse(args[1]) : 50;
   final cells = rows * cols;
 
-  print('excel_plus benchmark — $cells cells ($rows rows x $cols cols)\n');
+  print('excel_plus benchmark: $cells cells ($rows rows x $cols cols)\n');
 
   final sw = Stopwatch()..start();
   final excel = Excel.createExcel();

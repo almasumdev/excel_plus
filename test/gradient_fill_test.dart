@@ -167,7 +167,7 @@ void main() {
       expect(style.backgroundColor, ExcelColor.none);
     });
 
-    test('a gradient survives a two-pass read → save → read cycle', () {
+    test('a gradient survives a two-pass read/save/read cycle', () {
       final once = _withStyle(
         'A1',
         CellStyle(

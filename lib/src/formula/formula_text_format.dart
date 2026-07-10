@@ -162,7 +162,7 @@ String _formatNumberCode(double value, String code) {
   final minInt = _zeroCount(intFormat);
 
   // Distinguish grouping commas (between digit placeholders in the integer
-  // part) from trailing scaling commas (after the last placeholder → divide by
+  // part) from trailing scaling commas (after the last placeholder: divide by
   // 1000 each). Scan the whole section so trailing commas after the fraction
   // (e.g. "0.0,,") count as scaling.
   var lastPlaceholder = -1;
@@ -298,7 +298,7 @@ String _dayToken(DateTime dt, int len) {
 
 /// Renders the Excel serial [serial] using a date/time format [code]. Disambiguates
 /// `m` runs as month vs. minute by their neighbours (after hours / before
-/// seconds → minute).
+/// seconds to minute).
 String _formatDateTimeCode(double serial, String code) {
   final dt = _dateFromSerial(serial);
   final tokens = <_DtTok>[];
@@ -410,7 +410,7 @@ String _formatDateTimeCode(double serial, String code) {
   return sb.toString();
 }
 
-/// Registers TEXT (value → formatted string) onto [r].
+/// Registers TEXT (value to formatted string) onto [r].
 void _registerTextFormatFunctions(Map<String, _FormulaFn> r) {
   r['TEXT'] = _guard((a) {
     if (a.length < 2) return const _ErrVal(CellErrorValue.valueError);

@@ -16,7 +16,7 @@ enum GradientType {
 ///
 /// {@category Styling}
 class GradientStop {
-  /// Creates a stop placing [color] at [position] (expected `0.0`–`1.0`).
+  /// Creates a stop placing [color] at [position] (expected `0.0`-`1.0`).
   const GradientStop(this.position, this.color);
 
   /// Where the stop sits along the gradient, from `0.0` (start) to `1.0` (end).
@@ -36,17 +36,18 @@ class GradientStop {
   int get hashCode => Object.hash(position, color);
 }
 
-/// A gradient cell fill — a smooth blend between two or more colour [stops].
+/// A gradient cell fill, a smooth blend between two or more colour [stops].
 ///
 /// Apply it to a cell via [CellStyle.gradientFill]. A gradient fill takes
 /// precedence over the cell's [CellStyle.backgroundColor] and
 /// [CellStyle.fillPattern].
 ///
 /// A [GradientFill.linear] gradient sweeps the colours across the cell at
-/// [degree] degrees (measured clockwise: `0` = left→right, `90` = top→bottom).
-/// A [GradientFill.path] gradient radiates the colours from an inner rectangle
-/// — defined by the [left]/[right]/[top]/[bottom] insets (each `0.0`–`1.0`,
-/// where `0.5`/`0.5`/`0.5`/`0.5` is a point at the centre) — out to the edges.
+/// [degree] degrees (measured clockwise: `0` = left to right, `90` = top to bottom).
+/// A [GradientFill.path] gradient radiates the colours from an inner
+/// rectangle, defined by the [left]/[right]/[top]/[bottom] insets (each
+/// `0.0`-`1.0`, where `0.5`/`0.5`/`0.5`/`0.5` is a point at the centre), out
+/// to the edges.
 ///
 /// ```dart
 /// cell.cellStyle = CellStyle(
@@ -63,7 +64,7 @@ class GradientStop {
 /// {@category Styling}
 class GradientFill {
   /// A linear gradient sweeping the [stops] across the cell at [degree] degrees
-  /// (`0` = left→right, `90` = top→bottom).
+  /// (`0` = left to right, `90` = top to bottom).
   const GradientFill.linear({this.degree = 0, required this.stops})
     : type = GradientType.linear,
       left = 0,
@@ -72,7 +73,7 @@ class GradientFill {
       bottom = 0;
 
   /// A rectangular "path" gradient radiating the [stops] from an inner box
-  /// (the [left]/[right]/[top]/[bottom] insets, each `0.0`–`1.0`) to the edges.
+  /// (the [left]/[right]/[top]/[bottom] insets, each `0.0`-`1.0`) to the edges.
   const GradientFill.path({
     required this.stops,
     this.left = 0,
@@ -86,11 +87,11 @@ class GradientFill {
   final GradientType type;
 
   /// For a [GradientType.linear] gradient, the sweep angle in degrees
-  /// (`0` = left→right, `90` = top→bottom). Unused for path gradients.
+  /// (`0` = left to right, `90` = top to bottom). Unused for path gradients.
   final double degree;
 
   /// For a [GradientType.path] gradient, the inset of the inner box's left edge
-  /// (`0.0`–`1.0`). Unused for linear gradients.
+  /// (`0.0`-`1.0`). Unused for linear gradients.
   final double left;
 
   /// For a [GradientType.path] gradient, the inset of the inner box's right edge.

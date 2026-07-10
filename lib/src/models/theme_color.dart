@@ -6,7 +6,7 @@ part of '../../excel_plus.dart';
 /// optional *tint* rather than a literal RGB value. The twelve theme colors come
 /// from `xl/theme/theme1.xml`; [palette] holds them already ordered by the
 /// `theme="N"` index used in `styles.xml` (Excel swaps the first two light/dark
-/// pairs relative to the theme part's document order — see [_ParserThemeMixin]).
+/// pairs relative to the theme part's document order, see [_ParserThemeMixin]).
 ///
 /// Returns an 8-digit `AARRGGBB` hex (alpha forced to `FF`), or `null` when the
 /// index is out of range so the caller can fall back to its default.
@@ -46,30 +46,30 @@ String _resolveDefaultThemeColor(int themeIndex, double tint) =>
 
 /// The standard legacy `indexed="N"` color palette (ECMA-376 §18.8.27), used
 /// when a workbook does not supply its own `<indexedColors>` override. Indices
-/// run 0–63; 64 (system foreground) and 65 (system background) are "automatic"
+/// run 0-63; 64 (system foreground) and 65 (system background) are "automatic"
 /// and intentionally absent so they fall back to the caller's default.
 const _defaultIndexedPalette = <String>[
-  'FF000000', 'FFFFFFFF', 'FFFF0000', 'FF00FF00', // 0–3
-  'FF0000FF', 'FFFFFF00', 'FFFF00FF', 'FF00FFFF', // 4–7
-  'FF000000', 'FFFFFFFF', 'FFFF0000', 'FF00FF00', // 8–11
-  'FF0000FF', 'FFFFFF00', 'FFFF00FF', 'FF00FFFF', // 12–15
-  'FF800000', 'FF008000', 'FF000080', 'FF808000', // 16–19
-  'FF800080', 'FF008080', 'FFC0C0C0', 'FF808080', // 20–23
-  'FF9999FF', 'FF993366', 'FFFFFFCC', 'FFCCFFFF', // 24–27
-  'FF660066', 'FFFF8080', 'FF0066CC', 'FFCCCCFF', // 28–31
-  'FF000080', 'FFFF00FF', 'FFFFFF00', 'FF00FFFF', // 32–35
-  'FF800080', 'FF800000', 'FF008080', 'FF0000FF', // 36–39
-  'FF00CCFF', 'FFCCFFFF', 'FFCCFFCC', 'FFFFFF99', // 40–43
-  'FF99CCFF', 'FFFF99CC', 'FFCC99FF', 'FFFFCC99', // 44–47
-  'FF3366FF', 'FF33CCCC', 'FF99CC00', 'FFFFCC00', // 48–51
-  'FFFF9900', 'FFFF6600', 'FF666699', 'FF969696', // 52–55
-  'FF003366', 'FF339966', 'FF003300', 'FF333300', // 56–59
-  'FF993300', 'FF993366', 'FF333399', 'FF333333', // 60–63
+  'FF000000', 'FFFFFFFF', 'FFFF0000', 'FF00FF00', // 0-3
+  'FF0000FF', 'FFFFFF00', 'FFFF00FF', 'FF00FFFF', // 4-7
+  'FF000000', 'FFFFFFFF', 'FFFF0000', 'FF00FF00', // 8-11
+  'FF0000FF', 'FFFFFF00', 'FFFF00FF', 'FF00FFFF', // 12-15
+  'FF800000', 'FF008000', 'FF000080', 'FF808000', // 16-19
+  'FF800080', 'FF008080', 'FFC0C0C0', 'FF808080', // 20-23
+  'FF9999FF', 'FF993366', 'FFFFFFCC', 'FFCCFFFF', // 24-27
+  'FF660066', 'FFFF8080', 'FF0066CC', 'FFCCCCFF', // 28-31
+  'FF000080', 'FFFF00FF', 'FFFFFF00', 'FF00FFFF', // 32-35
+  'FF800080', 'FF800000', 'FF008080', 'FF0000FF', // 36-39
+  'FF00CCFF', 'FFCCFFFF', 'FFCCFFCC', 'FFFFFF99', // 40-43
+  'FF99CCFF', 'FFFF99CC', 'FFCC99FF', 'FFFFCC99', // 44-47
+  'FF3366FF', 'FF33CCCC', 'FF99CC00', 'FFFFCC00', // 48-51
+  'FFFF9900', 'FFFF6600', 'FF666699', 'FF969696', // 52-55
+  'FF003366', 'FF339966', 'FF003300', 'FF333300', // 56-59
+  'FF993300', 'FF993366', 'FF333399', 'FF333333', // 60-63
 ];
 
 /// Resolves a legacy `indexed="N"` palette color to an `AARRGGBB` hex string.
 ///
-/// Indices 0–63 map to [override] (the workbook's custom `<indexedColors>`
+/// Indices 0-63 map to [override] (the workbook's custom `<indexedColors>`
 /// table) when supplied, otherwise to [_defaultIndexedPalette]. Index 64 (system
 /// foreground) and 65 (system background) are "automatic" and return `null` so
 /// the caller falls back to its default, as does any out-of-range index.
@@ -121,7 +121,7 @@ String _applyTint(String hex, double tint) {
   return 'FF${h(rgb[0])}${h(rgb[1])}${h(rgb[2])}';
 }
 
-/// Converts 0–255 RGB to HSL with each component in `0.0..1.0`.
+/// Converts 0-255 RGB to HSL with each component in `0.0..1.0`.
 List<double> _rgbToHsl(int r, int g, int b) {
   final rf = r / 255.0, gf = g / 255.0, bf = b / 255.0;
   final maxC = max(rf, max(gf, bf));
@@ -144,7 +144,7 @@ List<double> _rgbToHsl(int r, int g, int b) {
   return [h, s, l];
 }
 
-/// Converts HSL (each `0.0..1.0`) back to 0–255 RGB.
+/// Converts HSL (each `0.0..1.0`) back to 0-255 RGB.
 List<int> _hslToRgb(double h, double s, double l) {
   double r, g, b;
   if (s == 0) {

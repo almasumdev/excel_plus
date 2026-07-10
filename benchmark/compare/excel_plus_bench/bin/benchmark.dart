@@ -3,8 +3,8 @@ import 'package:excel_plus/excel_plus.dart';
 
 /// Isolated benchmark for excel_plus.
 ///
-/// Runs the EXACT same workload as the excel_baseline harness — only the import
-/// on line 2 differs — so the two outputs are directly comparable. Run from
+/// Runs the EXACT same workload as the excel_baseline harness, only the import
+/// on line 2 differs, so the two outputs are directly comparable. Run from
 /// inside this package directory:
 ///
 ///   dart pub get
@@ -15,7 +15,7 @@ void main(List<String> args) {
   final cols = args.length > 1 ? int.parse(args[1]) : 50;
   final cells = rows * cols;
 
-  print('excel_plus benchmark — $cells cells ($rows rows x $cols cols)\n');
+  print('excel_plus benchmark: $cells cells ($rows rows x $cols cols)\n');
 
   final sw = Stopwatch()..start();
   final excel = Excel.createExcel();

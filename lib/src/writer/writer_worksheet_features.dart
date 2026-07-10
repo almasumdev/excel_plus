@@ -200,7 +200,7 @@ mixin _WriterWorksheetFeaturesMixin on _WriterBase {
     _insertWorksheetChildOrdered(worksheet, autoFilter);
   }
 
-  /// Builds a `<filterColumn>` element for [column] — a value-list `<filters>`,
+  /// Builds a `<filterColumn>` element for [column], a value-list `<filters>`,
   /// a `<customFilters>` pair, or a `<top10>`.
   XmlElement _buildFilterColumn(FilterColumn column) {
     final child = switch (column.type) {
@@ -317,7 +317,7 @@ mixin _WriterWorksheetFeaturesMixin on _WriterBase {
       );
     } else {
       // The container from an opened file is `x14:`-prefixed, so match by local
-      // name in any namespace — a qualified `findElements('sparklineGroups')`
+      // name in any namespace, a qualified `findElements('sparklineGroups')`
       // misses it and would append a second (schema-invalid) container.
       var existing = ext
           .findElements('sparklineGroups', namespaceUri: '*')
@@ -492,7 +492,7 @@ mixin _WriterWorksheetFeaturesMixin on _WriterBase {
 
   /// Writes the page/print setup (`<printOptions>`, `<pageMargins>`,
   /// `<pageSetup>` and the `<sheetPr><pageSetUpPr fitToPage>` flag) for
-  /// [sheetName], only when the API changed it — so an untouched file keeps its
+  /// [sheetName], only when the API changed it, so an untouched file keeps its
   /// original page-setup elements (including any `<pageSetup r:id>` printer
   /// settings) via the envelope round-trip.
   void _applyPageSetupForSheet(String sheetName) {
@@ -585,7 +585,7 @@ mixin _WriterWorksheetFeaturesMixin on _WriterBase {
       _insertWorksheetChildOrdered(worksheet, sheetPr);
     }
     // Regenerate pageSetUpPr (CT_SheetPr order: tabColor, outlinePr,
-    // pageSetUpPr) — placed last among them, before any extLst tail.
+    // pageSetUpPr), placed last among them, before any extLst tail.
     sheetPr.children.removeWhere(
       (n) => n is XmlElement && n.name.local == 'pageSetUpPr',
     );

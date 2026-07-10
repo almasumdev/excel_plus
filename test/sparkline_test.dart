@@ -147,7 +147,7 @@ void main() {
     test('adding a sparkline reuses the file\'s existing group container', () {
       // Regression: the writer matched only an unprefixed <sparklineGroups>, so
       // it missed the file's `x14:`-prefixed container and appended a second,
-      // schema-invalid one under the same <ext> — leaving two <sparklineGroups>
+      // schema-invalid one under the same <ext>, leaving two <sparklineGroups>
       // where Excel expects one (and would drop the newly added sparkline).
       final excel = Excel.decodeBytes(
         buildXlsx(

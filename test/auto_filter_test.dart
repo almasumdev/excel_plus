@@ -237,9 +237,9 @@ void main() {
             '</autoFilter>',
       );
       final excel = Excel.decodeBytes(bytes);
-      // Not modelled, so it doesn't surface on the getter …
+      // Not modelled, so it doesn't surface on the getter ...
       expect(excel['Sheet1'].autoFilterColumns, isEmpty);
-      // … but an untouched save preserves it via the envelope.
+      // ... but an untouched save preserves it via the envelope.
       expect(
         readPart(excel.encode()!, 'xl/worksheets/sheet1.xml'),
         contains('<dynamicFilter type="aboveAverage"'),

@@ -1,11 +1,11 @@
 // Web compile gate entrypoint (compiled by CI with `dart compile js` and
 // `dart compile wasm`; never run on the VM). It touches every
-// platform-conditional surface so a change that breaks web compilation —
+// platform-conditional surface so a change that breaks web compilation -
 // a stray `dart:io`/`dart:isolate` import, a broken conditional import, a
-// js-interop regression — fails CI instead of shipping:
-//  * `save(fileName:)` → the browser-download path (save_web.dart)
-//  * `decodeBytesAsync` / `encodeAsync` → the isolate stub (isolate_stub.dart)
-//  * decode/encode round-trip → core reader/writer under dart2js and wasm
+// js-interop regression, fails CI instead of shipping:
+//  * `save(fileName:)`: the browser-download path (save_web.dart)
+//  * `decodeBytesAsync` / `encodeAsync`: the isolate stub (isolate_stub.dart)
+//  * decode/encode round-trip to core reader/writer under dart2js and wasm
 import 'package:excel_plus/excel_plus.dart';
 
 Future<void> main() async {

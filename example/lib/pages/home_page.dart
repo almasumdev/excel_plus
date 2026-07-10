@@ -86,7 +86,7 @@ class HomePage extends StatelessWidget {
               const _SectionHeader(
                 title: 'Export showcases',
                 subtitle:
-                    'Polished, ready-to-export workbooks — download the .xlsx or '
+                    'Polished, ready-to-export workbooks: download the .xlsx or '
                     'copy the complete source.',
               ),
               const SizedBox(height: 12),
@@ -156,7 +156,7 @@ class HomePage extends StatelessWidget {
 }
 
 /// A compact showcase card: title plus a download and a copy-code button. No
-/// description, no preview, no detail page — just the two actions.
+/// description, no preview, no detail page, just the two actions.
 class _ShowcaseCard extends StatefulWidget {
   const _ShowcaseCard({required this.showcase, required this.icon});
 
@@ -249,7 +249,7 @@ class _ShowcaseCardState extends State<_ShowcaseCard> {
                       ),
                     )
                   : const Icon(Icons.download_outlined, size: 18),
-              label: Text(_busy ? 'Exporting…' : 'Download .xlsx'),
+              label: Text(_busy ? 'Exporting...' : 'Download .xlsx'),
               style: FilledButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
@@ -305,7 +305,7 @@ class _Hero extends StatelessWidget {
           const SizedBox(height: 14),
           const Text(
             'Fast, low-memory reading, creating and styling of Excel .xlsx '
-            'files in pure Dart. Explore each feature below — every demo builds '
+            'files in pure Dart. Explore each feature below; every demo builds '
             'a workbook, previews it, and exports a real file.',
             style: TextStyle(color: Colors.white, height: 1.5, fontSize: 15),
           ),

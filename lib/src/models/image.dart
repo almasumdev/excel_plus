@@ -1,6 +1,6 @@
 part of '../../excel_plus.dart';
 
-/// English Metric Units per pixel (96 DPI) — OOXML drawing sizes are in EMU.
+/// English Metric Units per pixel (96 DPI); OOXML drawing sizes are in EMU.
 const int _emuPerPixel = 9525;
 
 /// A picture embedded in a worksheet.
@@ -120,7 +120,7 @@ String? _sniffImageExtension(List<int> b) {
           continue;
         }
         final marker = b[i + 1];
-        // SOF0–SOF15, excluding DHT(C4), JPG(C8) and DAC(CC).
+        // SOF0-SOF15, excluding DHT(C4), JPG(C8) and DAC(CC).
         final isSof =
             marker >= 0xC0 &&
             marker <= 0xCF &&

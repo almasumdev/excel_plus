@@ -11,7 +11,7 @@ enum DataValidationType {
   /// Decimal (fractional) numbers.
   decimal,
 
-  /// A pick list — the source of a dropdown.
+  /// A pick list, the source of a dropdown.
   list,
 
   /// Calendar dates.
@@ -68,11 +68,11 @@ enum DataValidationErrorStyle {
   information,
 }
 
-/// An input rule applied to a cell range — a dropdown list, a numeric/length
+/// An input rule applied to a cell range: a dropdown list, a numeric/length
 /// bound, a date/time constraint, or a custom formula.
 ///
 /// Attach one with [Sheet.setDataValidation] (range-aware) or
-/// `cell.dataValidation = …` (single cell). Rules survive a read → save
+/// `cell.dataValidation = ...` (single cell). Rules survive a read/save
 /// round-trip.
 ///
 /// ```dart
@@ -107,12 +107,12 @@ class DataValidation {
   /// [DataValidationType.custom] and [DataValidationType.none].
   final DataValidationOperator operator;
 
-  /// First operand. For a list this is the source — either a quoted inline list
+  /// First operand. For a list this is the source, either a quoted inline list
   /// (`"Low,Medium,High"`) or a range/defined name (`$E$1:$E$3`). For bounded
   /// types it is the (lower) bound; for `custom` it is the formula.
   final String? formula1;
 
-  /// Second operand — the upper bound for `between` / `notBetween`; otherwise
+  /// Second operand, the upper bound for `between` / `notBetween`; otherwise
   /// `null`.
   final String? formula2;
 
@@ -143,7 +143,7 @@ class DataValidation {
   /// A dropdown whose options are the inline [values].
   ///
   /// Values are stored comma-joined, so an individual option cannot itself
-  /// contain a comma (an Excel limitation) — use [DataValidation.listFromRange]
+  /// contain a comma (an Excel limitation); use [DataValidation.listFromRange]
   /// to source such options from cells instead.
   factory DataValidation.list(
     List<String> values, {
@@ -304,7 +304,7 @@ class DataValidation {
     errorStyle: errorStyle,
   );
 
-  /// Escape hatch for full control — construct any rule directly from its raw
+  /// Escape hatch for full control: construct any rule directly from its raw
   /// OOXML operands. Useful for `date` / `time` rules whose operands are Excel
   /// serial numbers.
   factory DataValidation.raw({

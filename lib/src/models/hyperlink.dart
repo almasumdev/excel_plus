@@ -3,16 +3,16 @@ part of '../../excel_plus.dart';
 /// A hyperlink attached to a cell (or cell range).
 ///
 /// Two kinds are supported:
-///  * **External** — a web/`mailto:`/file URL ([Hyperlink.url], [Hyperlink.email]).
+///  * **External**: a web/`mailto:`/file URL ([Hyperlink.url], [Hyperlink.email]).
 ///    Stored as a worksheet relationship with `TargetMode="External"`.
-///  * **Internal** — a jump within the same workbook such as `'Sheet2'!B3` or a
+///  * **Internal**: a jump within the same workbook such as `'Sheet2'!B3` or a
 ///    defined name ([Hyperlink.location]). Stored inline, with no relationship.
 ///
 /// {@category Worksheet}
 class Hyperlink {
   const Hyperlink._({this.target, this.location, this.display, this.tooltip});
 
-  /// External target URL (e.g. `https://…`, `mailto:…`), or `null` for an
+  /// External target URL (e.g. `https://...`, `mailto:...`), or `null` for an
   /// internal link.
   final String? target;
 
@@ -29,7 +29,7 @@ class Hyperlink {
   /// Whether this is an external (URL) link rather than an internal jump.
   bool get isExternal => target != null;
 
-  /// A link to an external [url] (web, `mailto:`, file, …).
+  /// A link to an external [url] (web, `mailto:`, file, ...).
   factory Hyperlink.url(String url, {String? display, String? tooltip}) =>
       Hyperlink._(target: url, display: display, tooltip: tooltip);
 

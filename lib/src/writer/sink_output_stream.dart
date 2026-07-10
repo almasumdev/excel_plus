@@ -6,7 +6,7 @@ part of '../../excel_plus.dart';
 ///
 /// Small header/metadata writes are coalesced into a [_chunkSize] buffer; bulk
 /// file data (already-compressed streams) is forwarded directly. Only a running
-/// byte count is retained — the zip encoder needs [length] for entry offsets —
+/// byte count is retained: the zip encoder needs [length] for entry offsets,
 /// never the data itself.
 class _SinkOutputStream extends OutputStream {
   _SinkOutputStream(this._onBytes) : super(byteOrder: ByteOrder.littleEndian);

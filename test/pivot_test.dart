@@ -447,7 +447,7 @@ void main() {
 
     test('addPivotTable rejects a field index outside the source range', () {
       final excel = Excel.createExcel();
-      final s = _seed(excel); // source A1:C6 → valid columns 0..2
+      final s = _seed(excel); // source A1:C6: valid columns 0..2
       expect(
         () => s.addPivotTable(
           PivotTable(
@@ -693,7 +693,7 @@ void main() {
     });
 
     test('a pivot with no modelable shape is skipped but still preserved', () {
-      // No rowFields / dataFields / worksheet source — not representable as a
+      // No rowFields / dataFields / worksheet source: not representable as a
       // typed PivotTable, but the part must still survive the round-trip.
       final bytes = buildXlsx(
         '<row r="1"><c r="A1" t="inlineStr"><is><t>x</t></is></c></row>',

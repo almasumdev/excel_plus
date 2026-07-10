@@ -299,7 +299,7 @@ mixin _ParserWorksheetFeaturesMixin on _ParserBase {
   }
 
   /// Reads `<sheetProtection>` into the sheet model (the getters only; the
-  /// element — and its password hash — is left untouched on save unless the API
+  /// element, and its password hash, is left untouched on save unless the API
   /// changes it).
   void _parseSheetProtectionForSheet(String sheetName) {
     final sheet = _excel._sheetMap[sheetName];
@@ -342,7 +342,7 @@ mixin _ParserWorksheetFeaturesMixin on _ParserBase {
     if (hex != null) sheet._tabColor = ExcelColor.fromHexString(hex);
   }
 
-  /// Resolves a `<color>`-style element (tab colour, CF colour, …) to an ARGB
+  /// Resolves a `<color>`-style element (tab colour, CF colour, ...) to an ARGB
   /// hex string (rgb wins, then a theme reference + tint, then an indexed
   /// palette entry).
   String? _readColorHex(XmlElement el) {

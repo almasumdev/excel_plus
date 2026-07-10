@@ -2,7 +2,7 @@ part of '../../excel_plus.dart';
 
 /// Parses classic cell comments (`xl/commentsN.xml`) into the sheet's comment
 /// map, lazily per sheet. The note's VML shape part (`vmlDrawingN.vml`) is not
-/// modeled — it round-trips as an unmodeled archive part unless the comments are
+/// modeled; it round-trips as an unmodeled archive part unless the comments are
 /// changed via the API, in which case the writer regenerates both parts.
 mixin _ParserCommentsMixin on _ParserBase {
   void _parseCommentsForSheet(String sheetName) {
@@ -25,7 +25,7 @@ mixin _ParserCommentsMixin on _ParserBase {
     try {
       doc = XmlDocument.parse(utf8.decode(file.content));
     } catch (_) {
-      return; // malformed comments part — degrade gracefully
+      return; // malformed comments part: degrade gracefully
     }
 
     // Authors are referenced by index via each comment's authorId.

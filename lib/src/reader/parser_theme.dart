@@ -8,7 +8,7 @@ part of '../../excel_plus.dart';
 /// index Excel uses in `styles.xml`. That order is **not** the document order of
 /// `<a:clrScheme>`: Excel swaps the first two light/dark pairs, so theme 0 =
 /// light1 (background), theme 1 = dark1 (text), theme 2 = light2, theme 3 =
-/// dark2, then accent1–6, hyperlink, followedHyperlink.
+/// dark2, then accent1-6, hyperlink, followedHyperlink.
 mixin _ParserThemeMixin on _ParserBase {
   /// Maps the cell `theme="N"` index to a `<a:clrScheme>` child's local name.
   /// Note the light/dark swap in the first four entries versus document order
@@ -39,7 +39,7 @@ mixin _ParserThemeMixin on _ParserBase {
     try {
       document = XmlDocument.parse(utf8.decode(file.content));
     } catch (_) {
-      return; // malformed theme — degrade gracefully to no palette
+      return; // malformed theme: degrade gracefully to no palette
     }
 
     // Route the (now-decompressed) theme through the writer's re-serialize path
@@ -80,7 +80,7 @@ mixin _ParserThemeMixin on _ParserBase {
     }
   }
 
-  /// Locates the theme part — via the workbook relationships first, then the
+  /// Locates the theme part, via the workbook relationships first, then the
   /// conventional path, then any `xl/theme/*.xml`.
   String? _findThemeTarget() {
     final rels = _excel._xmlFiles['xl/_rels/workbook.xml.rels'];

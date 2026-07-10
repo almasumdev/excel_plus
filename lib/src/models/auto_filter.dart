@@ -33,7 +33,7 @@ enum FilterOperator {
   lessThanOrEqual,
 }
 
-/// A criterion applied to one column of a sheet's autofilter — the filter that
+/// A criterion applied to one column of a sheet's autofilter, the filter that
 /// actually hides non-matching rows, beyond just showing the dropdown arrow.
 ///
 /// Pass a list of these to [Sheet.setAutoFilter]'s `criteria`. [columnId] is
@@ -45,7 +45,7 @@ enum FilterOperator {
 ///   CellIndex.indexByString('A1'),
 ///   CellIndex.indexByString('D100'),
 ///   criteria: [
-///     FilterColumn.values(0, ['Active', 'Pending']), // column A is one of…
+///     FilterColumn.values(0, ['Active', 'Pending']), // column A is one of...
 ///     FilterColumn.custom(2, operator: FilterOperator.greaterThan, value: '1000'),
 ///   ],
 /// );
@@ -87,7 +87,7 @@ class FilterColumn {
     );
   }
 
-  /// Keep rows matching [operator] [value] — and optionally a second comparison
+  /// Keep rows matching [operator] [value], and optionally a second comparison
   /// ([operator2] [value2]) combined with AND ([matchAll] `true`, the default)
   /// or OR (`false`). Wildcards `*` and `?` in a value with
   /// [FilterOperator.equal] give "contains" / "begins with" / "ends with"
