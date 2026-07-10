@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <radialGradient id="bg" cx="46%" cy="44%" r="78%">
+      <stop offset="0%" stop-color="#474D44"/>
+      <stop offset="55%" stop-color="#31362E"/>
+      <stop offset="100%" stop-color="#20231D"/>
+    </radialGradient>
+    <linearGradient id="header" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#22945A"/>
+      <stop offset="100%" stop-color="#157141"/>
+    </linearGradient>
+    <linearGradient id="white" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#F6FAF6"/>
+      <stop offset="100%" stop-color="#E7EEE8"/>
+    </linearGradient>
+    <linearGradient id="gloss" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#96EC5F"/>
+      <stop offset="45%" stop-color="#4FCC5F"/>
+      <stop offset="100%" stop-color="#26A34E"/>
+    </linearGradient>
+    <filter id="soft" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="60"/>
+    </filter>
+    <filter id="soft2" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="26"/>
+    </filter>
+    <filter id="soft3" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="12"/>
+    </filter>
+    <clipPath id="face">
+      <rect x="232" y="240" width="560" height="480" rx="44"/>
+    </clipPath>
+  </defs>
+
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+  <ellipse cx="285" cy="640" rx="240" ry="290" fill="#FFFFFF" opacity="0.42" filter="url(#soft)"/>
+  <ellipse cx="720" cy="400" rx="320" ry="290" fill="#37D877" opacity="0.30" filter="url(#soft)"/>
+
+  <g transform="rotate(8 512 490)">
+    <rect x="252" y="276" width="566" height="486" rx="46" fill="#0E2117" opacity="0.55" filter="url(#soft2)"/>
+    <rect x="248" y="260" width="560" height="480" rx="46" fill="#134D2E"/>
+    <rect x="232" y="240" width="560" height="480" rx="44" fill="#177244"/>
+
+    <g clip-path="url(#face)">
+      <rect x="232" y="240" width="560" height="480" fill="url(#header)"/>
+      <!-- body cells: 4 rows x 3 cols under a 96px header -->
+      <rect x="232" y="336" width="187" height="96" fill="url(#white)"/>
+      <rect x="419" y="336" width="187" height="96" fill="url(#white)"/>
+      <rect x="606" y="336" width="186" height="96" fill="#46B76A"/>
+      <rect x="232" y="432" width="187" height="96" fill="url(#white)"/>
+      <rect x="419" y="432" width="187" height="96" fill="#45B667"/>
+      <rect x="606" y="432" width="186" height="96" fill="#2F9E57"/>
+      <rect x="232" y="528" width="187" height="96" fill="#EEF4EF"/>
+      <rect x="419" y="528" width="187" height="96" fill="#218A4D"/>
+      <rect x="606" y="528" width="186" height="96" fill="#1D8048"/>
+      <rect x="232" y="624" width="187" height="96" fill="url(#white)"/>
+      <rect x="419" y="624" width="187" height="96" fill="#187043"/>
+      <rect x="606" y="624" width="186" height="96" fill="#15663D"/>
+      <!-- grid lines -->
+      <path d="M419 336V720M606 336V720" stroke="#0E5C33" stroke-width="5"/>
+      <path d="M232 336H792M232 432H792M232 528H792M232 624H792" stroke="#0E5C33" stroke-width="5"/>
+      <path d="M419 240V336M606 240V336" stroke="#10603A" stroke-width="5"/>
+      <!-- sheen on the header -->
+      <rect x="232" y="240" width="560" height="46" fill="#FFFFFF" opacity="0.10"/>
+    </g>
+    <rect x="232" y="240" width="560" height="480" rx="44" fill="none" stroke="#2CA363" stroke-width="4"/>
+
+    <!-- plus mark -->
+    <g transform="translate(-84 -160)">
+      <path d="M700 640h84a18 18 0 0 1 18 18v66h66a18 18 0 0 1 18 18v84a18 18 0 0 1-18 18h-66v66a18 18 0 0 1-18 18h-84a18 18 0 0 1-18-18v-66h-66a18 18 0 0 1-18-18v-84a18 18 0 0 1 18-18h66v-66a18 18 0 0 1 18-18z"
+            fill="#58E07C" stroke="#58E07C" stroke-width="36" opacity="0.7" filter="url(#soft2)"/>
+      <path d="M700 640h84a18 18 0 0 1 18 18v66h66a18 18 0 0 1 18 18v84a18 18 0 0 1-18 18h-66v66a18 18 0 0 1-18 18h-84a18 18 0 0 1-18-18v-66h-66a18 18 0 0 1-18-18v-84a18 18 0 0 1 18-18h66v-66a18 18 0 0 1 18-18z"
+            transform="translate(0 24)" fill="#135E33"/>
+      <path d="M700 640h84a18 18 0 0 1 18 18v66h66a18 18 0 0 1 18 18v84a18 18 0 0 1-18 18h-66v66a18 18 0 0 1-18 18h-84a18 18 0 0 1-18-18v-66h-66a18 18 0 0 1-18-18v-84a18 18 0 0 1 18-18h66v-66a18 18 0 0 1 18-18z"
+            fill="url(#gloss)" stroke="#E7F7E8" stroke-width="13"/>
+      <path d="M706 664h72v88h88v72" fill="none" stroke="#C4F3A4" stroke-width="10" opacity="0.55" filter="url(#soft3)"/>
+    </g>
+  </g>
+</svg>
