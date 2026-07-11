@@ -1,3 +1,14 @@
+## 2.7.1
+
+Documentation only; no API or behaviour changes.
+
+- Reorganised the generated API reference into twelve ordered categories, each
+  with its own landing page: Core, Cell Values, Styling, Number Formats, Layout,
+  Formulas, Worksheet, Tables, Pivot Tables, Charts, CSV, and Errors.
+- Surfaced the built-in formula reference (engine, operators, and the full
+  function list) as the Formulas category page.
+- Enriched the library-level dartdoc and tidied the category descriptions.
+
 ## 2.7.0
 
 ### Added
