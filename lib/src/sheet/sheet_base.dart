@@ -251,7 +251,7 @@ class _SheetBase {
   /// a division by zero `#DIV/0!`, a self-referential formula `#CIRC`, and an
   /// unparseable formula `#ERROR!`.
   ///
-  /// {@category Core}
+  /// {@category Formulas}
   CellValue? evaluate(CellIndex index) {
     final v = _sheetData[index.rowIndex]?[index.columnIndex]?.value;
     if (v is! FormulaCellValue) return v;

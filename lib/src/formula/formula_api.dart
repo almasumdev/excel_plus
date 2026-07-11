@@ -19,7 +19,7 @@ typedef ExcelFunction = CellValue Function(List<CellValue?> args);
 /// });
 /// ```
 ///
-/// {@category Core}
+/// {@category Formulas}
 class FormulaApi {
   final Excel _excel;
   FormulaApi._(this._excel);

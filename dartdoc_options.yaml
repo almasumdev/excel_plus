@@ -5,6 +5,13 @@ dartdoc:
     - "Styling"
     - "Number Formats"
     - "Layout"
+    - "Formulas"
+    - "Worksheet"
+    - "Tables"
+    - "Pivot Tables"
+    - "Charts"
+    - "CSV"
+    - "Errors"
   categories:
     "Core":
       markdown: doc/categories/core.md
@@ -16,3 +23,17 @@ dartdoc:
       markdown: doc/categories/number_formats.md
     "Layout":
       markdown: doc/categories/layout.md
+    "Formulas":
+      markdown: doc/functions.md
+    "Worksheet":
+      markdown: doc/categories/worksheet.md
+    "Tables":
+      markdown: doc/categories/tables.md
+    "Pivot Tables":
+      markdown: doc/categories/pivot_tables.md
+    "Charts":
+      markdown: doc/categories/charts.md
+    "CSV":
+      markdown: doc/categories/csv.md
+    "Errors":
+      markdown: doc/categories/errors.md

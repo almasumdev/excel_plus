@@ -1,5 +1,10 @@
-/// A high-performance library for reading, creating, and editing
-/// Excel `.xlsx` files in Dart and Flutter.
+/// A fast, low-memory library for reading, creating, editing, and styling
+/// Excel `.xlsx` files (and reading legacy `.xls`) in Dart and Flutter.
+///
+/// Open or create a workbook with [Excel], then read and write cells through
+/// [Sheet]. The API is grouped into categories: cell values, styling, number
+/// formats, layout, formulas, worksheet features, tables, pivot tables, charts,
+/// CSV import/export, and errors.
 library;
 
 import 'dart:collection';

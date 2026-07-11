@@ -1,0 +1,1 @@
+Worksheet-level features: hyperlinks, data validation, conditional formatting, filters, freeze and split panes, comments, sparklines, sheet and workbook protection, row and column grouping, and page setup.
