@@ -83,7 +83,10 @@ Keep layers separate: the reader must not depend on writer logic and vice versa.
 
 ## Dependencies
 
-- Runtime deps are intentionally minimal: **`archive`, `xml`, `web`** (only 3).
+- Runtime deps are intentionally minimal: **`archive`, `xml`, `web`**, plus
+  first-party zero-dependency **`csv_plus`** (`^1.0.1`, for CSV import/export) =
+  4 total. `csv_plus` is the CSV bridge in [core/csv.dart](lib/src/core/csv.dart);
+  import its **core** library only (never `csv_plus/io.dart`, which pulls `dart:io`).
 - Dev deps: `lints`, `test`.
 - Add packages with `dart pub add <name>` — do not hand-edit `pubspec.yaml` deps.
 

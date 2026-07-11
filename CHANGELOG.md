@@ -1,3 +1,23 @@
+## 2.7.0
+
+### Added
+
+- **CSV import and export.** Read and write CSV (and TSV, pipe-delimited, or any
+  custom-delimiter) data through a new bridge built on
+  [csv_plus](https://pub.dev/packages/csv_plus), a first-party, zero-dependency
+  package.
+  - `Excel.fromCsv(csv, {sheetName, inferTypes, config})` builds a workbook from
+    CSV text; `excel.importCsv(csv, {sheetName, ...})` adds a sheet to an
+    existing workbook and returns it.
+  - `sheet.toCsv({config, formulasAsText})` and `excel.toCsv({sheet, ...})`
+    serialise a worksheet back to CSV.
+  - Type inference is guarded against silent data loss (a value such as `007`
+    stays text); numbers, booleans, dates, times, errors, and formulas each map
+    to a sensible CSV field. Pass a `CsvConfig` (re-exported from excel_plus) to
+    control the delimiter, quoting, line ending, or BOM.
+  - Pure Dart and web-safe on both dart2js and wasm; no `dart:io` on the CSV
+    path.
+
 ## 2.6.0
 
 ### Added

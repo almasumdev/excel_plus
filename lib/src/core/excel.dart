@@ -217,6 +217,43 @@ class Excel {
   static Future<Excel> decodeBytesAsync(List<int> data) =>
       iso.runIsolated(() => Excel.decodeBytes(data));
 
+  /// Creates a new workbook from CSV [csv], with the data in a single sheet.
+  ///
+  /// The sheet is named [sheetName] (default `'Sheet1'`). With [inferTypes]
+  /// (the default) numeric and boolean fields are typed and guarded against
+  /// silent data loss (a value such as `007` stays text); pass `false` to keep
+  /// every field as text. [config] controls the delimiter and how the input is
+  /// parsed (see [CsvConfig], with presets like [CsvConfig.excel] and
+  /// [CsvConfig.tsv]).
+  ///
+  /// To add CSV to an existing workbook instead, use [ExcelCsv.importCsv]; to
+  /// export, use [SheetCsv.toCsv] / [ExcelCsv.toCsv].
+  ///
+  /// ```dart
+  /// final excel = Excel.fromCsv('name,age\nAlice,30', sheetName: 'People');
+  /// File('people.xlsx').writeAsBytesSync(excel.save()!);
+  /// ```
+  factory Excel.fromCsv(
+    String csv, {
+    String sheetName = 'Sheet1',
+    bool inferTypes = true,
+    CsvConfig? config,
+  }) {
+    final excel = Excel.createExcel();
+    final defaultName = excel.getDefaultSheet() ?? excel.sheetOrder.first;
+    _fillSheetFromCsv(
+      excel[defaultName],
+      csv,
+      inferTypes: inferTypes,
+      config: config,
+    );
+    if (defaultName != sheetName) {
+      excel.rename(defaultName, sheetName);
+      excel.setDefaultSheet(sheetName);
+    }
+    return excel;
+  }
+
   /// Returns all sheets as a map of sheet names to [Sheet] objects.
   Map<String, Sheet> get tables {
     if (_sheetMap.isEmpty) {

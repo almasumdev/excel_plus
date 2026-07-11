@@ -7,6 +7,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:archive/archive.dart';
+import 'package:csv_plus/csv_plus.dart';
 import 'package:xml/xml.dart';
 import 'package:xml/xml_events.dart';
 import 'src/platform/save_stub.dart'
@@ -21,9 +22,16 @@ import 'src/platform/isolate_io.dart'
 /// from disk, without taking a separate `archive` dependency.
 export 'package:archive/archive.dart' show InputStream, InputFileStream;
 
+/// Re-exported from `csv_plus` so the CSV bridge ([Excel.fromCsv],
+/// [ExcelCsv.importCsv], [SheetCsv.toCsv]) can be configured and its parse
+/// errors caught without taking a separate `csv_plus` import.
+export 'package:csv_plus/csv_plus.dart'
+    show CsvConfig, QuoteMode, CsvException, CsvParseException;
+
 /// Core
 part 'src/core/excel.dart';
 part 'src/core/config.dart';
+part 'src/core/csv.dart';
 
 /// Models
 part 'src/models/exceptions.dart';

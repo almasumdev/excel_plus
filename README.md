@@ -73,7 +73,7 @@ package, measured on the same machine with the same workload:
 it is comparable; the gap widens with size (3.4× at 1M becomes **4.6× at 5M**, where
 `excel` needed ~12 GB RAM). Small-workbook create time is dominated by decoding the
 embedded template, so it is comparable too; at 1M+ cells excel_plus writes cells
-**3–3.5×** faster (one shared default style instead of a per-cell allocation).</sub>
+**3-3.5x** faster (one shared default style instead of a per-cell allocation).</sub>
 
 The two libraries pin conflicting `archive`/`xml` majors, so they can't run in one
 program; each harness lives in its own package under
@@ -113,6 +113,7 @@ cd ../excel_plus_bench                && dart pub get && dart run bin/benchmark.
     - [Work with multiple sheets](#work-with-multiple-sheets)
     - [Find and replace](#find-and-replace)
     - [Save the workbook](#save-the-workbook)
+    - [Import and export CSV](#import-and-export-csv)
     - [Flutter: read from assets, edit, and save](#flutter-read-from-assets-edit-and-save)
     - [Charts](#charts)
     - [Pivot tables](#pivot-tables)
@@ -139,6 +140,7 @@ Flutter platform. Expand a group for details:
 <summary><b>📄 Core & platform</b></summary>
 
 - Read, create & edit `.xlsx`
+- CSV import & export (also TSV, pipe, and custom delimiters)
 - Multiple sheets: create, copy, rename, delete
 - All cell types: text, int, double, bool, date, time, datetime, formula
 - Cross-platform: VM, web (`dart2js` + `wasm`) & Flutter mobile
@@ -553,6 +555,27 @@ await sink.close();
 final bytes = await excel.encodeAsync();
 ```
 
+### Import and export CSV
+
+CSV import and export are built on the zero-dependency
+[csv_plus](https://pub.dev/packages/csv_plus) package; TSV, pipe-delimited, and
+custom-delimiter formats work too. Pass a `CsvConfig` (re-exported from
+excel_plus) to change the delimiter, quoting, or line ending.
+
+```dart
+// Build a workbook from CSV text.
+final excel = Excel.fromCsv('name,age\nAlice,30\nBob,25', sheetName: 'People');
+
+// Add a CSV sheet to an existing workbook (here tab-separated).
+excel.importCsv('a\tb\n1\t2', sheetName: 'Tabbed', config: const CsvConfig.tsv());
+
+// Export a sheet back to CSV.
+final csv = excel['People'].toCsv();
+```
+
+Type inference is guarded against data loss: a value such as `007` stays text,
+not the integer `7`. Pass `inferTypes: false` to keep every field as text.
+
 ### Flutter: read from assets, edit, and save
 
 ```dart
@@ -867,10 +890,10 @@ excel_plus is created and owned by **Nurullah Al Masum**.
 
 ### Contributors
 
-excel_plus grows with its community — every contributor is listed here:
+excel_plus grows with its community; every contributor is listed here:
 
 <a href="https://github.com/almasumdev/excel_plus/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=almasumdev/excel_plus" alt="excel_plus contributors"/>
 </a>
 
-Want to help? Pull requests are welcome — see [Support and feedback](#support-and-feedback).
+Want to help? Pull requests are welcome; see [Support and feedback](#support-and-feedback).
