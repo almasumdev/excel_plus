@@ -576,6 +576,19 @@ final csv = excel['People'].toCsv();
 Type inference is guarded against data loss: a value such as `007` stays text,
 not the integer `7`. Pass `inferTypes: false` to keep every field as text.
 
+Messy exports import cleanly too. Skip a comment preamble with `comment`, drop
+leading rows with `skipRows`, or read only a slice with `maxRows`, all passed
+through `CsvConfig`:
+
+```dart
+// Skip the '#' comment preamble that many exports carry.
+excel.importCsv(
+  '# Sales report 2026\nname,total\nAlice,95\nBob,88',
+  sheetName: 'Sales',
+  config: const CsvConfig(comment: '#'),
+);
+```
+
 ### Flutter: read from assets, edit, and save
 
 ```dart

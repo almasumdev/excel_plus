@@ -1,3 +1,13 @@
+## 2.7.2
+
+Dependency and documentation update; no excel_plus API changes.
+
+- Require `csv_plus: ^1.1.0`. Its new decode-only options flow through
+  `Excel.fromCsv` and `importCsv` via their existing `config:` parameter:
+  `comment` skips comment lines (for example `#`-prefixed), `skipRows` drops a
+  leading preamble before the data, and `maxRows` caps how many rows are read.
+- Documented these CSV-import options in the README.
+
 ## 2.7.1
 
 Documentation only; no API or behaviour changes.
