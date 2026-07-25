@@ -121,6 +121,7 @@ part 'src/formula/formula_ast.dart';
 part 'src/formula/formula_parser.dart';
 part 'src/formula/formula_value.dart';
 part 'src/formula/formula_evaluator.dart';
+part 'src/formula/dependency_graph.dart';
 part 'src/formula/formula_functions.dart';
 part 'src/formula/formula_functions_extra.dart';
 part 'src/formula/formula_functions_lookup.dart';

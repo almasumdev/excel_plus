@@ -309,25 +309,41 @@ class Excel {
   ///   literal a caller wrote inside a prior spill range is treated as part of
   ///   that spill and cleared; a formula placed there is kept and instead makes
   ///   the re-spill resolve to `#SPILL!`.
-  void recalculate() {
+  ///
+  /// Pass [changed] (A1 references, optionally sheet-qualified, for example
+  /// `['A1', "Sheet2!B3"]`, and ranges like `'A1:A9'`) to recompute
+  /// **incrementally**: only the formulas that transitively depend on those
+  /// cells are recomputed, instead of the whole workbook. The result matches a
+  /// full recalculate; a formula that uses a dynamic reference (`INDIRECT` /
+  /// `OFFSET`) or a volatile function (`NOW` / `TODAY` / `RAND`) always
+  /// recomputes. With [changed] omitted (the default) every formula is
+  /// recomputed, exactly as before.
+  void recalculate({Iterable<String>? changed}) {
     parser._ensureAllSheetsParsed();
     final ctx = _FormulaContext(this);
 
-    // Collect formula cells, and the spill range each produced on a prior
-    // recalculate, so we can clear the cells it owns before recomputing.
-    final targets = <(Data, String)>[];
-    final priorSpills = <(String, String)>[]; // (sheetName, spill ref)
+    // Every formula cell in the workbook.
+    final all = <(Data, String)>[];
     for (final entry in _sheetMap.entries) {
       for (final row in entry.value._sheetData.values) {
         for (final data in row.values) {
-          final v = data.value;
-          if (v is FormulaCellValue) {
-            targets.add((data, entry.key));
-            final ref = v._arrayRef;
-            if (ref != null) priorSpills.add((entry.key, ref));
-          }
+          if (data.value is FormulaCellValue) all.add((data, entry.key));
         }
       }
+    }
+
+    // Recompute all of them, or (when the caller says what changed) only the
+    // formulas transitively affected by those cells.
+    final targets = changed == null
+        ? all
+        : _incrementalTargets(ctx, all, changed);
+
+    // The spill range each target produced on a prior recalculate, so we can
+    // clear the cells it owns before recomputing.
+    final priorSpills = <(String, String)>[]; // (sheetName, spill ref)
+    for (final (data, name) in targets) {
+      final ref = (data.value as FormulaCellValue)._arrayRef;
+      if (ref != null) priorSpills.add((name, ref));
     }
 
     // Clear each prior spill's non-anchor literals so a shrunk array leaves no

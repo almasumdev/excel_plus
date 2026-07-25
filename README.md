@@ -188,6 +188,7 @@ Flutter platform. Expand a group for details:
 - Formula-evaluation engine with ~130 functions
   ([function reference](https://github.com/almasumdev/excel_plus/blob/main/doc/functions.md)),
   plus `registerFunction` for your own
+- Incremental recalculation: `recalculate(changed: [...])` recomputes only the formulas affected by the changed cells
 - Dynamic-array spilling: `SEQUENCE` / `FILTER` / `SORT` / `UNIQUE` fill a spill range on `recalculate`, with Excel `#SPILL!` collision handling
 - Excel tables (ListObjects)
 - Pivot tables: read & write (row / column / page / nested fields + measures)
@@ -228,7 +229,6 @@ What ships next is driven by user requests on the
 [issue tracker](https://github.com/almasumdev/excel_plus/issues):
 
 - ⬜ More formula functions: long-tail statistical, engineering & database (D-)
-- ⬜ Incremental recalculation (dependency graph)
 
 Shipped milestones are in the
 [changelog](https://github.com/almasumdev/excel_plus/blob/main/CHANGELOG.md).
@@ -348,6 +348,11 @@ sheet.cell(CellIndex.indexByString('A4')).setFormula('AVERAGE(A1:A2)');
 // Evaluate one cell, or recompute the whole workbook:
 print(sheet.evaluate(CellIndex.indexByString('A3'))); // 30
 excel.recalculate(); // store every formula's computed result
+
+// After editing a few cells, recompute incrementally: only the formulas that
+// depend on the changed cells are recomputed, not the whole workbook.
+sheet.updateCell(CellIndex.indexByString('A1'), IntCellValue(99));
+excel.recalculate(changed: ['A1']);
 
 // A dynamic-array formula spills its result across a range on recalculate:
 sheet.cell(CellIndex.indexByString('D1')).setFormula('SEQUENCE(3)');

@@ -1,3 +1,21 @@
+## 2.11.0
+
+Incremental recalculation.
+
+### Added
+
+- `Excel.recalculate({Iterable<String>? changed})` can now recompute
+  **incrementally**: pass the A1 references that changed (optionally
+  sheet-qualified, e.g. `['A1', 'Sheet2!B3']`, ranges allowed) and only the
+  formulas that transitively depend on them are recomputed, instead of the whole
+  workbook. A static dependency graph built from the formula ASTs (with
+  bounding-box edges for ranges and cross-sheet references) drives it. The result
+  matches a full recalculate; a formula that uses a dynamic reference
+  (`INDIRECT` / `OFFSET`) or a volatile function (`NOW` / `TODAY` / `RAND`)
+  always recomputes, and each affected formula still spills exactly as in a full
+  pass. Calling `recalculate()` with no argument recomputes everything, exactly
+  as before (no behaviour change).
+
 ## 2.10.0
 
 Typed CSV import via a schema.

@@ -31,6 +31,7 @@ Future<void> main() async {
   // Formula engine + dynamic-array spilling: pure Dart, must compile web-safe.
   sheet.cell(CellIndex.indexByString('D1')).setFormula('SEQUENCE(3)');
   excel.recalculate();
+  excel.recalculate(changed: ['D1']); // incremental path
   final spill =
       (sheet.cell(CellIndex.indexByString('D1')).value as FormulaCellValue)
           .spillRange;

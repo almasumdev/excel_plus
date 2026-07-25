@@ -291,4 +291,141 @@ void main() {
       expect(numOf(s.cell(CellIndex.indexByString('A3')).value), 3);
     });
   });
+
+  group('Incremental Recalculation', () {
+    test('recomputes a transitive chain of dependents', () {
+      final excel = Excel.createExcel();
+      final s = excel['Sheet1'];
+      s.updateCell(CellIndex.indexByString('A1'), IntCellValue(1));
+      s.updateCell(CellIndex.indexByString('B1'), FormulaCellValue('A1+1'));
+      s.updateCell(CellIndex.indexByString('C1'), FormulaCellValue('B1+1'));
+      excel.recalculate();
+      expect(_formula(s, 'C1').cachedValue, '3');
+
+      s.updateCell(CellIndex.indexByString('A1'), IntCellValue(10));
+      excel.recalculate(changed: ['A1']);
+      expect(_formula(s, 'B1').cachedValue, '11');
+      expect(_formula(s, 'C1').cachedValue, '12');
+    });
+
+    test('recomputes only the formulas affected by the changed cells', () {
+      final excel = Excel.createExcel();
+      final s = excel['Sheet1'];
+      var ticks = 0;
+      excel.formula.registerFunction('TICK', (args) {
+        ticks++;
+        final v = args.isEmpty ? null : args.first;
+        return v is IntCellValue ? v : IntCellValue(0);
+      });
+      s.updateCell(CellIndex.indexByString('A1'), IntCellValue(1));
+      s.updateCell(CellIndex.indexByString('C1'), IntCellValue(2));
+      s.updateCell(CellIndex.indexByString('B1'), FormulaCellValue('TICK(A1)'));
+      s.updateCell(CellIndex.indexByString('D1'), FormulaCellValue('TICK(C1)'));
+      excel.recalculate();
+      expect(ticks, 2); // both computed on the full pass
+
+      ticks = 0;
+      s.updateCell(CellIndex.indexByString('A1'), IntCellValue(5));
+      excel.recalculate(changed: ['A1']);
+      expect(ticks, 1); // only B1 (=TICK(A1)) recomputed, not D1
+      expect(_formula(s, 'B1').cachedValue, '5');
+    });
+
+    test('recomputes a range dependant when a cell inside it changes', () {
+      final excel = Excel.createExcel();
+      final s = excel['Sheet1'];
+      s.updateCell(CellIndex.indexByString('A1'), IntCellValue(1));
+      s.updateCell(CellIndex.indexByString('A2'), IntCellValue(2));
+      s.updateCell(CellIndex.indexByString('A3'), IntCellValue(3));
+      s.updateCell(
+        CellIndex.indexByString('B1'),
+        FormulaCellValue('SUM(A1:A3)'),
+      );
+      excel.recalculate();
+      expect(_formula(s, 'B1').cachedValue, '6');
+
+      s.updateCell(CellIndex.indexByString('A2'), IntCellValue(20));
+      excel.recalculate(changed: ['A2']);
+      expect(_formula(s, 'B1').cachedValue, '24');
+    });
+
+    test('recomputes a cross-sheet dependant', () {
+      final excel = Excel.createExcel();
+      excel['Sheet1'].updateCell(
+        CellIndex.indexByString('A1'),
+        IntCellValue(4),
+      );
+      excel['Sheet2'].updateCell(
+        CellIndex.indexByString('A1'),
+        FormulaCellValue('Sheet1!A1*2'),
+      );
+      excel.recalculate();
+      expect(_formula(excel['Sheet2'], 'A1').cachedValue, '8');
+
+      excel['Sheet1'].updateCell(
+        CellIndex.indexByString('A1'),
+        IntCellValue(9),
+      );
+      excel.recalculate(changed: ['Sheet1!A1']);
+      expect(_formula(excel['Sheet2'], 'A1').cachedValue, '18');
+    });
+
+    test('always recomputes a volatile INDIRECT formula', () {
+      final excel = Excel.createExcel();
+      final s = excel['Sheet1'];
+      s.updateCell(CellIndex.indexByString('A1'), IntCellValue(1));
+      s.updateCell(
+        CellIndex.indexByString('B1'),
+        FormulaCellValue('INDIRECT("A1")'),
+      );
+      excel.recalculate();
+      expect(_formula(s, 'B1').cachedValue, '1');
+
+      // The dependency on A1 is dynamic (invisible to the static graph), but the
+      // formula is volatile, so it still recomputes.
+      s.updateCell(CellIndex.indexByString('A1'), IntCellValue(7));
+      excel.recalculate(changed: ['A1']);
+      expect(_formula(s, 'B1').cachedValue, '7');
+    });
+
+    test('an incremental recalculate matches a full one', () {
+      Excel build() {
+        final e = Excel.createExcel();
+        final s = e['Sheet1'];
+        s.updateCell(CellIndex.indexByString('A1'), IntCellValue(2));
+        s.updateCell(CellIndex.indexByString('A2'), IntCellValue(3));
+        s.updateCell(CellIndex.indexByString('B1'), FormulaCellValue('A1*A2'));
+        s.updateCell(CellIndex.indexByString('B2'), FormulaCellValue('B1+A2'));
+        s.updateCell(
+          CellIndex.indexByString('C1'),
+          FormulaCellValue('SUM(A1:A2)'),
+        );
+        return e;
+      }
+
+      final full = build();
+      final incr = build();
+      full.recalculate();
+      incr.recalculate();
+
+      full['Sheet1'].updateCell(
+        CellIndex.indexByString('A1'),
+        IntCellValue(10),
+      );
+      incr['Sheet1'].updateCell(
+        CellIndex.indexByString('A1'),
+        IntCellValue(10),
+      );
+      full.recalculate();
+      incr.recalculate(changed: ['A1']);
+
+      for (final ref in ['B1', 'B2', 'C1']) {
+        expect(
+          _formula(incr['Sheet1'], ref).cachedValue,
+          _formula(full['Sheet1'], ref).cachedValue,
+          reason: ref,
+        );
+      }
+    });
+  });
 }
