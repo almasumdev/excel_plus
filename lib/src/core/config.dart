@@ -97,6 +97,12 @@ const _imageContentTypes = <String, String>{
   'jpeg': 'image/jpeg',
   'jpg': 'image/jpeg',
   'gif': 'image/gif',
+  'bmp': 'image/bmp',
+  'tiff': 'image/tiff',
+  'webp': 'image/webp',
+  'ico': 'image/x-icon',
+  'emf': 'image/x-emf',
+  'wmf': 'image/x-wmf',
 };
 
 // reference: https://support.microsoft.com/en-gb/office/change-the-column-width-and-row-height-72f5e3cc-994d-43e8-ae58-9774a0905f46

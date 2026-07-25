@@ -1,3 +1,17 @@
+## 2.9.0
+
+Broader image-format support for `Sheet.insertImage`.
+
+### Added
+
+- `insertImage` now accepts BMP, TIFF, WebP, ICO, and the EMF and WMF metafiles,
+  in addition to the existing PNG, JPEG, and GIF. Each is detected from its magic
+  bytes, written with the correct OpenXML content type, and (unless a size is
+  passed) has its intrinsic pixel size read from the header, so anchored pictures
+  are sized correctly without a manual `width`/`height`. WebP dimensions are read
+  from the VP8X, VP8 (lossy), and VP8L (lossless) chunks; TIFF from its first
+  IFD; BMP, ICO, EMF, and WMF from their headers.
+
 ## 2.8.0
 
 Complete, Excel-correct dynamic-array spilling in `recalculate()`.

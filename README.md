@@ -200,7 +200,7 @@ Flutter platform. Expand a group for details:
 
 - Charts: read & write (column, bar, line, area, pie, doughnut, scatter)
 - Sparklines: in-cell mini charts (line / column / win-loss)
-- Images
+- Images: PNG, JPEG, GIF, BMP, TIFF, WebP, ICO, EMF & WMF, with automatic size detection
 - Comments / notes
 
 </details>

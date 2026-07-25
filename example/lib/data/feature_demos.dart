@@ -2474,15 +2474,15 @@ final _images = FeatureDemo(
   id: 'images',
   title: 'Images',
   description:
-      'Embed pictures (PNG/JPEG/GIF) anchored to a cell. The format and pixel '
-      'size are detected from the bytes; the size can be overridden. Images read '
-      'back via sheet.images, and any already in an opened file are preserved. '
+      'Embed pictures anchored to a cell. The format and pixel size are '
+      'detected from the bytes; the size can be overridden. Images read back '
+      'via sheet.images, and any already in an opened file are preserved. '
       'Open the exported file in Excel/Sheets to see the pictures.',
   points: [
     'sheet.insertImage(bytes, anchor: CellIndex...)',
     'width / height override the intrinsic pixel size',
     'sheet.images reads pictures back (bytes + anchor + size)',
-    'PNG, JPEG and GIF supported',
+    'PNG, JPEG, GIF, BMP, TIFF, WebP, ICO, EMF & WMF supported',
   ],
   snippet: '''
 final png = base64.decode(logoBase64);
