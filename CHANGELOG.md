@@ -1,20 +1,18 @@
 ## 2.11.1
 
-Recalculation robustness fixes.
+Formula recalculation fixes.
 
 ### Fixed
 
-- A self-referential defined name (for example a name whose formula refers back
-  to itself) no longer overflows the stack during `recalculate`; the affected
-  cell now degrades to a `#CIRC` error, matching how a self-referential cell is
-  already handled. This applied to both a full and an incremental recalculate.
+- A defined name that refers to itself no longer overflows the stack during
+  `recalculate` (full or incremental). It resolves to `#CIRC`, the same as a
+  self-referential cell.
 
 ### Changed
 
-- An incremental `recalculate(changed: ...)` now performs a full recompute when
-  none of the given references can be parsed, so a mistyped reference cannot
-  leave dependent formulas stale. An empty `changed` list still recomputes
-  nothing.
+- `recalculate(changed: ...)` now recomputes the whole workbook when none of the
+  given references parse, so a typo can't leave stale results. An empty list
+  still does nothing.
 
 ## 2.11.0
 
