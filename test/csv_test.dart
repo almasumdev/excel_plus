@@ -218,4 +218,80 @@ void main() {
       );
     });
   });
+
+  group('CSV Schema Import', () {
+    test('importCsv with a schema coerces each column to its declared '
+        'type', () {
+      final (excel, _) = _blank();
+      final sheet = excel.importCsv(
+        'id,score\n001,9\n002,8',
+        sheetName: 'Data',
+        schema: const CsvSchema(
+          columns: [
+            CsvColumnDef(name: 'id', type: String),
+            CsvColumnDef(name: 'score', type: double),
+          ],
+        ),
+      );
+
+      // Header row is kept as text.
+      expect((sheet.rows[0][0]!.value as TextCellValue).value.toString(), 'id');
+      // "001" stays text (schema String), not coerced to the number 1.
+      expect(
+        (sheet.rows[1][0]!.value as TextCellValue).value.toString(),
+        '001',
+      );
+      // The score column is coerced to double.
+      expect((sheet.rows[1][1]!.value as DoubleCellValue).value, 9.0);
+      expect((sheet.rows[2][1]!.value as DoubleCellValue).value, 8.0);
+    });
+
+    test('fromCsv with a schema types columns', () {
+      final excel = Excel.fromCsv(
+        'qty,price\n3,2\n4,1.5',
+        schema: const CsvSchema(
+          columns: [
+            CsvColumnDef(name: 'qty', type: int),
+            CsvColumnDef(name: 'price', type: double),
+          ],
+        ),
+      );
+      final sheet = excel['Sheet1'];
+      expect((sheet.rows[1][0]!.value as IntCellValue).value, 3);
+      // "2" is coerced to a double (2.0), not left as an int.
+      expect((sheet.rows[1][1]!.value as DoubleCellValue).value, 2.0);
+      expect((sheet.rows[2][1]!.value as DoubleCellValue).value, 1.5);
+    });
+
+    test('a schema-typed workbook saves and reopens as .xlsx', () {
+      final excel = Excel.fromCsv(
+        'name,score\nAda,9.5',
+        schema: const CsvSchema(
+          columns: [
+            CsvColumnDef(name: 'name', type: String),
+            CsvColumnDef(name: 'score', type: double),
+          ],
+        ),
+      );
+      final sheet = Excel.decodeBytes(excel.encode()!)['Sheet1'];
+      expect(
+        (sheet.rows[1][0]!.value as TextCellValue).value.toString(),
+        'Ada',
+      );
+      expect((sheet.rows[1][1]!.value as DoubleCellValue).value, 9.5);
+    });
+
+    test('a value that violates the schema throws CsvParseException', () {
+      final (excel, _) = _blank();
+      expect(
+        () => excel.importCsv(
+          'n\n1\nx',
+          schema: const CsvSchema(
+            columns: [CsvColumnDef(name: 'n', type: int)],
+          ),
+        ),
+        throwsA(isA<CsvParseException>()),
+      );
+    });
+  });
 }

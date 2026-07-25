@@ -1,3 +1,18 @@
+## 2.10.0
+
+Typed CSV import via a schema.
+
+### Added
+
+- `Excel.fromCsv` and `Excel.importCsv` accept an optional `schema` (a
+  `CsvSchema`, now re-exported from excel_plus along with `CsvColumnDef`). The
+  first row is treated as the header and each named column's values are coerced
+  to the declared type (`int`, `double`, `num`, `bool`, `String`, `DateTime`)
+  instead of being inferred, so a column such as an id can be forced to stay
+  text (`007` does not become `7`). A value that cannot be converted, or a null
+  in a `nullable: false` column, throws `CsvParseException`. Requires
+  `csv_plus: ^1.2.0`.
+
 ## 2.9.0
 
 Broader image-format support for `Sheet.insertImage`.

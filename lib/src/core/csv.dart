@@ -76,17 +76,36 @@ extension ExcelCsv on Excel {
   /// every field as [TextCellValue]. [config] controls the delimiter and how
   /// the input is parsed.
   ///
+  /// Pass a [schema] to force column types instead of inferring them: the first
+  /// row is treated as the header, and each named column's values are coerced to
+  /// the declared type (`int`, `double`, `num`, `bool`, `String`, `DateTime`).
+  /// A cell that cannot be converted, or a null in a `nullable: false` column,
+  /// throws [CsvParseException].
+  ///
   /// ```dart
   /// final sheet = excel.importCsv('name,age\nAlice,30', sheetName: 'People');
+  ///
+  /// // Force column types with a schema:
+  /// excel.importCsv('id,score\n001,9\n002,8', schema: const CsvSchema(columns: [
+  ///   CsvColumnDef(name: 'id', type: String), // keep "001" as text
+  ///   CsvColumnDef(name: 'score', type: double),
+  /// ]));
   /// ```
   Sheet importCsv(
     String csv, {
     String? sheetName,
     bool inferTypes = true,
     CsvConfig? config,
+    CsvSchema? schema,
   }) {
     final target = this[sheetName ?? _uniqueCsvSheetName(this)];
-    _fillSheetFromCsv(target, csv, inferTypes: inferTypes, config: config);
+    _fillSheetFromCsv(
+      target,
+      csv,
+      inferTypes: inferTypes,
+      config: config,
+      schema: schema,
+    );
     return target;
   }
 }
@@ -124,13 +143,30 @@ CellValue? _cellFromCsvField(dynamic field) {
 }
 
 /// Decodes [data] with csv_plus and appends each parsed row to [sheet].
+///
+/// When a [schema] is given, the first row is the header (matched to the
+/// schema's columns by name) and every data row is coerced to the declared
+/// column types; [inferTypes] then only governs columns the schema does not
+/// name.
 void _fillSheetFromCsv(
   Sheet sheet,
   String data, {
   required bool inferTypes,
   CsvConfig? config,
+  CsvSchema? schema,
 }) {
-  final codec = CsvCodec(config ?? const CsvConfig());
+  final base = config ?? const CsvConfig();
+  if (schema != null) {
+    final table = CsvCodec(
+      base.copyWith(dynamicTyping: inferTypes),
+    ).decodeWithSchema(data, schema);
+    sheet.appendRow([for (final h in table.headers) _cellFromCsvField(h)]);
+    for (final row in table.rawData) {
+      sheet.appendRow([for (final field in row) _cellFromCsvField(field)]);
+    }
+    return;
+  }
+  final codec = CsvCodec(base);
   final rows = inferTypes ? codec.decode(data) : codec.decodeStrings(data);
   for (final row in rows) {
     sheet.appendRow([for (final field in row) _cellFromCsvField(field)]);

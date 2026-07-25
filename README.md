@@ -596,6 +596,19 @@ excel.importCsv(
 );
 ```
 
+Or force column types with a `CsvSchema` (re-exported from excel_plus) instead of
+inferring them. The first row is the header; each named column is coerced to its
+declared type, and a value that cannot convert throws `CsvParseException`:
+
+```dart
+excel.importCsv('id,score\n001,9\n002,8', sheetName: 'Scores', schema: const CsvSchema(
+  columns: [
+    CsvColumnDef(name: 'id', type: String),   // keep "001" as text, not the number 1
+    CsvColumnDef(name: 'score', type: double), // 9 -> 9.0
+  ],
+));
+```
+
 ### Flutter: read from assets, edit, and save
 
 ```dart

@@ -28,10 +28,17 @@ import 'src/platform/isolate_io.dart'
 export 'package:archive/archive.dart' show InputStream, InputFileStream;
 
 /// Re-exported from `csv_plus` so the CSV bridge ([Excel.fromCsv],
-/// [ExcelCsv.importCsv], [SheetCsv.toCsv]) can be configured and its parse
-/// errors caught without taking a separate `csv_plus` import.
+/// [ExcelCsv.importCsv], [SheetCsv.toCsv]) can be configured, its columns typed
+/// with a [CsvSchema], and its parse errors caught without taking a separate
+/// `csv_plus` import.
 export 'package:csv_plus/csv_plus.dart'
-    show CsvConfig, QuoteMode, CsvException, CsvParseException;
+    show
+        CsvConfig,
+        QuoteMode,
+        CsvException,
+        CsvParseException,
+        CsvSchema,
+        CsvColumnDef;
 
 /// Core
 part 'src/core/excel.dart';

@@ -226,6 +226,11 @@ class Excel {
   /// parsed (see [CsvConfig], with presets like [CsvConfig.excel] and
   /// [CsvConfig.tsv]).
   ///
+  /// Pass a [schema] to force column types instead of inferring them: the first
+  /// row is the header, and each named column is coerced to its declared type
+  /// (see [ExcelCsv.importCsv]). A value that cannot be converted throws
+  /// [CsvParseException].
+  ///
   /// To add CSV to an existing workbook instead, use [ExcelCsv.importCsv]; to
   /// export, use [SheetCsv.toCsv] / [ExcelCsv.toCsv].
   ///
@@ -238,6 +243,7 @@ class Excel {
     String sheetName = 'Sheet1',
     bool inferTypes = true,
     CsvConfig? config,
+    CsvSchema? schema,
   }) {
     final excel = Excel.createExcel();
     final defaultName = excel.getDefaultSheet() ?? excel.sheetOrder.first;
@@ -246,6 +252,7 @@ class Excel {
       csv,
       inferTypes: inferTypes,
       config: config,
+      schema: schema,
     );
     if (defaultName != sheetName) {
       excel.rename(defaultName, sheetName);
