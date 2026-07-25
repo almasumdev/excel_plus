@@ -41,6 +41,7 @@ and it reuses untouched parts of a workbook byte-for-byte when saving.
 - Read and parse existing `.xlsx` files, or create new Excel workbooks from scratch.
 - Edit cells, rows, columns, and multiple sheets, then save back to `.xlsx`.
 - Style spreadsheets with fonts, colors, fills, borders, alignment, number formats, and merged cells.
+- Go beyond the basics with formulas and recalculation, charts, pivot tables, conditional formatting, data validation, and CSV import/export.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/almasumdev/excel_plus/main/images/preview.png"

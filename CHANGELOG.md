@@ -1,3 +1,10 @@
+## 2.12.1
+
+### Changed
+
+- Broadened the package description and README to name more of what the library
+  does (charts, formulas, pivot tables, CSV), for discoverability. No code change.
+
 ## 2.12.0
 
 Radar charts.
