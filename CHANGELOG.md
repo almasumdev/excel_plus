@@ -1,3 +1,7 @@
+## 2.11.2
+
+Documentation only; no code change from 2.11.1.
+
 ## 2.11.1
 
 Formula recalculation fixes.
