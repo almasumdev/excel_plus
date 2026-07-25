@@ -184,6 +184,8 @@ mixin _ParserDrawingsMixin on _ParserBase {
         type = ChartType.doughnut;
       case 'scatterChart':
         type = ChartType.scatter;
+      case 'radarChart':
+        type = ChartType.radar;
       default:
         return null;
     }
@@ -252,8 +254,18 @@ mixin _ParserDrawingsMixin on _ParserBase {
       yAxisTitle: yTitle,
       plotVisibleOnly: _childVal(chartEl, 'plotVisOnly') != '0',
       anchorTo: anchorTo,
+      radarStyle: type == ChartType.radar
+          ? _radarStyleFromVal(_childVal(plot, 'radarStyle'))
+          : RadarStyle.marker,
     );
   }
+
+  /// Maps an OOXML `radarStyle` value to a [RadarStyle], defaulting to marker.
+  RadarStyle _radarStyleFromVal(String? v) => switch (v) {
+    'standard' => RadarStyle.standard,
+    'filled' => RadarStyle.filled,
+    _ => RadarStyle.marker,
+  };
 
   /// The `val` attribute of [parent]'s direct child named [local].
   String? _childVal(XmlElement parent, String local) {

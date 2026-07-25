@@ -24,6 +24,23 @@ enum ChartType {
 
   /// A scatter (XY) chart.
   scatter,
+
+  /// A radar (spider) chart.
+  radar,
+}
+
+/// The visual style of a radar [Chart] (ignored by other chart types).
+///
+/// {@category Charts}
+enum RadarStyle {
+  /// Lines only, no point markers (OOXML `standard`).
+  standard,
+
+  /// Lines with a marker at each point (OOXML `marker`); the default.
+  marker,
+
+  /// Each series filled to the centre (OOXML `filled`).
+  filled,
 }
 
 /// How multiple series are combined (ignored by pie/doughnut/scatter).
@@ -169,6 +186,10 @@ class Chart {
   /// Defaults to `true`.
   final bool plotVisibleOnly;
 
+  /// The visual style of a radar chart: lines only, lines with markers, or
+  /// filled. Ignored by every other chart type. Defaults to [RadarStyle.marker].
+  final RadarStyle radarStyle;
+
   /// Set true once the chart has been written, so a re-save doesn't duplicate it.
   bool _written = false;
 
@@ -188,6 +209,7 @@ class Chart {
     this.yAxisTitle,
     this.plotVisibleOnly = true,
     this.anchorTo,
+    this.radarStyle = RadarStyle.marker,
   });
 
   /// A vertical bar (column) chart.
@@ -381,6 +403,33 @@ class Chart {
     height: height,
     xAxisTitle: xAxisTitle,
     yAxisTitle: yAxisTitle,
+    plotVisibleOnly: plotVisibleOnly,
+    anchorTo: anchorTo,
+  );
+
+  /// A radar (spider) chart. Pass [RadarStyle.filled] as [style] to fill each
+  /// series to the centre; the default draws markered lines.
+  factory Chart.radar({
+    required CellIndex anchor,
+    required List<ChartSeries> series,
+    String? categories,
+    String? title,
+    RadarStyle style = RadarStyle.marker,
+    LegendPosition legend = LegendPosition.right,
+    int width = 480,
+    int height = 288,
+    bool plotVisibleOnly = true,
+    CellIndex? anchorTo,
+  }) => Chart(
+    type: ChartType.radar,
+    anchor: anchor,
+    series: series,
+    categories: categories,
+    title: title,
+    radarStyle: style,
+    legend: legend,
+    width: width,
+    height: height,
     plotVisibleOnly: plotVisibleOnly,
     anchorTo: anchorTo,
   );

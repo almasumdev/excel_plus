@@ -1,3 +1,13 @@
+## 2.12.0
+
+Radar charts.
+
+### Added
+
+- `Chart.radar` authors a radar (spider) chart. Choose `RadarStyle.standard`,
+  `RadarStyle.marker` (the default), or `RadarStyle.filled`. Radar charts also
+  read back from an opened file, like the other chart types.
+
 ## 2.11.2
 
 Documentation only; no code change from 2.11.1.

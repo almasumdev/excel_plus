@@ -705,6 +705,59 @@ void main() {
     });
   });
 
+  group('Radar Charts', () {
+    test('a radar chart writes a radarChart part with the marker style', () {
+      final excel = Excel.createExcel();
+      _seed(excel).addChart(
+        Chart.radar(
+          anchor: CellIndex.indexByString('D2'),
+          title: 'Skills',
+          categories: 'A2:A5',
+          series: [ChartSeries(name: 'Score', values: 'B2:B5')],
+        ),
+      );
+      final chart = _part(_encode(excel), 'xl/charts/chart1.xml');
+      expect(chart, contains('<c:radarChart>'));
+      expect(chart, contains('<c:radarStyle val="marker"'));
+      // A non-filled radar series is drawn as a coloured line (width 28575).
+      expect(chart, contains('w="28575"'));
+      expect(chart, contains("'Sheet1'!B2:B5"));
+    });
+
+    test('a filled radar chart uses the filled style and a solid fill', () {
+      final excel = Excel.createExcel();
+      _seed(excel).addChart(
+        Chart.radar(
+          anchor: CellIndex.indexByString('D2'),
+          categories: 'A2:A5',
+          series: [ChartSeries(values: 'B2:B5')],
+          style: RadarStyle.filled,
+        ),
+      );
+      final chart = _part(_encode(excel), 'xl/charts/chart1.xml');
+      expect(chart, contains('<c:radarStyle val="filled"'));
+      // Filled series are area-filled, not drawn as a coloured line.
+      expect(chart, isNot(contains('w="28575"')));
+    });
+
+    test('a radar chart round-trips its type and style', () {
+      final excel = Excel.createExcel();
+      _seed(excel).addChart(
+        Chart.radar(
+          anchor: CellIndex.indexByString('D2'),
+          categories: 'A2:A5',
+          series: [ChartSeries(name: 'Score', values: 'B2:B5')],
+          style: RadarStyle.filled,
+        ),
+      );
+      final c = Excel.decodeBytes(excel.encode()!)['Sheet1'].charts.single;
+      expect(c.type, ChartType.radar);
+      expect(c.radarStyle, RadarStyle.filled);
+      expect(c.series.single.values, contains('B2:B5'));
+      expect(c.categories, contains('A2:A5'));
+    });
+  });
+
   group('Chart Validation', () {
     test('addChart rejects a chart with no data series', () {
       final excel = Excel.createExcel();

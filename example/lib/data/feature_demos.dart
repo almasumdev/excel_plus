@@ -3258,12 +3258,13 @@ final _charts = FeatureDemo(
   id: 'charts',
   title: 'Charts',
   description:
-      'Author charts over your data: column, bar, line, area, pie, doughnut and '
-      'scatter. Each is anchored to a cell with a title, legend, multiple series '
-      'and category labels, and you can colour each series, or each pie/doughnut '
-      'slice, explicitly. Download the file to see the rendered chart.',
+      'Author charts over your data: column, bar, line, area, pie, doughnut, '
+      'scatter and radar. Each is anchored to a cell with a title, legend, '
+      'multiple series and category labels, and you can colour each series, or '
+      'each pie/doughnut slice, explicitly. Download the file to see the '
+      'rendered chart.',
   points: [
-    'Chart.column / bar / line / area / pie / doughnut / scatter',
+    'Chart.column / bar / line / area / pie / doughnut / scatter / radar',
     'Multiple series + category labels from cell ranges',
     'Custom colours: ChartSeries(color:) per series, pointColors: per slice',
     'Title, axis titles and legend position',

@@ -236,9 +236,14 @@ mixin _WriterChartsMixin on _WriterBase {
     String sheetName,
     ChartSeries s,
     int index,
-    String? categories,
-  ) {
+    String? categories, [
+    bool radarFilled = false,
+  ]) {
     final isPieLike = type == ChartType.pie || type == ChartType.doughnut;
+    // A line series, and a non-filled radar series, are coloured on their line;
+    // bar/area/filled-radar get a solid fill; pie/doughnut colour per slice.
+    final asLine =
+        type == ChartType.line || (type == ChartType.radar && !radarFilled);
     // Pie/doughnut: one coloured slice per value, resolve the count once.
     final sliceCount = isPieLike ? _refValues(sheetName, s.values).length : 0;
     final children = <XmlNode>[
@@ -248,7 +253,7 @@ mixin _WriterChartsMixin on _WriterBase {
         _c('tx', [], [
           _c('v', [], [XmlText(s.name!)]),
         ]),
-      if (type == ChartType.line)
+      if (asLine)
         _lineSpPr(_resolvedSeriesColor(s, index))
       else if (!isPieLike)
         _fillSpPr(_resolvedSeriesColor(s, index)),
@@ -328,6 +333,8 @@ mixin _WriterChartsMixin on _WriterBase {
 
   /// The `<c:*Chart>` plot element plus the axes it needs.
   List<XmlElement> _plotElements(String sheetName, Chart chart) {
+    final radarFilled =
+        chart.type == ChartType.radar && chart.radarStyle == RadarStyle.filled;
     final ser = [
       for (var i = 0; i < chart.series.length; i++)
         _categorySeries(
@@ -336,6 +343,7 @@ mixin _WriterChartsMixin on _WriterBase {
           chart.series[i],
           i,
           chart.categories,
+          radarFilled,
         ),
     ];
     final axIds = [_cVal('axId', _catAxId), _cVal('axId', _valAxId)];
@@ -421,8 +429,24 @@ mixin _WriterChartsMixin on _WriterBase {
           ]),
           ..._scatterAxes(chart),
         ];
+      case ChartType.radar:
+        return [
+          _c('radarChart', [], [
+            _cVal('radarStyle', _radarStyleVal(chart.radarStyle)),
+            _cVal('varyColors', '0'),
+            ...ser,
+            ...axIds,
+          ]),
+          ..._categoryValueAxes(chart),
+        ];
     }
   }
+
+  String _radarStyleVal(RadarStyle s) => switch (s) {
+    RadarStyle.standard => 'standard',
+    RadarStyle.marker => 'marker',
+    RadarStyle.filled => 'filled',
+  };
 
   /// Serializes a whole `<c:chartSpace>` for [chart].
   String _buildChartXml(String sheetName, Chart chart) {
