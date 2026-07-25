@@ -63,8 +63,9 @@ String _evalKey(_EvalValue v) {
 /// COLUMN, ROWS, COLUMNS, OFFSET, INDIRECT, and FILTER/SORT/UNIQUE/SEQUENCE.
 ///
 /// The dynamic-array functions return a full [_ArrayVal]; they compose inside
-/// other functions (e.g. `SUM(FILTER(...))`) but do not yet *spill* across the
-/// grid, a top-level dynamic-array formula evaluates to its first cell.
+/// other functions (e.g. `SUM(FILTER(...))`) and, as the top-level result of a
+/// cell, **spill** across the grid on [Excel.recalculate] (which also handles
+/// the `#SPILL!` collision rules).
 void _registerReferenceFunctions(Map<String, _FormulaFn> r) {
   r['ROW'] = _guard((a) {
     if (a.length == 0) {
@@ -139,7 +140,7 @@ void _registerReferenceFunctions(Map<String, _FormulaFn> r) {
     return _evalNode(node, a.ctx, a.sheet);
   });
 
-  // --- dynamic arrays (return an _ArrayVal; no grid spilling) ---
+  // --- dynamic arrays (return an _ArrayVal; spill on recalculate) ---
   r['SEQUENCE'] = _guard((a) {
     if (a.length == 0) return const _ErrVal(CellErrorValue.valueError);
     final rows = _coerceNum(a.evalScalar(0)).toInt();

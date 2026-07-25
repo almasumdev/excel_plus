@@ -139,8 +139,10 @@ void main() {
       );
       excel.recalculate();
 
-      // Anchor keeps the formula; the rest of the range gets literal values.
+      // Anchor keeps the formula and reports the spill range; the rest of the
+      // range gets literal values.
       expect(_formula(s, 'A1').cachedValue, '1');
+      expect(_formula(s, 'A1').spillRange, 'A1:A3');
       expect(numOf(s.cell(CellIndex.indexByString('A2')).value), 2);
       expect(numOf(s.cell(CellIndex.indexByString('A3')).value), 3);
     });
@@ -153,6 +155,7 @@ void main() {
         FormulaCellValue('SEQUENCE(2,2,1,1)'),
       );
       excel.recalculate();
+      expect(_formula(s, 'A1').spillRange, 'A1:B2');
       expect(numOf(s.cell(CellIndex.indexByString('B1')).value), 2);
       expect(numOf(s.cell(CellIndex.indexByString('A2')).value), 3);
       expect(numOf(s.cell(CellIndex.indexByString('B2')).value), 4);
@@ -170,7 +173,25 @@ void main() {
       expect(numOf(reopened.cell(CellIndex.indexByString('A3')).value), 3);
     });
 
-    test('spilling never overwrites an existing formula cell', () {
+    test('a blocked spill yields #SPILL! and preserves the blocking value', () {
+      final excel = Excel.createExcel();
+      final s = excel['Sheet1'];
+      s.updateCell(
+        CellIndex.indexByString('A1'),
+        FormulaCellValue('SEQUENCE(3)'),
+      );
+      s.updateCell(CellIndex.indexByString('A2'), IntCellValue(99));
+      excel.recalculate();
+
+      // Anchor reports #SPILL! with no spill range; the blocking value stays
+      // put and nothing spills past it.
+      expect(_formula(s, 'A1').cachedValue, '#SPILL!');
+      expect(_formula(s, 'A1').spillRange, isNull);
+      expect(numOf(s.cell(CellIndex.indexByString('A2')).value), 99);
+      expect(s.cell(CellIndex.indexByString('A3')).value, isNull);
+    });
+
+    test('a spill blocked by a formula cell yields #SPILL!', () {
       final excel = Excel.createExcel();
       final s = excel['Sheet1'];
       s.updateCell(
@@ -179,11 +200,95 @@ void main() {
       );
       s.updateCell(CellIndex.indexByString('A2'), FormulaCellValue('99'));
       excel.recalculate();
-      // A2 stays a formula (was not clobbered by the spill).
+      expect(_formula(s, 'A1').cachedValue, '#SPILL!');
+      // The blocking formula is kept, not clobbered by the spill.
       expect(
         s.cell(CellIndex.indexByString('A2')).value,
         isA<FormulaCellValue>(),
       );
+    });
+
+    test('a shrinking array clears the cells it no longer fills', () {
+      final excel = Excel.createExcel();
+      final s = excel['Sheet1'];
+      s.updateCell(CellIndex.indexByString('C1'), IntCellValue(3));
+      s.updateCell(
+        CellIndex.indexByString('A1'),
+        FormulaCellValue('SEQUENCE(C1)'),
+      );
+      excel.recalculate();
+      expect(numOf(s.cell(CellIndex.indexByString('A3')).value), 3);
+
+      // Shrink the source; the third cell must be cleared, not left stale.
+      s.updateCell(CellIndex.indexByString('C1'), IntCellValue(2));
+      excel.recalculate();
+      expect(numOf(s.cell(CellIndex.indexByString('A2')).value), 2);
+      expect(s.cell(CellIndex.indexByString('A3')).value, isNull);
+      expect(_formula(s, 'A1').spillRange, 'A1:A2');
+    });
+
+    test('a growing array fills the newly covered cells', () {
+      final excel = Excel.createExcel();
+      final s = excel['Sheet1'];
+      s.updateCell(CellIndex.indexByString('C1'), IntCellValue(2));
+      s.updateCell(
+        CellIndex.indexByString('A1'),
+        FormulaCellValue('SEQUENCE(C1)'),
+      );
+      excel.recalculate();
+      expect(s.cell(CellIndex.indexByString('A3')).value, isNull);
+
+      s.updateCell(CellIndex.indexByString('C1'), IntCellValue(4));
+      excel.recalculate();
+      expect(numOf(s.cell(CellIndex.indexByString('A4')).value), 4);
+      expect(_formula(s, 'A1').spillRange, 'A1:A4');
+    });
+
+    test('the spill range round-trips and re-recalculates after reopen', () {
+      final excel = Excel.createExcel();
+      excel['Sheet1'].updateCell(
+        CellIndex.indexByString('A1'),
+        FormulaCellValue('SEQUENCE(3)'),
+      );
+      excel.recalculate();
+
+      final reopened = Excel.decodeBytes(excel.encode()!);
+      final rs = reopened['Sheet1'];
+      expect(_formula(rs, 'A1').spillRange, 'A1:A3');
+
+      // The reopened anchor knows its range, so a fresh recalculate clears and
+      // refills correctly.
+      reopened.recalculate();
+      expect(numOf(rs.cell(CellIndex.indexByString('A3')).value), 3);
+      expect(_formula(rs, 'A1').spillRange, 'A1:A3');
+    });
+
+    test('spillRange is null for a scalar formula', () {
+      final excel = Excel.createExcel();
+      final s = excel['Sheet1'];
+      s.updateCell(CellIndex.indexByString('A1'), IntCellValue(1));
+      s.updateCell(CellIndex.indexByString('A2'), IntCellValue(2));
+      s.updateCell(
+        CellIndex.indexByString('B1'),
+        FormulaCellValue('SUM(A1:A2)'),
+      );
+      excel.recalculate();
+      expect(_formula(s, 'B1').spillRange, isNull);
+    });
+
+    test('re-recalculating a spill is idempotent', () {
+      final excel = Excel.createExcel();
+      final s = excel['Sheet1'];
+      s.updateCell(
+        CellIndex.indexByString('A1'),
+        FormulaCellValue('SEQUENCE(3)'),
+      );
+      excel.recalculate();
+      excel.recalculate();
+      expect(_formula(s, 'A1').cachedValue, '1');
+      expect(_formula(s, 'A1').spillRange, 'A1:A3');
+      expect(numOf(s.cell(CellIndex.indexByString('A2')).value), 2);
+      expect(numOf(s.cell(CellIndex.indexByString('A3')).value), 3);
     });
   });
 }

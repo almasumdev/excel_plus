@@ -57,6 +57,10 @@ const _circularError = CellErrorValue('#CIRC');
 /// The generic parse-failure error for an unsupported/invalid formula.
 const _parseError = CellErrorValue('#ERROR!');
 
+/// `#SPILL!`: a dynamic-/array-formula result could not spill because a cell in
+/// its target range was already occupied.
+const _spillError = CellErrorValue('#SPILL!');
+
 /// Collapses an array/range to a single value for scalar contexts (first cell;
 /// `#VALUE!` if empty).
 _EvalValue _scalar(_EvalValue v) {

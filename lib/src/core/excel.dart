@@ -288,69 +288,163 @@ class Excel {
   /// to `#CIRC`; an unparseable one to `#ERROR!`.
   ///
   /// A formula whose result is an array (a dynamic-array function such as
-  /// `FILTER`/`SEQUENCE`, or a range like `=A1:A3`) **spills**: the anchor cell
-  /// keeps the formula (written as `<f t="array" ref="...">`) and the remaining
-  /// cells of the spill range receive the computed values. Existing formulas in
-  /// the spill range are left untouched.
+  /// `FILTER` or `SEQUENCE`, or a range like `=A1:A3`) **spills**: the anchor
+  /// cell keeps the formula (written as `<f t="array" ref="...">`) and the other
+  /// cells of the spill range receive the computed values. The anchor reports
+  /// the range via [FormulaCellValue.spillRange].
+  ///
+  /// Spilling matches Excel:
+  /// - If any cell the array would fill is already occupied (by a value or
+  ///   another formula), the array cannot spill: the anchor result becomes
+  ///   `#SPILL!` and the blocking cells are left untouched (never overwritten).
+  /// - Cells a formula spilled into on a previous [recalculate] are cleared
+  ///   before it recomputes, so an array that shrinks leaves no stale values. A
+  ///   literal a caller wrote inside a prior spill range is treated as part of
+  ///   that spill and cleared; a formula placed there is kept and instead makes
+  ///   the re-spill resolve to `#SPILL!`.
   void recalculate() {
     parser._ensureAllSheetsParsed();
     final ctx = _FormulaContext(this);
-    // Collect first, then mutate, so we don't change a map while iterating it.
+
+    // Collect formula cells, and the spill range each produced on a prior
+    // recalculate, so we can clear the cells it owns before recomputing.
     final targets = <(Data, String)>[];
+    final priorSpills = <(String, String)>[]; // (sheetName, spill ref)
     for (final entry in _sheetMap.entries) {
       for (final row in entry.value._sheetData.values) {
         for (final data in row.values) {
-          if (data.value is FormulaCellValue) targets.add((data, entry.key));
+          final v = data.value;
+          if (v is FormulaCellValue) {
+            targets.add((data, entry.key));
+            final ref = v._arrayRef;
+            if (ref != null) priorSpills.add((entry.key, ref));
+          }
         }
       }
     }
 
+    // Clear each prior spill's non-anchor literals so a shrunk array leaves no
+    // ghosts and an anchor never collides with its own previous range.
+    for (final (name, ref) in priorSpills) {
+      final sheet = _sheetMap[name];
+      final box = _spillBox(ref);
+      if (sheet == null || box == null) continue;
+      final (c0, r0, c1, r1) = box;
+      for (var r = r0; r <= r1; r++) {
+        for (var c = c0; c <= c1; c++) {
+          if (r == r0 && c == c0) continue; // keep the anchor
+          if (sheet._sheetData[r]?[c]?.value is FormulaCellValue) continue;
+          sheet._removeCell(r, c);
+        }
+      }
+    }
+
+    // Evaluate every formula once against the cleared grid.
+    final evaluated = <(Data, String, _EvalValue)>[];
+    for (final (data, name) in targets) {
+      final index = data.cellIndex;
+      evaluated.add((
+        data,
+        name,
+        ctx.cellValue(name, index.columnIndex, index.rowIndex),
+      ));
+    }
+
     final anchorWrites = <(Data, FormulaCellValue)>[];
     final spills = <(String, int, int, CellValue)>[]; // sheet, row, col, value
-    for (final (data, name) in targets) {
+    // Cells claimed by a committed spill this pass, so two arrays can't overlap
+    // (the later one resolves to #SPILL!).
+    final claimed = <String>{};
+
+    for (final (data, name, raw) in evaluated) {
       final formula = (data.value as FormulaCellValue).formula;
       final index = data.cellIndex;
-      final raw = ctx.cellValue(name, index.columnIndex, index.rowIndex);
+      final c0 = index.columnIndex;
+      final r0 = index.rowIndex;
       final rows = raw is _ArrayVal ? raw.rows.length : 1;
       final cols = raw is _ArrayVal && raw.rows.isNotEmpty
           ? raw.rows.first.length
           : 1;
-      if (raw is _ArrayVal && (rows > 1 || cols > 1)) {
-        final c0 = index.columnIndex;
-        final r0 = index.rowIndex;
-        final ref = getSpanCellId(c0, r0, c0 + cols - 1, r0 + rows - 1);
-        final (cached, type) = _cachedFor(_evalToCell(raw.rows[0][0]));
-        anchorWrites.add((
-          data,
-          FormulaCellValue._typed(formula, cached, type, arrayRef: ref),
-        ));
-        for (var r = 0; r < rows; r++) {
-          for (var c = 0; c < cols; c++) {
-            if (r == 0 && c == 0) continue;
-            spills.add((name, r0 + r, c0 + c, _evalToCell(raw.rows[r][c])));
-          }
-        }
-      } else {
+
+      if (raw is! _ArrayVal || (rows <= 1 && cols <= 1)) {
         final (cached, type) = _cachedFor(_evalToCell(raw));
         anchorWrites.add((
           data,
           FormulaCellValue._typed(formula, cached, type),
         ));
+        continue;
+      }
+
+      // Blocked if any non-anchor target cell holds a value or formula, or was
+      // claimed by another array this pass.
+      final sheet = _sheetMap[name];
+      var blocked = false;
+      for (var r = 0; r < rows && !blocked; r++) {
+        for (var c = 0; c < cols; c++) {
+          if (r == 0 && c == 0) continue;
+          final rr = r0 + r, cc = c0 + c;
+          if (sheet?._sheetData[rr]?[cc]?.value != null ||
+              claimed.contains('$name $rr $cc')) {
+            blocked = true;
+            break;
+          }
+        }
+      }
+      if (blocked) {
+        final (cached, type) = _cachedFor(_spillError);
+        anchorWrites.add((
+          data,
+          FormulaCellValue._typed(formula, cached, type),
+        ));
+        continue;
+      }
+
+      final ref = getSpanCellId(c0, r0, c0 + cols - 1, r0 + rows - 1);
+      final (cached, type) = _cachedFor(_evalToCell(raw.rows[0][0]));
+      anchorWrites.add((
+        data,
+        FormulaCellValue._typed(formula, cached, type, arrayRef: ref),
+      ));
+      for (var r = 0; r < rows; r++) {
+        for (var c = 0; c < cols; c++) {
+          if (r == 0 && c == 0) continue;
+          final rr = r0 + r, cc = c0 + c;
+          claimed.add('$name $rr $cc');
+          spills.add((name, rr, cc, _evalToCell(raw.rows[r][c])));
+        }
       }
     }
 
     for (final (data, value) in anchorWrites) {
       data._value = value;
     }
-    // Apply spilled values last, never overwriting another formula cell.
     for (final (name, row, col, value) in spills) {
       final sheet = _sheetMap[name];
       if (sheet == null) continue;
-      if (sheet._sheetData[row]?[col]?.value is FormulaCellValue) continue;
       sheet.updateCell(
         CellIndex.indexByColumnRow(columnIndex: col, rowIndex: row),
         value,
       );
+    }
+  }
+
+  /// Parses a spill range like `"A1:C3"` into inclusive 0-based
+  /// `(colStart, rowStart, colEnd, rowEnd)`, or null when it cannot be parsed.
+  (int, int, int, int)? _spillBox(String ref) {
+    final parts = ref.split(':');
+    try {
+      final a = CellIndex.indexByString(parts.first);
+      final b = CellIndex.indexByString(
+        parts.length > 1 ? parts[1] : parts.first,
+      );
+      return (
+        a.columnIndex < b.columnIndex ? a.columnIndex : b.columnIndex,
+        a.rowIndex < b.rowIndex ? a.rowIndex : b.rowIndex,
+        a.columnIndex < b.columnIndex ? b.columnIndex : a.columnIndex,
+        a.rowIndex < b.rowIndex ? b.rowIndex : a.rowIndex,
+      );
+    } catch (_) {
+      return null;
     }
   }
 

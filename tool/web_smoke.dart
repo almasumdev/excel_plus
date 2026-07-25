@@ -7,6 +7,7 @@
 //  * `decodeBytesAsync` / `encodeAsync`: the isolate stub (isolate_stub.dart)
 //  * decode/encode round-trip to core reader/writer under dart2js and wasm
 //  * `toCsv` / `fromCsv`: the csv_plus CSV bridge (core, must stay dart:io-free)
+//  * `recalculate`: the formula engine + dynamic-array spilling (pure Dart)
 import 'package:excel_plus/excel_plus.dart';
 
 Future<void> main() async {
@@ -27,9 +28,17 @@ Future<void> main() async {
   final csv = sheet.toCsv();
   final reimported = Excel.fromCsv(csv)['Sheet1'].maxRows;
 
+  // Formula engine + dynamic-array spilling: pure Dart, must compile web-safe.
+  sheet.cell(CellIndex.indexByString('D1')).setFormula('SEQUENCE(3)');
+  excel.recalculate();
+  final spill =
+      (sheet.cell(CellIndex.indexByString('D1')).value as FormulaCellValue)
+          .spillRange;
+
   excel.save(fileName: 'smoke.xlsx');
 
   print(
-    'web smoke ok: ${roundTripped.value} csv=${csv.length} rows=$reimported',
+    'web smoke ok: ${roundTripped.value} csv=${csv.length} '
+    'rows=$reimported spill=$spill',
   );
 }

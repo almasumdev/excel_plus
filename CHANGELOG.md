@@ -1,3 +1,33 @@
+## 2.8.0
+
+Complete, Excel-correct dynamic-array spilling in `recalculate()`.
+
+### Added
+
+- `FormulaCellValue.spillRange` reports the range a dynamic-array or array
+  formula spilled into (for example `"A1:C3"`), or `null` for an ordinary
+  single-value formula. It is set by `recalculate()` and round-trips through a
+  saved file's `<f t="array" ref="...">`.
+
+### Changed
+
+- `recalculate()` now spills array results (from `SEQUENCE`, `FILTER`, `SORT`,
+  `UNIQUE`, or a range like `=A1:A3`) the way Excel does:
+  - A spill that would land on an already-occupied cell (a value or another
+    formula) resolves to `#SPILL!` and leaves the blocking cells untouched,
+    instead of silently overwriting them or spilling around them.
+  - Cells a formula spilled into on a previous `recalculate()` are cleared
+    before it recomputes, so an array that shrinks no longer leaves stale
+    values behind.
+  - Two arrays that would overlap no longer fight: the first spills and the
+    second resolves to `#SPILL!`.
+
+### Fixed
+
+- A saved dynamic-array formula's spill range (`<f t="array" ref="...">`) is now
+  read back, so reopening a workbook and re-running `recalculate()` clears and
+  refills the range correctly.
+
 ## 2.7.2
 
 Dependency and documentation update; no excel_plus API changes.

@@ -56,6 +56,18 @@ class FormulaCellValue extends CellValue {
     String? arrayRef,
   }) : _arrayRef = arrayRef;
 
+  /// The spill range this formula anchors (e.g. `"A1:C3"`), or `null` when the
+  /// formula is not the anchor of a spilled array result.
+  ///
+  /// A dynamic-array or array formula (for example `=SEQUENCE(3)` or a range
+  /// like `=A1:A3`) that produces more than one value **spills**: after
+  /// [Excel.recalculate], the anchor cell reports the whole spilled range here,
+  /// and it round-trips through a saved file's `<f t="array" ref="...">`. It is
+  /// `null` for an ordinary single-value formula, and cleared to `null` when the
+  /// result cannot spill (a `#SPILL!` [cachedValue], because the target range
+  /// was blocked).
+  String? get spillRange => _arrayRef;
+
   @override
   String toString() {
     return formula;

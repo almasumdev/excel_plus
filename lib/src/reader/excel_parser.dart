@@ -271,6 +271,7 @@ class Parser extends _ParserBase
     StringBuffer? formulaBuf;
     String? formulaType; // `<f t="...">`: 'shared', 'array', or null
     String? formulaSi; // shared-formula group id
+    String? formulaRef; // `<f t="array" ref="...">`: the spill range
     // Shared-formula masters by `si`: (anchorRow, anchorCol, formula).
     final sharedFormulas = <String, (int, int, String)>{};
 
@@ -310,6 +311,7 @@ class Parser extends _ParserBase
             formulaBuf = null;
             formulaType = null;
             formulaSi = null;
+            formulaRef = null;
             for (final attr in event.attributes) {
               switch (attr.localName) {
                 case 'r':
@@ -341,6 +343,8 @@ class Parser extends _ParserBase
                 formulaType = attr.value;
               } else if (attr.localName == 'si') {
                 formulaSi = attr.value;
+              } else if (attr.localName == 'ref') {
+                formulaRef = attr.value;
               }
             }
           case 't':
@@ -364,6 +368,7 @@ class Parser extends _ParserBase
                 formulaBuf?.toString(),
                 formulaType,
                 formulaSi,
+                formulaRef,
                 sharedFormulas,
               );
             }
@@ -397,6 +402,7 @@ class Parser extends _ParserBase
     String? formula,
     String? formulaType,
     String? formulaSi,
+    String? formulaRef,
     Map<String, (int, int, String)> sharedFormulas,
   ) {
     final coords = _cellCoordsFromCellId(cellRef);
@@ -476,6 +482,19 @@ class Parser extends _ParserBase
         }
     }
 
+    // Reconstruct a spilled array anchor so its spill range round-trips and a
+    // later recalculate() can clear the cells it owns.
+    if (value is FormulaCellValue &&
+        formulaType == 'array' &&
+        formulaRef != null) {
+      value = FormulaCellValue._typed(
+        value.formula,
+        value.cachedValue,
+        _cachedTypeCode(type),
+        arrayRef: formulaRef,
+      );
+    }
+
     sheetObject.updateCell(
       CellIndex.indexByColumnRow(columnIndex: columnIndex, rowIndex: rowIndex),
       value,
@@ -487,6 +506,15 @@ class Parser extends _ParserBase
 
   /// The cached formula result (`<v>`) or `null` when empty.
   static String? _cachedOrNull(String raw) => raw.isEmpty ? null : raw;
+
+  /// Maps an OOXML cell `t` attribute to the cached-result type code carried by
+  /// [FormulaCellValue] (`'str'` / `'b'` / `'e'`, or `null` for numeric).
+  static String? _cachedTypeCode(String? cellType) => switch (cellType) {
+    'str' => 'str',
+    'b' => 'b',
+    'e' => 'e',
+    _ => null,
+  };
 
   /// Reads a `t="d"` ISO-8601 date cell. Returns a [DateCellValue] for a pure
   /// date or a [DateTimeCellValue] when a time component is present. Falls back
