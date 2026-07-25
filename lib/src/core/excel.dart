@@ -313,11 +313,12 @@ class Excel {
   /// Pass [changed] (A1 references, optionally sheet-qualified, for example
   /// `['A1', "Sheet2!B3"]`, and ranges like `'A1:A9'`) to recompute
   /// **incrementally**: only the formulas that transitively depend on those
-  /// cells are recomputed, instead of the whole workbook. The result matches a
-  /// full recalculate; a formula that uses a dynamic reference (`INDIRECT` /
-  /// `OFFSET`) or a volatile function (`NOW` / `TODAY` / `RAND`) always
-  /// recomputes. With [changed] omitted (the default) every formula is
-  /// recomputed, exactly as before.
+  /// cells are recomputed, instead of the whole workbook. The result always
+  /// matches a full recalculate. A formula that uses a dynamic reference
+  /// (`INDIRECT` / `OFFSET`) or a volatile function (`NOW` / `TODAY` / `RAND`)
+  /// always recomputes; if none of the [changed] references can be parsed, a
+  /// full recalculate is performed so nothing is left stale. With [changed]
+  /// omitted (the default) every formula is recomputed, exactly as before.
   void recalculate({Iterable<String>? changed}) {
     parser._ensureAllSheetsParsed();
     final ctx = _FormulaContext(this);

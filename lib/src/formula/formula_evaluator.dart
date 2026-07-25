@@ -176,10 +176,17 @@ _EvalValue _resolveRange(_RangeNode n, _FormulaContext ctx, String sheet) {
 _EvalValue _resolveName(_NameNode n, _FormulaContext ctx, String sheet) {
   final dn = ctx._findDefinedName(n.name, n.sheet ?? sheet);
   if (dn == null) return const _ErrVal(CellErrorValue.name);
+  // Guard against a name that resolves (directly or transitively) to itself, so
+  // a cyclic defined name yields `#CIRC` instead of recursing forever. Reuses
+  // the evaluator's active-key set with a `name` namespace.
+  final key = 'name:${n.name.toLowerCase()}';
+  if (!ctx._active.add(key)) return const _ErrVal(_circularError);
   try {
     return _evalNode(_parseFormula(dn.refersTo), ctx, n.sheet ?? sheet);
   } on FormatException {
     return const _ErrVal(CellErrorValue.name);
+  } finally {
+    ctx._active.remove(key);
   }
 }
 

@@ -427,5 +427,111 @@ void main() {
         );
       }
     });
+
+    // A workbook with a dynamic array plus dependents that read the anchor, its
+    // range, and a single cell it spills into. Recomputed one way per instance
+    // and compared cell-by-cell: incremental must be indistinguishable from full
+    // even as the array's size changes.
+    Excel spillWorkbook(int seed) {
+      final e = Excel.createExcel();
+      final s = e['Sheet1'];
+      s.updateCell(CellIndex.indexByString('C1'), IntCellValue(seed));
+      s.updateCell(
+        CellIndex.indexByString('A1'),
+        FormulaCellValue('SEQUENCE(C1)'),
+      );
+      s.updateCell(
+        CellIndex.indexByString('E1'),
+        FormulaCellValue('SUM(A1:A5)'),
+      );
+      s.updateCell(CellIndex.indexByString('F1'), FormulaCellValue('A4*2+10'));
+      s.updateCell(CellIndex.indexByString('G1'), FormulaCellValue('A1+100'));
+      return e;
+    }
+
+    String? snapshot(Excel e, String ref) {
+      final v = e['Sheet1'].cell(CellIndex.indexByString(ref)).value;
+      if (v is FormulaCellValue) return 'f:${v.cachedValue}';
+      if (v is IntCellValue) return 'i:${v.value}';
+      if (v is DoubleCellValue) return 'd:${v.value}';
+      return v?.toString();
+    }
+
+    void expectSameGrid(Excel incr, Excel full) {
+      for (final ref in ['A1', 'A2', 'A3', 'A4', 'E1', 'F1', 'G1']) {
+        expect(snapshot(incr, ref), snapshot(full, ref), reason: ref);
+      }
+    }
+
+    test('incremental matches full when an array grows', () {
+      final full = spillWorkbook(2);
+      final incr = spillWorkbook(2);
+      full.recalculate();
+      incr.recalculate();
+
+      // Grow the array from A1:A2 to A1:A4.
+      full['Sheet1'].updateCell(CellIndex.indexByString('C1'), IntCellValue(4));
+      incr['Sheet1'].updateCell(CellIndex.indexByString('C1'), IntCellValue(4));
+      full.recalculate();
+      incr.recalculate(changed: ['C1']);
+
+      expect(_formula(incr['Sheet1'], 'A1').spillRange, 'A1:A4');
+      expectSameGrid(incr, full);
+    });
+
+    test('incremental matches full when an array shrinks', () {
+      final full = spillWorkbook(4);
+      final incr = spillWorkbook(4);
+      full.recalculate();
+      incr.recalculate();
+
+      // Shrink the array from A1:A4 to A1:A2.
+      full['Sheet1'].updateCell(CellIndex.indexByString('C1'), IntCellValue(2));
+      incr['Sheet1'].updateCell(CellIndex.indexByString('C1'), IntCellValue(2));
+      full.recalculate();
+      incr.recalculate(changed: ['C1']);
+
+      expect(_formula(incr['Sheet1'], 'A1').spillRange, 'A1:A2');
+      expect(incr['Sheet1'].cell(CellIndex.indexByString('A4')).value, isNull);
+      expectSameGrid(incr, full);
+    });
+
+    test('an unparsable changed reference falls back to a full recompute', () {
+      final excel = Excel.createExcel();
+      final s = excel['Sheet1'];
+      s.updateCell(CellIndex.indexByString('A1'), IntCellValue(1));
+      s.updateCell(CellIndex.indexByString('B1'), FormulaCellValue('A1+1'));
+      excel.recalculate();
+      expect(_formula(s, 'B1').cachedValue, '2');
+
+      // The caller names a garbage reference: rather than silently skip, the
+      // whole workbook is recomputed so B1 cannot go stale.
+      s.updateCell(CellIndex.indexByString('A1'), IntCellValue(10));
+      excel.recalculate(changed: ['###']);
+      expect(_formula(s, 'B1').cachedValue, '11');
+    });
+
+    test(
+      'a cyclic defined name degrades to an error instead of overflowing',
+      () {
+        final excel = Excel.createExcel();
+        final s = excel['Sheet1'];
+        // A pathological self-referential name: neither the dependency graph nor
+        // the evaluator may recurse into it forever.
+        excel.setDefinedName('SELFREF', 'SELFREF+1');
+        s.updateCell(CellIndex.indexByString('A1'), IntCellValue(1));
+        s.updateCell(
+          CellIndex.indexByString('B1'),
+          FormulaCellValue('SELFREF'),
+        );
+        s.updateCell(CellIndex.indexByString('C1'), FormulaCellValue('A1+1'));
+        expect(excel.recalculate, returnsNormally);
+        expect(_formula(s, 'B1').cachedValue, contains('CIRC'));
+
+        s.updateCell(CellIndex.indexByString('A1'), IntCellValue(2));
+        expect(() => excel.recalculate(changed: ['A1']), returnsNormally);
+        expect(_formula(s, 'C1').cachedValue, '3');
+      },
+    );
   });
 }
