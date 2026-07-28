@@ -1,3 +1,13 @@
+## 2.12.2
+
+### Fixed
+
+- Reading an `.xlsx` whose shared-strings table has duplicate entries no longer
+  drops or misplaces text cells. The reader was deduplicating shared strings
+  (which is only correct when writing), so every index after a duplicate shifted
+  and later text cells read the wrong value or came back null. Thanks to
+  @albertexye for the detailed report (#2).
+
 ## 2.12.1
 
 ### Changed

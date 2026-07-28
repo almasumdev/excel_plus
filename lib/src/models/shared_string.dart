@@ -24,6 +24,17 @@ class _SharedStringsMaintainer {
     }
   }
 
+  /// Appends [val] at the next index without deduplicating, so a table read from
+  /// a file keeps every `<si>` at its own index even when two entries are
+  /// identical. Reusing [add] here would collapse duplicates and shift every
+  /// later index, dropping or corrupting the cells that reference them. The
+  /// reverse [_stringIndex] keeps the first occurrence for later writer-side
+  /// deduplication.
+  void addPreservingIndex(SharedString val, String key) {
+    _stringIndex.putIfAbsent(key, () => _entries.length);
+    _entries.add(_SharedStringEntry(val));
+  }
+
   int indexOf(SharedString val) {
     return _stringIndex[val._dedupKey] ?? -1;
   }

@@ -205,12 +205,16 @@ abstract class _ParserBase {
                 ).rootElement;
                 final ss = SharedString(node: siElement);
                 // Key on the full XML so two runs with the same plain text but
-                // different styling remain distinct entries.
-                _excel._sharedStrings.add(ss, ss._dedupKey);
+                // different styling remain distinct entries. Preserve the index
+                // so duplicate <si> entries don't shift later indices.
+                _excel._sharedStrings.addPreservingIndex(ss, ss._dedupKey);
               } else {
                 // Simple string, no DOM needed
                 final val = textBuf.toString();
-                _excel._sharedStrings.add(SharedString._fromText(val), val);
+                _excel._sharedStrings.addPreservingIndex(
+                  SharedString._fromText(val),
+                  val,
+                );
               }
               inSi = false;
             }
