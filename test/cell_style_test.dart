@@ -299,4 +299,51 @@ void main() {
       expect(style?.leftBorder.borderStyle, BorderStyle.Medium);
     });
   });
+
+  group('Style Index Fidelity', () {
+    // cellXfs with a duplicate xf (index 1 and 2 are both bold). Cells resolve
+    // their style by exact index, so a reader that deduplicated xfs (the way it
+    // once did shared strings) would shift index 3 and lose its italic style.
+    const styles =
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+        '<fonts count="3">'
+        '<font><sz val="11"/><name val="Calibri"/></font>'
+        '<font><b/><sz val="11"/><name val="Calibri"/></font>'
+        '<font><i/><sz val="11"/><name val="Calibri"/></font>'
+        '</fonts>'
+        '<fills count="2"><fill><patternFill patternType="none"/></fill>'
+        '<fill><patternFill patternType="gray125"/></fill></fills>'
+        '<borders count="1"><border><left/><right/><top/><bottom/><diagonal/>'
+        '</border></borders>'
+        '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" '
+        'borderId="0"/></cellStyleXfs>'
+        '<cellXfs count="4">'
+        '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'
+        '<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>'
+        '<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>'
+        '<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/>'
+        '</cellXfs>'
+        '</styleSheet>';
+
+    test('duplicate cellXfs entries keep every cell at its correct style', () {
+      final bytes = buildXlsx(
+        '<row r="1">'
+        '<c r="A1" s="1"><v>1</v></c>'
+        '<c r="B1" s="2"><v>2</v></c>'
+        '<c r="C1" s="3"><v>3</v></c>'
+        '</row>',
+        styles: styles,
+      );
+      final s = Excel.decodeBytes(bytes).tables.values.first;
+      CellStyle? styleAt(String ref) =>
+          s.cell(CellIndex.indexByString(ref)).cellStyle;
+
+      expect(styleAt('A1')?.isBold, isTrue); // xf 1
+      expect(styleAt('B1')?.isBold, isTrue); // xf 2 (the duplicate)
+      // xf 3 is italic and not bold: proves its index did not shift.
+      expect(styleAt('C1')?.isItalic, isTrue);
+      expect(styleAt('C1')?.isBold, isFalse);
+    });
+  });
 }
