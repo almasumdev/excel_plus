@@ -162,10 +162,20 @@ abstract class _ParserBase {
       if (event is XmlStartElementEvent) {
         switch (event.name) {
           case 'si':
-            inSi = true;
-            hasRichContent = false;
-            textBuf.clear();
-            richXmlBuf = null;
+            if (event.isSelfClosing) {
+              // <si/> is an empty shared string. parseEvents emits no end event
+              // for a self-closing tag, so record it here; otherwise its index
+              // (and every index after it) would shift and later cells misread.
+              _excel._sharedStrings.addPreservingIndex(
+                SharedString._fromText(''),
+                '',
+              );
+            } else {
+              inSi = true;
+              hasRichContent = false;
+              textBuf.clear();
+              richXmlBuf = null;
+            }
           case 'r':
             if (inSi) {
               if (!hasRichContent) {

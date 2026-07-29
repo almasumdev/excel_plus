@@ -61,5 +61,66 @@ void main() {
       expect(textAt(reopened, 'C1'), 'Repeat');
       expect(textAt(reopened, 'D1'), 'Omega');
     });
+
+    String sstOf(List<String> siXml) =>
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+        '${siXml.join()}</sst>';
+
+    const rowXml =
+        '<row r="1">'
+        '<c r="A1" t="s"><v>0</v></c>'
+        '<c r="B1" t="s"><v>1</v></c>'
+        '<c r="C1" t="s"><v>2</v></c>'
+        '<c r="D1" t="s"><v>3</v></c>'
+        '</row>';
+
+    test('empty <si></si> keeps later indices aligned', () {
+      final bytes = buildXlsx(
+        rowXml,
+        sharedStrings: sstOf([
+          '<si><t>Alpha</t></si>',
+          '<si></si>',
+          '<si><t>Cherry</t></si>',
+          '<si><t>Date</t></si>',
+        ]),
+      );
+      final s = Excel.decodeBytes(bytes).tables.values.first;
+      expect(textAt(s, 'A1'), 'Alpha');
+      expect(textAt(s, 'C1'), 'Cherry');
+      expect(textAt(s, 'D1'), 'Date');
+    });
+
+    test('self-closing <si/> keeps later indices aligned', () {
+      final bytes = buildXlsx(
+        rowXml,
+        sharedStrings: sstOf([
+          '<si><t>Alpha</t></si>',
+          '<si/>',
+          '<si><t>Cherry</t></si>',
+          '<si><t>Date</t></si>',
+        ]),
+      );
+      final s = Excel.decodeBytes(bytes).tables.values.first;
+      expect(textAt(s, 'A1'), 'Alpha');
+      expect(textAt(s, 'C1'), 'Cherry');
+      expect(textAt(s, 'D1'), 'Date');
+    });
+
+    test('<si><t/></si> keeps later indices aligned', () {
+      final bytes = buildXlsx(
+        rowXml,
+        sharedStrings: sstOf([
+          '<si><t>Alpha</t></si>',
+          '<si><t/></si>',
+          '<si><t>Cherry</t></si>',
+          '<si><t>Date</t></si>',
+        ]),
+      );
+      final s = Excel.decodeBytes(bytes).tables.values.first;
+      expect(textAt(s, 'A1'), 'Alpha');
+      expect(textAt(s, 'C1'), 'Cherry');
+      expect(textAt(s, 'D1'), 'Date');
+    });
   });
 }

@@ -1,3 +1,13 @@
+## 2.12.3
+
+### Fixed
+
+- Reading an `.xlsx` no longer drops or misreads text cells when the
+  shared-strings table has an empty self-closing entry (`<si/>`). That entry was
+  skipped while parsing, which shifted every later shared-string index so cells
+  after it read the wrong value or came back null. Follow-up to the 2.12.2
+  shared-strings fix. Thanks again to @albertexye (#2).
+
 ## 2.12.2
 
 ### Fixed
