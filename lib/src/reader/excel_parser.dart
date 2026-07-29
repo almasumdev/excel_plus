@@ -188,8 +188,14 @@ class Parser extends _ParserBase
 
     Sheet sheetObject = _excel._sheetMap[name]!;
 
-    var file = _excel._archive.findFile('xl/$target');
-    file!.decompress();
+    final file = target == null ? null : _excel._archive.findFile('xl/$target');
+    if (file == null) {
+      // The worksheet part could not be located (missing or unresolved
+      // relationship). Degrade to an empty sheet rather than crashing.
+      _normalizeTable(sheetObject);
+      return;
+    }
+    file.decompress();
 
     var xmlStr = utf8.decode(file.content);
 

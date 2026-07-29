@@ -19,6 +19,16 @@ abstract class _ParserBase {
     sheet._countRowsAndColumns();
   }
 
+  /// Normalizes a workbook-relationship Target to a path relative to the `xl/`
+  /// folder, the base every consumer prepends. A Target may be package-absolute
+  /// (`/xl/worksheets/sheet1.xml`) or relative to `xl/` (`worksheets/sheet1.xml`);
+  /// both resolve here to `worksheets/sheet1.xml` so `'xl/$target'` finds it.
+  String _normalizeXlTarget(String target) {
+    if (target.startsWith('/xl/')) return target.substring(4);
+    if (target.startsWith('/')) return target.substring(1);
+    return target;
+  }
+
   void _putContentXml() {
     var file = _excel._archive.findFile("[Content_Types].xml");
 
@@ -44,13 +54,15 @@ abstract class _ParserBase {
         if (target != null) {
           switch (node.getAttribute('Type')) {
             case _relationshipsStyles:
-              _excel._stylesTarget = target;
+              _excel._stylesTarget = _normalizeXlTarget(target);
               break;
             case _relationshipsWorksheet:
-              if (id != null) _worksheetTargets[id] = target;
+              if (id != null) {
+                _worksheetTargets[id] = _normalizeXlTarget(target);
+              }
               break;
             case _relationshipsSharedStrings:
-              _excel._sharedStringsTarget = target;
+              _excel._sharedStringsTarget = _normalizeXlTarget(target);
               break;
           }
         }

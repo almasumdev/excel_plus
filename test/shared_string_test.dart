@@ -122,5 +122,25 @@ void main() {
       expect(textAt(s, 'C1'), 'Cherry');
       expect(textAt(s, 'D1'), 'Date');
     });
+
+    test('a rich-text <si> (runs + phoneticPr) keeps later indices aligned', () {
+      final bytes = buildXlsx(
+        rowXml,
+        sharedStrings: sstOf([
+          '<si><t>Alpha</t></si>',
+          '<si><r><t>Part1</t></r><r><rPr><sz val="12"/>'
+              '<color rgb="FF000000"/><rFont val="Arial"/><family val="3"/>'
+              '<charset val="134"/><scheme val="minor"/></rPr><t>Part2</t></r>'
+              '<phoneticPr fontId="3" type="noConversion"/></si>',
+          '<si><t>Cherry</t></si>',
+          '<si><t>Date</t></si>',
+        ]),
+      );
+      final s = Excel.decodeBytes(bytes).tables.values.first;
+      expect(textAt(s, 'A1'), 'Alpha');
+      expect(textAt(s, 'B1'), 'Part1Part2'); // the rich entry, index 1
+      expect(textAt(s, 'C1'), 'Cherry');
+      expect(textAt(s, 'D1'), 'Date');
+    });
   });
 }

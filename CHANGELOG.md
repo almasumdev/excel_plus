@@ -1,22 +1,20 @@
-## 2.12.3
+## 2.12.4
+
+Reading robustness fixes, all from issue #2 (thanks to @albertexye for the
+detailed reports and a sample file).
 
 ### Fixed
 
-- Reading an `.xlsx` no longer drops or misreads text cells when the
-  shared-strings table has an empty self-closing entry (`<si/>`). That entry was
-  skipped while parsing, which shifted every later shared-string index so cells
-  after it read the wrong value or came back null. Follow-up to the 2.12.2
-  shared-strings fix. Thanks again to @albertexye (#2).
-
-## 2.12.2
-
-### Fixed
-
-- Reading an `.xlsx` whose shared-strings table has duplicate entries no longer
-  drops or misplaces text cells. The reader was deduplicating shared strings
-  (which is only correct when writing), so every index after a duplicate shifted
-  and later text cells read the wrong value or came back null. Thanks to
-  @albertexye for the detailed report (#2).
+- Reading an `.xlsx` no longer drops, misplaces, or misreads text cells because
+  of the shared-strings table. Two cases each shifted every later shared-string
+  index: a duplicate entry (the reader was deduplicating on read, which is only
+  correct when writing) and an empty self-closing `<si/>` (skipped while
+  parsing).
+- Reading an `.xlsx` whose workbook relationships use absolute part paths
+  (`Target="/xl/worksheets/sheet1.xml"`, as Excel and several generators write
+  them) no longer crashes. Absolute and relative Targets now both resolve, and a
+  worksheet that cannot be located degrades to an empty sheet instead of
+  throwing.
 
 ## 2.12.1
 
