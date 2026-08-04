@@ -173,7 +173,16 @@ class Parser extends _ParserBase
         if (isTopLeftCellThatShouldNotBeDeleted) {
           continue;
         }
-        sheet._removeCell(rowI, columnI);
+        // Excel draws a merged region's border from the covered cells' own
+        // borders, so keep a covered cell's style and clear only its value
+        // rather than removing the cell (which would lose the border). Cells
+        // with no style are removed as before.
+        final covered = sheet._sheetData[rowI]?[columnI];
+        if (covered?._cellStyle != null) {
+          covered!._value = null;
+        } else {
+          sheet._removeCell(rowI, columnI);
+        }
       }
     }
   }
@@ -337,6 +346,28 @@ class Parser extends _ParserBase
               if (currentRow >= 0) {
                 cellRef = getCellId(currentCol, currentRow);
               }
+            }
+            // A self-closing <c/> emits no end event, so process it here. Only a
+            // styled cell matters (there is no value in a self-closing cell);
+            // this keeps a bordered-but-empty cell from being dropped along with
+            // its style.
+            if (event.isSelfClosing &&
+                cellStyle > 0 &&
+                cellRef != null &&
+                currentRow >= 0) {
+              _processSaxCell(
+                sheetObject,
+                sheetName,
+                cellRef,
+                cellType,
+                cellStyle,
+                '',
+                null,
+                null,
+                null,
+                null,
+                sharedFormulas,
+              );
             }
           case 'v':
             currentElement = 'v';

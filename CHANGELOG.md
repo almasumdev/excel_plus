@@ -1,3 +1,13 @@
+## 2.12.5
+
+### Fixed
+
+- Borders (and other styles) on empty cells and merged regions no longer
+  disappear on read and save. A styled empty cell written in self-closing form
+  (`<c s="1"/>`) was dropped along with its style, and a merged region's covered
+  cells were removed entirely, losing the borders Excel draws from them. Both are
+  now kept. Thanks to @pamtbaau for the report (#3).
+
 ## 2.12.4
 
 Reading robustness fixes, all from issue #2 (thanks to @albertexye for the
