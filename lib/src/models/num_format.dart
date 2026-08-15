@@ -36,6 +36,23 @@ class NumFormatMaintainer {
     }
   }
 
+  /// Registers a `<numFmt>` declaration read from a file under [numFmtId].
+  ///
+  /// Unlike [add] this accepts ids below 164 and overwrites any entry already
+  /// held for the id. An explicit `<numFmt>` in `styles.xml` is authoritative
+  /// for that id: Excel writes such declarations below 164 for locale-specific
+  /// and accounting formats, and dropping them renders the cell as General and
+  /// loses the format code on save. Overwriting rather than throwing also keeps
+  /// a file that repeats an id readable instead of failing the whole decode.
+  void _addFromFile(int numFmtId, CustomNumFormat format) {
+    _map[numFmtId] = format;
+    // Keep the first id seen for a given code so write-side dedup stays stable.
+    _inverseMap.putIfAbsent(format, () => numFmtId);
+    if (numFmtId >= _nextFmtId) {
+      _nextFmtId = numFmtId + 1;
+    }
+  }
+
   /// Returns the id already registered for [format], or assigns and returns the
   /// next available custom id.
   int findOrAdd(CustomNumFormat format) {

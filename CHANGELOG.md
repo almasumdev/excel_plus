@@ -1,3 +1,14 @@
+## 2.14.1
+
+### Fixed
+
+- A `<numFmt>` declared with an id below 164 is now honoured instead of being
+  ignored. Ids under 164 are nominally reserved for built-in formats, but Excel
+  declares them for accounting and locale-specific codes; the reader dropped
+  those declarations, so the cell rendered as General and the format code was
+  lost on save. An explicit declaration is now authoritative for its id, and a
+  file that repeats an id is read (last declaration wins) rather than throwing.
+
 ## 2.14.0
 
 Chart data labels.

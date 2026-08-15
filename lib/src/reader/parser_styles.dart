@@ -272,8 +272,8 @@ mixin _ParserStylesMixin on _ParserBase {
         node1.findAllElements('numFmt').forEach((node) {
           final numFmtId = int.tryParse(node.getAttribute('numFmtId') ?? '');
           final formatCode = node.getAttribute('formatCode');
-          if (numFmtId != null && formatCode != null && numFmtId >= 164) {
-            _excel._numFormats.add(
+          if (numFmtId != null && formatCode != null) {
+            _excel._numFormats._addFromFile(
               numFmtId,
               NumFormat.custom(formatCode: formatCode),
             );
