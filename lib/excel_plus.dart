@@ -128,6 +128,8 @@ part 'src/formula/formula_functions_lookup.dart';
 part 'src/formula/formula_functions_datetime.dart';
 part 'src/formula/formula_functions_stats.dart';
 part 'src/formula/formula_functions_financial.dart';
+part 'src/formula/formula_functions_database.dart';
+part 'src/formula/formula_functions_engineering.dart';
 part 'src/formula/formula_functions_reference.dart';
 part 'src/formula/formula_text_format.dart';
 part 'src/formula/formula_api.dart';

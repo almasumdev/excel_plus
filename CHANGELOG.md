@@ -1,3 +1,18 @@
+## 2.13.0
+
+Database and engineering formula functions.
+
+### Added
+
+- Database functions: `DSUM`, `DPRODUCT`, `DCOUNT`, `DCOUNTA`, `DAVERAGE`,
+  `DMAX`, `DMIN`, `DGET`, `DSTDEV`, `DSTDEVP`, `DVAR`, `DVARP`. Each takes a
+  database range (first row is the headers), a field (a header name or a 1-based
+  column number), and a criteria range.
+- Engineering functions: number-base conversions (`DEC2BIN` / `DEC2OCT` /
+  `DEC2HEX`, `BIN2DEC` / `OCT2DEC` / `HEX2DEC`, and the cross conversions),
+  bitwise `BITAND`, `BITOR`, `BITXOR`, `BITLSHIFT`, `BITRSHIFT`, and `CONVERT`
+  for common length, mass, time, and temperature units.
+
 ## 2.12.5
 
 ### Fixed

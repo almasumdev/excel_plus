@@ -42,17 +42,25 @@ CHOOSE · OFFSET · INDIRECT · ROW · COLUMN · ROWS · COLUMNS
 
 **Financial**: PMT · FV · PV · NPER · NPV · IRR · RATE
 
+**Database**: DSUM · DPRODUCT · DCOUNT · DCOUNTA · DAVERAGE · DMAX · DMIN ·
+DGET · DSTDEV · DSTDEVP · DVAR · DVARP (each takes a database range, a field
+name or 1-based column number, and a criteria range)
+
+**Engineering**: DEC2BIN · DEC2OCT · DEC2HEX · BIN2DEC · OCT2DEC · HEX2DEC ·
+BIN2OCT · BIN2HEX · OCT2BIN · OCT2HEX · HEX2BIN · HEX2OCT · BITAND · BITOR ·
+BITXOR · BITLSHIFT · BITRSHIFT · CONVERT (common length, mass, time, and
+temperature units)
+
 **Date & time**: DATE · TIME · TODAY · NOW · YEAR · MONTH · DAY · HOUR ·
 MINUTE · SECOND · WEEKDAY · DAYS · DATEDIF · EDATE · EOMONTH
 
 **Dynamic arrays**: FILTER · SORT · UNIQUE · SEQUENCE
 
-Dynamic-array functions compose inside other functions (e.g.
-`SUM(UNIQUE(A1:A100))`) but do not yet spill across the grid; a top-level
-dynamic-array formula returns its first cell.
+Dynamic-array functions spill their result across the grid on `recalculate`
+(with Excel `#SPILL!` collision handling) and also compose inside other
+functions (e.g. `SUM(UNIQUE(A1:A100))`).
 
 ## Not yet supported
 
-- Array-formula spilling (writing a result across multiple cells)
-- Long-tail statistical / engineering / database functions
+- Long-tail statistical functions (beyond the set above)
 - R1C1-style `INDIRECT` (only A1-style text is resolved)

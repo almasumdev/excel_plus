@@ -186,7 +186,7 @@ Flutter platform. Expand a group for details:
 <details>
 <summary><b>📊 Formulas & data tools</b></summary>
 
-- Formula-evaluation engine with ~130 functions
+- Formula-evaluation engine with ~160 functions
   ([function reference](https://github.com/almasumdev/excel_plus/blob/main/doc/functions.md)),
   plus `registerFunction` for your own
 - Incremental recalculation: `recalculate(changed: [...])` recomputes only the formulas affected by the changed cells
@@ -221,7 +221,7 @@ Flutter platform. Expand a group for details:
 
 ## Limitations
 
-- ❌ Long-tail statistical, engineering & database functions (register your own)
+- ❌ Long-tail statistical functions (register your own)
 - ❌ R1C1-style references (A1-style only)
 
 ## Roadmap

@@ -289,6 +289,8 @@ Map<String, _FormulaFn> _buildFunctionRegistry() {
   _registerDateTimeFunctions(r);
   _registerStatFunctions(r);
   _registerFinancialFunctions(r);
+  _registerDatabaseFunctions(r);
+  _registerEngineeringFunctions(r);
   _registerReferenceFunctions(r);
   _registerTextFormatFunctions(r);
   return r;
