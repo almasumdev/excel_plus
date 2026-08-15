@@ -3,6 +3,22 @@ cell and `excel.recalculate()` recomputes the whole workbook. Anything not built
 in can be added with `excel.formula.registerFunction`. This page lists what is
 supported.
 
+```dart
+sheet.updateCell(CellIndex.indexByString('A1'), IntCellValue(10));
+sheet.updateCell(CellIndex.indexByString('A2'), IntCellValue(20));
+sheet.cell(CellIndex.indexByString('A3')).setFormula('SUM(A1:A2)');
+
+print(sheet.evaluate(CellIndex.indexByString('A3'))); // 30
+excel.recalculate();                 // store every formula's computed result
+excel.recalculate(changed: ['A1']);  // or recompute only what A1 affects
+
+// Register a custom function, callable as =TRIPLE(A1):
+excel.formula.registerFunction('TRIPLE', (args) {
+  final v = args.isEmpty ? null : args.first;
+  return IntCellValue((v is IntCellValue ? v.value : 0) * 3);
+});
+```
+
 ## Engine
 
 - Operators: `+ - * / ^ %`, comparisons (`= <> < <= > >=`), `&`, unary minus

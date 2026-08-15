@@ -1,3 +1,21 @@
+## 2.14.2
+
+Documentation and source hygiene.
+
+### Changed
+
+- Expanded the API reference. Every category (Core, Cell Values, Styling, Number
+  Formats, Layout, Worksheet, Tables, Pivot Tables, Charts, CSV, and Errors) now
+  opens with a short guide and a worked example instead of a one-line summary.
+- Refreshed the README function count and roadmap; engineering and database
+  functions already shipped.
+
+### Fixed
+
+- Removed stray NUL bytes from a source file that made it read as binary to some
+  tools. The affected spill-tracking code now uses a typed key, with no change in
+  behaviour.
+
 ## 2.14.1
 
 ### Fixed

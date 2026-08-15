@@ -235,7 +235,7 @@ Flutter platform. Expand a group for details:
 What ships next is driven by user requests on the
 [issue tracker](https://github.com/almasumdev/excel_plus/issues):
 
-- ⬜ More formula functions: long-tail statistical, engineering & database (D-)
+- ⬜ More formula functions: long-tail statistical (engineering & database already shipped)
 
 Shipped milestones are in the
 [changelog](https://github.com/almasumdev/excel_plus/blob/main/CHANGELOG.md).
@@ -342,7 +342,7 @@ them: `sheet.evaluate(cell)` returns the computed value, and `excel.recalculate(
 writes each formula's result into its cached value (so a saved file shows
 results). See the
 [formula functions reference](https://github.com/almasumdev/excel_plus/blob/main/doc/functions.md)
-for the ~130 built-in functions.
+for the ~160 built-in functions.
 
 ```dart
 sheet.updateCell(CellIndex.indexByString('A1'), IntCellValue(10));
