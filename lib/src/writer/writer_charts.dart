@@ -357,6 +357,7 @@ mixin _WriterChartsMixin on _WriterBase {
             _cVal('grouping', _groupingVal(chart.grouping)),
             _cVal('varyColors', '0'),
             ...ser,
+            ..._dLbls(chart),
             _cVal('gapWidth', '150'),
             ...axIds,
           ]),
@@ -371,6 +372,7 @@ mixin _WriterChartsMixin on _WriterBase {
             _cVal('grouping', g),
             _cVal('varyColors', '0'),
             ...ser,
+            ..._dLbls(chart),
             _cVal('marker', '1'),
             ...axIds,
           ]),
@@ -385,6 +387,7 @@ mixin _WriterChartsMixin on _WriterBase {
             _cVal('grouping', g),
             _cVal('varyColors', '0'),
             ...ser,
+            ..._dLbls(chart),
             ...axIds,
           ]),
           ..._categoryValueAxes(chart),
@@ -400,6 +403,7 @@ mixin _WriterChartsMixin on _WriterBase {
               0,
               chart.categories,
             ),
+            ..._dLbls(chart),
             _cVal('firstSliceAng', '0'),
           ]),
         ];
@@ -414,6 +418,7 @@ mixin _WriterChartsMixin on _WriterBase {
               0,
               chart.categories,
             ),
+            ..._dLbls(chart),
             _cVal('firstSliceAng', '0'),
             _cVal('holeSize', '50'),
           ]),
@@ -425,6 +430,7 @@ mixin _WriterChartsMixin on _WriterBase {
             _cVal('varyColors', '0'),
             for (var i = 0; i < chart.series.length; i++)
               _scatterSeries(sheetName, chart.series[i], i),
+            ..._dLbls(chart),
             ...axIds,
           ]),
           ..._scatterAxes(chart),
@@ -435,6 +441,7 @@ mixin _WriterChartsMixin on _WriterBase {
             _cVal('radarStyle', _radarStyleVal(chart.radarStyle)),
             _cVal('varyColors', '0'),
             ...ser,
+            ..._dLbls(chart),
             ...axIds,
           ]),
           ..._categoryValueAxes(chart),
@@ -447,6 +454,24 @@ mixin _WriterChartsMixin on _WriterBase {
     RadarStyle.marker => 'marker',
     RadarStyle.filled => 'filled',
   };
+
+  /// The `<c:dLbls>` element for [chart]'s data-label config, or empty when it
+  /// has none. Children follow the CT_DLbls schema order (showLegendKey,
+  /// showVal, showCatName, showSerName, showPercent, showBubbleSize).
+  List<XmlElement> _dLbls(Chart chart) {
+    final d = chart.dataLabels;
+    if (d == null) return const [];
+    return [
+      _c('dLbls', [], [
+        _cVal('showLegendKey', '0'),
+        _cVal('showVal', d.value ? '1' : '0'),
+        _cVal('showCatName', d.category ? '1' : '0'),
+        _cVal('showSerName', d.seriesName ? '1' : '0'),
+        _cVal('showPercent', d.percent ? '1' : '0'),
+        _cVal('showBubbleSize', '0'),
+      ]),
+    ];
+  }
 
   /// Serializes a whole `<c:chartSpace>` for [chart].
   String _buildChartXml(String sheetName, Chart chart) {

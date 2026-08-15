@@ -43,6 +43,32 @@ enum RadarStyle {
   filled,
 }
 
+/// What a chart prints on its data labels, the small text drawn on each point,
+/// bar, or slice. Pass one to a [Chart] via `dataLabels`; omit it for none.
+///
+/// {@category Charts}
+class ChartDataLabels {
+  /// Show each point's numeric value.
+  final bool value;
+
+  /// Show each point's category name.
+  final bool category;
+
+  /// Show each point's share of the total as a percentage (pie / doughnut).
+  final bool percent;
+
+  /// Show the series name.
+  final bool seriesName;
+
+  /// Creates a data-label configuration; by default it shows the value only.
+  const ChartDataLabels({
+    this.value = true,
+    this.category = false,
+    this.percent = false,
+    this.seriesName = false,
+  });
+}
+
 /// How multiple series are combined (ignored by pie/doughnut/scatter).
 ///
 /// {@category Charts}
@@ -190,6 +216,10 @@ class Chart {
   /// filled. Ignored by every other chart type. Defaults to [RadarStyle.marker].
   final RadarStyle radarStyle;
 
+  /// What to print on the chart's data labels (value, category, percent, series
+  /// name), or `null` to draw no labels. Applies to every series.
+  final ChartDataLabels? dataLabels;
+
   /// Set true once the chart has been written, so a re-save doesn't duplicate it.
   bool _written = false;
 
@@ -210,6 +240,7 @@ class Chart {
     this.plotVisibleOnly = true,
     this.anchorTo,
     this.radarStyle = RadarStyle.marker,
+    this.dataLabels,
   });
 
   /// A vertical bar (column) chart.
@@ -226,6 +257,7 @@ class Chart {
     String? yAxisTitle,
     bool plotVisibleOnly = true,
     CellIndex? anchorTo,
+    ChartDataLabels? dataLabels,
   }) => Chart(
     type: ChartType.column,
     anchor: anchor,
@@ -240,6 +272,7 @@ class Chart {
     yAxisTitle: yAxisTitle,
     plotVisibleOnly: plotVisibleOnly,
     anchorTo: anchorTo,
+    dataLabels: dataLabels,
   );
 
   /// A horizontal bar chart.
@@ -256,6 +289,7 @@ class Chart {
     String? yAxisTitle,
     bool plotVisibleOnly = true,
     CellIndex? anchorTo,
+    ChartDataLabels? dataLabels,
   }) => Chart(
     type: ChartType.bar,
     anchor: anchor,
@@ -270,6 +304,7 @@ class Chart {
     yAxisTitle: yAxisTitle,
     plotVisibleOnly: plotVisibleOnly,
     anchorTo: anchorTo,
+    dataLabels: dataLabels,
   );
 
   /// A line chart.
@@ -286,6 +321,7 @@ class Chart {
     String? yAxisTitle,
     bool plotVisibleOnly = true,
     CellIndex? anchorTo,
+    ChartDataLabels? dataLabels,
   }) => Chart(
     type: ChartType.line,
     anchor: anchor,
@@ -300,6 +336,7 @@ class Chart {
     yAxisTitle: yAxisTitle,
     plotVisibleOnly: plotVisibleOnly,
     anchorTo: anchorTo,
+    dataLabels: dataLabels,
   );
 
   /// An area chart.
@@ -316,6 +353,7 @@ class Chart {
     String? yAxisTitle,
     bool plotVisibleOnly = true,
     CellIndex? anchorTo,
+    ChartDataLabels? dataLabels,
   }) => Chart(
     type: ChartType.area,
     anchor: anchor,
@@ -330,6 +368,7 @@ class Chart {
     yAxisTitle: yAxisTitle,
     plotVisibleOnly: plotVisibleOnly,
     anchorTo: anchorTo,
+    dataLabels: dataLabels,
   );
 
   /// A pie chart (uses the first series only).
@@ -343,6 +382,7 @@ class Chart {
     int height = 288,
     bool plotVisibleOnly = true,
     CellIndex? anchorTo,
+    ChartDataLabels? dataLabels,
   }) => Chart(
     type: ChartType.pie,
     anchor: anchor,
@@ -354,6 +394,7 @@ class Chart {
     height: height,
     plotVisibleOnly: plotVisibleOnly,
     anchorTo: anchorTo,
+    dataLabels: dataLabels,
   );
 
   /// A doughnut chart (uses the first series only).
@@ -367,6 +408,7 @@ class Chart {
     int height = 288,
     bool plotVisibleOnly = true,
     CellIndex? anchorTo,
+    ChartDataLabels? dataLabels,
   }) => Chart(
     type: ChartType.doughnut,
     anchor: anchor,
@@ -378,6 +420,7 @@ class Chart {
     height: height,
     plotVisibleOnly: plotVisibleOnly,
     anchorTo: anchorTo,
+    dataLabels: dataLabels,
   );
 
   /// A scatter (XY) chart. Each series needs both [ChartSeries.xValues] and
@@ -393,6 +436,7 @@ class Chart {
     String? yAxisTitle,
     bool plotVisibleOnly = true,
     CellIndex? anchorTo,
+    ChartDataLabels? dataLabels,
   }) => Chart(
     type: ChartType.scatter,
     anchor: anchor,
@@ -405,6 +449,7 @@ class Chart {
     yAxisTitle: yAxisTitle,
     plotVisibleOnly: plotVisibleOnly,
     anchorTo: anchorTo,
+    dataLabels: dataLabels,
   );
 
   /// A radar (spider) chart. Pass [RadarStyle.filled] as [style] to fill each
@@ -420,6 +465,7 @@ class Chart {
     int height = 288,
     bool plotVisibleOnly = true,
     CellIndex? anchorTo,
+    ChartDataLabels? dataLabels,
   }) => Chart(
     type: ChartType.radar,
     anchor: anchor,
@@ -432,6 +478,7 @@ class Chart {
     height: height,
     plotVisibleOnly: plotVisibleOnly,
     anchorTo: anchorTo,
+    dataLabels: dataLabels,
   );
 
   @override

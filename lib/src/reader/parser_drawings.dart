@@ -257,6 +257,7 @@ mixin _ParserDrawingsMixin on _ParserBase {
       radarStyle: type == ChartType.radar
           ? _radarStyleFromVal(_childVal(plot, 'radarStyle'))
           : RadarStyle.marker,
+      dataLabels: _dataLabelsFrom(plot),
     );
   }
 
@@ -266,6 +267,29 @@ mixin _ParserDrawingsMixin on _ParserBase {
     'filled' => RadarStyle.filled,
     _ => RadarStyle.marker,
   };
+
+  /// Reads a plot's `<c:dLbls>` into a [ChartDataLabels], or null when the chart
+  /// has no data labels (or shows nothing).
+  ChartDataLabels? _dataLabelsFrom(XmlElement plot) {
+    final el = plot.childElements
+        .where((e) => e.name.local == 'dLbls')
+        .firstOrNull;
+    if (el == null) return null;
+    bool shown(String local) => _childVal(el, local) == '1';
+    final labels = ChartDataLabels(
+      value: shown('showVal'),
+      category: shown('showCatName'),
+      percent: shown('showPercent'),
+      seriesName: shown('showSerName'),
+    );
+    if (!labels.value &&
+        !labels.category &&
+        !labels.percent &&
+        !labels.seriesName) {
+      return null;
+    }
+    return labels;
+  }
 
   /// The `val` attribute of [parent]'s direct child named [local].
   String? _childVal(XmlElement parent, String local) {

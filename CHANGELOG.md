@@ -1,3 +1,14 @@
+## 2.14.0
+
+Chart data labels.
+
+### Added
+
+- `Chart` takes an optional `dataLabels` (a `ChartDataLabels`) that prints labels
+  on every series: the value, the category name, the series name, and/or (for pie
+  and doughnut) the percentage. Works across all chart types and reads back from
+  an opened file.
+
 ## 2.13.0
 
 Database and engineering formula functions.

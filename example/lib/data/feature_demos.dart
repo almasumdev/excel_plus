@@ -3267,6 +3267,7 @@ final _charts = FeatureDemo(
     'Chart.column / bar / line / area / pie / doughnut / scatter / radar',
     'Multiple series + category labels from cell ranges',
     'Custom colours: ChartSeries(color:) per series, pointColors: per slice',
+    'Data labels: ChartDataLabels(value / category / percent / seriesName)',
     'Title, axis titles and legend position',
     'sheet.addChart(...), anchored to a cell',
   ],

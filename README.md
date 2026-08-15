@@ -206,7 +206,7 @@ Flutter platform. Expand a group for details:
 <details>
 <summary><b>🖼️ Objects & media</b></summary>
 
-- Charts: read & write (column, bar, line, area, pie, doughnut, scatter, radar)
+- Charts: read & write (column, bar, line, area, pie, doughnut, scatter, radar), with optional data labels
 - Sparklines: in-cell mini charts (line / column / win-loss)
 - Images: PNG, JPEG, GIF, BMP, TIFF, WebP, ICO, EMF & WMF, with automatic size detection
 - Comments / notes
@@ -680,6 +680,10 @@ for (final c in sheet.charts) {
 
 Also `Chart.bar`, `Chart.line`, `Chart.area`, `Chart.pie`, `Chart.doughnut`,
 `Chart.scatter`, and `Chart.radar` (pass `RadarStyle.filled` to fill it).
+
+Pass `dataLabels: ChartDataLabels(...)` to print values on the chart (or the
+category, series name, or percentage), for example
+`dataLabels: ChartDataLabels(value: true)`.
 
 ### Sparklines
 

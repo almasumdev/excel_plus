@@ -758,6 +758,70 @@ void main() {
     });
   });
 
+  group('Chart Data Labels', () {
+    test('a chart with data labels writes dLbls with the chosen flags', () {
+      final excel = Excel.createExcel();
+      _seed(excel).addChart(
+        Chart.column(
+          anchor: CellIndex.indexByString('D2'),
+          categories: 'A2:A5',
+          series: [ChartSeries(name: 'Units', values: 'B2:B5')],
+          dataLabels: ChartDataLabels(value: true, category: true),
+        ),
+      );
+      final chart = _part(_encode(excel), 'xl/charts/chart1.xml');
+      expect(chart, contains('<c:dLbls>'));
+      expect(chart, contains('<c:showVal val="1"'));
+      expect(chart, contains('<c:showCatName val="1"'));
+      expect(chart, contains('<c:showPercent val="0"'));
+    });
+
+    test('a pie chart can label slices with percentages', () {
+      final excel = Excel.createExcel();
+      _seed(excel).addChart(
+        Chart.pie(
+          anchor: CellIndex.indexByString('D2'),
+          categories: 'A2:A5',
+          series: ChartSeries(values: 'B2:B5'),
+          dataLabels: ChartDataLabels(value: false, percent: true),
+        ),
+      );
+      final chart = _part(_encode(excel), 'xl/charts/chart1.xml');
+      expect(chart, contains('<c:showPercent val="1"'));
+      expect(chart, contains('<c:showVal val="0"'));
+    });
+
+    test('a chart without data labels writes no dLbls', () {
+      final excel = Excel.createExcel();
+      _seed(excel).addChart(
+        Chart.column(
+          anchor: CellIndex.indexByString('D2'),
+          categories: 'A2:A5',
+          series: [ChartSeries(values: 'B2:B5')],
+        ),
+      );
+      final chart = _part(_encode(excel), 'xl/charts/chart1.xml');
+      expect(chart, isNot(contains('<c:dLbls>')));
+    });
+
+    test('data labels round-trip through the reader', () {
+      final excel = Excel.createExcel();
+      _seed(excel).addChart(
+        Chart.column(
+          anchor: CellIndex.indexByString('D2'),
+          categories: 'A2:A5',
+          series: [ChartSeries(values: 'B2:B5')],
+          dataLabels: ChartDataLabels(value: true, seriesName: true),
+        ),
+      );
+      final c = Excel.decodeBytes(excel.encode()!)['Sheet1'].charts.single;
+      expect(c.dataLabels, isNotNull);
+      expect(c.dataLabels!.value, isTrue);
+      expect(c.dataLabels!.seriesName, isTrue);
+      expect(c.dataLabels!.percent, isFalse);
+    });
+  });
+
   group('Chart Validation', () {
     test('addChart rejects a chart with no data series', () {
       final excel = Excel.createExcel();
