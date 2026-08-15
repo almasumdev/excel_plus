@@ -378,7 +378,7 @@ class Excel {
     final spills = <(String, int, int, CellValue)>[]; // sheet, row, col, value
     // Cells claimed by a committed spill this pass, so two arrays can't overlap
     // (the later one resolves to #SPILL!).
-    final claimed = <String>{};
+    final claimed = <(String, int, int)>{};
 
     for (final (data, name, raw) in evaluated) {
       final formula = (data.value as FormulaCellValue).formula;
@@ -408,7 +408,7 @@ class Excel {
           if (r == 0 && c == 0) continue;
           final rr = r0 + r, cc = c0 + c;
           if (sheet?._sheetData[rr]?[cc]?.value != null ||
-              claimed.contains('$name $rr $cc')) {
+              claimed.contains((name, rr, cc))) {
             blocked = true;
             break;
           }
@@ -433,7 +433,7 @@ class Excel {
         for (var c = 0; c < cols; c++) {
           if (r == 0 && c == 0) continue;
           final rr = r0 + r, cc = c0 + c;
-          claimed.add('$name $rr $cc');
+          claimed.add((name, rr, cc));
           spills.add((name, rr, cc, _evalToCell(raw.rows[r][c])));
         }
       }
