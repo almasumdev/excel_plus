@@ -3,6 +3,16 @@
        alt="excel_plus: a fast, low-memory Excel (.xlsx) library for Dart and Flutter" width="100%"/>
 </p>
 
+# Excel (.xlsx) Library for Dart & Flutter
+
+**excel_plus** is a fast, low-memory, non-UI Dart library for **creating, reading,
+editing, and styling Microsoft Excel `.xlsx` spreadsheets**, and for **reading
+legacy `.xls` workbooks** (Excel 97-2003). It works in plain Dart and in Flutter
+apps, on the VM, Web (JS & WASM), and mobile. excel_plus is a source-compatible
+**drop-in replacement for the [`excel`](https://pub.dev/packages/excel) package**:
+change one import and your existing code keeps working, with far more features,
+better performance on large workbooks, and active maintenance.
+
 <p align="center">
   <a href="https://pub.dev/packages/excel_plus"><img src="https://img.shields.io/pub/v/excel_plus.svg" alt="pub version"></a>
   <a href="https://pub.dev/packages/excel_plus/score"><img src="https://img.shields.io/pub/points/excel_plus" alt="pub points"></a>
@@ -16,15 +26,6 @@
   <a href="https://dart.dev"><img src="https://img.shields.io/badge/Dart-3.11+-0175C2?logo=dart" alt="Dart"></a>
 </p>
 
-# Excel (.xlsx) Library for Dart & Flutter
-
-**excel_plus** is a fast, low-memory, non-UI Dart library for **creating, reading,
-editing, and styling Microsoft Excel `.xlsx` spreadsheets**. It works in plain
-Dart and in Flutter apps, on the VM, Web (JS & WASM), and mobile. excel_plus is a
-source-compatible **drop-in replacement for the [`excel`](https://pub.dev/packages/excel)
-package**: change one import and your existing code keeps working, with far more
-features, better performance on large workbooks, and active maintenance.
-
 > ⭐ **Find this useful?** [Star it on GitHub](https://github.com/almasumdev/excel_plus)
 > and 👍 [like it on pub.dev](https://pub.dev/packages/excel_plus). Stars and likes
 > help other Dart & Flutter developers find a maintained, full-featured Excel library.
@@ -32,13 +33,16 @@ features, better performance on large workbooks, and active maintenance.
 ## Overview
 
 excel_plus reads and writes the Office Open XML `.xlsx` format used by Microsoft
-Excel, Google Sheets, and LibreOffice Calc. It parses workbooks with a streaming
-(SAX) reader and loads each sheet lazily, so memory stays low even on large files,
-and it reuses untouched parts of a workbook byte-for-byte when saving.
+Excel, Google Sheets, and LibreOffice Calc, and it reads the legacy binary `.xls`
+format (BIFF8, Excel 97-2003) through a built-in parser that needs no extra
+dependencies. It parses workbooks with a streaming (SAX) reader and loads each
+sheet lazily, so memory stays low even on large files, and it reuses untouched
+parts of a workbook byte-for-byte when saving.
 
 **What you can do with it:**
 
 - Read and parse existing `.xlsx` files, or create new Excel workbooks from scratch.
+- Open legacy `.xls` (Excel 97-2003) workbooks and save them back out as modern `.xlsx`.
 - Edit cells, rows, columns, and multiple sheets, then save back to `.xlsx`.
 - Style spreadsheets with fonts, colors, fills, borders, alignment, number formats, and merged cells.
 - Go beyond the basics with formulas and recalculation, charts, pivot tables, conditional formatting, data validation, and CSV import/export.
@@ -103,6 +107,7 @@ cd ../excel_plus_bench                && dart pub get && dart run bin/benchmark.
     - [Add text, number, boolean, and date values](#add-text-number-boolean-and-date-values)
     - [Add formulas](#add-formulas)
     - [Read an existing Excel file](#read-an-existing-excel-file)
+    - [Read a legacy .xls file](#read-a-legacy-xls-file)
     - [Read a single cell](#read-a-single-cell)
     - [Style a cell: font, color, fill, alignment](#style-a-cell-font-color-fill-alignment)
     - [Add borders](#add-borders)
@@ -141,6 +146,7 @@ Flutter platform. Expand a group for details:
 <summary><b>📄 Core & platform</b></summary>
 
 - Read, create & edit `.xlsx`
+- Read legacy `.xls` (Excel 97-2003): values, dates, styles & formulas
 - CSV import & export (also TSV, pipe, and custom delimiters)
 - Multiple sheets: create, copy, rename, delete
 - All cell types: text, int, double, bool, date, time, datetime, formula
@@ -403,6 +409,29 @@ result, parsed on a background isolate (it falls back to the main thread on web)
 
 ```dart
 final excel = await Excel.decodeBytesAsync(bytes); // no jank
+```
+
+### Read a legacy .xls file
+
+`Excel.decodeBytes` sniffs the input, so legacy binary `.xls` workbooks
+(BIFF8, Excel 97-2003) open through the same call, with no extra dependency and
+no separate API:
+
+```dart
+final excel = Excel.decodeBytes(File('legacy.xls').readAsBytesSync());
+print(excel.tables.keys); // sheet names, exactly as for .xlsx
+```
+
+Values, dates (1900 and 1904 epochs), merged cells, sheet order and visibility,
+number formats, fonts, fills, borders, alignment, and column/row sizing are all
+mapped, and formula token streams are decoded back to formula text (shared and
+array formulas included), keeping the last-calculated result as the cached value.
+
+`.xls` support is **read-only by design**: saving always produces a modern
+`.xlsx` file, which makes this the migration path for old spreadsheets.
+
+```dart
+File('modern.xlsx').writeAsBytesSync(excel.save()!);
 ```
 
 ### Read a single cell
