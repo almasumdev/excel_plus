@@ -27,8 +27,8 @@ firebase.json
 # never ship in the package.
 *.xlsx
 # README references these via absolute raw.githubusercontent URLs, so they
-# don't need to ship — but images/logo.png ships as the pub.dev screenshot/logo.
+# don't need to ship. images/logo.png and images/preview.png are the exception:
+# both ship as pub.dev screenshots (declared in pubspec).
 images/banner.png
-images/preview.png
 images/benchmark.svg
 images/logo.svg
