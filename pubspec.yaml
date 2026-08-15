@@ -9,7 +9,7 @@ topics:
   - xlsx
   - xls
   - spreadsheet
-  - workbook
+  - csv
 
 screenshots:
   - description: The excel_plus logo.
