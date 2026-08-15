@@ -14,6 +14,8 @@ topics:
 screenshots:
   - description: The excel_plus logo.
     path: images/logo.png
+  - description: A styled sheet with a merged title, a bold header row, coloured status cells, borders, and currency formatting.
+    path: images/preview.png
 
 environment:
   sdk: ^3.11.4

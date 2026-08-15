@@ -1,10 +1,45 @@
 /// A fast, low-memory library for reading, creating, editing, and styling
 /// Excel `.xlsx` files (and reading legacy `.xls`) in Dart and Flutter.
 ///
-/// Open or create a workbook with [Excel], then read and write cells through
-/// [Sheet]. The API is grouped into categories: cell values, styling, number
-/// formats, layout, formulas, worksheet features, tables, pivot tables, charts,
-/// CSV import/export, and errors.
+/// excel_plus is a source-compatible drop-in for the `excel` package, built on a
+/// streaming (SAX) parser with lazy per-sheet loading so it stays fast and light
+/// even on workbooks with millions of cells.
+///
+/// ## Quick start
+///
+/// ```dart
+/// import 'package:excel_plus/excel_plus.dart';
+///
+/// // Create a workbook, write a cell, and save it to bytes.
+/// final excel = Excel.createExcel();
+/// final sheet = excel['Sheet1'];
+/// sheet.updateCell(CellIndex.indexByString('A1'), TextCellValue('Hello'));
+/// final bytes = excel.save();
+///
+/// // Open an existing .xlsx (or legacy .xls, detected automatically) and read.
+/// final wb = Excel.decodeBytes(fileBytes);
+/// for (final name in wb.tables.keys) {
+///   for (final row in wb[name].rows) {
+///     print(row.map((cell) => cell?.value).toList());
+///   }
+/// }
+/// ```
+///
+/// ## Where to look next
+///
+/// Start with [Excel] (the workbook) and [Sheet] (a worksheet); address a cell
+/// with [CellIndex] and read it as a typed [CellValue]. The rest of the API is
+/// grouped into categories, each with its own guide:
+///
+/// - **Cell Values** typed cell contents: text, numbers, dates, formulas.
+/// - **Styling** and **Number Formats** fonts, colours, fills, borders,
+///   alignment, and how values are displayed.
+/// - **Formulas** the built-in evaluation engine and ~160 functions.
+/// - **Worksheet** data validation, conditional formatting, hyperlinks, panes,
+///   comments, sparklines, protection, images, and print setup.
+/// - **Tables**, **Pivot Tables**, and **Charts** structured data objects.
+/// - **CSV** import and export, and **Layout** printed-page headers and footers.
+/// - **Errors** the typed exceptions thrown for unreadable input.
 library;
 
 import 'dart:collection';

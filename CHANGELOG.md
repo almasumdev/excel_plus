@@ -6,9 +6,11 @@ Documentation and source hygiene.
 
 - Expanded the API reference. Every category (Core, Cell Values, Styling, Number
   Formats, Layout, Worksheet, Tables, Pivot Tables, Charts, CSV, and Errors) now
-  opens with a short guide and a worked example instead of a one-line summary.
+  opens with a short guide and a worked example instead of a one-line summary,
+  and the documentation homepage leads with a quick-start example.
 - Refreshed the README function count and roadmap; engineering and database
   functions already shipped.
+- Added the styled-sheet preview to the package screenshots on pub.dev.
 
 ### Fixed
 
