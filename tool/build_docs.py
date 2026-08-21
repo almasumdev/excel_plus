@@ -20,6 +20,9 @@ def emit_asset(src, name, ext):
 BASE    = "https://excel-plus.web.app"
 OUT     = "site"
 VERSION = "2.14.3"
+# IndexNow verification key. Must stay in step with the file emitted
+# at the site root, or Bing and Yandex reject the submission.
+INDEXNOW_KEY = "38c0f40270a4bc555c1b91dbc589a4a3"
 
 # Sidebar groups. Structure mirrors how the task is approached, not file order.
 GROUPS = [
@@ -855,5 +858,9 @@ io.open(os.path.join(OUT, "robots.txt"), "w", encoding="utf-8", newline="\n").wr
     "User-agent: *\nAllow: /\n\nSitemap: %s/sitemap.xml\n" % BASE)
 
 shutil.copyfile("images/logo.svg", os.path.join(OUT, "logo.svg"))
+
+# IndexNow ownership proof: the file name is the key and so are its contents.
+io.open(os.path.join(OUT, INDEXNOW_KEY + ".txt"), "w", encoding="utf-8",
+        newline="\n").write(INDEXNOW_KEY + "\n")
 
 print("wrote sitemap.xml (%d urls), robots.txt, logo.svg" % len(slugs))
