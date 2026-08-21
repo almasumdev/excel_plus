@@ -1,3 +1,12 @@
+## 2.14.3
+
+### Changed
+
+- Added a documentation website at https://excel-plus.web.app, with
+  task-based guides for reading, creating and editing workbooks, cell
+  styling, number formats, formulas, CSV, legacy `.xls`, and large files.
+  Linked from the package page via the new `documentation` field.
+
 ## 2.14.2
 
 Documentation and source hygiene.

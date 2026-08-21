@@ -26,6 +26,17 @@ better performance on large workbooks, and active maintenance.
   <a href="https://dart.dev"><img src="https://img.shields.io/badge/Dart-3.11+-0175C2?logo=dart" alt="Dart"></a>
 </p>
 
+> 📘 **[Documentation](https://excel-plus.web.app)**: guides for
+> [reading](https://excel-plus.web.app/read-excel-file),
+> [creating](https://excel-plus.web.app/create-excel-file) and
+> [editing](https://excel-plus.web.app/edit-excel-file) workbooks,
+> [cell styles](https://excel-plus.web.app/cell-styles),
+> [number formats](https://excel-plus.web.app/number-formats),
+> [formulas](https://excel-plus.web.app/formulas),
+> [CSV](https://excel-plus.web.app/csv),
+> [legacy .xls](https://excel-plus.web.app/read-xls-files) and
+> [large files](https://excel-plus.web.app/large-files).
+
 > ⭐ **Find this useful?** [Star it on GitHub](https://github.com/almasumdev/excel_plus)
 > and 👍 [like it on pub.dev](https://pub.dev/packages/excel_plus). Stars and likes
 > help other Dart & Flutter developers find a maintained, full-featured Excel library.
@@ -273,6 +284,9 @@ throw either: it evaluates to an `#ERROR!` cell value.
 ## Example
 
 <p align="center">
+  <a href="https://excel-plus.web.app">
+    <img src="https://img.shields.io/badge/📘%20Documentation-excel--plus.web.app-0B6B3A?style=for-the-badge&logo=readthedocs&logoColor=white" alt="Read the documentation">
+  </a>
   <a href="https://masum-excel.web.app">
     <img src="https://img.shields.io/badge/▶%20Live%20Demo-masum--excel.web.app-21A366?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Open the live demo">
   </a>

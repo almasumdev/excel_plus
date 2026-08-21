@@ -5,13 +5,13 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Reading Large Excel Files in Dart Without Running Out of Memory</title>
 <meta name="description" content="Handle .xlsx workbooks with millions of cells in Dart using a streaming parser, lazy sheet loading, streamed encoding and background isolates.">
-<link rel="canonical" href="https://masum-excel.web.app/large-files">
+<link rel="canonical" href="https://excel-plus.web.app/large-files">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Large Excel files">
 <meta property="og:description" content="Handle .xlsx workbooks with millions of cells in Dart using a streaming parser, lazy sheet loading, streamed encoding and background isolates.">
-<meta property="og:url" content="https://masum-excel.web.app/large-files">
+<meta property="og:url" content="https://excel-plus.web.app/large-files">
 <link rel="stylesheet" href="/style.css">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Large Excel files", "description": "Handle .xlsx workbooks with millions of cells in Dart using a streaming parser, lazy sheet loading, streamed encoding and background isolates.", "url": "https://masum-excel.web.app/large-files", "author": {"@type": "Person", "name": "Nurullah Al Masum"}, "about": {"@type": "SoftwareSourceCode", "name": "excel_plus", "programmingLanguage": "Dart", "codeRepository": "https://github.com/almasumdev/excel_plus"}}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Large Excel files", "description": "Handle .xlsx workbooks with millions of cells in Dart using a streaming parser, lazy sheet loading, streamed encoding and background isolates.", "url": "https://excel-plus.web.app/large-files", "author": {"@type": "Person", "name": "Nurullah Al Masum"}, "about": {"@type": "SoftwareSourceCode", "name": "excel_plus", "programmingLanguage": "Dart", "codeRepository": "https://github.com/almasumdev/excel_plus"}}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "How do I read a large Excel file in Dart without running out of memory?", "acceptedAnswer": {"@type": "Answer", "text": "Use Excel.decodeBuffer with an InputFileStream so the file is read lazily, and access only the sheets you need, since each sheet is parsed on first use. Write large output with encodeToStream."}}]}</script>
 </head>
 <body>

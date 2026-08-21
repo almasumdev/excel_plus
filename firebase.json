@@ -1,13 +1,28 @@
 {
-  "hosting": {
-    "site": "masum-excel",
-    "public": "example/build/web",
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
-    "rewrites": [
-      {
-        "source": "**",
-        "destination": "/index.html"
-      }
-    ]
-  }
+  "hosting": [
+    {
+      "site": "masum-excel",
+      "public": "example/build/web",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+      "rewrites": [
+        {
+          "source": "**",
+          "destination": "/index.html"
+        }
+      ]
+    },
+    {
+      "site": "excel-plus",
+      "public": "site",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+      "cleanUrls": true,
+      "trailingSlash": false,
+      "headers": [
+        {
+          "source": "**/*.@(css|js)",
+          "headers": [{ "key": "Cache-Control", "value": "public, max-age=3600" }]
+        }
+      ]
+    }
+  ]
 }
