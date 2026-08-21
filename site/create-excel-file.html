@@ -7,34 +7,49 @@
 <meta name="description" content="Generate an Excel .xlsx file from Dart: build a workbook, write text, numbers, dates and booleans, add sheets, and save to disk or bytes.">
 <link rel="canonical" href="https://excel-plus.web.app/create-excel-file">
 <meta property="og:type" content="article">
-<meta property="og:title" content="How to create an Excel file in Dart">
+<meta property="og:title" content="How to Create an Excel File in Dart (.xlsx)">
 <meta property="og:description" content="Generate an Excel .xlsx file from Dart: build a workbook, write text, numbers, dates and booleans, add sheets, and save to disk or bytes.">
 <meta property="og:url" content="https://excel-plus.web.app/create-excel-file">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="/logo.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/style.css">
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "How to create an Excel file in Dart", "description": "Generate an Excel .xlsx file from Dart: build a workbook, write text, numbers, dates and booleans, add sheets, and save to disk or bytes.", "url": "https://excel-plus.web.app/create-excel-file", "author": {"@type": "Person", "name": "Nurullah Al Masum"}, "about": {"@type": "SoftwareSourceCode", "name": "excel_plus", "programmingLanguage": "Dart", "codeRepository": "https://github.com/almasumdev/excel_plus"}}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "How do I generate an Excel file in Dart?", "acceptedAnswer": {"@type": "Answer", "text": "Call Excel.createExcel to make a workbook, write values with updateCell or appendRow, then call save to get the .xlsx bytes."}}, {"@type": "Question", "name": "Can I create an Excel file without Microsoft Excel?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. The file is written as Office Open XML directly from Dart, so no Excel installation or external service is involved."}}]}</script>
 </head>
 <body>
-<header class="site"><div class="wrap">
-<a class="brand" href="/">excel_plus</a>
-<nav class="top"><a href="/read-excel-file">Read a file</a><a href="/create-excel-file" aria-current="page">Create a file</a><a href="/edit-excel-file">Edit a file</a><a href="/cell-styles">Cell styles</a><a href="/number-formats">Number formats</a><a href="/formulas">Formulas</a><a href="/csv">CSV</a><a href="/read-xls-files">Legacy .xls</a><a href="/large-files">Large files</a></nav>
-</div></header>
-<main><div class="wrap">
-<h1>How to create an Excel file in Dart</h1>
-<p class="lede">Build an <code>.xlsx</code> workbook from nothing and write it out, with no template file and no Office install.</p>
-<h2>Install</h2>
-<pre><code>dart pub add excel_plus</code></pre>
-<pre><code>import 'package:excel_plus/excel_plus.dart';</code></pre>
-<h2>A minimal workbook</h2>
-<pre><code>final excel = Excel.createExcel();
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="topbar">
+  <button class="menu" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="sidebar"><svg viewBox="0 0 24 24" aria-hidden="true" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <a class="brand" href="/"><img src="/logo.svg" alt="" width="24" height="24">excel_plus</a>
+  <span class="ver">v2.14.3</span>
+  <div class="grow"></div>
+  <a class="ext" href="https://pub.dev/packages/excel_plus"><span>pub.dev</span></a>
+  <a class="ext" href="https://github.com/almasumdev/excel_plus" aria-label="Source on GitHub"><svg viewBox="0 0 16 16" aria-hidden="true" width="16" height="16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span>GitHub</span></a>
+</header>
+
+<div class="scrim" aria-hidden="true"></div>
+
+<div class="shell">
+  <nav class="sidebar" id="sidebar" aria-label="Documentation"><h2>Start here</h2><ul><li><a href="/">Introduction</a></li><li><a href="/read-excel-file">Read a file</a></li><li><a href="/create-excel-file" aria-current="page">Create a file</a></li><li><a href="/edit-excel-file">Edit a file</a></li></ul><h2>Formatting</h2><ul><li><a href="/cell-styles">Cell styles</a></li><li><a href="/number-formats">Number formats</a></li></ul><h2>Data</h2><ul><li><a href="/formulas">Formulas</a></li><li><a href="/csv">CSV import and export</a></li></ul><h2>Going further</h2><ul><li><a href="/read-xls-files">Legacy .xls files</a></li><li><a href="/large-files">Large files</a></li></ul></nav>
+
+  <main class="content" id="content">
+    <article>
+      <h1>How to create an Excel file in Dart</h1>
+      <p class="lede">Build an <code>.xlsx</code> workbook from nothing and write it out, with no template file and no Office install.</p>
+      <h2 id="install">Install<a class="anchor" href="#install" aria-label="Link to this section">#</a></h2>
+<div class="codeblock"><pre><code>dart pub add excel_plus</code></pre></div>
+<div class="codeblock"><pre><code>import 'package:excel_plus/excel_plus.dart';</code></pre></div>
+<h2 id="a-minimal-workbook">A minimal workbook<a class="anchor" href="#a-minimal-workbook" aria-label="Link to this section">#</a></h2>
+<div class="codeblock"><pre><code>final excel = Excel.createExcel();
 final sheet = excel['Sheet1'];
 
 sheet.updateCell(CellIndex.indexByString('A1'), TextCellValue('Hello, world!'));
 
-final bytes = excel.save();</code></pre>
-<h2>Writing each value type</h2>
+final bytes = excel.save();</code></pre></div>
+<h2 id="writing-each-value-type">Writing each value type<a class="anchor" href="#writing-each-value-type" aria-label="Link to this section">#</a></h2>
 <p>Wrap the Dart value in the matching <code>CellValue</code>. Storing a real date rather than a string is what lets Excel sort and filter it correctly.</p>
-<pre><code>sheet.updateCell(CellIndex.indexByString('A1'), TextCellValue('Name'));
+<div class="codeblock"><pre><code>sheet.updateCell(CellIndex.indexByString('A1'), TextCellValue('Name'));
 sheet.updateCell(CellIndex.indexByString('B1'), IntCellValue(42));
 sheet.updateCell(CellIndex.indexByString('C1'), DoubleCellValue(3.14));
 sheet.updateCell(CellIndex.indexByString('D1'), BoolCellValue(true));
@@ -43,10 +58,10 @@ sheet.updateCell(CellIndex.indexByString('F1'), TimeCellValue(hour: 9, minute: 3
 sheet.updateCell(
   CellIndex.indexByString('G1'),
   DateTimeCellValue(year: 2026, month: 6, day: 9, hour: 9, minute: 30),
-);</code></pre>
-<h2>Appending rows</h2>
+);</code></pre></div>
+<h2 id="appending-rows">Appending rows<a class="anchor" href="#appending-rows" aria-label="Link to this section">#</a></h2>
 <p>For tabular output you rarely want to compute addresses by hand. <code>appendRow</code> writes after the last filled row.</p>
-<pre><code>final sheet = excel['Sheet1'];
+<div class="codeblock"><pre><code>final sheet = excel['Sheet1'];
 
 sheet.appendRow([TextCellValue('Product'), TextCellValue('Qty'), TextCellValue('Price')]);
 
@@ -56,18 +71,18 @@ for (final item in items) {
     IntCellValue(item.quantity),
     DoubleCellValue(item.price),
   ]);
-}</code></pre>
-<h2>Several sheets</h2>
-<pre><code>final excel = Excel.createExcel();
+}</code></pre></div>
+<h2 id="several-sheets">Several sheets<a class="anchor" href="#several-sheets" aria-label="Link to this section">#</a></h2>
+<div class="codeblock"><pre><code>final excel = Excel.createExcel();
 
 excel['Summary'].updateCell(CellIndex.indexByString('A1'), TextCellValue('Total'));
 excel['Detail'].updateCell(CellIndex.indexByString('A1'), TextCellValue('Line items'));
 
 excel.rename('Sheet1', 'Overview');
-excel.delete('Detail');</code></pre>
-<h2>Saving</h2>
+excel.delete('Detail');</code></pre></div>
+<h2 id="saving">Saving<a class="anchor" href="#saving" aria-label="Link to this section">#</a></h2>
 <p>Pick whichever output the surrounding program needs.</p>
-<pre><code>// Bytes, for sending over the network or writing yourself.
+<div class="codeblock"><pre><code>// Bytes, for sending over the network or writing yourself.
 final List&lt;int&gt;? bytes = excel.save();
 
 // Straight to a file.
@@ -77,15 +92,21 @@ File('output.xlsx').writeAsBytesSync(excel.save()!);
 excel.save(fileName: 'report.xlsx');
 
 // Encode off the main thread so a UI stays responsive.
-final bytes = await excel.encodeAsync();</code></pre>
+final bytes = await excel.encodeAsync();</code></pre></div>
 <p>For a workbook too big to hold in memory, stream it out instead. See <a href="/large-files">large files</a>.</p>
-<p class="next">Next: <a href="/cell-styles">Style the cells</a> &middot; <a href="/number-formats">Number formats</a> &middot; <a href="/formulas">Formulas</a></p>
-</div></main>
-<footer class="site"><div class="wrap">
-excel_plus is an open source Excel library for Dart, MIT licensed.
-<a href="https://pub.dev/packages/excel_plus">pub.dev</a> &middot;
-<a href="https://github.com/almasumdev/excel_plus">source</a> &middot;
-<a href="https://pub.dev/documentation/excel_plus/latest/">API reference</a>
-</div></footer>
+<nav class="next" aria-label="Related guides"><a href="/cell-styles">Style the cells</a><a href="/number-formats">Number formats</a><a href="/formulas">Formulas</a></nav>
+      <footer class="pagefoot">
+        excel_plus is open source under the MIT licence.
+        <a href="https://pub.dev/packages/excel_plus">pub.dev</a> &middot;
+        <a href="https://github.com/almasumdev/excel_plus">Source</a> &middot;
+        <a href="https://pub.dev/documentation/excel_plus/latest/">API reference</a>
+      </footer>
+    </article>
+  </main>
+
+  <aside class="toc"><nav aria-labelledby="toc-h"><h2 id="toc-h">On this page</h2><ul><li><a href="#install">Install</a></li><li><a href="#a-minimal-workbook">A minimal workbook</a></li><li><a href="#writing-each-value-type">Writing each value type</a></li><li><a href="#appending-rows">Appending rows</a></li><li><a href="#several-sheets">Several sheets</a></li><li><a href="#saving">Saving</a></li></ul></nav></aside>
+</div>
+
+<script src="/docs.js" defer></script>
 </body>
 </html>

@@ -7,67 +7,88 @@
 <meta name="description" content="Write Excel formulas from Dart, evaluate them without opening Excel, recalculate a whole workbook, and register your own custom functions.">
 <link rel="canonical" href="https://excel-plus.web.app/formulas">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Formulas in Dart">
+<meta property="og:title" content="Excel Formulas in Dart: Write, Evaluate and Recalculate">
 <meta property="og:description" content="Write Excel formulas from Dart, evaluate them without opening Excel, recalculate a whole workbook, and register your own custom functions.">
 <meta property="og:url" content="https://excel-plus.web.app/formulas">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="/logo.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/style.css">
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Formulas in Dart", "description": "Write Excel formulas from Dart, evaluate them without opening Excel, recalculate a whole workbook, and register your own custom functions.", "url": "https://excel-plus.web.app/formulas", "author": {"@type": "Person", "name": "Nurullah Al Masum"}, "about": {"@type": "SoftwareSourceCode", "name": "excel_plus", "programmingLanguage": "Dart", "codeRepository": "https://github.com/almasumdev/excel_plus"}}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Can Dart calculate Excel formulas without opening Excel?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Call sheet.evaluate for a single cell, or excel.recalculate to compute every formula in the workbook and store the results in the saved file."}}]}</script>
 </head>
 <body>
-<header class="site"><div class="wrap">
-<a class="brand" href="/">excel_plus</a>
-<nav class="top"><a href="/read-excel-file">Read a file</a><a href="/create-excel-file">Create a file</a><a href="/edit-excel-file">Edit a file</a><a href="/cell-styles">Cell styles</a><a href="/number-formats">Number formats</a><a href="/formulas" aria-current="page">Formulas</a><a href="/csv">CSV</a><a href="/read-xls-files">Legacy .xls</a><a href="/large-files">Large files</a></nav>
-</div></header>
-<main><div class="wrap">
-<h1>Formulas in Dart</h1>
-<p class="lede">Write formulas into cells, and compute their results without Excel ever being involved.</p>
-<h2>Install</h2>
-<pre><code>dart pub add excel_plus</code></pre>
-<pre><code>import 'package:excel_plus/excel_plus.dart';</code></pre>
-<h2>Writing a formula</h2>
-<pre><code>sheet.updateCell(CellIndex.indexByString('A1'), IntCellValue(10));
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="topbar">
+  <button class="menu" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="sidebar"><svg viewBox="0 0 24 24" aria-hidden="true" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <a class="brand" href="/"><img src="/logo.svg" alt="" width="24" height="24">excel_plus</a>
+  <span class="ver">v2.14.3</span>
+  <div class="grow"></div>
+  <a class="ext" href="https://pub.dev/packages/excel_plus"><span>pub.dev</span></a>
+  <a class="ext" href="https://github.com/almasumdev/excel_plus" aria-label="Source on GitHub"><svg viewBox="0 0 16 16" aria-hidden="true" width="16" height="16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span>GitHub</span></a>
+</header>
+
+<div class="scrim" aria-hidden="true"></div>
+
+<div class="shell">
+  <nav class="sidebar" id="sidebar" aria-label="Documentation"><h2>Start here</h2><ul><li><a href="/">Introduction</a></li><li><a href="/read-excel-file">Read a file</a></li><li><a href="/create-excel-file">Create a file</a></li><li><a href="/edit-excel-file">Edit a file</a></li></ul><h2>Formatting</h2><ul><li><a href="/cell-styles">Cell styles</a></li><li><a href="/number-formats">Number formats</a></li></ul><h2>Data</h2><ul><li><a href="/formulas" aria-current="page">Formulas</a></li><li><a href="/csv">CSV import and export</a></li></ul><h2>Going further</h2><ul><li><a href="/read-xls-files">Legacy .xls files</a></li><li><a href="/large-files">Large files</a></li></ul></nav>
+
+  <main class="content" id="content">
+    <article>
+      <h1>Formulas in Dart</h1>
+      <p class="lede">Write formulas into cells, and compute their results without Excel ever being involved.</p>
+      <h2 id="install">Install<a class="anchor" href="#install" aria-label="Link to this section">#</a></h2>
+<div class="codeblock"><pre><code>dart pub add excel_plus</code></pre></div>
+<div class="codeblock"><pre><code>import 'package:excel_plus/excel_plus.dart';</code></pre></div>
+<h2 id="writing-a-formula">Writing a formula<a class="anchor" href="#writing-a-formula" aria-label="Link to this section">#</a></h2>
+<div class="codeblock"><pre><code>sheet.updateCell(CellIndex.indexByString('A1'), IntCellValue(10));
 sheet.updateCell(CellIndex.indexByString('A2'), IntCellValue(20));
 sheet.updateCell(CellIndex.indexByString('A3'), FormulaCellValue('SUM(A1:A2)'));
 
 // Or set one on a cell that already exists.
-sheet.cell(CellIndex.indexByString('A4')).setFormula('AVERAGE(A1:A2)');</code></pre>
-<h2>Evaluating without Excel</h2>
+sheet.cell(CellIndex.indexByString('A4')).setFormula('AVERAGE(A1:A2)');</code></pre></div>
+<h2 id="evaluating-without-excel">Evaluating without Excel<a class="anchor" href="#evaluating-without-excel" aria-label="Link to this section">#</a></h2>
 <p>A formula written into a file has no result until something calculates it. If the file is going to be read by a program rather than opened in Excel, calculate it yourself.</p>
-<pre><code>print(sheet.evaluate(CellIndex.indexByString('A3')));
+<div class="codeblock"><pre><code>print(sheet.evaluate(CellIndex.indexByString('A3')));
 
 // Store every formula's computed result in the file, so a reader sees values.
-excel.recalculate();</code></pre>
-<h2>Recalculating only what changed</h2>
+excel.recalculate();</code></pre></div>
+<h2 id="recalculating-only-what-changed">Recalculating only what changed<a class="anchor" href="#recalculating-only-what-changed" aria-label="Link to this section">#</a></h2>
 <p>On a large workbook, recomputing everything after each edit is wasteful. Name the cells you touched and only the formulas depending on them are redone.</p>
-<pre><code>sheet.updateCell(CellIndex.indexByString('A1'), IntCellValue(99));
-excel.recalculate(changed: ['A1']);</code></pre>
-<h2>Dynamic arrays</h2>
+<div class="codeblock"><pre><code>sheet.updateCell(CellIndex.indexByString('A1'), IntCellValue(99));
+excel.recalculate(changed: ['A1']);</code></pre></div>
+<h2 id="dynamic-arrays">Dynamic arrays<a class="anchor" href="#dynamic-arrays" aria-label="Link to this section">#</a></h2>
 <p>A formula that returns several values spills into the cells below or beside it, the same way modern Excel behaves.</p>
-<pre><code>sheet.cell(CellIndex.indexByString('D1')).setFormula('SEQUENCE(3)');
+<div class="codeblock"><pre><code>sheet.cell(CellIndex.indexByString('D1')).setFormula('SEQUENCE(3)');
 excel.recalculate();
 
 // D1 keeps the formula and reports its spill range as 'D1:D3'.
 // D2 and D3 receive 2 and 3.
 // If a target cell is already occupied the anchor reports #SPILL!
-// and nothing is overwritten.</code></pre>
-<h2>Custom functions</h2>
+// and nothing is overwritten.</code></pre></div>
+<h2 id="custom-functions">Custom functions<a class="anchor" href="#custom-functions" aria-label="Link to this section">#</a></h2>
 <p>Register a Dart function and call it from a formula like any built in.</p>
-<pre><code>excel.formula.registerFunction('TRIPLE', (args) {
+<div class="codeblock"><pre><code>excel.formula.registerFunction('TRIPLE', (args) {
   final v = args.isEmpty ? null : args.first;
   return IntCellValue((v is IntCellValue ? v.value : 0) * 3);
 });
 
-sheet.cell(CellIndex.indexByString('B1')).setFormula('TRIPLE(A1)');</code></pre>
-<h2>What is available</h2>
+sheet.cell(CellIndex.indexByString('B1')).setFormula('TRIPLE(A1)');</code></pre></div>
+<h2 id="what-is-available">What is available<a class="anchor" href="#what-is-available" aria-label="Link to this section">#</a></h2>
 <p>Around 160 functions are implemented, covering maths and statistics, text, logical, lookup and reference, date and time, financial, database and engineering families. The full list lives in the <a href="https://github.com/almasumdev/excel_plus/blob/main/doc/functions.md">function reference</a>.</p>
-<p class="next">Next: <a href="/create-excel-file">Create a file</a> &middot; <a href="/number-formats">Number formats</a></p>
-</div></main>
-<footer class="site"><div class="wrap">
-excel_plus is an open source Excel library for Dart, MIT licensed.
-<a href="https://pub.dev/packages/excel_plus">pub.dev</a> &middot;
-<a href="https://github.com/almasumdev/excel_plus">source</a> &middot;
-<a href="https://pub.dev/documentation/excel_plus/latest/">API reference</a>
-</div></footer>
+<nav class="next" aria-label="Related guides"><a href="/create-excel-file">Create a file</a><a href="/number-formats">Number formats</a></nav>
+      <footer class="pagefoot">
+        excel_plus is open source under the MIT licence.
+        <a href="https://pub.dev/packages/excel_plus">pub.dev</a> &middot;
+        <a href="https://github.com/almasumdev/excel_plus">Source</a> &middot;
+        <a href="https://pub.dev/documentation/excel_plus/latest/">API reference</a>
+      </footer>
+    </article>
+  </main>
+
+  <aside class="toc"><nav aria-labelledby="toc-h"><h2 id="toc-h">On this page</h2><ul><li><a href="#install">Install</a></li><li><a href="#writing-a-formula">Writing a formula</a></li><li><a href="#evaluating-without-excel">Evaluating without Excel</a></li><li><a href="#recalculating-only-what-changed">Recalculating only what changed</a></li><li><a href="#dynamic-arrays">Dynamic arrays</a></li><li><a href="#custom-functions">Custom functions</a></li><li><a href="#what-is-available">What is available</a></li></ul></nav></aside>
+</div>
+
+<script src="/docs.js" defer></script>
 </body>
 </html>

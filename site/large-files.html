@@ -7,58 +7,79 @@
 <meta name="description" content="Handle .xlsx workbooks with millions of cells in Dart using a streaming parser, lazy sheet loading, streamed encoding and background isolates.">
 <link rel="canonical" href="https://excel-plus.web.app/large-files">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Large Excel files">
+<meta property="og:title" content="Reading Large Excel Files in Dart Without Running Out of Memory">
 <meta property="og:description" content="Handle .xlsx workbooks with millions of cells in Dart using a streaming parser, lazy sheet loading, streamed encoding and background isolates.">
 <meta property="og:url" content="https://excel-plus.web.app/large-files">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="/logo.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/style.css">
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Large Excel files", "description": "Handle .xlsx workbooks with millions of cells in Dart using a streaming parser, lazy sheet loading, streamed encoding and background isolates.", "url": "https://excel-plus.web.app/large-files", "author": {"@type": "Person", "name": "Nurullah Al Masum"}, "about": {"@type": "SoftwareSourceCode", "name": "excel_plus", "programmingLanguage": "Dart", "codeRepository": "https://github.com/almasumdev/excel_plus"}}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "How do I read a large Excel file in Dart without running out of memory?", "acceptedAnswer": {"@type": "Answer", "text": "Use Excel.decodeBuffer with an InputFileStream so the file is read lazily, and access only the sheets you need, since each sheet is parsed on first use. Write large output with encodeToStream."}}]}</script>
 </head>
 <body>
-<header class="site"><div class="wrap">
-<a class="brand" href="/">excel_plus</a>
-<nav class="top"><a href="/read-excel-file">Read a file</a><a href="/create-excel-file">Create a file</a><a href="/edit-excel-file">Edit a file</a><a href="/cell-styles">Cell styles</a><a href="/number-formats">Number formats</a><a href="/formulas">Formulas</a><a href="/csv">CSV</a><a href="/read-xls-files">Legacy .xls</a><a href="/large-files" aria-current="page">Large files</a></nav>
-</div></header>
-<main><div class="wrap">
-<h1>Large Excel files</h1>
-<p class="lede">Workbooks with millions of cells, without the heap blowing up.</p>
-<h2>Install</h2>
-<pre><code>dart pub add excel_plus</code></pre>
-<pre><code>import 'package:excel_plus/excel_plus.dart';</code></pre>
-<h2>Why big spreadsheets break things</h2>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="topbar">
+  <button class="menu" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="sidebar"><svg viewBox="0 0 24 24" aria-hidden="true" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <a class="brand" href="/"><img src="/logo.svg" alt="" width="24" height="24">excel_plus</a>
+  <span class="ver">v2.14.3</span>
+  <div class="grow"></div>
+  <a class="ext" href="https://pub.dev/packages/excel_plus"><span>pub.dev</span></a>
+  <a class="ext" href="https://github.com/almasumdev/excel_plus" aria-label="Source on GitHub"><svg viewBox="0 0 16 16" aria-hidden="true" width="16" height="16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span>GitHub</span></a>
+</header>
+
+<div class="scrim" aria-hidden="true"></div>
+
+<div class="shell">
+  <nav class="sidebar" id="sidebar" aria-label="Documentation"><h2>Start here</h2><ul><li><a href="/">Introduction</a></li><li><a href="/read-excel-file">Read a file</a></li><li><a href="/create-excel-file">Create a file</a></li><li><a href="/edit-excel-file">Edit a file</a></li></ul><h2>Formatting</h2><ul><li><a href="/cell-styles">Cell styles</a></li><li><a href="/number-formats">Number formats</a></li></ul><h2>Data</h2><ul><li><a href="/formulas">Formulas</a></li><li><a href="/csv">CSV import and export</a></li></ul><h2>Going further</h2><ul><li><a href="/read-xls-files">Legacy .xls files</a></li><li><a href="/large-files" aria-current="page">Large files</a></li></ul></nav>
+
+  <main class="content" id="content">
+    <article>
+      <h1>Large Excel files</h1>
+      <p class="lede">Workbooks with millions of cells, without the heap blowing up.</p>
+      <h2 id="install">Install<a class="anchor" href="#install" aria-label="Link to this section">#</a></h2>
+<div class="codeblock"><pre><code>dart pub add excel_plus</code></pre></div>
+<div class="codeblock"><pre><code>import 'package:excel_plus/excel_plus.dart';</code></pre></div>
+<h2 id="why-big-spreadsheets-break-things">Why big spreadsheets break things<a class="anchor" href="#why-big-spreadsheets-break-things" aria-label="Link to this section">#</a></h2>
 <p>The obvious way to parse a spreadsheet is to load the XML for a sheet into a document tree and walk it. That tree is many times larger than the file, so a workbook of a few hundred megabytes can need tens of gigabytes of memory. Most out of memory crashes when reading a spreadsheet come from this, not from the file itself.</p>
 <p>excel_plus reads cell data as a stream of events instead of building that tree, and only parses a sheet the first time you touch it.</p>
 
-<h2>Streaming a file from disk</h2>
+<h2 id="streaming-a-file-from-disk">Streaming a file from disk<a class="anchor" href="#streaming-a-file-from-disk" aria-label="Link to this section">#</a></h2>
 <p>On the VM, desktop or mobile, <code>decodeBuffer</code> reads the file lazily rather than pulling all of it into memory first.</p>
-<pre><code>final excel = Excel.decodeBuffer(InputFileStream('input.xlsx'));</code></pre>
+<div class="codeblock"><pre><code>final excel = Excel.decodeBuffer(InputFileStream('input.xlsx'));</code></pre></div>
 <p><code>InputFileStream</code> is re-exported, so there is no separate import to add. It reads a path, so it is native only, and it holds the file open while the workbook is in use. Use <code>decodeBytes</code> for bytes from a network response, an asset, or in the browser.</p>
 
-<h2>Only touch the sheets you need</h2>
+<h2 id="only-touch-the-sheets-you-need">Only touch the sheets you need<a class="anchor" href="#only-touch-the-sheets-you-need" aria-label="Link to this section">#</a></h2>
 <p>Sheets are parsed on first access. Reading one sheet out of a workbook of thirty does not pay for the other twenty nine, so avoid iterating <code>tables.keys</code> when you only want one.</p>
-<pre><code>final excel = Excel.decodeBuffer(InputFileStream('big.xlsx'));
+<div class="codeblock"><pre><code>final excel = Excel.decodeBuffer(InputFileStream('big.xlsx'));
 
 // Only this sheet is parsed.
-final sheet = excel['Q4'];</code></pre>
-<h2>Streaming the output</h2>
+final sheet = excel['Q4'];</code></pre></div>
+<h2 id="streaming-the-output">Streaming the output<a class="anchor" href="#streaming-the-output" aria-label="Link to this section">#</a></h2>
 <p>Writing has the same problem in reverse. <code>encodeToStream</code> pushes the file to a sink as it is produced, so the whole workbook is never held as one buffer.</p>
-<pre><code>final sink = File('big.xlsx').openWrite();
+<div class="codeblock"><pre><code>final sink = File('big.xlsx').openWrite();
 excel.encodeToStream(sink.add);
-await sink.close();</code></pre>
-<h2>Keeping an interface responsive</h2>
+await sink.close();</code></pre></div>
+<h2 id="keeping-an-interface-responsive">Keeping an interface responsive<a class="anchor" href="#keeping-an-interface-responsive" aria-label="Link to this section">#</a></h2>
 <p>Encoding a large workbook is CPU bound and will block whatever thread it runs on. In an app, push it to a background isolate.</p>
-<pre><code>final bytes = await excel.encodeAsync();</code></pre>
+<div class="codeblock"><pre><code>final bytes = await excel.encodeAsync();</code></pre></div>
 <p>On the web this falls back to the main thread, since isolates are not available there.</p>
 
-<h2>Untouched parts are not re-encoded</h2>
+<h2 id="untouched-parts-are-not-re-encoded">Untouched parts are not re-encoded<a class="anchor" href="#untouched-parts-are-not-re-encoded" aria-label="Link to this section">#</a></h2>
 <p>When a workbook is opened and saved, the parts you did not modify are carried across as they were rather than being rebuilt. That keeps saves fast on large files and avoids losing anything the library does not model.</p>
-<p class="next">Next: <a href="/read-excel-file">Read a file</a> &middot; <a href="/create-excel-file">Create a file</a></p>
-</div></main>
-<footer class="site"><div class="wrap">
-excel_plus is an open source Excel library for Dart, MIT licensed.
-<a href="https://pub.dev/packages/excel_plus">pub.dev</a> &middot;
-<a href="https://github.com/almasumdev/excel_plus">source</a> &middot;
-<a href="https://pub.dev/documentation/excel_plus/latest/">API reference</a>
-</div></footer>
+<nav class="next" aria-label="Related guides"><a href="/read-excel-file">Read a file</a><a href="/create-excel-file">Create a file</a></nav>
+      <footer class="pagefoot">
+        excel_plus is open source under the MIT licence.
+        <a href="https://pub.dev/packages/excel_plus">pub.dev</a> &middot;
+        <a href="https://github.com/almasumdev/excel_plus">Source</a> &middot;
+        <a href="https://pub.dev/documentation/excel_plus/latest/">API reference</a>
+      </footer>
+    </article>
+  </main>
+
+  <aside class="toc"><nav aria-labelledby="toc-h"><h2 id="toc-h">On this page</h2><ul><li><a href="#install">Install</a></li><li><a href="#why-big-spreadsheets-break-things">Why big spreadsheets break things</a></li><li><a href="#streaming-a-file-from-disk">Streaming a file from disk</a></li><li><a href="#only-touch-the-sheets-you-need">Only touch the sheets you need</a></li><li><a href="#streaming-the-output">Streaming the output</a></li><li><a href="#keeping-an-interface-responsive">Keeping an interface responsive</a></li><li><a href="#untouched-parts-are-not-re-encoded">Untouched parts are not re-encoded</a></li></ul></nav></aside>
+</div>
+
+<script src="/docs.js" defer></script>
 </body>
 </html>

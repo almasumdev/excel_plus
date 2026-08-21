@@ -7,58 +7,79 @@
 <meta name="description" content="Import CSV or TSV into an .xlsx workbook and export a spreadsheet sheet back to CSV from Dart, with control over delimiters, type inference and schemas.">
 <link rel="canonical" href="https://excel-plus.web.app/csv">
 <meta property="og:type" content="article">
-<meta property="og:title" content="CSV import and export">
+<meta property="og:title" content="Convert Excel to CSV and CSV to Excel in Dart">
 <meta property="og:description" content="Import CSV or TSV into an .xlsx workbook and export a spreadsheet sheet back to CSV from Dart, with control over delimiters, type inference and schemas.">
 <meta property="og:url" content="https://excel-plus.web.app/csv">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="/logo.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/style.css">
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "CSV import and export", "description": "Import CSV or TSV into an .xlsx workbook and export a spreadsheet sheet back to CSV from Dart, with control over delimiters, type inference and schemas.", "url": "https://excel-plus.web.app/csv", "author": {"@type": "Person", "name": "Nurullah Al Masum"}, "about": {"@type": "SoftwareSourceCode", "name": "excel_plus", "programmingLanguage": "Dart", "codeRepository": "https://github.com/almasumdev/excel_plus"}}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "How do I convert a CSV file to Excel in Dart?", "acceptedAnswer": {"@type": "Answer", "text": "Pass the CSV text to Excel.fromCsv to build a workbook, then save it as .xlsx. Use importCsv to add a CSV sheet to an existing workbook."}}, {"@type": "Question", "name": "How do I export a spreadsheet to CSV in Dart?", "acceptedAnswer": {"@type": "Answer", "text": "Call toCsv on the sheet. Pass a CsvConfig to change the delimiter, for example to produce tab separated output."}}]}</script>
 </head>
 <body>
-<header class="site"><div class="wrap">
-<a class="brand" href="/">excel_plus</a>
-<nav class="top"><a href="/read-excel-file">Read a file</a><a href="/create-excel-file">Create a file</a><a href="/edit-excel-file">Edit a file</a><a href="/cell-styles">Cell styles</a><a href="/number-formats">Number formats</a><a href="/formulas">Formulas</a><a href="/csv" aria-current="page">CSV</a><a href="/read-xls-files">Legacy .xls</a><a href="/large-files">Large files</a></nav>
-</div></header>
-<main><div class="wrap">
-<h1>CSV import and export</h1>
-<p class="lede">Move between <code>.xlsx</code> and CSV or TSV in either direction.</p>
-<h2>Install</h2>
-<pre><code>dart pub add excel_plus</code></pre>
-<pre><code>import 'package:excel_plus/excel_plus.dart';</code></pre>
-<h2>CSV to a workbook</h2>
-<pre><code>final excel = Excel.fromCsv('name,age\nAlice,30\nBob,25', sheetName: 'People');
+<a class="skip" href="#content">Skip to content</a>
 
-File('people.xlsx').writeAsBytesSync(excel.save()!);</code></pre>
-<h2>Adding a CSV sheet to a workbook you already have</h2>
-<pre><code>excel.importCsv('a\tb\n1\t2', sheetName: 'Tabbed', config: const CsvConfig.tsv());</code></pre>
-<h2>A sheet back to CSV</h2>
-<pre><code>final csv = excel['People'].toCsv();</code></pre>
-<h2>Type inference will not damage your data</h2>
+<header class="topbar">
+  <button class="menu" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="sidebar"><svg viewBox="0 0 24 24" aria-hidden="true" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <a class="brand" href="/"><img src="/logo.svg" alt="" width="24" height="24">excel_plus</a>
+  <span class="ver">v2.14.3</span>
+  <div class="grow"></div>
+  <a class="ext" href="https://pub.dev/packages/excel_plus"><span>pub.dev</span></a>
+  <a class="ext" href="https://github.com/almasumdev/excel_plus" aria-label="Source on GitHub"><svg viewBox="0 0 16 16" aria-hidden="true" width="16" height="16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span>GitHub</span></a>
+</header>
+
+<div class="scrim" aria-hidden="true"></div>
+
+<div class="shell">
+  <nav class="sidebar" id="sidebar" aria-label="Documentation"><h2>Start here</h2><ul><li><a href="/">Introduction</a></li><li><a href="/read-excel-file">Read a file</a></li><li><a href="/create-excel-file">Create a file</a></li><li><a href="/edit-excel-file">Edit a file</a></li></ul><h2>Formatting</h2><ul><li><a href="/cell-styles">Cell styles</a></li><li><a href="/number-formats">Number formats</a></li></ul><h2>Data</h2><ul><li><a href="/formulas">Formulas</a></li><li><a href="/csv" aria-current="page">CSV import and export</a></li></ul><h2>Going further</h2><ul><li><a href="/read-xls-files">Legacy .xls files</a></li><li><a href="/large-files">Large files</a></li></ul></nav>
+
+  <main class="content" id="content">
+    <article>
+      <h1>CSV import and export</h1>
+      <p class="lede">Move between <code>.xlsx</code> and CSV or TSV in either direction.</p>
+      <h2 id="install">Install<a class="anchor" href="#install" aria-label="Link to this section">#</a></h2>
+<div class="codeblock"><pre><code>dart pub add excel_plus</code></pre></div>
+<div class="codeblock"><pre><code>import 'package:excel_plus/excel_plus.dart';</code></pre></div>
+<h2 id="csv-to-a-workbook">CSV to a workbook<a class="anchor" href="#csv-to-a-workbook" aria-label="Link to this section">#</a></h2>
+<div class="codeblock"><pre><code>final excel = Excel.fromCsv('name,age\nAlice,30\nBob,25', sheetName: 'People');
+
+File('people.xlsx').writeAsBytesSync(excel.save()!);</code></pre></div>
+<h2 id="adding-a-csv-sheet-to-a-workbook-you-already-have">Adding a CSV sheet to a workbook you already have<a class="anchor" href="#adding-a-csv-sheet-to-a-workbook-you-already-have" aria-label="Link to this section">#</a></h2>
+<div class="codeblock"><pre><code>excel.importCsv('a\tb\n1\t2', sheetName: 'Tabbed', config: const CsvConfig.tsv());</code></pre></div>
+<h2 id="a-sheet-back-to-csv">A sheet back to CSV<a class="anchor" href="#a-sheet-back-to-csv" aria-label="Link to this section">#</a></h2>
+<div class="codeblock"><pre><code>final csv = excel['People'].toCsv();</code></pre></div>
+<h2 id="type-inference-will-not-damage-your-data">Type inference will not damage your data<a class="anchor" href="#type-inference-will-not-damage-your-data" aria-label="Link to this section">#</a></h2>
 <p>Values that look numeric but are not, such as a zero padded id, stay text. <code>007</code> does not become <code>7</code>. Pass <code>inferTypes: false</code> to keep every field as text.</p>
 
-<h2>Messy exports</h2>
+<h2 id="messy-exports">Messy exports<a class="anchor" href="#messy-exports" aria-label="Link to this section">#</a></h2>
 <p>Real CSV files often carry a comment preamble or junk rows before the header.</p>
-<pre><code>excel.importCsv(
+<div class="codeblock"><pre><code>excel.importCsv(
   '# Sales report 2026\nname,total\nAlice,95\nBob,88',
   sheetName: 'Sales',
   config: const CsvConfig(comment: '#'),
-);</code></pre>
+);</code></pre></div>
 <p><code>CsvConfig</code> also takes <code>skipRows</code> to drop leading rows and <code>maxRows</code> to read only a slice, plus delimiter, quoting and line ending settings.</p>
 
-<h2>Forcing column types</h2>
+<h2 id="forcing-column-types">Forcing column types<a class="anchor" href="#forcing-column-types" aria-label="Link to this section">#</a></h2>
 <p>When guessing is not good enough, declare the columns. The first row is the header, each named column is coerced to its declared type, and a value that cannot convert throws <code>CsvParseException</code>.</p>
-<pre><code>excel.importCsv('id,score\n001,9\n002,8', sheetName: 'Scores', schema: const CsvSchema(
+<div class="codeblock"><pre><code>excel.importCsv('id,score\n001,9\n002,8', sheetName: 'Scores', schema: const CsvSchema(
   columns: [
     CsvColumnDef(name: 'id', type: String),
     CsvColumnDef(name: 'score', type: double),
   ],
-));</code></pre><p class="next">Next: <a href="/read-excel-file">Read a file</a> &middot; <a href="/create-excel-file">Create a file</a></p>
-</div></main>
-<footer class="site"><div class="wrap">
-excel_plus is an open source Excel library for Dart, MIT licensed.
-<a href="https://pub.dev/packages/excel_plus">pub.dev</a> &middot;
-<a href="https://github.com/almasumdev/excel_plus">source</a> &middot;
-<a href="https://pub.dev/documentation/excel_plus/latest/">API reference</a>
-</div></footer>
+));</code></pre></div><nav class="next" aria-label="Related guides"><a href="/read-excel-file">Read a file</a><a href="/create-excel-file">Create a file</a></nav>
+      <footer class="pagefoot">
+        excel_plus is open source under the MIT licence.
+        <a href="https://pub.dev/packages/excel_plus">pub.dev</a> &middot;
+        <a href="https://github.com/almasumdev/excel_plus">Source</a> &middot;
+        <a href="https://pub.dev/documentation/excel_plus/latest/">API reference</a>
+      </footer>
+    </article>
+  </main>
+
+  <aside class="toc"><nav aria-labelledby="toc-h"><h2 id="toc-h">On this page</h2><ul><li><a href="#install">Install</a></li><li><a href="#csv-to-a-workbook">CSV to a workbook</a></li><li><a href="#adding-a-csv-sheet-to-a-workbook-you-already-have">Adding a CSV sheet to a workbook you already have</a></li><li><a href="#a-sheet-back-to-csv">A sheet back to CSV</a></li><li><a href="#type-inference-will-not-damage-your-data">Type inference will not damage your data</a></li><li><a href="#messy-exports">Messy exports</a></li><li><a href="#forcing-column-types">Forcing column types</a></li></ul></nav></aside>
+</div>
+
+<script src="/docs.js" defer></script>
 </body>
 </html>
