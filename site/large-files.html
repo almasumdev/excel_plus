@@ -12,7 +12,7 @@
 <meta property="og:url" content="https://excel-plus.web.app/large-files">
 <meta name="twitter:card" content="summary">
 <link rel="icon" href="/logo.svg" type="image/svg+xml">
-<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/style.eaea107fe4.css">
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Large Excel files", "description": "Handle .xlsx workbooks with millions of cells in Dart using a streaming parser, lazy sheet loading, streamed encoding and background isolates.", "url": "https://excel-plus.web.app/large-files", "author": {"@type": "Person", "name": "Nurullah Al Masum"}, "about": {"@type": "SoftwareSourceCode", "name": "excel_plus", "programmingLanguage": "Dart", "codeRepository": "https://github.com/almasumdev/excel_plus"}}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "How do I read a large Excel file in Dart without running out of memory?", "acceptedAnswer": {"@type": "Answer", "text": "Use Excel.decodeBuffer with an InputFileStream so the file is read lazily, and access only the sheets you need, since each sheet is parsed on first use. Write large output with encodeToStream."}}]}</script>
 </head>
@@ -80,6 +80,6 @@ await sink.close();</code></pre></div>
   <aside class="toc"><nav aria-labelledby="toc-h"><h2 id="toc-h">On this page</h2><ul><li><a href="#install">Install</a></li><li><a href="#why-big-spreadsheets-break-things">Why big spreadsheets break things</a></li><li><a href="#streaming-a-file-from-disk">Streaming a file from disk</a></li><li><a href="#only-touch-the-sheets-you-need">Only touch the sheets you need</a></li><li><a href="#streaming-the-output">Streaming the output</a></li><li><a href="#keeping-an-interface-responsive">Keeping an interface responsive</a></li><li><a href="#untouched-parts-are-not-re-encoded">Untouched parts are not re-encoded</a></li></ul></nav></aside>
 </div>
 
-<script src="/docs.js" defer></script>
+<script src="/docs.029eb910a1.js" defer></script>
 </body>
 </html>

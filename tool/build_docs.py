@@ -1,5 +1,21 @@
 # -*- coding: utf-8 -*-
-import io, os, json, re
+import io, os, json, re, hashlib, glob, shutil
+
+def emit_asset(src, name, ext):
+    """Copy an asset under a content-hashed name and return its URL.
+
+    The hash is the cache key: a changed file gets a new URL, so the long
+    immutable cache in firebase.json can never serve a stale pair of HTML
+    and CSS. Stale hashed copies from earlier builds are removed first.
+    """
+    data = io.open(src, 'rb').read()
+    digest = hashlib.sha256(data).hexdigest()[:10]
+    for old in glob.glob(os.path.join(OUT, name + '.*.' + ext)):
+        os.remove(old)
+    out = '%s.%s.%s' % (name, digest, ext)
+    io.open(os.path.join(OUT, out), 'wb').write(data)
+    return '/' + out
+
 
 BASE    = "https://excel-plus.web.app"
 OUT     = "site"
@@ -115,7 +131,7 @@ def page(slug, title, desc, h1, lede, body, faq=None):
 <meta property="og:url" content="%(canonical)s">
 <meta name="twitter:card" content="summary">
 <link rel="icon" href="/logo.svg" type="image/svg+xml">
-<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="%(css)s">
 %(ld)s
 </head>
 <body>
@@ -152,12 +168,13 @@ def page(slug, title, desc, h1, lede, body, faq=None):
   %(toc)s
 </div>
 
-<script src="/docs.js" defer></script>
+<script src="%(js)s" defer></script>
 </body>
 </html>
 """ % dict(title=title, desc=desc, canonical=canonical, ld="\n".join(blocks),
            menu=ICON_MENU, gh=ICON_GITHUB, version=VERSION,
            side=sidebar_html(slug), h1=h1, lede=lede, body=body,
+           css=CSS_URL, js=JS_URL,
            toc=toc_html(headings))
 
 
@@ -173,6 +190,9 @@ def nxt(pairs):
 
 
 os.makedirs(OUT, exist_ok=True)
+CSS_URL = emit_asset('tool/docs_assets/style.css', 'style', 'css')
+JS_URL = emit_asset('tool/docs_assets/docs.js', 'docs', 'js')
+print('  assets: %s  %s' % (CSS_URL, JS_URL))
 def esc(s):
     return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
@@ -751,7 +771,7 @@ void main() {
     if (!file.path.toLowerCase().endsWith('.xls')) continue;
 
     final excel = Excel.decodeBytes(file.readAsBytesSync());
-    final target = file.path.replaceAll(RegExp(r'\.xls$', caseSensitive: false), '.xlsx');
+    final target = file.path.replaceAll(RegExp(r'\\.xls$', caseSensitive: false), '.xlsx');
     File(target).writeAsBytesSync(excel.save()!);
   }
 }
@@ -814,7 +834,6 @@ print("all %d pages defined" % (len(PAGES) + 0))
 
 
 # ---------------------------------------------------------------- emit
-import shutil
 
 slugs = []
 for p in PAGES:
