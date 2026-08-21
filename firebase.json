@@ -3,7 +3,11 @@
     {
       "site": "masum-excel",
       "public": "example/build/web",
-      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
       "rewrites": [
         {
           "source": "**",
@@ -14,23 +18,78 @@
     {
       "site": "excel-plus",
       "public": "site",
-      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
-      "cleanUrls": true,
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "cleanUrls": false,
       "trailingSlash": false,
       "headers": [
         {
           "source": "**",
-          "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache"
+            }
+          ]
         },
         {
           "source": "/logo.svg",
-          "headers": [{ "key": "Cache-Control", "value": "public, max-age=86400" }]
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=86400"
+            }
+          ]
         },
         {
           "source": "**/*.@(css|js)",
           "headers": [
-            { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=31536000, immutable"
+            }
           ]
+        }
+      ],
+      "rewrites": [
+        {
+          "source": "/read-excel-file",
+          "destination": "/read-excel-file.html"
+        },
+        {
+          "source": "/create-excel-file",
+          "destination": "/create-excel-file.html"
+        },
+        {
+          "source": "/edit-excel-file",
+          "destination": "/edit-excel-file.html"
+        },
+        {
+          "source": "/cell-styles",
+          "destination": "/cell-styles.html"
+        },
+        {
+          "source": "/number-formats",
+          "destination": "/number-formats.html"
+        },
+        {
+          "source": "/formulas",
+          "destination": "/formulas.html"
+        },
+        {
+          "source": "/csv",
+          "destination": "/csv.html"
+        },
+        {
+          "source": "/read-xls-files",
+          "destination": "/read-xls-files.html"
+        },
+        {
+          "source": "/large-files",
+          "destination": "/large-files.html"
         }
       ]
     }

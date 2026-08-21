@@ -859,6 +859,11 @@ io.open(os.path.join(OUT, "robots.txt"), "w", encoding="utf-8", newline="\n").wr
 
 shutil.copyfile("images/logo.svg", os.path.join(OUT, "logo.svg"))
 
+# Search Console ownership proof. Copied verbatim; Google matches the exact
+# bytes at the exact path, so this must not be templated or minified.
+for proof in glob.glob("tool/docs_assets/google*.html"):
+    shutil.copyfile(proof, os.path.join(OUT, os.path.basename(proof)))
+
 # IndexNow ownership proof: the file name is the key and so are its contents.
 io.open(os.path.join(OUT, INDEXNOW_KEY + ".txt"), "w", encoding="utf-8",
         newline="\n").write(INDEXNOW_KEY + "\n")
