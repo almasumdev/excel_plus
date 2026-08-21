@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>How to Style Excel Cells in Dart: Fonts, Colours, Fills and Borders</title>
+<meta name="description" content="Format spreadsheet cells from Dart: bold and italic fonts, font size and colour, background fills, gradients, borders, alignment and text wrapping.">
+<link rel="canonical" href="https://masum-excel.web.app/cell-styles">
+<meta property="og:type" content="article">
+<meta property="og:title" content="How to style Excel cells in Dart">
+<meta property="og:description" content="Format spreadsheet cells from Dart: bold and italic fonts, font size and colour, background fills, gradients, borders, alignment and text wrapping.">
+<meta property="og:url" content="https://masum-excel.web.app/cell-styles">
+<link rel="stylesheet" href="/style.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "How to style Excel cells in Dart", "description": "Format spreadsheet cells from Dart: bold and italic fonts, font size and colour, background fills, gradients, borders, alignment and text wrapping.", "url": "https://masum-excel.web.app/cell-styles", "author": {"@type": "Person", "name": "Nurullah Al Masum"}, "about": {"@type": "SoftwareSourceCode", "name": "excel_plus", "programmingLanguage": "Dart", "codeRepository": "https://github.com/almasumdev/excel_plus"}}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "How do I make a cell bold in Dart?", "acceptedAnswer": {"@type": "Answer", "text": "Assign a CellStyle with bold set to true, either through the cellStyle argument of updateCell or by setting cell.cellStyle directly."}}]}</script>
+</head>
+<body>
+<header class="site"><div class="wrap">
+<a class="brand" href="/">excel_plus</a>
+<nav class="top"><a href="/read-excel-file">Read a file</a><a href="/create-excel-file">Create a file</a><a href="/edit-excel-file">Edit a file</a><a href="/cell-styles" aria-current="page">Cell styles</a><a href="/number-formats">Number formats</a><a href="/formulas">Formulas</a><a href="/csv">CSV</a><a href="/read-xls-files">Legacy .xls</a><a href="/large-files">Large files</a></nav>
+</div></header>
+<main><div class="wrap">
+<h1>How to style Excel cells in Dart</h1>
+<p class="lede">Fonts, colours, fills, borders and alignment, applied through a single <code>CellStyle</code>.</p>
+<h2>Install</h2>
+<pre><code>dart pub add excel_plus</code></pre>
+<pre><code>import 'package:excel_plus/excel_plus.dart';</code></pre>
+<h2>Font, colour, fill and alignment</h2>
+<pre><code>sheet.updateCell(
+  CellIndex.indexByString('A1'),
+  TextCellValue('Header'),
+  cellStyle: CellStyle(
+    bold: true,
+    italic: true,
+    fontSize: 14,
+    fontColorHex: ExcelColor.white,
+    backgroundColorHex: ExcelColor.fromHexString('#21A366'),
+    horizontalAlign: HorizontalAlign.Center,
+    verticalAlign: VerticalAlign.Center,
+  ),
+);</code></pre>
+<p>You can also assign a style to a cell that already holds a value:</p>
+<pre><code>sheet.cell(CellIndex.indexByString('A1')).cellStyle = CellStyle(bold: true);</code></pre>
+<h2>Colours</h2>
+<p>Use a named colour or any hex string. Theme and indexed colours are supported too, which matters when a workbook should follow the theme it was created with.</p>
+<pre><code>ExcelColor.red;
+ExcelColor.fromHexString('#21A366');
+ExcelColor.theme(ThemeColor.accent1);
+ExcelColor.indexed(12);</code></pre>
+<h2>Borders</h2>
+<pre><code>sheet.cell(CellIndex.indexByString('A1')).cellStyle = CellStyle(
+  leftBorder: Border(borderStyle: BorderStyle.Thin),
+  rightBorder: Border(borderStyle: BorderStyle.Thin),
+  topBorder: Border(borderStyle: BorderStyle.Medium),
+  bottomBorder: Border(borderStyle: BorderStyle.Medium, borderColorHex: ExcelColor.red),
+);</code></pre>
+<h2>Gradient fills</h2>
+<pre><code>// Linear, sweeping top to bottom. 0 degrees runs left to right.
+sheet.cell(CellIndex.indexByString('A1')).cellStyle = CellStyle(
+  gradientFill: GradientFill.linear(
+    degree: 90,
+    stops: [
+      GradientStop(0, ExcelColor.fromHexString('#2962FF')),
+      GradientStop(1, ExcelColor.white),
+    ],
+  ),
+);
+
+// Path, radiating from the centre outwards.
+sheet.cell(CellIndex.indexByString('A2')).cellStyle = CellStyle(
+  gradientFill: GradientFill.path(
+    left: 0.5, right: 0.5, top: 0.5, bottom: 0.5,
+    stops: [GradientStop(0, ExcelColor.white), GradientStop(1, ExcelColor.red)],
+  ),
+);</code></pre>
+<h2>Wrapping and rotation</h2>
+<pre><code>CellStyle(
+  textWrapping: TextWrapping.WrapText,
+  rotation: 45,
+);</code></pre>
+<h2>Reusing one style</h2>
+<p>Build the style once and apply it across a header row rather than constructing a new one per cell.</p>
+<pre><code>final header = CellStyle(
+  bold: true,
+  fontColorHex: ExcelColor.white,
+  backgroundColorHex: ExcelColor.fromHexString('#21A366'),
+  horizontalAlign: HorizontalAlign.Center,
+);
+
+for (var col = 0; col &lt; 5; col++) {
+  sheet.cell(CellIndex.indexByColumnRow(columnIndex: col, rowIndex: 0)).cellStyle = header;
+}</code></pre><p class="next">Next: <a href="/number-formats">Number formats</a> &middot; <a href="/edit-excel-file">Edit a file</a></p>
+</div></main>
+<footer class="site"><div class="wrap">
+excel_plus is an open source Excel library for Dart, MIT licensed.
+<a href="https://pub.dev/packages/excel_plus">pub.dev</a> &middot;
+<a href="https://github.com/almasumdev/excel_plus">source</a> &middot;
+<a href="https://pub.dev/documentation/excel_plus/latest/">API reference</a>
+</div></footer>
+</body>
+</html>

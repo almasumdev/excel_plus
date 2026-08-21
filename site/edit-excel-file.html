@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>How to Edit and Update an Existing Excel File in Dart</title>
+<meta name="description" content="Open an existing .xlsx template in Dart, change cell values, insert or delete rows and columns, merge cells, and save the workbook back.">
+<link rel="canonical" href="https://masum-excel.web.app/edit-excel-file">
+<meta property="og:type" content="article">
+<meta property="og:title" content="How to edit an existing Excel file">
+<meta property="og:description" content="Open an existing .xlsx template in Dart, change cell values, insert or delete rows and columns, merge cells, and save the workbook back.">
+<meta property="og:url" content="https://masum-excel.web.app/edit-excel-file">
+<link rel="stylesheet" href="/style.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "How to edit an existing Excel file", "description": "Open an existing .xlsx template in Dart, change cell values, insert or delete rows and columns, merge cells, and save the workbook back.", "url": "https://masum-excel.web.app/edit-excel-file", "author": {"@type": "Person", "name": "Nurullah Al Masum"}, "about": {"@type": "SoftwareSourceCode", "name": "excel_plus", "programmingLanguage": "Dart", "codeRepository": "https://github.com/almasumdev/excel_plus"}}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "How do I update a cell in an existing Excel file with Dart?", "acceptedAnswer": {"@type": "Answer", "text": "Decode the file with Excel.decodeBytes, call updateCell on the sheet with the new value, then save the workbook. Pass the cell's current cellStyle if you want to keep its existing formatting."}}]}</script>
+</head>
+<body>
+<header class="site"><div class="wrap">
+<a class="brand" href="/">excel_plus</a>
+<nav class="top"><a href="/read-excel-file">Read a file</a><a href="/create-excel-file">Create a file</a><a href="/edit-excel-file" aria-current="page">Edit a file</a><a href="/cell-styles">Cell styles</a><a href="/number-formats">Number formats</a><a href="/formulas">Formulas</a><a href="/csv">CSV</a><a href="/read-xls-files">Legacy .xls</a><a href="/large-files">Large files</a></nav>
+</div></header>
+<main><div class="wrap">
+<h1>How to edit an existing Excel file</h1>
+<p class="lede">Open a workbook you already have, change what you need, and write it back with everything else untouched.</p>
+<h2>Install</h2>
+<pre><code>dart pub add excel_plus</code></pre>
+<pre><code>import 'package:excel_plus/excel_plus.dart';</code></pre>
+<h2>Open, change, save</h2>
+<p>The usual template workflow. Read the file, update the cells that matter, save it under a new name.</p>
+<pre><code>import 'dart:io';
+import 'package:excel_plus/excel_plus.dart';
+
+void main() {
+  final excel = Excel.decodeBytes(File('template.xlsx').readAsBytesSync());
+  final sheet = excel['Sheet1'];
+
+  sheet.updateCell(CellIndex.indexByString('B2'), TextCellValue('Updated'));
+  sheet.updateCell(CellIndex.indexByString('B3'), IntCellValue(2026));
+
+  File('output.xlsx').writeAsBytesSync(excel.save()!);
+}</code></pre>
+<p>Parts of the workbook that are not modelled, such as embedded images or printer settings, are carried across to the saved file byte for byte, so opening and saving does not quietly strip them.</p>
+
+<h2>Keeping a cell's existing style</h2>
+<p>Writing a value replaces the cell. To change only the text and keep the formatting the template already had, pass the old style back in.</p>
+<pre><code>final index = CellIndex.indexByString('B2');
+final existing = sheet.cell(index).cellStyle;
+
+sheet.updateCell(index, TextCellValue('Updated'), cellStyle: existing);</code></pre>
+<h2>Rows and columns</h2>
+<pre><code>sheet.insertRow(2);
+sheet.removeRow(5);
+
+sheet.insertColumn(1);
+sheet.removeColumn(3);</code></pre>
+<h2>Merging</h2>
+<pre><code>sheet.merge(
+  CellIndex.indexByString('A1'),
+  CellIndex.indexByString('D1'),
+  customValue: TextCellValue('Merged title'),
+);
+
+sheet.unMerge('A1:D1');</code></pre>
+<h2>Find and replace</h2>
+<pre><code>sheet.findAndReplace('draft', 'final');</code></pre>
+<h2>Column width and row height</h2>
+<pre><code>sheet.setColumnWidth(0, 24);
+sheet.setRowHeight(0, 28);
+sheet.setColumnAutoFit(1);</code></pre><p class="next">Next: <a href="/cell-styles">Style cells</a> &middot; <a href="/formulas">Formulas</a> &middot; <a href="/large-files">Large files</a></p>
+</div></main>
+<footer class="site"><div class="wrap">
+excel_plus is an open source Excel library for Dart, MIT licensed.
+<a href="https://pub.dev/packages/excel_plus">pub.dev</a> &middot;
+<a href="https://github.com/almasumdev/excel_plus">source</a> &middot;
+<a href="https://pub.dev/documentation/excel_plus/latest/">API reference</a>
+</div></footer>
+</body>
+</html>

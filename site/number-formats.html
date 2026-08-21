@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Excel Number Formats in Dart: Currency, Percent and Dates</title>
+<meta name="description" content="Apply Excel number formats from Dart: currency with thousands separators, percentages, date and time formats, and custom format codes.">
+<link rel="canonical" href="https://masum-excel.web.app/number-formats">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Number formats in Dart">
+<meta property="og:description" content="Apply Excel number formats from Dart: currency with thousands separators, percentages, date and time formats, and custom format codes.">
+<meta property="og:url" content="https://masum-excel.web.app/number-formats">
+<link rel="stylesheet" href="/style.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Number formats in Dart", "description": "Apply Excel number formats from Dart: currency with thousands separators, percentages, date and time formats, and custom format codes.", "url": "https://masum-excel.web.app/number-formats", "author": {"@type": "Person", "name": "Nurullah Al Masum"}, "about": {"@type": "SoftwareSourceCode", "name": "excel_plus", "programmingLanguage": "Dart", "codeRepository": "https://github.com/almasumdev/excel_plus"}}</script>
+</head>
+<body>
+<header class="site"><div class="wrap">
+<a class="brand" href="/">excel_plus</a>
+<nav class="top"><a href="/read-excel-file">Read a file</a><a href="/create-excel-file">Create a file</a><a href="/edit-excel-file">Edit a file</a><a href="/cell-styles">Cell styles</a><a href="/number-formats" aria-current="page">Number formats</a><a href="/formulas">Formulas</a><a href="/csv">CSV</a><a href="/read-xls-files">Legacy .xls</a><a href="/large-files">Large files</a></nav>
+</div></header>
+<main><div class="wrap">
+<h1>Number formats in Dart</h1>
+<p class="lede">Control how a value is displayed without changing the value itself.</p>
+<h2>Install</h2>
+<pre><code>dart pub add excel_plus</code></pre>
+<pre><code>import 'package:excel_plus/excel_plus.dart';</code></pre>
+<h2>Currency and percentages</h2>
+<pre><code>// Currency with a thousands separator, using a custom format code.
+sheet.updateCell(
+  CellIndex.indexByString('A1'),
+  DoubleCellValue(12500.5),
+  cellStyle: CellStyle(numberFormat: NumFormat.custom(formatCode: r'$#,##0.00')),
+);
+
+// Percentage, using a built in format.
+sheet.updateCell(
+  CellIndex.indexByString('A2'),
+  DoubleCellValue(0.125),
+  cellStyle: CellStyle(numberFormat: NumFormat.standard_10),
+);</code></pre>
+<p>Note the raw value for a percentage is the fraction, so <code>0.125</code> displays as <code>12.50%</code>. Storing <code>12.5</code> instead would display as <code>1250.00%</code>.</p>
+
+<h2>Dates</h2>
+<p>Write a real date value and let the number format decide how it looks. That keeps sorting and filtering working in Excel.</p>
+<pre><code>sheet.updateCell(
+  CellIndex.indexByString('A1'),
+  DateCellValue(year: 2026, month: 6, day: 9),
+  cellStyle: CellStyle(numberFormat: NumFormat.custom(formatCode: 'dd/mm/yyyy')),
+);</code></pre>
+<h2>Common format codes</h2>
+<table>
+<tr><th>Format code</th><th>Shows</th></tr>
+<tr><td><code>0</code></td><td>Whole number</td></tr>
+<tr><td><code>0.00</code></td><td>Two decimal places</td></tr>
+<tr><td><code>#,##0</code></td><td>Thousands separator</td></tr>
+<tr><td><code>0.00%</code></td><td>Percentage</td></tr>
+<tr><td><code>dd/mm/yyyy</code></td><td>Date</td></tr>
+<tr><td><code>hh:mm:ss</code></td><td>Time</td></tr>
+<tr><td><code>#,##0.00;[Red]-#,##0.00</code></td><td>Negatives in red</td></tr>
+</table>
+
+<h2>Custom codes</h2>
+<p>Any format code Excel understands can be passed through. Use a raw string in Dart so a leading currency symbol is not read as string interpolation.</p>
+<pre><code>NumFormat.custom(formatCode: r'$#,##0.00');
+NumFormat.custom(formatCode: '0.0"kg"');
+NumFormat.custom(formatCode: r'[&gt;=1000]#,##0,"k";0');</code></pre><p class="next">Next: <a href="/cell-styles">Cell styles</a> &middot; <a href="/formulas">Formulas</a></p>
+</div></main>
+<footer class="site"><div class="wrap">
+excel_plus is an open source Excel library for Dart, MIT licensed.
+<a href="https://pub.dev/packages/excel_plus">pub.dev</a> &middot;
+<a href="https://github.com/almasumdev/excel_plus">source</a> &middot;
+<a href="https://pub.dev/documentation/excel_plus/latest/">API reference</a>
+</div></footer>
+</body>
+</html>

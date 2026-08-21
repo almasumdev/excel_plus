@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>How to Read an Excel File in Dart (.xlsx)</title>
+<meta name="description" content="Read and parse an Excel .xlsx file in Dart: open the workbook, loop over sheets and rows, and get typed cell values. Full working code.">
+<link rel="canonical" href="https://masum-excel.web.app/read-excel-file">
+<meta property="og:type" content="article">
+<meta property="og:title" content="How to read an Excel file in Dart">
+<meta property="og:description" content="Read and parse an Excel .xlsx file in Dart: open the workbook, loop over sheets and rows, and get typed cell values. Full working code.">
+<meta property="og:url" content="https://masum-excel.web.app/read-excel-file">
+<link rel="stylesheet" href="/style.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "How to read an Excel file in Dart", "description": "Read and parse an Excel .xlsx file in Dart: open the workbook, loop over sheets and rows, and get typed cell values. Full working code.", "url": "https://masum-excel.web.app/read-excel-file", "author": {"@type": "Person", "name": "Nurullah Al Masum"}, "about": {"@type": "SoftwareSourceCode", "name": "excel_plus", "programmingLanguage": "Dart", "codeRepository": "https://github.com/almasumdev/excel_plus"}}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "How do I read an Excel file in Dart?", "acceptedAnswer": {"@type": "Answer", "text": "Read the file into bytes and pass them to Excel.decodeBytes, then access a sheet by name and iterate its rows. Each cell exposes a typed CellValue."}}, {"@type": "Question", "name": "Does reading an Excel file need Microsoft Excel installed?", "acceptedAnswer": {"@type": "Answer", "text": "No. excel_plus parses the Office Open XML format directly in Dart, so nothing needs to be installed and no external process runs."}}]}</script>
+</head>
+<body>
+<header class="site"><div class="wrap">
+<a class="brand" href="/">excel_plus</a>
+<nav class="top"><a href="/read-excel-file" aria-current="page">Read a file</a><a href="/create-excel-file">Create a file</a><a href="/edit-excel-file">Edit a file</a><a href="/cell-styles">Cell styles</a><a href="/number-formats">Number formats</a><a href="/formulas">Formulas</a><a href="/csv">CSV</a><a href="/read-xls-files">Legacy .xls</a><a href="/large-files">Large files</a></nav>
+</div></header>
+<main><div class="wrap">
+<h1>How to read an Excel file in Dart</h1>
+<p class="lede">Open an <code>.xlsx</code> workbook, walk its sheets and rows, and pull out typed values.</p>
+<h2>Install</h2>
+<pre><code>dart pub add excel_plus</code></pre>
+<pre><code>import 'package:excel_plus/excel_plus.dart';</code></pre>
+<h2>Read every row</h2>
+<p>Load the file into bytes and hand them to <code>Excel.decodeBytes</code>. Each sheet is available by name from <code>tables</code>.</p>
+<pre><code>import 'dart:io';
+import 'package:excel_plus/excel_plus.dart';
+
+void main() {
+  final bytes = File('input.xlsx').readAsBytesSync();
+  final excel = Excel.decodeBytes(bytes);
+
+  for (final sheetName in excel.tables.keys) {
+    for (final row in excel[sheetName].rows) {
+      print(row.map((cell) =&gt; cell?.value).toList());
+    }
+  }
+}</code></pre>
+<p>A cell can be <code>null</code> when the sheet has a gap, so guard the value with <code>?.</code> as above.</p>
+
+<h2>Read one cell</h2>
+<pre><code>final cell = excel['Sheet1'].cell(CellIndex.indexByString('B2'));
+print(cell.value);</code></pre>
+<h2>Cell values are typed</h2>
+<p><code>cell.value</code> returns a <code>CellValue</code>, not a raw string, so the original type survives the round trip. Switch on it to get the underlying Dart value:</p>
+<pre><code>final value = sheet.cell(CellIndex.indexByString('A1')).value;
+
+switch (value) {
+  case TextCellValue(:final value):    print('text: ${value.text}');
+  case IntCellValue(:final value):     print('int: $value');
+  case DoubleCellValue(:final value):  print('double: $value');
+  case BoolCellValue(:final value):    print('bool: $value');
+  case DateCellValue():                print('date: ${value.asDateTimeLocal()}');
+  case FormulaCellValue(:final formula): print('formula: $formula');
+  case null:                           print('empty cell');
+  default:                             print(value);
+}</code></pre>
+<h2>Addressing cells</h2>
+<p>Two ways to point at a cell. Use whichever fits the code around it.</p>
+<pre><code>CellIndex.indexByString('B2');
+CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: 1);</code></pre>
+<p>Both are zero based when given as numbers, so <code>B2</code> is column 1, row 1.</p>
+
+<h2>Sheet size</h2>
+<pre><code>final sheet = excel['Sheet1'];
+print(sheet.maxRows);
+print(sheet.maxColumns);</code></pre>
+<h2>Reading from somewhere other than disk</h2>
+<p><code>decodeBytes</code> takes any <code>List&lt;int&gt;</code>, so the same call works for a file, an HTTP response body, or an asset bundled with an app. If the file is large and sits on disk, see <a href="/large-files">reading large files</a> for a streaming alternative that keeps memory flat.</p>
+<p class="next">Next: <a href="/edit-excel-file">Edit a file</a> &middot; <a href="/large-files">Large files</a> &middot; <a href="/read-xls-files">Legacy .xls</a></p>
+</div></main>
+<footer class="site"><div class="wrap">
+excel_plus is an open source Excel library for Dart, MIT licensed.
+<a href="https://pub.dev/packages/excel_plus">pub.dev</a> &middot;
+<a href="https://github.com/almasumdev/excel_plus">source</a> &middot;
+<a href="https://pub.dev/documentation/excel_plus/latest/">API reference</a>
+</div></footer>
+</body>
+</html>

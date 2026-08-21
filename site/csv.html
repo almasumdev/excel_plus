@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Convert Excel to CSV and CSV to Excel in Dart</title>
+<meta name="description" content="Import CSV or TSV into an .xlsx workbook and export a spreadsheet sheet back to CSV from Dart, with control over delimiters, type inference and schemas.">
+<link rel="canonical" href="https://masum-excel.web.app/csv">
+<meta property="og:type" content="article">
+<meta property="og:title" content="CSV import and export">
+<meta property="og:description" content="Import CSV or TSV into an .xlsx workbook and export a spreadsheet sheet back to CSV from Dart, with control over delimiters, type inference and schemas.">
+<meta property="og:url" content="https://masum-excel.web.app/csv">
+<link rel="stylesheet" href="/style.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "CSV import and export", "description": "Import CSV or TSV into an .xlsx workbook and export a spreadsheet sheet back to CSV from Dart, with control over delimiters, type inference and schemas.", "url": "https://masum-excel.web.app/csv", "author": {"@type": "Person", "name": "Nurullah Al Masum"}, "about": {"@type": "SoftwareSourceCode", "name": "excel_plus", "programmingLanguage": "Dart", "codeRepository": "https://github.com/almasumdev/excel_plus"}}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "How do I convert a CSV file to Excel in Dart?", "acceptedAnswer": {"@type": "Answer", "text": "Pass the CSV text to Excel.fromCsv to build a workbook, then save it as .xlsx. Use importCsv to add a CSV sheet to an existing workbook."}}, {"@type": "Question", "name": "How do I export a spreadsheet to CSV in Dart?", "acceptedAnswer": {"@type": "Answer", "text": "Call toCsv on the sheet. Pass a CsvConfig to change the delimiter, for example to produce tab separated output."}}]}</script>
+</head>
+<body>
+<header class="site"><div class="wrap">
+<a class="brand" href="/">excel_plus</a>
+<nav class="top"><a href="/read-excel-file">Read a file</a><a href="/create-excel-file">Create a file</a><a href="/edit-excel-file">Edit a file</a><a href="/cell-styles">Cell styles</a><a href="/number-formats">Number formats</a><a href="/formulas">Formulas</a><a href="/csv" aria-current="page">CSV</a><a href="/read-xls-files">Legacy .xls</a><a href="/large-files">Large files</a></nav>
+</div></header>
+<main><div class="wrap">
+<h1>CSV import and export</h1>
+<p class="lede">Move between <code>.xlsx</code> and CSV or TSV in either direction.</p>
+<h2>Install</h2>
+<pre><code>dart pub add excel_plus</code></pre>
+<pre><code>import 'package:excel_plus/excel_plus.dart';</code></pre>
+<h2>CSV to a workbook</h2>
+<pre><code>final excel = Excel.fromCsv('name,age\nAlice,30\nBob,25', sheetName: 'People');
+
+File('people.xlsx').writeAsBytesSync(excel.save()!);</code></pre>
+<h2>Adding a CSV sheet to a workbook you already have</h2>
+<pre><code>excel.importCsv('a\tb\n1\t2', sheetName: 'Tabbed', config: const CsvConfig.tsv());</code></pre>
+<h2>A sheet back to CSV</h2>
+<pre><code>final csv = excel['People'].toCsv();</code></pre>
+<h2>Type inference will not damage your data</h2>
+<p>Values that look numeric but are not, such as a zero padded id, stay text. <code>007</code> does not become <code>7</code>. Pass <code>inferTypes: false</code> to keep every field as text.</p>
+
+<h2>Messy exports</h2>
+<p>Real CSV files often carry a comment preamble or junk rows before the header.</p>
+<pre><code>excel.importCsv(
+  '# Sales report 2026\nname,total\nAlice,95\nBob,88',
+  sheetName: 'Sales',
+  config: const CsvConfig(comment: '#'),
+);</code></pre>
+<p><code>CsvConfig</code> also takes <code>skipRows</code> to drop leading rows and <code>maxRows</code> to read only a slice, plus delimiter, quoting and line ending settings.</p>
+
+<h2>Forcing column types</h2>
+<p>When guessing is not good enough, declare the columns. The first row is the header, each named column is coerced to its declared type, and a value that cannot convert throws <code>CsvParseException</code>.</p>
+<pre><code>excel.importCsv('id,score\n001,9\n002,8', sheetName: 'Scores', schema: const CsvSchema(
+  columns: [
+    CsvColumnDef(name: 'id', type: String),
+    CsvColumnDef(name: 'score', type: double),
+  ],
+));</code></pre><p class="next">Next: <a href="/read-excel-file">Read a file</a> &middot; <a href="/create-excel-file">Create a file</a></p>
+</div></main>
+<footer class="site"><div class="wrap">
+excel_plus is an open source Excel library for Dart, MIT licensed.
+<a href="https://pub.dev/packages/excel_plus">pub.dev</a> &middot;
+<a href="https://github.com/almasumdev/excel_plus">source</a> &middot;
+<a href="https://pub.dev/documentation/excel_plus/latest/">API reference</a>
+</div></footer>
+</body>
+</html>

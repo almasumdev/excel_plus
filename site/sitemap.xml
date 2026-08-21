@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://masum-excel.web.app/</loc><changefreq>monthly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://masum-excel.web.app/read-excel-file</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://masum-excel.web.app/create-excel-file</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://masum-excel.web.app/edit-excel-file</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://masum-excel.web.app/cell-styles</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://masum-excel.web.app/number-formats</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://masum-excel.web.app/formulas</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://masum-excel.web.app/csv</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://masum-excel.web.app/read-xls-files</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://masum-excel.web.app/large-files</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+</urlset>

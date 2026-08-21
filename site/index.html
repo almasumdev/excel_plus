@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>excel_plus - Excel Library for Dart to Read, Write and Edit XLSX Files</title>
+<meta name="description" content="Open source Dart library to read, create, edit and style Excel .xlsx spreadsheets, and read legacy .xls files. Streaming parser, low memory, no native dependencies.">
+<link rel="canonical" href="https://masum-excel.web.app/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="An Excel library for Dart">
+<meta property="og:description" content="Open source Dart library to read, create, edit and style Excel .xlsx spreadsheets, and read legacy .xls files. Streaming parser, low memory, no native dependencies.">
+<meta property="og:url" content="https://masum-excel.web.app/">
+<link rel="stylesheet" href="/style.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "An Excel library for Dart", "description": "Open source Dart library to read, create, edit and style Excel .xlsx spreadsheets, and read legacy .xls files. Streaming parser, low memory, no native dependencies.", "url": "https://masum-excel.web.app/", "author": {"@type": "Person", "name": "Nurullah Al Masum"}, "about": {"@type": "SoftwareSourceCode", "name": "excel_plus", "programmingLanguage": "Dart", "codeRepository": "https://github.com/almasumdev/excel_plus"}}</script>
+</head>
+<body>
+<header class="site"><div class="wrap">
+<a class="brand" href="/">excel_plus</a>
+<nav class="top"><a href="/read-excel-file">Read a file</a><a href="/create-excel-file">Create a file</a><a href="/edit-excel-file">Edit a file</a><a href="/cell-styles">Cell styles</a><a href="/number-formats">Number formats</a><a href="/formulas">Formulas</a><a href="/csv">CSV</a><a href="/read-xls-files">Legacy .xls</a><a href="/large-files">Large files</a></nav>
+</div></header>
+<main><div class="wrap">
+<h1>An Excel library for Dart</h1>
+<p class="lede">Read, create, edit and style Microsoft Excel <code>.xlsx</code> spreadsheets from Dart, and read legacy <code>.xls</code> workbooks. No native dependencies, no Office install, no server round trip.</p>
+<h2>Install</h2>
+<pre><code>dart pub add excel_plus</code></pre>
+<pre><code>import 'package:excel_plus/excel_plus.dart';</code></pre>
+<h2>A first example</h2>
+<pre><code>final excel = Excel.createExcel();
+final sheet = excel['Sheet1'];
+
+sheet.updateCell(CellIndex.indexByString('A1'), TextCellValue('Product'));
+sheet.updateCell(CellIndex.indexByString('B1'), TextCellValue('Price'));
+sheet.updateCell(CellIndex.indexByString('A2'), TextCellValue('Notebook'));
+sheet.updateCell(CellIndex.indexByString('B2'), DoubleCellValue(12.50));
+
+File('report.xlsx').writeAsBytesSync(excel.save()!);</code></pre>
+<h2>Guides</h2>
+<div class="cards">
+<div class="card"><a href="/read-excel-file">Read an Excel file</a><p>Open an .xlsx file and walk its rows and cells.</p></div>
+<div class="card"><a href="/create-excel-file">Create an Excel file</a><p>Build a workbook from scratch and save it.</p></div>
+<div class="card"><a href="/edit-excel-file">Edit an existing file</a><p>Open a template, change cells, write it back.</p></div>
+<div class="card"><a href="/cell-styles">Style cells</a><p>Fonts, colours, fills, borders, alignment and merges.</p></div>
+<div class="card"><a href="/number-formats">Number formats</a><p>Currency, percentages, dates and custom format codes.</p></div>
+<div class="card"><a href="/formulas">Formulas</a><p>Write formulas, evaluate them, recalculate a workbook.</p></div>
+<div class="card"><a href="/csv">CSV import and export</a><p>Convert between spreadsheets and CSV or TSV.</p></div>
+<div class="card"><a href="/read-xls-files">Legacy .xls files</a><p>Read old Excel 97-2003 binary workbooks.</p></div>
+<div class="card"><a href="/large-files">Large files</a><p>Handle workbooks with millions of cells.</p></div>
+</div>
+
+<h2>What it supports</h2>
+<ul>
+<li>Reading, creating and editing <code>.xlsx</code>, plus reading legacy <code>.xls</code> (Excel 97-2003)</li>
+<li>All cell types: text, integers, doubles, booleans, dates, times and formulas</li>
+<li>Fonts, fills, gradients, borders, alignment, rotation, text wrapping and merged ranges</li>
+<li>Built in and custom number formats</li>
+<li>Around 160 formula functions, with evaluation and incremental recalculation</li>
+<li>Charts, sparklines, pivot tables, conditional formatting, data validation and autofilters</li>
+<li>Hyperlinks, freeze panes, cell comments, images and Excel tables</li>
+<li>CSV and TSV import and export</li>
+</ul>
+
+<h2>Where it runs</h2>
+<p>Pure Dart, so it runs anywhere Dart does: the Dart VM, compiled executables, server code, mobile and desktop apps, and the browser through both JavaScript and WebAssembly. There is no dependency on a native Excel library or a headless Office process.</p>
+<p class="next">Next: <a href="/read-excel-file">Read an Excel file</a> &middot; <a href="/create-excel-file">Create one</a></p>
+</div></main>
+<footer class="site"><div class="wrap">
+excel_plus is an open source Excel library for Dart, MIT licensed.
+<a href="https://pub.dev/packages/excel_plus">pub.dev</a> &middot;
+<a href="https://github.com/almasumdev/excel_plus">source</a> &middot;
+<a href="https://pub.dev/documentation/excel_plus/latest/">API reference</a>
+</div></footer>
+</body>
+</html>

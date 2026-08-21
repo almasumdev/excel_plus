@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>How to Create an Excel File in Dart (.xlsx)</title>
+<meta name="description" content="Generate an Excel .xlsx file from Dart: build a workbook, write text, numbers, dates and booleans, add sheets, and save to disk or bytes.">
+<link rel="canonical" href="https://masum-excel.web.app/create-excel-file">
+<meta property="og:type" content="article">
+<meta property="og:title" content="How to create an Excel file in Dart">
+<meta property="og:description" content="Generate an Excel .xlsx file from Dart: build a workbook, write text, numbers, dates and booleans, add sheets, and save to disk or bytes.">
+<meta property="og:url" content="https://masum-excel.web.app/create-excel-file">
+<link rel="stylesheet" href="/style.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "How to create an Excel file in Dart", "description": "Generate an Excel .xlsx file from Dart: build a workbook, write text, numbers, dates and booleans, add sheets, and save to disk or bytes.", "url": "https://masum-excel.web.app/create-excel-file", "author": {"@type": "Person", "name": "Nurullah Al Masum"}, "about": {"@type": "SoftwareSourceCode", "name": "excel_plus", "programmingLanguage": "Dart", "codeRepository": "https://github.com/almasumdev/excel_plus"}}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "How do I generate an Excel file in Dart?", "acceptedAnswer": {"@type": "Answer", "text": "Call Excel.createExcel to make a workbook, write values with updateCell or appendRow, then call save to get the .xlsx bytes."}}, {"@type": "Question", "name": "Can I create an Excel file without Microsoft Excel?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. The file is written as Office Open XML directly from Dart, so no Excel installation or external service is involved."}}]}</script>
+</head>
+<body>
+<header class="site"><div class="wrap">
+<a class="brand" href="/">excel_plus</a>
+<nav class="top"><a href="/read-excel-file">Read a file</a><a href="/create-excel-file" aria-current="page">Create a file</a><a href="/edit-excel-file">Edit a file</a><a href="/cell-styles">Cell styles</a><a href="/number-formats">Number formats</a><a href="/formulas">Formulas</a><a href="/csv">CSV</a><a href="/read-xls-files">Legacy .xls</a><a href="/large-files">Large files</a></nav>
+</div></header>
+<main><div class="wrap">
+<h1>How to create an Excel file in Dart</h1>
+<p class="lede">Build an <code>.xlsx</code> workbook from nothing and write it out, with no template file and no Office install.</p>
+<h2>Install</h2>
+<pre><code>dart pub add excel_plus</code></pre>
+<pre><code>import 'package:excel_plus/excel_plus.dart';</code></pre>
+<h2>A minimal workbook</h2>
+<pre><code>final excel = Excel.createExcel();
+final sheet = excel['Sheet1'];
+
+sheet.updateCell(CellIndex.indexByString('A1'), TextCellValue('Hello, world!'));
+
+final bytes = excel.save();</code></pre>
+<h2>Writing each value type</h2>
+<p>Wrap the Dart value in the matching <code>CellValue</code>. Storing a real date rather than a string is what lets Excel sort and filter it correctly.</p>
+<pre><code>sheet.updateCell(CellIndex.indexByString('A1'), TextCellValue('Name'));
+sheet.updateCell(CellIndex.indexByString('B1'), IntCellValue(42));
+sheet.updateCell(CellIndex.indexByString('C1'), DoubleCellValue(3.14));
+sheet.updateCell(CellIndex.indexByString('D1'), BoolCellValue(true));
+sheet.updateCell(CellIndex.indexByString('E1'), DateCellValue(year: 2026, month: 6, day: 9));
+sheet.updateCell(CellIndex.indexByString('F1'), TimeCellValue(hour: 9, minute: 30, second: 0));
+sheet.updateCell(
+  CellIndex.indexByString('G1'),
+  DateTimeCellValue(year: 2026, month: 6, day: 9, hour: 9, minute: 30),
+);</code></pre>
+<h2>Appending rows</h2>
+<p>For tabular output you rarely want to compute addresses by hand. <code>appendRow</code> writes after the last filled row.</p>
+<pre><code>final sheet = excel['Sheet1'];
+
+sheet.appendRow([TextCellValue('Product'), TextCellValue('Qty'), TextCellValue('Price')]);
+
+for (final item in items) {
+  sheet.appendRow([
+    TextCellValue(item.name),
+    IntCellValue(item.quantity),
+    DoubleCellValue(item.price),
+  ]);
+}</code></pre>
+<h2>Several sheets</h2>
+<pre><code>final excel = Excel.createExcel();
+
+excel['Summary'].updateCell(CellIndex.indexByString('A1'), TextCellValue('Total'));
+excel['Detail'].updateCell(CellIndex.indexByString('A1'), TextCellValue('Line items'));
+
+excel.rename('Sheet1', 'Overview');
+excel.delete('Detail');</code></pre>
+<h2>Saving</h2>
+<p>Pick whichever output the surrounding program needs.</p>
+<pre><code>// Bytes, for sending over the network or writing yourself.
+final List&lt;int&gt;? bytes = excel.save();
+
+// Straight to a file.
+File('output.xlsx').writeAsBytesSync(excel.save()!);
+
+// Trigger a download in the browser.
+excel.save(fileName: 'report.xlsx');
+
+// Encode off the main thread so a UI stays responsive.
+final bytes = await excel.encodeAsync();</code></pre>
+<p>For a workbook too big to hold in memory, stream it out instead. See <a href="/large-files">large files</a>.</p>
+<p class="next">Next: <a href="/cell-styles">Style the cells</a> &middot; <a href="/number-formats">Number formats</a> &middot; <a href="/formulas">Formulas</a></p>
+</div></main>
+<footer class="site"><div class="wrap">
+excel_plus is an open source Excel library for Dart, MIT licensed.
+<a href="https://pub.dev/packages/excel_plus">pub.dev</a> &middot;
+<a href="https://github.com/almasumdev/excel_plus">source</a> &middot;
+<a href="https://pub.dev/documentation/excel_plus/latest/">API reference</a>
+</div></footer>
+</body>
+</html>

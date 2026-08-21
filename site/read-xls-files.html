@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>How to Read Legacy .xls Files in Dart (Excel 97-2003)</title>
+<meta name="description" content="Open old binary .xls workbooks in Dart, read their values, dates, styles and formulas, and convert them to the modern .xlsx format.">
+<link rel="canonical" href="https://masum-excel.web.app/read-xls-files">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Reading legacy .xls files">
+<meta property="og:description" content="Open old binary .xls workbooks in Dart, read their values, dates, styles and formulas, and convert them to the modern .xlsx format.">
+<meta property="og:url" content="https://masum-excel.web.app/read-xls-files">
+<link rel="stylesheet" href="/style.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Reading legacy .xls files", "description": "Open old binary .xls workbooks in Dart, read their values, dates, styles and formulas, and convert them to the modern .xlsx format.", "url": "https://masum-excel.web.app/read-xls-files", "author": {"@type": "Person", "name": "Nurullah Al Masum"}, "about": {"@type": "SoftwareSourceCode", "name": "excel_plus", "programmingLanguage": "Dart", "codeRepository": "https://github.com/almasumdev/excel_plus"}}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Can Dart read old .xls files?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Pass the bytes to Excel.decodeBytes and the binary BIFF8 format is detected and parsed automatically. Saving the result produces a modern .xlsx file."}}]}</script>
+</head>
+<body>
+<header class="site"><div class="wrap">
+<a class="brand" href="/">excel_plus</a>
+<nav class="top"><a href="/read-excel-file">Read a file</a><a href="/create-excel-file">Create a file</a><a href="/edit-excel-file">Edit a file</a><a href="/cell-styles">Cell styles</a><a href="/number-formats">Number formats</a><a href="/formulas">Formulas</a><a href="/csv">CSV</a><a href="/read-xls-files" aria-current="page">Legacy .xls</a><a href="/large-files">Large files</a></nav>
+</div></header>
+<main><div class="wrap">
+<h1>Reading legacy .xls files</h1>
+<p class="lede">Open binary Excel 97-2003 workbooks and convert them to the modern format.</p>
+<h2>Install</h2>
+<pre><code>dart pub add excel_plus</code></pre>
+<pre><code>import 'package:excel_plus/excel_plus.dart';</code></pre>
+<h2>The same call as .xlsx</h2>
+<p><code>Excel.decodeBytes</code> looks at the bytes and picks the right parser, so a legacy workbook opens through exactly the same call, with no extra dependency and no separate API.</p>
+<pre><code>final excel = Excel.decodeBytes(File('legacy.xls').readAsBytesSync());
+
+print(excel.tables.keys);</code></pre>
+<h2>What is carried over</h2>
+<ul>
+<li>Cell values of every type</li>
+<li>Dates, in both the 1900 and 1904 epochs</li>
+<li>Merged cells, sheet order and sheet visibility</li>
+<li>Number formats, fonts, fills, borders and alignment</li>
+<li>Column widths and row heights</li>
+<li>Formulas, decoded from the binary token stream back into formula text, including shared and array formulas, keeping the last calculated result as the cached value</li>
+</ul>
+<p>Where the decoder meets a token stream it does not model, it falls back to the cached result rather than failing the file.</p>
+
+<h2>Converting to .xlsx</h2>
+<p>Reading <code>.xls</code> is deliberately read only. Saving always produces a modern <code>.xlsx</code>, which makes this the migration path for a pile of old spreadsheets.</p>
+<pre><code>final excel = Excel.decodeBytes(File('legacy.xls').readAsBytesSync());
+File('modern.xlsx').writeAsBytesSync(excel.save()!);</code></pre>
+<h2>Converting a folder of them</h2>
+<pre><code>import 'dart:io';
+import 'package:excel_plus/excel_plus.dart';
+
+void main() {
+  for (final file in Directory('old').listSync().whereType&lt;File&gt;()) {
+    if (!file.path.toLowerCase().endsWith('.xls')) continue;
+
+    final excel = Excel.decodeBytes(file.readAsBytesSync());
+    final target = file.path.replaceAll(RegExp(r'\.xls$', caseSensitive: false), '.xlsx');
+    File(target).writeAsBytesSync(excel.save()!);
+  }
+}</code></pre>
+<h2>Files that will not open</h2>
+<p>Password protected workbooks and pre-BIFF8 files (Excel 5.0 and earlier) throw a clear error rather than returning something half parsed. If a file fails, checking whether it opens in a spreadsheet program is usually the fastest way to tell a genuinely corrupt file from an unsupported one.</p>
+<p class="next">Next: <a href="/read-excel-file">Read .xlsx</a> &middot; <a href="/csv">CSV</a></p>
+</div></main>
+<footer class="site"><div class="wrap">
+excel_plus is an open source Excel library for Dart, MIT licensed.
+<a href="https://pub.dev/packages/excel_plus">pub.dev</a> &middot;
+<a href="https://github.com/almasumdev/excel_plus">source</a> &middot;
+<a href="https://pub.dev/documentation/excel_plus/latest/">API reference</a>
+</div></footer>
+</body>
+</html>

@@ -2,6 +2,9 @@ CLAUDE.md
 benchmark/
 scripts/
 tool/
+# Documentation website sources. Deployed to Firebase hosting, not
+# part of the published package.
+site/
 docs/
 doc/api/
 # Local-only working files. .pubignore *replaces* .gitignore when publishing,
