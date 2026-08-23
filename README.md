@@ -614,7 +614,7 @@ final bytes = await excel.encodeAsync();
 ### Import and export CSV
 
 CSV import and export are built on the zero-dependency
-[csv_plus](https://pub.dev/packages/csv_plus) package; TSV, pipe-delimited, and
+[csv_plus](https://pub.dev/packages/csv_plus) package ([docs](https://csv-plus.web.app)); TSV, pipe-delimited, and
 custom-delimiter formats work too. Pass a `CsvConfig` (re-exported from
 excel_plus) to change the delimiter, quoting, or line ending.
 
