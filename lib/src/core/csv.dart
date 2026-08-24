@@ -33,7 +33,7 @@ extension SheetCsv on Sheet {
       for (final row in rows)
         [
           for (final cell in row)
-            _csvFieldFromCell(cell?.value, formulasAsText: formulasAsText),
+            _scalarFromCell(cell?.value, formulasAsText: formulasAsText),
         ],
     ];
     return CsvCodec(config ?? const CsvConfig()).encode(grid);
@@ -110,9 +110,9 @@ extension ExcelCsv on Excel {
   }
 }
 
-/// Maps a [CellValue] to a scalar (`String` / `num` / `bool` / `null`) that
-/// csv_plus can encode as a single field.
-Object? _csvFieldFromCell(CellValue? value, {required bool formulasAsText}) =>
+/// Maps a [CellValue] to a scalar (`String` / `num` / `bool` / `null`) for the
+/// CSV and JSON bridges: a value both encoders can emit directly.
+Object? _scalarFromCell(CellValue? value, {required bool formulasAsText}) =>
     switch (value) {
       null => null,
       final TextCellValue v => v.value.toString(),

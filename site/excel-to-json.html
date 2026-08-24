@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>How to Convert an Excel File to JSON in Dart (.xlsx)</title>
+<meta name="description" content="Turn an .xlsx worksheet into JSON or a list of header-keyed Dart maps, with control over which row supplies the keys and how dates and formulas are exported.">
+<link rel="canonical" href="https://excel-plus.web.app/excel-to-json">
+<meta property="og:type" content="article">
+<meta property="og:title" content="How to Convert an Excel File to JSON in Dart (.xlsx)">
+<meta property="og:description" content="Turn an .xlsx worksheet into JSON or a list of header-keyed Dart maps, with control over which row supplies the keys and how dates and formulas are exported.">
+<meta property="og:url" content="https://excel-plus.web.app/excel-to-json">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/style.eaea107fe4.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Excel to JSON", "description": "Turn an .xlsx worksheet into JSON or a list of header-keyed Dart maps, with control over which row supplies the keys and how dates and formulas are exported.", "url": "https://excel-plus.web.app/excel-to-json", "author": {"@type": "Person", "name": "Nurullah Al Masum"}, "about": {"@type": "SoftwareSourceCode", "name": "excel_plus", "programmingLanguage": "Dart", "codeRepository": "https://github.com/almasumdev/excel_plus"}}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "How do I convert an Excel file to JSON in Dart?", "acceptedAnswer": {"@type": "Answer", "text": "Open the workbook with Excel.decodeBytes, then call toJson on a sheet for a JSON array, or on the workbook for an object keyed by sheet name."}}, {"@type": "Question", "name": "How do I read an Excel sheet as a list of maps in Dart?", "acceptedAnswer": {"@type": "Answer", "text": "Call rowsAsMaps on the sheet. The first row supplies the keys by default; pass headerRow to use a different row."}}, {"@type": "Question", "name": "How are Excel dates exported to JSON?", "acceptedAnswer": {"@type": "Answer", "text": "As ISO 8601 strings, such as 2024-01-31 for a date and 2024-01-31T09:30:00 for a date and time, because JSON has no date type."}}]}</script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+
+<header class="topbar">
+  <button class="menu" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="sidebar"><svg viewBox="0 0 24 24" aria-hidden="true" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <a class="brand" href="/"><img src="/logo.svg" alt="" width="24" height="24">excel_plus</a>
+  <span class="ver">v2.15.0</span>
+  <div class="grow"></div>
+  <a class="ext" href="https://pub.dev/packages/excel_plus"><span>pub.dev</span></a>
+  <a class="ext" href="https://github.com/almasumdev/excel_plus" aria-label="Source on GitHub"><svg viewBox="0 0 16 16" aria-hidden="true" width="16" height="16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg><span>GitHub</span></a>
+</header>
+
+<div class="scrim" aria-hidden="true"></div>
+
+<div class="shell">
+  <nav class="sidebar" id="sidebar" aria-label="Documentation"><h2>Start here</h2><ul><li><a href="/">Introduction</a></li><li><a href="/read-excel-file">Read a file</a></li><li><a href="/create-excel-file">Create a file</a></li><li><a href="/edit-excel-file">Edit a file</a></li></ul><h2>Formatting</h2><ul><li><a href="/cell-styles">Cell styles</a></li><li><a href="/number-formats">Number formats</a></li></ul><h2>Data</h2><ul><li><a href="/formulas">Formulas</a></li><li><a href="/csv">CSV import and export</a></li><li><a href="/excel-to-json" aria-current="page">Excel to JSON</a></li></ul><h2>Going further</h2><ul><li><a href="/read-xls-files">Legacy .xls files</a></li><li><a href="/large-files">Large files</a></li></ul></nav>
+
+  <main class="content" id="content">
+    <article>
+      <h1>Excel to JSON</h1>
+      <p class="lede">Read a spreadsheet as header-keyed maps, or serialise it straight to a JSON string.</p>
+      <h2 id="install">Install<a class="anchor" href="#install" aria-label="Link to this section">#</a></h2>
+<div class="codeblock"><pre><code>dart pub add excel_plus</code></pre></div>
+<div class="codeblock"><pre><code>import 'package:excel_plus/excel_plus.dart';</code></pre></div>
+<h2 id="a-sheet-as-a-list-of-maps">A sheet as a list of maps<a class="anchor" href="#a-sheet-as-a-list-of-maps" aria-label="Link to this section">#</a></h2>
+<p>The first row supplies the keys, and every row after it becomes one map. This is usually what you want when the spreadsheet is feeding a model constructor or an API call.</p>
+<div class="codeblock"><pre><code>final excel = Excel.decodeBytes(File('people.xlsx').readAsBytesSync());
+
+for (final row in excel['People'].rowsAsMaps()) {
+  print('${row['name']} is ${row['age']}');
+}
+// {name: Alice, age: 30, active: true}
+// {name: Bob,   age: 25, active: false}</code></pre></div>
+<h2 id="a-sheet-as-a-json-string">A sheet as a JSON string<a class="anchor" href="#a-sheet-as-a-json-string" aria-label="Link to this section">#</a></h2>
+<div class="codeblock"><pre><code>final json = excel['People'].toJson();
+// [{"name":"Alice","age":30,"active":true},{"name":"Bob","age":25,"active":false}]
+
+final readable = excel['People'].toJson(pretty: true);</code></pre></div>
+<h2 id="the-whole-workbook">The whole workbook<a class="anchor" href="#the-whole-workbook" aria-label="Link to this section">#</a></h2>
+<p>Without a sheet name you get every worksheet, keyed by name and in worksheet order.</p>
+<div class="codeblock"><pre><code>final all = excel.toJson();
+// {"People":[{"name":"Alice"}],"Totals":[{"sum":42}]}
+
+final one = excel.toJson(sheet: 'People');</code></pre></div>
+<h2 id="choosing-the-header-row">Choosing the header row<a class="anchor" href="#choosing-the-header-row" aria-label="Link to this section">#</a></h2>
+<p>Many real exports carry a title or a blank line before the real header. Point <code>headerRow</code> at the row you want, or pass <code>null</code> for an array of arrays with no header at all.</p>
+<div class="codeblock"><pre><code>final later = sheet.toJson(headerRow: 2);    // skip a two line preamble
+final grid  = sheet.toJson(headerRow: null); // [["name","age"],["Alice",30]]</code></pre></div>
+<h2 id="how-values-are-exported">How values are exported<a class="anchor" href="#how-values-are-exported" aria-label="Link to this section">#</a></h2>
+<p>Numbers and booleans keep their Dart types. Dates and times become ISO 8601 strings, because JSON has no date type.</p>
+<div class="table-wrap"><div class="tablewrap"><table>
+<thead><tr><th>Cell</th><th>JSON</th></tr></thead>
+<tbody>
+<tr><td>Text</td><td><code>"Alice"</code></td></tr>
+<tr><td>Int, Double</td><td><code>30</code>, <code>1.5</code></td></tr>
+<tr><td>Bool</td><td><code>true</code></td></tr>
+<tr><td>Date</td><td><code>"2024-01-31"</code></td></tr>
+<tr><td>DateTime</td><td><code>"2024-01-31T09:30:00"</code></td></tr>
+<tr><td>Time</td><td><code>"09:30:00"</code></td></tr>
+<tr><td>Formula</td><td>its cached result, or <code>"=SUM(A1:A9)"</code></td></tr>
+<tr><td>Error</td><td><code>"#DIV/0!"</code></td></tr>
+<tr><td>Empty</td><td><code>null</code></td></tr>
+</tbody></table></div></div>
+<p>Pass <code>formulasAsText: true</code> to export formula text instead of cached results.</p>
+
+<h2 id="messy-headers">Messy headers<a class="anchor" href="#messy-headers" aria-label="Link to this section">#</a></h2>
+<p>Every map holds a key for each column in the sheet's used width, so all rows share the same keys and a blank cell reads as <code>null</code>. An empty header cell falls back to its column letter, and a repeated name gets a <code>_2</code> suffix, so a column is never silently dropped. Rows where every cell is empty are skipped unless you pass <code>skipEmptyRows: false</code>.</p>
+<nav class="next" aria-label="Related guides"><a href="/csv">CSV import and export</a><a href="/read-excel-file">Read a file</a></nav>
+      <footer class="pagefoot">
+        excel_plus is open source under the MIT licence.
+        <a href="https://pub.dev/packages/excel_plus">pub.dev</a> &middot;
+        <a href="https://github.com/almasumdev/excel_plus">Source</a> &middot;
+        <a href="https://pub.dev/documentation/excel_plus/latest/">API reference</a>
+      </footer>
+    </article>
+  </main>
+
+  <aside class="toc"><nav aria-labelledby="toc-h"><h2 id="toc-h">On this page</h2><ul><li><a href="#install">Install</a></li><li><a href="#a-sheet-as-a-list-of-maps">A sheet as a list of maps</a></li><li><a href="#a-sheet-as-a-json-string">A sheet as a JSON string</a></li><li><a href="#the-whole-workbook">The whole workbook</a></li><li><a href="#choosing-the-header-row">Choosing the header row</a></li><li><a href="#how-values-are-exported">How values are exported</a></li><li><a href="#messy-headers">Messy headers</a></li></ul></nav></aside>
+</div>
+
+<script src="/docs.029eb910a1.js" defer></script>
+</body>
+</html>

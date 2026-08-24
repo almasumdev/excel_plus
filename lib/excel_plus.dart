@@ -79,6 +79,7 @@ export 'package:csv_plus/csv_plus.dart'
 part 'src/core/excel.dart';
 part 'src/core/config.dart';
 part 'src/core/csv.dart';
+part 'src/core/json.dart';
 
 /// Models
 part 'src/models/exceptions.dart';

@@ -11,6 +11,7 @@ dartdoc:
     - "Pivot Tables"
     - "Charts"
     - "CSV"
+    - "JSON"
     - "Errors"
   categories:
     "Core":
@@ -35,5 +36,7 @@ dartdoc:
       markdown: doc/categories/charts.md
     "CSV":
       markdown: doc/categories/csv.md
+    "JSON":
+      markdown: doc/categories/json.md
     "Errors":
       markdown: doc/categories/errors.md

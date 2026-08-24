@@ -19,7 +19,7 @@ def emit_asset(src, name, ext):
 
 BASE    = "https://excel-plus.web.app"
 OUT     = "site"
-VERSION = "2.14.3"
+VERSION = "2.15.0"
 # IndexNow verification key. Must stay in step with the file emitted
 # at the site root, or Bing and Yandex reject the submission.
 INDEXNOW_KEY = "38c0f40270a4bc555c1b91dbc589a4a3"
@@ -39,6 +39,7 @@ GROUPS = [
     ("Data", [
         ("formulas", "Formulas"),
         ("csv",      "CSV import and export"),
+        ("excel-to-json", "Excel to JSON"),
     ]),
     ("Going further", [
         ("read-xls-files", "Legacy .xls files"),
@@ -731,6 +732,75 @@ excel.importCsv('id,score\\n001,9\\n002,8', sheetName: 'Scores', schema: const C
           "Call toCsv on the sheet. Pass a CsvConfig to change the delimiter, for example to produce tab separated output.")],
 ))
 print("defined formulas + csv")
+
+# ---------------------------------------------------------------- json
+PAGES.append(dict(
+    slug="excel-to-json",
+    title="How to Convert an Excel File to JSON in Dart (.xlsx)",
+    desc="Turn an .xlsx worksheet into JSON or a list of header-keyed Dart maps, with control over which row supplies the keys and how dates and formulas are exported.",
+    h1="Excel to JSON",
+    lede="Read a spreadsheet as header-keyed maps, or serialise it straight to a JSON string.",
+    body=INSTALL + """
+<h2>A sheet as a list of maps</h2>
+<p>The first row supplies the keys, and every row after it becomes one map. This is usually what you want when the spreadsheet is feeding a model constructor or an API call.</p>
+""" + pre("""
+final excel = Excel.decodeBytes(File('people.xlsx').readAsBytesSync());
+
+for (final row in excel['People'].rowsAsMaps()) {
+  print('${row['name']} is ${row['age']}');
+}
+// {name: Alice, age: 30, active: true}
+// {name: Bob,   age: 25, active: false}
+""") + """
+<h2>A sheet as a JSON string</h2>
+""" + pre("""
+final json = excel['People'].toJson();
+// [{"name":"Alice","age":30,"active":true},{"name":"Bob","age":25,"active":false}]
+
+final readable = excel['People'].toJson(pretty: true);
+""") + """
+<h2>The whole workbook</h2>
+<p>Without a sheet name you get every worksheet, keyed by name and in worksheet order.</p>
+""" + pre("""
+final all = excel.toJson();
+// {"People":[{"name":"Alice"}],"Totals":[{"sum":42}]}
+
+final one = excel.toJson(sheet: 'People');
+""") + """
+<h2>Choosing the header row</h2>
+<p>Many real exports carry a title or a blank line before the real header. Point <code>headerRow</code> at the row you want, or pass <code>null</code> for an array of arrays with no header at all.</p>
+""" + pre("""
+final later = sheet.toJson(headerRow: 2);    // skip a two line preamble
+final grid  = sheet.toJson(headerRow: null); // [["name","age"],["Alice",30]]
+""") + """
+<h2>How values are exported</h2>
+<p>Numbers and booleans keep their Dart types. Dates and times become ISO 8601 strings, because JSON has no date type.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Cell</th><th>JSON</th></tr></thead>
+<tbody>
+<tr><td>Text</td><td><code>"Alice"</code></td></tr>
+<tr><td>Int, Double</td><td><code>30</code>, <code>1.5</code></td></tr>
+<tr><td>Bool</td><td><code>true</code></td></tr>
+<tr><td>Date</td><td><code>"2024-01-31"</code></td></tr>
+<tr><td>DateTime</td><td><code>"2024-01-31T09:30:00"</code></td></tr>
+<tr><td>Time</td><td><code>"09:30:00"</code></td></tr>
+<tr><td>Formula</td><td>its cached result, or <code>"=SUM(A1:A9)"</code></td></tr>
+<tr><td>Error</td><td><code>"#DIV/0!"</code></td></tr>
+<tr><td>Empty</td><td><code>null</code></td></tr>
+</tbody></table></div>
+<p>Pass <code>formulasAsText: true</code> to export formula text instead of cached results.</p>
+
+<h2>Messy headers</h2>
+<p>Every map holds a key for each column in the sheet's used width, so all rows share the same keys and a blank cell reads as <code>null</code>. An empty header cell falls back to its column letter, and a repeated name gets a <code>_2</code> suffix, so a column is never silently dropped. Rows where every cell is empty are skipped unless you pass <code>skipEmptyRows: false</code>.</p>
+""" + nxt([("csv", "CSV import and export"), ("read-excel-file", "Read a file")]),
+    faq=[("How do I convert an Excel file to JSON in Dart?",
+          "Open the workbook with Excel.decodeBytes, then call toJson on a sheet for a JSON array, or on the workbook for an object keyed by sheet name."),
+         ("How do I read an Excel sheet as a list of maps in Dart?",
+          "Call rowsAsMaps on the sheet. The first row supplies the keys by default; pass headerRow to use a different row."),
+         ("How are Excel dates exported to JSON?",
+          "As ISO 8601 strings, such as 2024-01-31 for a date and 2024-01-31T09:30:00 for a date and time, because JSON has no date type.")],
+))
+print("defined excel-to-json")
 
 # ---------------------------------------------------------------- xls
 PAGES.append(dict(

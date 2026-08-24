@@ -1,3 +1,27 @@
+## 2.15.0
+
+Export a worksheet as JSON, or as plain Dart maps.
+
+### New
+
+- `Sheet.rowsAsMaps()` reads a worksheet as a `List<Map<String, dynamic>>`,
+  taking the keys from a header row (row 0 by default, or any row via
+  `headerRow`). Every map holds a key for each column in the sheet's used
+  width, so all rows share the same keys and an empty cell reads as `null`. An
+  empty header cell falls back to its column letter and a repeated name gets a
+  `_2` suffix, so no column is dropped. All-empty rows are skipped unless
+  `skipEmptyRows: false`.
+- `Sheet.toJson()` serialises a worksheet to a JSON string, either as an array
+  of header-keyed objects or, with `headerRow: null`, as an array of arrays.
+  `pretty: true` indents the output.
+- `Excel.toJson()` serialises the whole workbook to an object keyed by sheet
+  name in worksheet order, or one named sheet with `sheet:`.
+
+Values map the same way the CSV bridge maps them: numbers and booleans keep
+their Dart types, dates and times become ISO-8601 strings, a formula exports its
+cached result (or its text with `formulasAsText: true`), and a cell error
+exports its literal.
+
 ## 2.14.3
 
 ### Changed

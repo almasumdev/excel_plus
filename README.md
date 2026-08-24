@@ -34,6 +34,7 @@ better performance on large workbooks, and active maintenance.
 > [number formats](https://excel-plus.web.app/number-formats),
 > [formulas](https://excel-plus.web.app/formulas),
 > [CSV](https://excel-plus.web.app/csv),
+> [JSON](https://excel-plus.web.app/excel-to-json),
 > [legacy .xls](https://excel-plus.web.app/read-xls-files) and
 > [large files](https://excel-plus.web.app/large-files).
 
@@ -56,7 +57,7 @@ parts of a workbook byte-for-byte when saving.
 - Open legacy `.xls` (Excel 97-2003) workbooks and save them back out as modern `.xlsx`.
 - Edit cells, rows, columns, and multiple sheets, then save back to `.xlsx`.
 - Style spreadsheets with fonts, colors, fills, borders, alignment, number formats, and merged cells.
-- Go beyond the basics with formulas and recalculation, charts, pivot tables, conditional formatting, data validation, and CSV import/export.
+- Go beyond the basics with formulas and recalculation, charts, pivot tables, conditional formatting, data validation, CSV import/export, and JSON export.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/almasumdev/excel_plus/main/images/preview.png"
@@ -131,6 +132,7 @@ cd ../excel_plus_bench                && dart pub get && dart run bin/benchmark.
     - [Find and replace](#find-and-replace)
     - [Save the workbook](#save-the-workbook)
     - [Import and export CSV](#import-and-export-csv)
+    - [Convert a sheet to JSON](#convert-a-sheet-to-json)
     - [Flutter: read from assets, edit, and save](#flutter-read-from-assets-edit-and-save)
     - [Charts](#charts)
     - [Pivot tables](#pivot-tables)
@@ -159,6 +161,7 @@ Flutter platform. Expand a group for details:
 - Read, create & edit `.xlsx`
 - Read legacy `.xls` (Excel 97-2003): values, dates, styles & formulas
 - CSV import & export (also TSV, pipe, and custom delimiters)
+- JSON export: a sheet as header-keyed maps or a JSON string
 - Multiple sheets: create, copy, rename, delete
 - All cell types: text, int, double, bool, date, time, datetime, formula
 - Cross-platform: VM, web (`dart2js` + `wasm`) & Flutter mobile
@@ -656,6 +659,38 @@ excel.importCsv('id,score\n001,9\n002,8', sheetName: 'Scores', schema: const Csv
     CsvColumnDef(name: 'score', type: double), // 9 -> 9.0
   ],
 ));
+```
+
+### Convert a sheet to JSON
+
+Read a worksheet as header-keyed maps, or serialise it straight to a JSON
+string. Row 0 supplies the keys by default.
+
+```dart
+final excel = Excel.decodeBytes(bytes);
+
+// Header-keyed maps, ready for a model constructor or an API call.
+for (final row in excel['People'].rowsAsMaps()) {
+  print('${row['name']} is ${row['age']}');
+}
+
+// Or a JSON string: one sheet, or the whole workbook keyed by sheet name.
+final sheetJson = excel['People'].toJson();
+final workbookJson = excel.toJson(pretty: true);
+```
+
+Every map holds a key for each column in the sheet's used width, so all rows
+share the same keys and an empty cell reads as `null`. An empty header cell
+falls back to its column letter (`A`, `B`, ...) and a repeated name gets a `_2`
+suffix, so no column is ever dropped. Numbers and booleans keep their Dart
+types; dates and times become ISO-8601 strings, because JSON has no date type.
+
+Pass `headerRow` to take the keys from a different row, or `headerRow: null` for
+an array of arrays with no header at all:
+
+```dart
+final grid = sheet.toJson(headerRow: null);  // [["name","age"],["Alice",30]]
+final later = sheet.toJson(headerRow: 2);    // skip a two-line preamble
 ```
 
 ### Flutter: read from assets, edit, and save

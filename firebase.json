@@ -84,6 +84,10 @@
           "destination": "/csv.html"
         },
         {
+          "source": "/excel-to-json",
+          "destination": "/excel-to-json.html"
+        },
+        {
           "source": "/read-xls-files",
           "destination": "/read-xls-files.html"
         },
