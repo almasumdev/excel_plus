@@ -305,10 +305,12 @@ Clone the repository and run it, or copy any snippet from
 
 ## Other useful links
 
+- [Documentation and guides](https://excel-plus.web.app)
 - [API reference](https://pub.dev/documentation/excel_plus/latest/)
 - [Source code on GitHub](https://github.com/almasumdev/excel_plus)
 - [Changelog](https://github.com/almasumdev/excel_plus/blob/main/CHANGELOG.md)
 - [Issue tracker](https://github.com/almasumdev/excel_plus/issues)
+- [Contributing](https://github.com/almasumdev/excel_plus/blob/main/CONTRIBUTING.md)
 
 ## Installation
 
