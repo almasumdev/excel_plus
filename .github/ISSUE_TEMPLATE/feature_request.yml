@@ -1,0 +1,45 @@
+name: Feature request
+description: Something the package cannot do yet
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do
+      description: Describe the task, not the API you have in mind. It often turns out there is already a way.
+      placeholder: I need to read the displayed text of every cell to render a sheet in my own grid
+    validations:
+      required: true
+
+  - type: textarea
+    id: workaround
+    attributes:
+      label: What are you doing instead today
+      description: The workaround you are living with, if any.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      multiple: true
+      options:
+        - Reading
+        - Writing
+        - Styling and number formats
+        - Formulas
+        - Charts
+        - Images
+        - Legacy .xls
+        - CSV
+        - Performance or memory
+        - Documentation
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I checked the README and the documentation site to see whether this already exists.
+          required: true
