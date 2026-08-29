@@ -98,6 +98,41 @@ class Data {
     _cellStyle = style;
   }
 
+  /// The text a spreadsheet application would show for this cell.
+  ///
+  /// Applies the cell's [CellStyle.numberFormat] to its value, so a stored
+  /// `1234.5` under an accounting format reads as the string a user would see
+  /// rather than as a raw double. Use it when rendering a sheet into your own
+  /// table, grid or PDF.
+  ///
+  /// An empty cell gives an empty string. Text is returned as stored. A
+  /// formula cell renders its cached result when the file carried one, and
+  /// otherwise the formula text, which is what a reader can know without
+  /// evaluating.
+  ///
+  /// ```dart
+  /// final cell = sheet.cell(CellIndex.indexByString('B2'));
+  /// print(cell.displayText); // 1,234.50
+  /// ```
+  String get displayText {
+    final v = _value;
+    if (v == null) return '';
+    final fmt = _cellStyle?.numberFormat ?? NumFormat.standard_0;
+    return switch (v) {
+      TextCellValue() => v.value.toString(),
+      IntCellValue() => fmt.format(v.value),
+      DoubleCellValue() => fmt.format(v.value),
+      BoolCellValue() => v.value ? 'TRUE' : 'FALSE',
+      DateCellValue() => fmt.format(v.asDateTimeUtc()),
+      DateTimeCellValue() => fmt.format(v.asDateTimeUtc()),
+      TimeCellValue() => fmt.format(
+        v.asDuration().inMicroseconds / 86400000000,
+      ),
+      CellErrorValue() => v.value,
+      FormulaCellValue() => v.formula,
+    };
+  }
+
   /// The hyperlink attached to this cell, or `null` if there is none.
   Hyperlink? get hyperlink => _sheet.getHyperlink(cellIndex);
 

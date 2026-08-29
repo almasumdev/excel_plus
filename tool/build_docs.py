@@ -617,7 +617,32 @@ sheet.updateCell(
 NumFormat.custom(formatCode: r'$#,##0.00');
 NumFormat.custom(formatCode: '0.0"kg"');
 NumFormat.custom(formatCode: r'[>=1000]#,##0,"k";0');
-""") + nxt([("cell-styles", "Cell styles"), ("formulas", "Formulas")]),
+""") + """
+<h2>Showing a cell the way Excel would</h2>
+<p>Reading a cell gives you the stored value, not the text a spreadsheet displays. <code>1234.5</code> under an accounting format is still <code>1234.5</code> in Dart. To render a sheet into your own table, grid or PDF you need the formatted string, and that renderer is public.</p>
+""" + pre("""
+// The whole cell, using its own number format.
+final cell = sheet.cell(CellIndex.indexByString('B2'));
+print(cell.displayText); // 1,234.50
+
+// Or a value against any format you choose.
+NumFormat.standard_4.format(1234.5);   // 1,234.50
+NumFormat.standard_9.format(0.25);     // 25%
+NumFormat.custom(formatCode: 'yyyy-mm-dd')
+    .format(DateTime.utc(2026, 3, 4)); // 2026-03-04
+""") + """
+<p>This is the same renderer the <code>TEXT</code> function uses, so the two always agree. Text is returned unchanged, an empty cell gives an empty string, and a formula cell shows its cached result when the file carried one.</p>
+
+<h2>Built-in format ids</h2>
+<p>Excel reserves a set of numbered formats a file can reference without spelling out a code. The currency ids (5 to 8) and the accounting ids (41 to 44) are the ones most real files use, and they read and write as themselves rather than falling back:</p>
+<table>
+<tr><th>Id</th><th>Shows</th></tr>
+<tr><td><code>standard_5</code> to <code>standard_8</code></td><td>Currency, with parenthesized and optionally red negatives</td></tr>
+<tr><td><code>standard_41</code>, <code>standard_43</code></td><td>Accounting, no currency symbol</td></tr>
+<tr><td><code>standard_42</code>, <code>standard_44</code></td><td>Accounting with a currency symbol</td></tr>
+</table>
+<p>Ids 23 to 36 are left unmapped on purpose. The spec reserves them and their meaning depends on the locale, so there is no single code that is correct to write back. A file using one still opens: the id is preserved and the cell falls back rather than being rewritten as something else.</p>
+""" + nxt([("cell-styles", "Cell styles"), ("formulas", "Formulas")]),
 ))
 print("defined styles + formats")
 

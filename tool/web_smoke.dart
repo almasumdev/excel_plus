@@ -36,10 +36,14 @@ Future<void> main() async {
       (sheet.cell(CellIndex.indexByString('D1')).value as FormulaCellValue)
           .spillRange;
 
+  // The number format renderer must build for web too.
+  final shown = NumFormat.standard_4.format(1234.5);
+  final cellText = sheet.cell(CellIndex.indexByString('A1')).displayText;
+
   excel.save(fileName: 'smoke.xlsx');
 
   print(
     'web smoke ok: ${roundTripped.value} csv=${csv.length} '
-    'rows=$reimported spill=$spill',
+    'rows=$reimported spill=$spill shown=$shown cell=$cellText',
   );
 }

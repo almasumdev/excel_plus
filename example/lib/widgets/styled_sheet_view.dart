@@ -119,7 +119,9 @@ class _CellBox extends StatelessWidget {
     final rotation = style?.rotation ?? 0;
 
     Widget label = Text(
-      _formatValue(data?.value, style?.numberFormat),
+      // The library renders a cell the way a spreadsheet would, so this
+      // demo does not carry its own copy of Excel's format codes.
+      data?.displayText ?? '',
       textAlign: _textAlign(hAlign),
       maxLines: wrap ? null : 1,
       overflow: wrap ? null : TextOverflow.ellipsis,
@@ -249,63 +251,3 @@ TextAlign _textAlign(xls.HorizontalAlign h) => switch (h) {
   xls.HorizontalAlign.Center => TextAlign.center,
   xls.HorizontalAlign.Right => TextAlign.right,
 };
-
-String _formatValue(xls.CellValue? value, xls.NumFormat? format) {
-  final code = format?.formatCode ?? '';
-  return switch (value) {
-    null => '',
-    xls.TextCellValue() => value.value.toString(),
-    xls.FormulaCellValue() => '=${value.formula}',
-    xls.BoolCellValue() => value.value ? 'TRUE' : 'FALSE',
-    xls.IntCellValue() => _formatNumber(
-      value.value.toDouble(),
-      code,
-      integral: true,
-    ),
-    xls.DoubleCellValue() => _formatNumber(value.value, code),
-    xls.DateCellValue() =>
-      '${value.year}-${_two(value.month)}-${_two(value.day)}',
-    xls.DateTimeCellValue() =>
-      '${value.year}-${_two(value.month)}-${_two(value.day)} '
-          '${_two(value.hour)}:${_two(value.minute)}',
-    xls.TimeCellValue() => '${_two(value.hour)}:${_two(value.minute)}',
-    xls.CellErrorValue() => value.value,
-  };
-}
-
-String _formatNumber(double value, String code, {bool integral = false}) {
-  if (code.contains('%')) {
-    final decimals = code.contains('0.00') ? 2 : 0;
-    return '${(value * 100).toStringAsFixed(decimals)}%';
-  }
-  if (code.contains(r'$')) {
-    final decimals = code.contains('.00') ? 2 : 0;
-    final body = '\$${_grouped(value.abs(), decimals)}';
-    if (value >= 0) return body;
-    return code.contains('[Red]') ? '($body)' : '-$body';
-  }
-  if (code.contains('E+')) return value.toStringAsExponential(2);
-  if (code.contains('#,##0')) {
-    return _grouped(value, code.contains('.00') ? 2 : 0);
-  }
-  if (code == '0.00') return value.toStringAsFixed(2);
-  if (code == '0') return value.round().toString();
-  if (integral) return value.toInt().toString();
-  return value == value.roundToDouble() ? value.toInt().toString() : '$value';
-}
-
-String _grouped(double value, int decimals) {
-  final negative = value < 0;
-  final s = value.abs().toStringAsFixed(decimals);
-  final dot = s.indexOf('.');
-  final intPart = dot == -1 ? s : s.substring(0, dot);
-  final frac = dot == -1 ? '' : s.substring(dot);
-  final buffer = StringBuffer();
-  for (var i = 0; i < intPart.length; i++) {
-    if (i > 0 && (intPart.length - i) % 3 == 0) buffer.write(',');
-    buffer.write(intPart[i]);
-  }
-  return '${negative ? '-' : ''}$buffer$frac';
-}
-
-String _two(int n) => n.toString().padLeft(2, '0');

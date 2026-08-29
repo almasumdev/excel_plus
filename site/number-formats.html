@@ -78,7 +78,30 @@ sheet.updateCell(
 <p>Any format code Excel understands can be passed through. Use a raw string in Dart so a leading currency symbol is not read as string interpolation.</p>
 <div class="codeblock"><pre><code>NumFormat.custom(formatCode: r'$#,##0.00');
 NumFormat.custom(formatCode: '0.0"kg"');
-NumFormat.custom(formatCode: r'[&gt;=1000]#,##0,"k";0');</code></pre></div><nav class="next" aria-label="Related guides"><a href="/cell-styles">Cell styles</a><a href="/formulas">Formulas</a></nav>
+NumFormat.custom(formatCode: r'[&gt;=1000]#,##0,"k";0');</code></pre></div>
+<h2 id="showing-a-cell-the-way-excel-would">Showing a cell the way Excel would<a class="anchor" href="#showing-a-cell-the-way-excel-would" aria-label="Link to this section">#</a></h2>
+<p>Reading a cell gives you the stored value, not the text a spreadsheet displays. <code>1234.5</code> under an accounting format is still <code>1234.5</code> in Dart. To render a sheet into your own table, grid or PDF you need the formatted string, and that renderer is public.</p>
+<div class="codeblock"><pre><code>// The whole cell, using its own number format.
+final cell = sheet.cell(CellIndex.indexByString('B2'));
+print(cell.displayText); // 1,234.50
+
+// Or a value against any format you choose.
+NumFormat.standard_4.format(1234.5);   // 1,234.50
+NumFormat.standard_9.format(0.25);     // 25%
+NumFormat.custom(formatCode: 'yyyy-mm-dd')
+    .format(DateTime.utc(2026, 3, 4)); // 2026-03-04</code></pre></div>
+<p>This is the same renderer the <code>TEXT</code> function uses, so the two always agree. Text is returned unchanged, an empty cell gives an empty string, and a formula cell shows its cached result when the file carried one.</p>
+
+<h2 id="built-in-format-ids">Built-in format ids<a class="anchor" href="#built-in-format-ids" aria-label="Link to this section">#</a></h2>
+<p>Excel reserves a set of numbered formats a file can reference without spelling out a code. The currency ids (5 to 8) and the accounting ids (41 to 44) are the ones most real files use, and they read and write as themselves rather than falling back:</p>
+<div class="tablewrap"><table>
+<tr><th>Id</th><th>Shows</th></tr>
+<tr><td><code>standard_5</code> to <code>standard_8</code></td><td>Currency, with parenthesized and optionally red negatives</td></tr>
+<tr><td><code>standard_41</code>, <code>standard_43</code></td><td>Accounting, no currency symbol</td></tr>
+<tr><td><code>standard_42</code>, <code>standard_44</code></td><td>Accounting with a currency symbol</td></tr>
+</table></div>
+<p>Ids 23 to 36 are left unmapped on purpose. The spec reserves them and their meaning depends on the locale, so there is no single code that is correct to write back. A file using one still opens: the id is preserved and the cell falls back rather than being rewritten as something else.</p>
+<nav class="next" aria-label="Related guides"><a href="/cell-styles">Cell styles</a><a href="/formulas">Formulas</a></nav>
       <footer class="pagefoot">
         excel_plus is open source under the MIT licence.
         <a href="https://pub.dev/packages/excel_plus">pub.dev</a> &middot;
@@ -88,7 +111,7 @@ NumFormat.custom(formatCode: r'[&gt;=1000]#,##0,"k";0');</code></pre></div><nav 
     </article>
   </main>
 
-  <aside class="toc"><nav aria-labelledby="toc-h"><h2 id="toc-h">On this page</h2><ul><li><a href="#install">Install</a></li><li><a href="#currency-and-percentages">Currency and percentages</a></li><li><a href="#dates">Dates</a></li><li><a href="#common-format-codes">Common format codes</a></li><li><a href="#custom-codes">Custom codes</a></li></ul></nav></aside>
+  <aside class="toc"><nav aria-labelledby="toc-h"><h2 id="toc-h">On this page</h2><ul><li><a href="#install">Install</a></li><li><a href="#currency-and-percentages">Currency and percentages</a></li><li><a href="#dates">Dates</a></li><li><a href="#common-format-codes">Common format codes</a></li><li><a href="#custom-codes">Custom codes</a></li><li><a href="#showing-a-cell-the-way-excel-would">Showing a cell the way Excel would</a></li><li><a href="#built-in-format-ids">Built-in format ids</a></li></ul></nav></aside>
 </div>
 
 <script src="/docs.029eb910a1.js" defer></script>

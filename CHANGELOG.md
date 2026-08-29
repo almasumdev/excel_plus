@@ -1,3 +1,38 @@
+## 2.16.0
+
+Get the text a spreadsheet would show, and read the currency and accounting
+formats real files use. Additive and backward-compatible.
+
+### New
+
+- `NumFormat.format(value)` renders a value the way a spreadsheet displays it.
+  This is the renderer the `TEXT` formula function already used internally, now
+  reachable from the public API, so the two always agree. It takes a `num`, a
+  `DateTime`, a `bool`, a `String` or null; a date is converted to its serial
+  number first, text comes back unchanged, and null renders as an empty string.
+- `Data.displayText` applies a cell's own number format to its value. Reading a
+  cell gives you the stored `1234.5`; `displayText` gives you `1,234.50`. This
+  is what you want when rendering a sheet into your own table, grid or PDF, and
+  it removed sixty lines of hand-written format-code handling from the example
+  app, which is the point.
+
+### Fixed
+
+- **The built-in currency and accounting number formats were unmodelled and
+  degraded to General.** Ids 5 to 8 (currency) and 41 to 44 (accounting) are
+  among the most common formats in real workbooks and are referenced by id
+  rather than by a spelled-out code, so a file using one lost its formatting on
+  the way through. They now read and write as themselves.
+- Ids 23 to 36 are deliberately still unmapped. The spec reserves them and their
+  meaning is locale dependent, so there is no single format code that is correct
+  to write back. A file using one still opens: the id is preserved and the cell
+  falls back rather than being rewritten as something else.
+
+### Docs
+
+- The number formats guide covers rendering a cell as text and the built-in
+  format ids, on the site and in the README.
+
 ## 2.15.0
 
 Export a worksheet as JSON, or as plain Dart maps.

@@ -136,6 +136,34 @@ sealed class NumFormat {
     formatCode: "#,##0.00",
   );
 
+  /// Standard format `5`: currency with parenthesized negatives
+  /// (`$#,##0_);($#,##0)`).
+  static const standard_5 = StandardNumericNumFormat._(
+    numFmtId: 5,
+    formatCode: r"$#,##0_);($#,##0)",
+  );
+
+  /// Standard format `6`: currency with red parenthesized negatives
+  /// (`$#,##0_);[Red]($#,##0)`).
+  static const standard_6 = StandardNumericNumFormat._(
+    numFmtId: 6,
+    formatCode: r"$#,##0_);[Red]($#,##0)",
+  );
+
+  /// Standard format `7`: two-decimal currency with parenthesized negatives
+  /// (`$#,##0.00_);($#,##0.00)`).
+  static const standard_7 = StandardNumericNumFormat._(
+    numFmtId: 7,
+    formatCode: r"$#,##0.00_);($#,##0.00)",
+  );
+
+  /// Standard format `8`: two-decimal currency with red parenthesized
+  /// negatives (`$#,##0.00_);[Red]($#,##0.00)`).
+  static const standard_8 = StandardNumericNumFormat._(
+    numFmtId: 8,
+    formatCode: r"$#,##0.00_);[Red]($#,##0.00)",
+  );
+
   /// Standard format `9`: percentage with no decimals (`0%`).
   static const standard_9 = StandardNumericNumFormat._(
     numFmtId: 9,
@@ -249,6 +277,30 @@ sealed class NumFormat {
     formatCode: "#,##0.00;[Red](#,#)",
   );
 
+  /// Standard format `41`: accounting, no currency symbol, no decimals.
+  static const standard_41 = StandardNumericNumFormat._(
+    numFmtId: 41,
+    formatCode: r'_(* #,##0_);_(* \(#,##0\);_(* "-"_);_(@_)',
+  );
+
+  /// Standard format `42`: accounting with a currency symbol, no decimals.
+  static const standard_42 = StandardNumericNumFormat._(
+    numFmtId: 42,
+    formatCode: r'_("$"* #,##0_);_("$"* \(#,##0\);_("$"* "-"_);_(@_)',
+  );
+
+  /// Standard format `43`: accounting, no currency symbol, two decimals.
+  static const standard_43 = StandardNumericNumFormat._(
+    numFmtId: 43,
+    formatCode: r'_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)',
+  );
+
+  /// Standard format `44`: accounting with a currency symbol, two decimals.
+  static const standard_44 = StandardNumericNumFormat._(
+    numFmtId: 44,
+    formatCode: r'_("$"* #,##0.00_);_("$"* \(#,##0.00\);_("$"* "-"??_);_(@_)',
+  );
+
   /// Standard format `45`: minutes and seconds (`mm:ss`).
   static const standard_45 = StandardTimeNumFormat._(
     numFmtId: 45,
@@ -280,6 +332,63 @@ sealed class NumFormat {
   );
 
   const NumFormat({required this.formatCode});
+
+  /// Renders [value] the way a spreadsheet application would display it under
+  /// this format.
+  ///
+  /// This is the same renderer the `TEXT` formula function uses, so
+  /// `NumFormat.standard_14.format(45000)` and `TEXT(45000, "m/d/yyyy")` agree.
+  /// Use it to show a cell in your own table, grid or PDF without
+  /// reimplementing Excel's format codes.
+  ///
+  /// [value] may be a [num], a [DateTime], a [bool], a [String] or null.
+  /// Numbers and dates are formatted through [formatCode]; a date is converted
+  /// to its serial number first. Text is returned unchanged, since a numeric
+  /// format does not apply to it, and null renders as an empty string.
+  ///
+  /// ```dart
+  /// NumFormat.standard_4.format(1234.5); // 1,234.50
+  /// NumFormat.standard_9.format(0.25);   // 25%
+  /// ```
+  String format(Object? value) {
+    if (value == null) return '';
+    if (value is String) return value;
+    if (formatCode == 'General') {
+      if (value is DateTime) return value.toIso8601String();
+      if (value is num) {
+        // General shows a whole number without a trailing .0, which is what a
+        // spreadsheet displays and what `TEXT(v, "General")` returns.
+        return value == value.roundToDouble() && value.abs() < 1e15
+            ? value.toInt().toString()
+            : value.toString();
+      }
+      return value.toString();
+    }
+
+    final double? serial = switch (value) {
+      DateTime d => _toDayFraction(
+        DateTime.utc(
+          d.year,
+          d.month,
+          d.day,
+          d.hour,
+          d.minute,
+          d.second,
+          d.millisecond,
+          d.microsecond,
+        ).difference(_excelEpoch),
+      ),
+      num n => n.toDouble(),
+      bool b => b ? 1.0 : 0.0,
+      _ => null,
+    };
+    if (serial == null) return value.toString();
+
+    if (_isDateTimeCode(formatCode)) {
+      return _formatDateTimeCode(serial, formatCode);
+    }
+    return _formatNumberCode(serial, formatCode);
+  }
 
   /// Creates a custom number format from [formatCode], inferring whether it is a
   /// date/time or numeric format from the code.
@@ -339,12 +448,20 @@ sealed class NumFormat {
   };
 }
 
+// Ids 23 to 36 are deliberately absent. ECMA-376 leaves them reserved and
+// their meaning is locale dependent, so there is no single format code that is
+// correct to write back. A file using one still reads: the id is preserved and
+// the cell falls back rather than being rewritten as something else.
 const Map<int, NumFormat> _standardNumFormats = {
   0: NumFormat.standard_0,
   1: NumFormat.standard_1,
   2: NumFormat.standard_2,
   3: NumFormat.standard_3,
   4: NumFormat.standard_4,
+  5: NumFormat.standard_5,
+  6: NumFormat.standard_6,
+  7: NumFormat.standard_7,
+  8: NumFormat.standard_8,
   9: NumFormat.standard_9,
   10: NumFormat.standard_10,
   11: NumFormat.standard_11,
@@ -363,6 +480,10 @@ const Map<int, NumFormat> _standardNumFormats = {
   38: NumFormat.standard_38,
   39: NumFormat.standard_39,
   40: NumFormat.standard_40,
+  41: NumFormat.standard_41,
+  42: NumFormat.standard_42,
+  43: NumFormat.standard_43,
+  44: NumFormat.standard_44,
   45: NumFormat.standard_45,
   46: NumFormat.standard_46,
   47: NumFormat.standard_47,

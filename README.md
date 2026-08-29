@@ -526,7 +526,35 @@ sheet.updateCell(
   DoubleCellValue(0.125),
   cellStyle: CellStyle(numberFormat: NumFormat.standard_10), // 0.00%
 );
+
+// Accounting and currency built-ins read and write as themselves.
+sheet.updateCell(
+  CellIndex.indexByString('A3'),
+  DoubleCellValue(1234.5),
+  cellStyle: CellStyle(numberFormat: NumFormat.standard_44), // accounting
+);
 ```
+
+### Show a cell the way Excel would
+
+Reading a cell gives you the stored value, not the text a spreadsheet displays.
+When you are rendering a sheet into your own table, grid or PDF, ask for the
+formatted string:
+
+```dart
+final cell = sheet.cell(CellIndex.indexByString('A1'));
+print(cell.value);       // DoubleCellValue(1234.5)
+print(cell.displayText); // 1,234.50
+
+// Or format any value against any format.
+NumFormat.standard_4.format(1234.5); // 1,234.50
+NumFormat.standard_9.format(0.25);   // 25%
+NumFormat.custom(formatCode: 'yyyy-mm-dd')
+    .format(DateTime.utc(2026, 3, 4)); // 2026-03-04
+```
+
+This is the same renderer the `TEXT` formula function uses, so the two always
+agree.
 
 ### Merge and unmerge cells
 
