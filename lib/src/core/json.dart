@@ -47,7 +47,9 @@ extension SheetJson on Sheet {
     }
     final grid = rows;
     if (headerRow >= grid.length) return <Map<String, dynamic>>[];
-    final keys = _jsonHeaderKeys(grid[headerRow]);
+    final keys = _jsonHeaderKeys([
+      for (final cell in grid[headerRow]) cell?.value,
+    ]);
     final maps = <Map<String, dynamic>>[];
     for (var r = headerRow + 1; r < grid.length; r++) {
       final row = grid[r];
@@ -185,12 +187,12 @@ Object _sheetJsonData(
 
 /// Column names taken from [headerCells], falling back to the column letter for
 /// an empty cell and suffixing repeats so every column keeps a distinct key.
-List<String> _jsonHeaderKeys(List<Data?> headerCells) {
+List<String> _jsonHeaderKeys(List<CellValue?> headerValues) {
   final keys = <String>[];
   final used = <String>{};
-  for (var c = 0; c < headerCells.length; c++) {
+  for (var c = 0; c < headerValues.length; c++) {
     final raw = _scalarFromCell(
-      headerCells[c]?.value,
+      headerValues[c],
       formulasAsText: false,
     )?.toString().trim();
     final base = (raw == null || raw.isEmpty) ? _columnLettersFor(c) : raw;

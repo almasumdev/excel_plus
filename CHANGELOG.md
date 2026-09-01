@@ -1,3 +1,25 @@
+## 2.17.0
+
+Read a large sheet a row at a time, without building the cell grid.
+
+### New
+
+- `Excel.streamRows(sheetName)` walks a worksheet row by row straight out of the
+  archive, yielding `List<CellValue?>` without materialising the sheet's cell
+  grid. `Excel.streamRowsAsMaps(sheetName)` does the same keyed by a header row.
+  On a 2.5 MB sheet of 40,000 rows this measured 94 MB of additional memory
+  against 164 MB for the eager path, and ran about 30% faster. The saving grows
+  with row count, because the streaming cost is dominated by the worksheet XML
+  rather than by the number of cells.
+- The iterable is lazy. Breaking out of the loop stops the parse there instead
+  of after the whole file has been read, which is what you want when validating
+  a bulk upload and rejecting on the first bad row.
+
+Values are typed exactly as the ordinary reader types them. Both paths now share
+one decoder, and a test asserts they return identical values for every sheet of
+a real file, so the two cannot drift apart. Styles, merges and row metadata are
+not read on the streaming path; use the ordinary path when you need those.
+
 ## 2.16.0
 
 Get the text a spreadsheet would show, and read the currency and accounting

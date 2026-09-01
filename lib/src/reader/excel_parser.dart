@@ -472,52 +472,12 @@ class Parser extends _ParserBase
       }
     }
 
-    CellValue? value;
-
-    switch (type) {
-      case 's': // shared string
-        final idx = int.tryParse(rawValue);
-        final ss = idx != null ? _excel._sharedStrings.value(idx) : null;
-        // Guard against out-of-range / non-numeric indexes instead of crashing.
-        value = ss != null ? TextCellValue.span(ss.textSpan) : null;
-      case 'b': // boolean
-        value = formula != null
-            ? FormulaCellValue(formula, cachedValue: _cachedOrNull(rawValue))
-            : BoolCellValue(rawValue == '1');
-      case 'e': // error value (e.g. #DIV/0!, #N/A)
-        value = formula != null
-            ? FormulaCellValue(formula, cachedValue: _cachedOrNull(rawValue))
-            : CellErrorValue(rawValue);
-      case 'str': // formula string result
-        // The cached value (rawValue) is the formula's result, not the formula.
-        value = formula != null
-            ? FormulaCellValue(formula, cachedValue: _cachedOrNull(rawValue))
-            : TextCellValue(rawValue);
-      case 'd': // ISO-8601 date string (ST_CellType "d")
-        value = _readIsoDateCell(rawValue, formula);
-      case 'inlineStr':
-        value = TextCellValue(rawValue);
-      case 'n': // number (explicit)
-      default: // number (default)
-        if (formula != null) {
-          value = FormulaCellValue(
-            formula,
-            cachedValue: _cachedOrNull(rawValue),
-          );
-        } else if (rawValue.isEmpty) {
-          value = null;
-        } else if (styleIndex > 0) {
-          var numFmtId = _excel._numFmtIds[styleIndex];
-          final numFormat = _excel._numFormats.getByNumFmtId(numFmtId);
-          if (numFormat == null) {
-            value = NumFormat.defaultNumeric.read(rawValue);
-          } else {
-            value = numFormat.read(rawValue);
-          }
-        } else {
-          value = NumFormat.defaultNumeric.read(rawValue);
-        }
-    }
+    CellValue? value = _excel._decodeCellValue(
+      type,
+      styleIndex,
+      rawValue,
+      formula,
+    );
 
     // Reconstruct a spilled array anchor so its spill range round-trips and a
     // later recalculate() can clear the cells it owns.
@@ -556,7 +516,7 @@ class Parser extends _ParserBase
   /// Reads a `t="d"` ISO-8601 date cell. Returns a [DateCellValue] for a pure
   /// date or a [DateTimeCellValue] when a time component is present. Falls back
   /// to text if the value is not parseable instead of throwing.
-  CellValue? _readIsoDateCell(String rawValue, String? formula) {
+  static CellValue? _readIsoDateCell(String rawValue, String? formula) {
     if (formula != null) {
       return FormulaCellValue(formula, cachedValue: _cachedOrNull(rawValue));
     }

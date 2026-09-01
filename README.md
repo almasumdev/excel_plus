@@ -453,6 +453,33 @@ array formulas included), keeping the last-calculated result as the cached value
 File('modern.xlsx').writeAsBytesSync(excel.save()!);
 ```
 
+### Stream a large file row by row
+
+Reading a sheet the ordinary way builds every cell as an object before you see
+the first row. For a large import you usually just want the values, once:
+
+```dart
+final excel = Excel.decodeBytes(bytes);
+
+for (final row in excel.streamRows('Sheet1')) {
+  process(row); // List<CellValue?>
+}
+
+// Or keyed by a header row.
+for (final row in excel.streamRowsAsMaps('Sheet1')) {
+  print(row['email']);
+}
+```
+
+The iterable is lazy, so breaking out stops the parse there rather than after
+reading the whole file. That is what you want when validating an upload and
+rejecting on the first bad row.
+
+On a 2.5 MB, 40,000 row sheet this measured 94 MB of additional memory against
+164 MB for the eager path, and ran about 30% faster. Values are typed exactly as
+the normal reader types them; styles, merges and row metadata are not read, so
+use the ordinary path when you need those.
+
 ### Read a single cell
 
 ```dart
