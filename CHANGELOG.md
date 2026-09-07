@@ -1,3 +1,21 @@
+## 2.18.0
+
+Validate an import one row at a time, instead of all or nothing.
+
+### New
+
+- `Excel.validateRows(sheetName, schema)` yields a `SheetRowValidation` per row
+  as the sheet is read: the row keyed by header, its sheet row number, and
+  everything the schema objected to. A bad row no longer costs the good ones,
+  which is what an importer actually needs.
+- Built on `streamRows`, so it is lazy and memory-bounded. Rejecting a file on
+  the first bad row means simply stopping the loop; the rest is never read.
+- `SheetRowValidation.displayRow` is the 1-based number a spreadsheet shows, so
+  the message a user gets points at the line they can see.
+- Validation uses `CsvSchema`, the same vocabulary the CSV import already uses,
+  so a user gets the same verdict whichever format they uploaded.
+  `CsvValidationException` is now re-exported alongside it.
+
 ## 2.17.0
 
 Read a large sheet a row at a time, without building the cell grid.

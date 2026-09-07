@@ -480,6 +480,33 @@ On a 2.5 MB, 40,000 row sheet this measured 94 MB of additional memory against
 the normal reader types them; styles, merges and row metadata are not read, so
 use the ordinary path when you need those.
 
+### Validate an import row by row
+
+Reading a whole sheet, validating it, then reporting means the user waits for
+the entire file to learn that line 3 is wrong. Validate as you read instead:
+
+```dart
+const schema = CsvSchema(columns: [
+  CsvColumnDef(name: 'email', type: String),
+  CsvColumnDef(name: 'age', type: int, nullable: true),
+]);
+
+for (final row in excel.validateRows('Sheet1', schema)) {
+  if (row.isValid) {
+    insert(row.values);
+  } else {
+    report('row ${row.displayRow}: ${row.errors.join(', ')}');
+  }
+}
+```
+
+Good rows survive a bad one, so an import does not have to be all-or-nothing.
+To reject the whole file on the first problem, just stop iterating: it is built
+on `streamRows`, so the rest of the sheet is never read.
+
+`CsvSchema` is the same vocabulary the CSV import uses, so a user gets the same
+verdict whichever format they uploaded.
+
 ### Read a single cell
 
 ```dart

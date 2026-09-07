@@ -72,6 +72,7 @@ export 'package:csv_plus/csv_plus.dart'
         QuoteMode,
         CsvException,
         CsvParseException,
+        CsvValidationException,
         CsvSchema,
         CsvColumnDef;
 
@@ -130,6 +131,7 @@ part 'src/reader/parser_worksheet_features.dart';
 part 'src/reader/parser_styles.dart';
 part 'src/reader/excel_parser.dart';
 part 'src/reader/sheet_stream.dart';
+part 'src/core/validate.dart';
 part 'src/reader/xls_compound.dart';
 part 'src/reader/xls_records.dart';
 part 'src/reader/xls_styles.dart';
