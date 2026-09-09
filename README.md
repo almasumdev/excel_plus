@@ -612,6 +612,28 @@ NumFormat.custom(formatCode: 'yyyy-mm-dd')
 This is the same renderer the `TEXT` formula function uses, so the two always
 agree.
 
+### Conditional formatting
+
+```dart
+sheet.addConditionalFormat(start, end,
+    ConditionalFormat.greaterThan(100, style: CellStyle(fontColorHex: ExcelColor.red)));
+
+// Text, ranking, average and date rules
+ConditionalFormat.containsText('urgent', style: hit);
+ConditionalFormat.top10(5, style: hit);              // or percent: / bottom:
+ConditionalFormat.aboveAverage(style: hit);          // or below: / standardDeviations:
+ConditionalFormat.duplicateValues(style: hit);
+ConditionalFormat.timePeriod('last7Days', style: hit);
+
+// Scales, bars and icons
+ConditionalFormat.colorScale(min: red, mid: yellow, max: green);
+ConditionalFormat.dataBar(blue);
+ConditionalFormat.iconSet(IconSetType.threeTrafficLights1);
+```
+
+All rule kinds survive a decode, edit and save, including the rank, text,
+average and period details that make each rule mean what it means.
+
 ### Merge and unmerge cells
 
 ```dart

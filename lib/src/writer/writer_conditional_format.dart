@@ -83,6 +83,19 @@ mixin _WriterConditionalFormatMixin on _WriterBase {
       XmlAttribute(_xmlName('priority'), priority.toString()),
       if (fmt._operator != null)
         XmlAttribute(_xmlName('operator'), fmt._operator),
+      // Rule-specific attributes. Omitting these left a top10 / text /
+      // average / period rule as a cfRule Excel could not act on.
+      if (fmt.text != null) XmlAttribute(_xmlName('text'), fmt.text!),
+      if (fmt.rank != null) XmlAttribute(_xmlName('rank'), fmt.rank.toString()),
+      if (fmt.rankIsPercent) XmlAttribute(_xmlName('percent'), '1'),
+      if (fmt.rankFromBottom) XmlAttribute(_xmlName('bottom'), '1'),
+      if (fmt._typeName == 'aboveAverage' && !fmt.aboveAverage)
+        XmlAttribute(_xmlName('aboveAverage'), '0'),
+      if (fmt.equalAverage) XmlAttribute(_xmlName('equalAverage'), '1'),
+      if (fmt.stdDev != null)
+        XmlAttribute(_xmlName('stdDev'), fmt.stdDev.toString()),
+      if (fmt.timePeriod != null)
+        XmlAttribute(_xmlName('timePeriod'), fmt.timePeriod!),
     ];
     final children = <XmlElement>[];
     switch (fmt._typeName) {
@@ -97,6 +110,15 @@ mixin _WriterConditionalFormatMixin on _WriterBase {
         children.add(_buildDataBar(fmt));
       case 'iconSet':
         children.add(_buildIconSet(fmt));
+      default:
+        // Text and period rules carry a formula alongside their attributes,
+        // and Excel expects the two to agree. Everything else that reaches
+        // here (duplicateValues, uniqueValues) is attribute-only and correct
+        // with no children, so emitting the formulas we hold is right in both
+        // cases rather than silently dropping them.
+        for (final f in fmt._formulas) {
+          children.add(XmlElement(_xmlName('formula'), [], [XmlText(f)]));
+        }
     }
     return XmlElement(_xmlName('cfRule'), attrs, children);
   }

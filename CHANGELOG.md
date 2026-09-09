@@ -1,3 +1,35 @@
+## 2.19.0
+
+Conditional formatting rules now survive a round trip intact.
+
+### Fixed
+
+- **Six of the eleven rule kinds were written back incomplete.** The reader
+  modelled `top10`, `aboveAverage`, `containsText`, `notContainsText`,
+  `beginsWith`, `endsWith`, `timePeriod`, `duplicateValues` and `uniqueValues`,
+  but the writer emitted only the type, style and priority for them: no `rank`,
+  no `text`, no `stdDev`, no `timePeriod`, and no `formula` children. Opening a
+  workbook that used one of those rules and saving it back produced a `cfRule`
+  Excel could not act on. A below-average rule was the worst case, because
+  losing `aboveAverage="0"` silently inverted it.
+- The reader now captures `text`, `rank`, `percent`, `bottom`, `aboveAverage`,
+  `equalAverage`, `stdDev` and `timePeriod`, the writer emits them, and rules
+  that carry a formula alongside their attributes keep it.
+
+### New
+
+- Authoring factories for the rule kinds that could previously only be read:
+  `ConditionalFormat.containsText`, `.notContainsText`, `.beginsWith`,
+  `.endsWith`, `.top10` (with `percent` and `bottom`), `.aboveAverage` (with
+  `below`, `orEqual` and `standardDeviations`), `.duplicateValues`,
+  `.uniqueValues` and `.timePeriod`.
+- The matching detail is exposed on `ConditionalFormat`: `text`, `rank`,
+  `rankIsPercent`, `rankFromBottom`, `aboveAverage`, `equalAverage`, `stdDev`
+  and `timePeriod`.
+
+Excel stores a text rule as both an attribute and an equivalent formula and
+expects the two to agree, so the factories generate the formula for you.
+
 ## 2.18.0
 
 Validate an import one row at a time, instead of all or nothing.

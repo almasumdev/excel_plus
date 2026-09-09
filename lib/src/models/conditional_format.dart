@@ -29,6 +29,14 @@ class ConditionalFormat {
     this.iconReverse = false,
     this.iconShowValue = true,
     this.iconThresholds = const [],
+    this.text,
+    this.rank,
+    this.rankIsPercent = false,
+    this.rankFromBottom = false,
+    this.aboveAverage = true,
+    this.equalAverage = false,
+    this.stdDev,
+    this.timePeriod,
     this.range,
   }) : _typeName = typeName,
        _operator = operator,
@@ -55,6 +63,39 @@ class ConditionalFormat {
   /// For an icon-set rule, the threshold values (one per icon) at which each
   /// icon takes over, as percentages by default (the first is `0`).
   final List<double> iconThresholds;
+
+  /// For a text rule (`containsText`, `notContainsText`, `beginsWith`,
+  /// `endsWith`), the string being looked for; `null` for other rule kinds.
+  final String? text;
+
+  /// For a `top10` rule, how many items the rule covers.
+  ///
+  /// Read together with [rankIsPercent], which makes it a percentage, and
+  /// [rankFromBottom], which selects the bottom instead of the top.
+  final int? rank;
+
+  /// For a `top10` rule, whether [rank] is a percentage rather than a count.
+  final bool rankIsPercent;
+
+  /// For a `top10` rule, whether the rule selects the bottom N instead of the
+  /// top N.
+  final bool rankFromBottom;
+
+  /// For an `aboveAverage` rule, whether it matches values above the average
+  /// (`true`, the default) or below it.
+  final bool aboveAverage;
+
+  /// For an `aboveAverage` rule, whether values exactly equal to the average
+  /// also match.
+  final bool equalAverage;
+
+  /// For an `aboveAverage` rule, the number of standard deviations from the
+  /// mean the rule applies at; `null` for a plain above/below average rule.
+  final int? stdDev;
+
+  /// For a `timePeriod` rule, the OOXML period name (`today`, `yesterday`,
+  /// `last7Days`, `thisMonth`, ...); `null` for other rule kinds.
+  final String? timePeriod;
 
   /// The differential style applied when a `cellIs` / `formula` rule matches;
   /// `null` for colour-scale and data-bar rules.
@@ -103,10 +144,126 @@ class ConditionalFormat {
     iconReverse: iconReverse,
     iconShowValue: iconShowValue,
     iconThresholds: iconThresholds,
+    text: text,
+    rank: rank,
+    rankIsPercent: rankIsPercent,
+    rankFromBottom: rankFromBottom,
+    aboveAverage: aboveAverage,
+    equalAverage: equalAverage,
+    stdDev: stdDev,
+    timePeriod: timePeriod,
     range: sqref,
   );
 
   static String _num(num value) => value.toString();
+
+  /// Highlight cells whose text contains [value].
+  ///
+  /// Excel stores a text rule as both a `text` attribute and an equivalent
+  /// formula, and wants them to agree, so the formula is generated for you.
+  factory ConditionalFormat.containsText(
+    String value, {
+    required CellStyle style,
+  }) => ConditionalFormat._(
+    typeName: 'containsText',
+    operator: 'containsText',
+    text: value,
+    formulas: ['NOT(ISERROR(SEARCH("$value",A1)))'],
+    style: style,
+  );
+
+  /// Highlight cells whose text does not contain [value].
+  factory ConditionalFormat.notContainsText(
+    String value, {
+    required CellStyle style,
+  }) => ConditionalFormat._(
+    typeName: 'notContainsText',
+    operator: 'notContains',
+    text: value,
+    formulas: ['ISERROR(SEARCH("$value",A1))'],
+    style: style,
+  );
+
+  /// Highlight cells whose text begins with [value].
+  factory ConditionalFormat.beginsWith(
+    String value, {
+    required CellStyle style,
+  }) => ConditionalFormat._(
+    typeName: 'beginsWith',
+    operator: 'beginsWith',
+    text: value,
+    formulas: ['LEFT(A1,${value.length})="$value"'],
+    style: style,
+  );
+
+  /// Highlight cells whose text ends with [value].
+  factory ConditionalFormat.endsWith(
+    String value, {
+    required CellStyle style,
+  }) => ConditionalFormat._(
+    typeName: 'endsWith',
+    operator: 'endsWith',
+    text: value,
+    formulas: ['RIGHT(A1,${value.length})="$value"'],
+    style: style,
+  );
+
+  /// Highlight the top [count] values in the range.
+  ///
+  /// Set [percent] to treat [count] as a percentage, and [bottom] to select
+  /// the lowest values instead of the highest.
+  factory ConditionalFormat.top10(
+    int count, {
+    required CellStyle style,
+    bool percent = false,
+    bool bottom = false,
+  }) => ConditionalFormat._(
+    typeName: 'top10',
+    rank: count,
+    rankIsPercent: percent,
+    rankFromBottom: bottom,
+    style: style,
+  );
+
+  /// Highlight values above the range's average.
+  ///
+  /// Set [below] to match values under the average instead, [orEqual] to
+  /// include values exactly equal to it, and [standardDeviations] to move the
+  /// threshold that many standard deviations away from the mean.
+  factory ConditionalFormat.aboveAverage({
+    required CellStyle style,
+    bool below = false,
+    bool orEqual = false,
+    int? standardDeviations,
+  }) => ConditionalFormat._(
+    typeName: 'aboveAverage',
+    aboveAverage: !below,
+    equalAverage: orEqual,
+    stdDev: standardDeviations,
+    style: style,
+  );
+
+  /// Highlight values that appear more than once in the range.
+  factory ConditionalFormat.duplicateValues({required CellStyle style}) =>
+      ConditionalFormat._(typeName: 'duplicateValues', style: style);
+
+  /// Highlight values that appear exactly once in the range.
+  factory ConditionalFormat.uniqueValues({required CellStyle style}) =>
+      ConditionalFormat._(typeName: 'uniqueValues', style: style);
+
+  /// Highlight dates falling in [period].
+  ///
+  /// [period] is an OOXML period name: `today`, `yesterday`, `tomorrow`,
+  /// `last7Days`, `lastWeek`, `thisWeek`, `nextWeek`, `lastMonth`,
+  /// `thisMonth` or `nextMonth`.
+  factory ConditionalFormat.timePeriod(
+    String period, {
+    required CellStyle style,
+  }) => ConditionalFormat._(
+    typeName: 'timePeriod',
+    timePeriod: period,
+    style: style,
+  );
 
   /// Highlight cells greater than [value].
   factory ConditionalFormat.greaterThan(

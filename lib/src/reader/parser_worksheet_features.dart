@@ -218,9 +218,22 @@ mixin _ParserWorksheetFeaturesMixin on _ParserBase {
       ];
     }
 
+    // Rule-specific attributes. Without these a top10 / text / average /
+    // period rule decoded to a shell that could not be written back.
+    final rank = int.tryParse(rule.getAttribute('rank') ?? '');
+    final stdDev = int.tryParse(rule.getAttribute('stdDev') ?? '');
+
     return ConditionalFormat._(
       typeName: type,
       operator: rule.getAttribute('operator'),
+      text: rule.getAttribute('text'),
+      rank: rank,
+      rankIsPercent: rule.getAttribute('percent') == '1',
+      rankFromBottom: rule.getAttribute('bottom') == '1',
+      aboveAverage: rule.getAttribute('aboveAverage') != '0',
+      equalAverage: rule.getAttribute('equalAverage') == '1',
+      stdDev: stdDev,
+      timePeriod: rule.getAttribute('timePeriod'),
       formulas: formulas,
       colors: colors,
       threeColor: threeColor,
