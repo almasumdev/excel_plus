@@ -702,7 +702,9 @@ sheet.cell(CellIndex.indexByString('B1')).setFormula('TRIPLE(A1)');
 <p>Over 300 functions are implemented, covering maths and trigonometry, the full statistical library (distributions, their inverses, and the hypothesis tests), text, logical, lookup and reference, date and time, financial, database and engineering families. The full list lives in the <a href="https://github.com/almasumdev/excel_plus/blob/main/doc/functions.md">function reference</a>.</p>
 """ + nxt([("create-excel-file", "Create a file"), ("number-formats", "Number formats")]),
     faq=[("Can Dart calculate Excel formulas without opening Excel?",
-          "Yes. Call sheet.evaluate for a single cell, or excel.recalculate to compute every formula in the workbook and store the results in the saved file.")],
+          "Yes. Call sheet.evaluate for a single cell, or excel.recalculate to compute every formula in the workbook and store the results in the saved file."),
+         ("Can Dart compute statistical functions like NORM.DIST or a t-test?",
+          "Yes. Every distribution is built in with both tails and an inverse (normal, lognormal, binomial, Poisson, gamma, beta, chi-square, t and F), along with T.TEST, Z.TEST, F.TEST, CHISQ.TEST, the regression functions and the pre-2010 spellings such as NORMDIST and TINV. Write the formula into a cell and call evaluate, exactly as with SUM.")],
 ))
 
 # ---------------------------------------------------------------- csv

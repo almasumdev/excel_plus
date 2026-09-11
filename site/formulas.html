@@ -14,7 +14,7 @@
 <link rel="icon" href="/logo.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/style.eaea107fe4.css">
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Formulas in Dart", "description": "Write Excel formulas from Dart, evaluate them without opening Excel, recalculate a whole workbook, and register your own custom functions.", "url": "https://excel-plus.web.app/formulas", "author": {"@type": "Person", "name": "Nurullah Al Masum"}, "about": {"@type": "SoftwareSourceCode", "name": "excel_plus", "programmingLanguage": "Dart", "codeRepository": "https://github.com/almasumdev/excel_plus"}}</script>
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Can Dart calculate Excel formulas without opening Excel?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Call sheet.evaluate for a single cell, or excel.recalculate to compute every formula in the workbook and store the results in the saved file."}}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Can Dart calculate Excel formulas without opening Excel?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Call sheet.evaluate for a single cell, or excel.recalculate to compute every formula in the workbook and store the results in the saved file."}}, {"@type": "Question", "name": "Can Dart compute statistical functions like NORM.DIST or a t-test?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Every distribution is built in with both tails and an inverse (normal, lognormal, binomial, Poisson, gamma, beta, chi-square, t and F), along with T.TEST, Z.TEST, F.TEST, CHISQ.TEST, the regression functions and the pre-2010 spellings such as NORMDIST and TINV. Write the formula into a cell and call evaluate, exactly as with SUM."}}]}</script>
 </head>
 <body>
 <a class="skip" href="#content">Skip to content</a>
@@ -75,7 +75,7 @@ excel.recalculate();
 
 sheet.cell(CellIndex.indexByString('B1')).setFormula('TRIPLE(A1)');</code></pre></div>
 <h2 id="what-is-available">What is available<a class="anchor" href="#what-is-available" aria-label="Link to this section">#</a></h2>
-<p>Around 160 functions are implemented, covering maths and statistics, text, logical, lookup and reference, date and time, financial, database and engineering families. The full list lives in the <a href="https://github.com/almasumdev/excel_plus/blob/main/doc/functions.md">function reference</a>.</p>
+<p>Over 300 functions are implemented, covering maths and trigonometry, the full statistical library (distributions, their inverses, and the hypothesis tests), text, logical, lookup and reference, date and time, financial, database and engineering families. The full list lives in the <a href="https://github.com/almasumdev/excel_plus/blob/main/doc/functions.md">function reference</a>.</p>
 <nav class="next" aria-label="Related guides"><a href="/create-excel-file">Create a file</a><a href="/number-formats">Number formats</a></nav>
       <footer class="pagefoot">
         excel_plus is open source under the MIT licence.
