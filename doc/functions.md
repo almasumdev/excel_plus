@@ -32,22 +32,71 @@ excel.formula.registerFunction('TRIPLE', (args) {
 
 ## Functions
 
-**Math**: SUM · PRODUCT · ABS · INT · SQRT · POWER · MOD · SIGN · ROUND ·
-ROUNDUP · ROUNDDOWN · TRUNC · CEILING · FLOOR · MROUND · LN · LOG10 · LOG · EXP ·
-PI · SUMPRODUCT
+**Math**: SUM · PRODUCT · ABS · INT · SQRT · SQRTPI · POWER · MOD ·
+QUOTIENT · SIGN · ROUND · ROUNDUP · ROUNDDOWN · TRUNC · CEILING · FLOOR ·
+MROUND · EVEN · ODD · LN · LOG10 · LOG · EXP · PI · SUMPRODUCT · SUMSQ ·
+GCD · LCM · RAND · RANDBETWEEN
 
-**Statistics**: AVERAGE · COUNT · COUNTA · COUNTBLANK · MIN · MAX · MEDIAN ·
-MODE · STDEV · STDEVP · VAR · VARP · PERCENTILE · QUARTILE · CORREL · LARGE ·
-SMALL · RANK
+**Trigonometry**: SIN · COS · TAN · ASIN · ACOS · ATAN · ATAN2 · SEC ·
+CSC · COT · SINH · COSH · TANH · ASINH · ACOSH · ATANH · SECH · CSCH ·
+COTH · DEGREES · RADIANS
+
+`ATAN2` takes its x before its y, matching Excel rather than most maths
+libraries. A unary minus binds tighter than `^`, so `-2^2` is 4, again as in
+Excel.
+
+**Combinatorics**: FACT · FACTDOUBLE · COMBIN · COMBINA · PERMUT ·
+PERMUTATIONA · MULTINOMIAL
+
+**Statistics**: AVERAGE · AVERAGEA · COUNT · COUNTA · COUNTBLANK · MIN ·
+MINA · MAX · MAXA · MEDIAN · MODE · MODE.SNGL · STDEV · STDEV.S ·
+STDEV.P · STDEVP · STDEVA · STDEVPA · VAR · VAR.S · VAR.P · VARP · VARA ·
+VARPA · AVEDEV · DEVSQ · GEOMEAN · HARMEAN · TRIMMEAN · SKEW · SKEW.P ·
+KURT
+
+The `A` variants count text as zero and a boolean as one or zero, where their
+plain counterparts skip both.
+
+**Rank & percentile**: LARGE · SMALL · RANK · RANK.EQ · RANK.AVG ·
+PERCENTILE · PERCENTILE.INC · PERCENTILE.EXC · QUARTILE · QUARTILE.INC ·
+QUARTILE.EXC · PERCENTRANK · PERCENTRANK.INC · PERCENTRANK.EXC
+
+**Correlation & regression**: CORREL · PEARSON · RSQ · COVAR ·
+COVARIANCE.P · COVARIANCE.S · SLOPE · INTERCEPT · STEYX · FORECAST ·
+FORECAST.LINEAR · STANDARDIZE · FISHER · FISHERINV
+
+**Distributions**: NORM.DIST · NORM.INV · NORM.S.DIST · NORM.S.INV · GAUSS ·
+PHI · LOGNORM.DIST · LOGNORM.INV · BINOM.DIST · BINOM.DIST.RANGE ·
+BINOM.INV · NEGBINOM.DIST · HYPGEOM.DIST · POISSON.DIST · EXPON.DIST ·
+WEIBULL.DIST · GAMMA · GAMMALN · GAMMALN.PRECISE · GAMMA.DIST · GAMMA.INV ·
+BETA.DIST · BETA.INV · CHISQ.DIST · CHISQ.DIST.RT · CHISQ.INV ·
+CHISQ.INV.RT · T.DIST · T.DIST.RT · T.DIST.2T · T.INV · T.INV.2T · F.DIST ·
+F.DIST.RT · F.INV · F.INV.RT
+
+Every `*.INV` inverts its own `*.DIST`, so a value put through one and back
+comes out where it started.
+
+**Inference**: Z.TEST · T.TEST · F.TEST · CHISQ.TEST · CONFIDENCE.NORM ·
+CONFIDENCE.T
+
+`T.TEST` covers all three types: paired, two-sample with equal variances, and
+two-sample with unequal variances (Welch).
+
+**Pre-2010 names**: the older spellings resolve to the same results, so a
+workbook written by an earlier Excel evaluates unchanged — NORMDIST ·
+NORMINV · NORMSDIST · NORMSINV · LOGNORMDIST · LOGINV · BINOMDIST ·
+CRITBINOM · NEGBINOMDIST · HYPGEOMDIST · POISSON · EXPONDIST · WEIBULL ·
+GAMMADIST · GAMMAINV · BETADIST · BETAINV · CHIDIST · CHIINV · TDIST ·
+TINV · FDIST · FINV · ZTEST · TTEST · FTEST · CHITEST · CONFIDENCE
 
 **Criteria**: SUMIF · SUMIFS · COUNTIF · COUNTIFS · AVERAGEIF · AVERAGEIFS ·
 MAXIFS · MINIFS (text criteria support `*`/`?` wildcards)
 
-**Logical**: IF · IFS · SWITCH · AND · OR · NOT · TRUE · FALSE · XOR · IFERROR ·
-IFNA
+**Logical**: IF · IFS · SWITCH · AND · OR · NOT · TRUE · FALSE · XOR ·
+IFERROR · IFNA
 
-**Information**: NA · ISERROR · ISERR · ISNA · ISNUMBER · ISTEXT · ISLOGICAL ·
-ISBLANK · ISEVEN · ISODD
+**Information**: NA · ISERROR · ISERR · ISNA · ISNUMBER · ISTEXT ·
+ISLOGICAL · ISBLANK · ISEVEN · ISODD
 
 **Text**: CONCAT · CONCATENATE · TEXT · LEN · UPPER · LOWER · TRIM · LEFT ·
 RIGHT · MID · PROPER · REPT · EXACT · SUBSTITUTE · REPLACE · FIND · SEARCH ·
@@ -64,8 +113,8 @@ name or 1-based column number, and a criteria range)
 
 **Engineering**: DEC2BIN · DEC2OCT · DEC2HEX · BIN2DEC · OCT2DEC · HEX2DEC ·
 BIN2OCT · BIN2HEX · OCT2BIN · OCT2HEX · HEX2BIN · HEX2OCT · BITAND · BITOR ·
-BITXOR · BITLSHIFT · BITRSHIFT · CONVERT (common length, mass, time, and
-temperature units)
+BITXOR · BITLSHIFT · BITRSHIFT · ERF · ERF.PRECISE · ERFC · ERFC.PRECISE ·
+DELTA · GESTEP · CONVERT (common length, mass, time, and temperature units)
 
 **Date & time**: DATE · TIME · TODAY · NOW · YEAR · MONTH · DAY · HOUR ·
 MINUTE · SECOND · WEEKDAY · DAYS · DATEDIF · EDATE · EOMONTH
@@ -78,5 +127,7 @@ functions (e.g. `SUM(UNIQUE(A1:A100))`).
 
 ## Not yet supported
 
-- Long-tail statistical functions (beyond the set above)
+- Array-returning statistics: FREQUENCY, MODE.MULT, LINEST, LOGEST, TREND,
+  GROWTH. These need a formula to spill a computed block rather than a range
+  read from the sheet, which the engine does not do yet.
 - R1C1-style `INDIRECT` (only A1-style text is resolved)

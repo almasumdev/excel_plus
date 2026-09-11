@@ -206,9 +206,13 @@ Flutter platform. Expand a group for details:
 <details>
 <summary><b>📊 Formulas & data tools</b></summary>
 
-- Formula-evaluation engine with ~160 functions
+- Formula-evaluation engine with over 300 functions
   ([function reference](https://github.com/almasumdev/excel_plus/blob/main/doc/functions.md)),
   plus `registerFunction` for your own
+- Full statistical library: every distribution and its inverse (normal,
+  lognormal, binomial, Poisson, gamma, beta, chi-square, t, F), the four
+  hypothesis tests, regression and correlation, and the pre-2010 spellings so
+  older workbooks evaluate unchanged
 - Incremental recalculation: `recalculate(changed: [...])` recomputes only the formulas affected by the changed cells
 - Dynamic-array spilling: `SEQUENCE` / `FILTER` / `SORT` / `UNIQUE` fill a spill range on `recalculate`, with Excel `#SPILL!` collision handling
 - Excel tables (ListObjects)
@@ -241,7 +245,7 @@ Flutter platform. Expand a group for details:
 
 ## Limitations
 
-- ❌ Long-tail statistical functions (register your own)
+- ❌ Array-returning statistics: FREQUENCY, MODE.MULT, LINEST, TREND, GROWTH
 - ❌ R1C1-style references (A1-style only)
 
 ## Roadmap
@@ -249,7 +253,8 @@ Flutter platform. Expand a group for details:
 What ships next is driven by user requests on the
 [issue tracker](https://github.com/almasumdev/excel_plus/issues):
 
-- ⬜ More formula functions: long-tail statistical (engineering & database already shipped)
+- ⬜ Array-returning statistical functions (FREQUENCY, LINEST, TREND), which
+  need a formula to spill a computed block rather than read one from the sheet
 
 Shipped milestones are in the
 [changelog](https://github.com/almasumdev/excel_plus/blob/main/CHANGELOG.md).

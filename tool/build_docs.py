@@ -244,7 +244,7 @@ File('report.xlsx').writeAsBytesSync(excel.save()!);
 <li>All cell types: text, integers, doubles, booleans, dates, times and formulas</li>
 <li>Fonts, fills, gradients, borders, alignment, rotation, text wrapping and merged ranges</li>
 <li>Built in and custom number formats</li>
-<li>Around 160 formula functions, with evaluation and incremental recalculation</li>
+<li>Over 300 formula functions, with evaluation and incremental recalculation</li>
 <li>Charts, sparklines, pivot tables, conditional formatting, data validation and autofilters</li>
 <li>Hyperlinks, freeze panes, cell comments, images and Excel tables</li>
 <li>CSV and TSV import and export</li>
@@ -699,7 +699,7 @@ excel.formula.registerFunction('TRIPLE', (args) {
 sheet.cell(CellIndex.indexByString('B1')).setFormula('TRIPLE(A1)');
 """) + """
 <h2>What is available</h2>
-<p>Around 160 functions are implemented, covering maths and statistics, text, logical, lookup and reference, date and time, financial, database and engineering families. The full list lives in the <a href="https://github.com/almasumdev/excel_plus/blob/main/doc/functions.md">function reference</a>.</p>
+<p>Over 300 functions are implemented, covering maths and trigonometry, the full statistical library (distributions, their inverses, and the hypothesis tests), text, logical, lookup and reference, date and time, financial, database and engineering families. The full list lives in the <a href="https://github.com/almasumdev/excel_plus/blob/main/doc/functions.md">function reference</a>.</p>
 """ + nxt([("create-excel-file", "Create a file"), ("number-formats", "Number formats")]),
     faq=[("Can Dart calculate Excel formulas without opening Excel?",
           "Yes. Call sheet.evaluate for a single cell, or excel.recalculate to compute every formula in the workbook and store the results in the saved file.")],

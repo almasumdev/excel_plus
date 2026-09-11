@@ -925,6 +925,21 @@ const _formulaShowcaseRows = <(String, String)>[
   ('2nd largest', 'LARGE(A2:A6,2)'),
   ('Rank of 120', 'RANK(120,A2:A6)'),
   ('90th percentile', 'PERCENTILE(A2:A6,0.9)'),
+  ('Skew', 'ROUND(SKEW(A2:A6),3)'),
+  ('Geometric mean', 'ROUND(GEOMEAN(A2:A6),2)'),
+  // Distributions
+  ('Normal CDF', 'ROUND(NORM.DIST(150,AVERAGE(A2:A6),STDEV(A2:A6),TRUE),4)'),
+  ('95% z value', 'ROUND(NORM.S.INV(0.975),4)'),
+  ('Binomial', 'ROUND(BINOM.DIST(5,10,0.5,TRUE),4)'),
+  ('Poisson', 'ROUND(POISSON.DIST(2,5,TRUE),4)'),
+  ('Chi-square tail', 'ROUND(CHISQ.DIST.RT(18.307,10),4)'),
+  ('t critical', 'ROUND(T.INV.2T(0.05,10),4)'),
+  // Regression
+  ('Slope', 'ROUND(SLOPE(A2:A6,SEQUENCE(5)),3)'),
+  ('Correlation', 'ROUND(CORREL(A2:A6,SEQUENCE(5)),3)'),
+  // Trigonometry
+  ('Sine of 30 deg', 'ROUND(SIN(RADIANS(30)),4)'),
+  ('Combinations', 'COMBIN(10,3)'),
   // Criteria
   ('Count > 100', 'COUNTIF(A2:A6,">100")'),
   ('Sum > 100', 'SUMIF(A2:A6,">100")'),
@@ -958,11 +973,12 @@ final _formulaEval = FeatureDemo(
   description:
       'Compute formula results in pure Dart, no spreadsheet app needed. '
       'evaluate() returns a single cell\'s value; recalculate() fills every '
-      'formula\'s cached result. ~130 built-in functions plus your own.',
+      'formula\'s cached result. Over 300 built-in functions plus your own.',
   points: [
     'sheet.evaluate(cell) computes a result on demand',
     'excel.recalculate() recomputes every formula cell',
-    '~130 functions: math, stats, lookup, text, financial, date, arrays',
+    '300+ functions: math, trig, statistics, distributions, lookup, text, '
+        'financial, date, arrays',
     'Register custom functions with excel.formula.registerFunction',
   ],
   snippet: '''
@@ -998,14 +1014,23 @@ Excel buildFormulaEval() {
     return DoubleCellValue(ns.last - ns.first);
   });
 
-  // A few of the ~130 built-in functions across families.
+  // A few of the built-in functions, one from each family.
   final measures = [
     'SUM(A2:A6)',
     'ROUND(AVERAGE(A2:A6),1)',
     'MAX(A2:A6)-MIN(A2:A6)',
     'STDEV(A2:A6)',
+    'SKEW(A2:A6)',
     'LARGE(A2:A6,2)',
     'RANK(120,A2:A6)',
+    'NORM.DIST(150,AVERAGE(A2:A6),STDEV(A2:A6),TRUE)',
+    'NORM.S.INV(0.975)',
+    'BINOM.DIST(5,10,0.5,TRUE)',
+    'CHISQ.DIST.RT(18.307,10)',
+    'T.INV.2T(0.05,10)',
+    'CORREL(A2:A6,SEQUENCE(5))',
+    'SIN(RADIANS(30))',
+    'COMBIN(10,3)',
     'COUNTIF(A2:A6,">100")',
     'SUMIF(A2:A6,">100")',
     'IF(AVERAGE(A2:A6)>100,"High","Low")',

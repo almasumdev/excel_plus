@@ -105,37 +105,15 @@ void _registerStatFunctions(Map<String, _FormulaFn> r) {
   r['QUARTILE'] = quartile();
   r['QUARTILE.INC'] = quartile();
 
-  r['CORREL'] = _guard((a) {
-    final x = _asArray(a.eval(0)).cells.toList();
-    final y = _asArray(a.eval(1)).cells.toList();
-    final xs = <double>[];
-    final ys = <double>[];
-    final len = x.length < y.length ? x.length : y.length;
-    for (var i = 0; i < len; i++) {
-      final xv = _asNumOrNull(x[i]);
-      final yv = _asNumOrNull(y[i]);
-      if (xv != null && yv != null) {
-        xs.add(xv);
-        ys.add(yv);
-      }
-    }
-    final n = xs.length;
-    if (n == 0) return const _ErrVal(CellErrorValue.divisionByZero);
-    final mx = xs.fold(0.0, (s, v) => s + v) / n;
-    final my = ys.fold(0.0, (s, v) => s + v) / n;
-    var sxy = 0.0, sxx = 0.0, syy = 0.0;
-    for (var i = 0; i < n; i++) {
-      final dx = xs[i] - mx;
-      final dy = ys[i] - my;
-      sxy += dx * dy;
-      sxx += dx * dx;
-      syy += dy * dy;
-    }
-    if (sxx == 0 || syy == 0) {
-      return const _ErrVal(CellErrorValue.divisionByZero);
-    }
-    return _NumVal(sxy / sqrt(sxx * syy));
+  // CORREL and PEARSON are the same coefficient under two names.
+  _FormulaFn correl() => _guard((a) {
+    final pair = _numericPairs(a.eval(0), a.eval(1));
+    final rr = _LinearFit.of(pair.x, pair.y).r;
+    if (rr == null) return const _ErrVal(CellErrorValue.divisionByZero);
+    return _NumVal(rr);
   });
+  r['CORREL'] = correl();
+  r['PEARSON'] = correl();
 
   _FormulaFn mode() => _guard((a) {
     final ns = a.numbers();

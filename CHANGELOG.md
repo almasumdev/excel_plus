@@ -1,3 +1,73 @@
+## 2.20.0
+
+The statistical library is complete. Every distribution Excel offers, both of
+its tails, its inverse, and the four hypothesis tests now evaluate in pure Dart,
+so the README no longer has to point at `registerFunction` for anything
+statistical. Trigonometry and combinatorics landed in the same pass: the engine
+had no `SIN` at all before this.
+
+### New
+
+- **Distributions, with both tails and an inverse for each**: `NORM.DIST`,
+  `NORM.INV`, `NORM.S.DIST`, `NORM.S.INV`, `GAUSS`, `PHI`, `LOGNORM.DIST`,
+  `LOGNORM.INV`, `BINOM.DIST`, `BINOM.DIST.RANGE`, `BINOM.INV`,
+  `NEGBINOM.DIST`, `HYPGEOM.DIST`, `POISSON.DIST`, `EXPON.DIST`,
+  `WEIBULL.DIST`, `GAMMA`, `GAMMALN`, `GAMMALN.PRECISE`, `GAMMA.DIST`,
+  `GAMMA.INV`, `BETA.DIST`, `BETA.INV`, `CHISQ.DIST`, `CHISQ.DIST.RT`,
+  `CHISQ.INV`, `CHISQ.INV.RT`, `T.DIST`, `T.DIST.RT`, `T.DIST.2T`, `T.INV`,
+  `T.INV.2T`, `F.DIST`, `F.DIST.RT`, `F.INV` and `F.INV.RT`.
+- **Hypothesis tests and intervals**: `Z.TEST`, `T.TEST` (paired, equal
+  variance, and Welch), `F.TEST`, `CHISQ.TEST`, `CONFIDENCE.NORM` and
+  `CONFIDENCE.T`.
+- **Descriptive statistics**: `AVEDEV`, `DEVSQ`, `GEOMEAN`, `HARMEAN`,
+  `TRIMMEAN`, `SKEW`, `SKEW.P` and `KURT`.
+- **Regression and correlation**: `SLOPE`, `INTERCEPT`, `RSQ`, `STEYX`,
+  `FORECAST`, `FORECAST.LINEAR`, `COVAR`, `COVARIANCE.P`, `COVARIANCE.S`,
+  `PEARSON`, `STANDARDIZE`, `FISHER` and `FISHERINV`.
+- **Rank and percentile**: `RANK.AVG`, `PERCENTILE.EXC`, `QUARTILE.EXC`,
+  `PERCENTRANK`, `PERCENTRANK.INC` and `PERCENTRANK.EXC`.
+- **The text-counting variants**, which read text as zero and a boolean as one
+  or zero where their plain counterparts skip both: `AVERAGEA`, `MAXA`, `MINA`,
+  `STDEVA`, `STDEVPA`, `VARA` and `VARPA`.
+- **Trigonometry**, none of which existed before: `SIN`, `COS`, `TAN`, `ASIN`,
+  `ACOS`, `ATAN`, `ATAN2`, `SEC`, `CSC`, `COT`, `SINH`, `COSH`, `TANH`,
+  `ASINH`, `ACOSH`, `ATANH`, `SECH`, `CSCH`, `COTH`, `DEGREES` and `RADIANS`.
+- **Combinatorics and integer arithmetic**: `FACT`, `FACTDOUBLE`, `COMBIN`,
+  `COMBINA`, `PERMUT`, `PERMUTATIONA`, `MULTINOMIAL`, `GCD`, `LCM`, `QUOTIENT`,
+  `SUMSQ`, `SQRTPI`, `EVEN`, `ODD`, `RAND` and `RANDBETWEEN`.
+- **Engineering additions**: `ERF`, `ERF.PRECISE`, `ERFC`, `ERFC.PRECISE`,
+  `DELTA` and `GESTEP`.
+- **The pre-2010 spellings**, so a workbook written by an older Excel evaluates
+  unchanged: `NORMDIST`, `NORMINV`, `NORMSDIST`, `NORMSINV`, `LOGNORMDIST`,
+  `LOGINV`, `BINOMDIST`, `CRITBINOM`, `NEGBINOMDIST`, `HYPGEOMDIST`, `POISSON`,
+  `EXPONDIST`, `WEIBULL`, `GAMMADIST`, `GAMMAINV`, `BETADIST`, `BETAINV`,
+  `CHIDIST`, `CHIINV`, `TDIST`, `TINV`, `FDIST`, `FINV`, `ZTEST`, `TTEST`,
+  `FTEST`, `CHITEST` and `CONFIDENCE`.
+
+That takes the engine from 167 function names to 314.
+
+### Notes
+
+Every distribution is built on one set of shared numerics (a Lanczos log gamma,
+the incomplete gamma series and continued fraction, the incomplete beta
+continued fraction, and a single inverse solver), so an inverse can never
+disagree with its own forward function. The suite checks that directly: each
+`*.INV` is run against its own `*.DIST`, each pair of tails is checked to add to
+one, and each discrete cumulative form is checked against the running total of
+its own mass function.
+
+`ATAN2` takes its x before its y, matching Excel rather than most maths
+libraries. A unary minus still binds tighter than `^`, so `-2^2` is 4, also as
+in Excel.
+
+The formula engine remains opt-in: none of this is built or touched unless you
+call `evaluate` or `recalculate`, so plain reading and writing pays nothing for
+it.
+
+Array-returning statistics (`FREQUENCY`, `MODE.MULT`, `LINEST`, `LOGEST`,
+`TREND`, `GROWTH`) are still out. They need a formula to spill a computed block
+rather than read a range from the sheet, which is a separate piece of work.
+
 ## 2.19.0
 
 Conditional formatting rules now survive a round trip intact.

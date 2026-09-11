@@ -184,4 +184,29 @@ void _registerEngineeringFunctions(Map<String, _FormulaFn> r) {
     }
     return _NumVal(n * fu.$2 / tu.$2);
   });
+  // --- error function ---
+  // ERF integrates between two limits; given one it runs from zero, which is
+  // the plain error function.
+  r['ERF'] = _guard((a) {
+    final lower = _coerceNum(a.evalScalar(0));
+    if (a.length < 2) return _NumVal(_erf(lower));
+    return _NumVal(_erf(_coerceNum(a.evalScalar(1))) - _erf(lower));
+  });
+  r['ERF.PRECISE'] = _guard((a) => _NumVal(_erf(_coerceNum(a.evalScalar(0)))));
+  _FormulaFn erfc() =>
+      _guard((a) => _NumVal(_erfc(_coerceNum(a.evalScalar(0)))));
+  r['ERFC'] = erfc();
+  r['ERFC.PRECISE'] = erfc();
+
+  // --- step comparisons ---
+  r['DELTA'] = _guard((a) {
+    final x = _coerceNum(a.evalScalar(0));
+    final y = a.length > 1 ? _coerceNum(a.evalScalar(1)) : 0.0;
+    return _NumVal(x == y ? 1 : 0);
+  });
+  r['GESTEP'] = _guard((a) {
+    final x = _coerceNum(a.evalScalar(0));
+    final step = a.length > 1 ? _coerceNum(a.evalScalar(1)) : 0.0;
+    return _NumVal(x >= step ? 1 : 0);
+  });
 }

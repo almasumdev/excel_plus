@@ -67,4 +67,53 @@ void main() {
       expect(_err(_eval('CONVERT(1,"km","kg")')), isNotNull); // mismatched
     });
   });
+  group('Error Function', () {
+    test('ERF matches its published values', () {
+      expect(_num(_eval('ERF(0)')), closeTo(0, 1e-12));
+      expect(_num(_eval('ERF(1)')), closeTo(0.8427007929, 1e-9));
+      expect(_num(_eval('ERF(0.5)')), closeTo(0.5204998778, 1e-9));
+      // It is an odd function, so a sign change flips the result.
+      expect(_num(_eval('ERF(-1)+ERF(1)')), closeTo(0, 1e-12));
+    });
+
+    test('a second argument integrates between the two limits', () {
+      expect(_num(_eval('ERF(0.5,1)-(ERF(1)-ERF(0.5))')), closeTo(0, 1e-12));
+      expect(_num(_eval('ERF(0.5,1)')), closeTo(0.3222009151, 1e-9));
+    });
+
+    test('ERFC is the rest of the area', () {
+      expect(_num(_eval('ERF(1.25)+ERFC(1.25)')), closeTo(1, 1e-12));
+      expect(_num(_eval('ERFC(1)')), closeTo(0.1572992071, 1e-9));
+      expect(_num(_eval('ERFC(0)')), closeTo(1, 1e-12));
+    });
+
+    test('the far tail keeps its significant digits', () {
+      // Taken from the upper incomplete gamma directly rather than as one
+      // minus the error function, which would round to zero here.
+      expect(_num(_eval('ERFC(5)')), closeTo(1.5374597944e-12, 1e-22));
+    });
+
+    test('the precise spellings agree with the plain ones', () {
+      expect(_num(_eval('ERF.PRECISE(0.75)-ERF(0.75)')), closeTo(0, 1e-15));
+      expect(_num(_eval('ERFC.PRECISE(0.75)-ERFC(0.75)')), closeTo(0, 1e-15));
+    });
+  });
+
+  group('Step Comparisons', () {
+    test('DELTA reports whether two numbers are equal', () {
+      expect(_num(_eval('DELTA(5,5)')), 1);
+      expect(_num(_eval('DELTA(5,4)')), 0);
+      // A single argument is compared against zero.
+      expect(_num(_eval('DELTA(0)')), 1);
+      expect(_num(_eval('DELTA(2)')), 0);
+    });
+
+    test('GESTEP reports whether a number reaches the step', () {
+      expect(_num(_eval('GESTEP(5,4)')), 1);
+      expect(_num(_eval('GESTEP(4,4)')), 1);
+      expect(_num(_eval('GESTEP(3,4)')), 0);
+      expect(_num(_eval('GESTEP(1)')), 1);
+      expect(_num(_eval('GESTEP(-1)')), 0);
+    });
+  });
 }
