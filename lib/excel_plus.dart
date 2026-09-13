@@ -171,6 +171,7 @@ part 'src/formula/formula_functions_stats_extra.dart';
 part 'src/formula/formula_functions_distributions.dart';
 part 'src/formula/formula_functions_distributions_discrete.dart';
 part 'src/formula/formula_functions_inference.dart';
+part 'src/formula/formula_functions_array_stats.dart';
 part 'src/formula/formula_functions_math.dart';
 part 'src/formula/formula_functions_financial.dart';
 part 'src/formula/formula_functions_database.dart';

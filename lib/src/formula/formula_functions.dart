@@ -292,6 +292,7 @@ Map<String, _FormulaFn> _buildFunctionRegistry() {
   _registerDistributionFunctions(r);
   _registerDiscreteDistributionFunctions(r);
   _registerInferenceFunctions(r);
+  _registerArrayStatFunctions(r);
   _registerMathFunctions(r);
   _registerFinancialFunctions(r);
   _registerDatabaseFunctions(r);

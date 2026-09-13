@@ -147,6 +147,53 @@ void main() {
       expect(numOf(s.cell(CellIndex.indexByString('A3')).value), 3);
     });
 
+    test('editing a spilling formula to a larger one still spills', () {
+      // The prior spill's cells are the new one's target, so unless the old
+      // range is remembered across the edit they block it with #SPILL!.
+      final excel = Excel.createExcel();
+      final s = excel['Sheet1'];
+      final at = CellIndex.indexByString('A1');
+      s.updateCell(at, FormulaCellValue('SEQUENCE(2)'));
+      excel.recalculate();
+      expect(_formula(s, 'A1').spillRange, 'A1:A2');
+
+      // A fresh FormulaCellValue, which is how a caller edits a formula.
+      s.updateCell(at, FormulaCellValue('SEQUENCE(4)'));
+      excel.recalculate();
+      expect(_formula(s, 'A1').cachedValue, '1');
+      expect(_formula(s, 'A1').spillRange, 'A1:A4');
+      expect(numOf(s.cell(CellIndex.indexByString('A4')).value), 4);
+    });
+
+    test('editing it to a smaller one leaves no ghosts behind', () {
+      final excel = Excel.createExcel();
+      final s = excel['Sheet1'];
+      final at = CellIndex.indexByString('A1');
+      s.updateCell(at, FormulaCellValue('SEQUENCE(4)'));
+      excel.recalculate();
+
+      s.updateCell(at, FormulaCellValue('SEQUENCE(2)'));
+      excel.recalculate();
+      expect(_formula(s, 'A1').spillRange, 'A1:A2');
+      expect(s.cell(CellIndex.indexByString('A3')).value, isNull);
+      expect(s.cell(CellIndex.indexByString('A4')).value, isNull);
+    });
+
+    test('replacing a spilling formula with a scalar one clears its range', () {
+      final excel = Excel.createExcel();
+      final s = excel['Sheet1'];
+      final at = CellIndex.indexByString('A1');
+      s.updateCell(at, FormulaCellValue('SEQUENCE(3)'));
+      excel.recalculate();
+
+      s.updateCell(at, FormulaCellValue('1+1'));
+      excel.recalculate();
+      expect(_formula(s, 'A1').cachedValue, '2');
+      expect(_formula(s, 'A1').spillRange, isNull);
+      expect(s.cell(CellIndex.indexByString('A2')).value, isNull);
+      expect(s.cell(CellIndex.indexByString('A3')).value, isNull);
+    });
+
     test('a 2-D array result spills across rows and columns', () {
       final excel = Excel.createExcel();
       final s = excel['Sheet1'];

@@ -119,7 +119,14 @@ DELTA · GESTEP · CONVERT (common length, mass, time, and temperature units)
 **Date & time**: DATE · TIME · TODAY · NOW · YEAR · MONTH · DAY · HOUR ·
 MINUTE · SECOND · WEEKDAY · DAYS · DATEDIF · EDATE · EOMONTH
 
-**Dynamic arrays**: FILTER · SORT · UNIQUE · SEQUENCE
+**Dynamic arrays**: FILTER · SORT · UNIQUE · SEQUENCE · TRANSPOSE
+
+**Array-returning statistics**: FREQUENCY · MODE.MULT · LINEST · LOGEST ·
+TREND · GROWTH
+
+`LINEST` and `LOGEST` take several predictors, and list their coefficients
+right to left with the intercept last, the way Excel does. Pass a fourth
+argument of `TRUE` for the five-row statistics block.
 
 Dynamic-array functions spill their result across the grid on `recalculate`
 (with Excel `#SPILL!` collision handling) and also compose inside other
@@ -127,7 +134,4 @@ functions (e.g. `SUM(UNIQUE(A1:A100))`).
 
 ## Not yet supported
 
-- Array-returning statistics: FREQUENCY, MODE.MULT, LINEST, LOGEST, TREND,
-  GROWTH. These need a formula to spill a computed block rather than a range
-  read from the sheet, which the engine does not do yet.
 - R1C1-style `INDIRECT` (only A1-style text is resolved)

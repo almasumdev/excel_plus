@@ -1,3 +1,53 @@
+## 2.21.0
+
+The array-returning statistics land, which closes the last gap the README
+listed. A real spilling bug turned up while building them and is fixed here too.
+
+### New
+
+- **Array-returning statistics**: `FREQUENCY`, `MODE.MULT`, `LINEST`, `LOGEST`,
+  `TREND` and `GROWTH`, plus `TRANSPOSE`. They spill across the grid on
+  `recalculate` exactly as `SEQUENCE` and `FILTER` already do.
+- `LINEST` and `LOGEST` handle several predictors, not just one. Coefficients
+  come back right to left with the intercept last, matching Excel, and a fourth
+  argument of `TRUE` adds the five-row statistics block: standard errors, r
+  squared, the standard error of y, the F statistic, the degrees of freedom,
+  and the regression and residual sums of squares. A third argument of `FALSE`
+  forces the fit through the origin.
+- `TREND` and `GROWTH` predict at new points, or reproduce the fitted points
+  when `new_x` is left out. Omitting `known_x` uses 1, 2, 3 and so on.
+
+### Fixed
+
+- **Editing a spilling formula produced a spurious `#SPILL!`.** The anchor's
+  spill range was recorded only on its `FormulaCellValue`, so replacing the
+  formula through `updateCell`, which is how you edit one, threw that record
+  away. The previous spill's cells were then never cleared and blocked the new
+  result, and once a cell reported `#SPILL!` it stayed that way. The workbook
+  now remembers each anchor's range itself, so growing `SEQUENCE(2)` to
+  `SEQUENCE(4)`, shrinking it back, or replacing it with an ordinary formula
+  all behave. This affected every dynamic array (`SEQUENCE`, `FILTER`, `SORT`,
+  `UNIQUE`) since they shipped, not only the new functions.
+
+### Notes
+
+**A correction to 2.20.0.** That release said these functions "need a formula to
+spill a computed block rather than read one from the sheet, which the engine
+does not do yet". That was wrong. `SEQUENCE` has always built a computed block
+out of nothing and spilled it, so the machinery was already general and the
+functions only ever needed writing. The README and the function reference
+carried the same wrong claim and are corrected.
+
+The regression sits on one shared least-squares fit, solved through the normal
+equations with a Gauss-Jordan inverse and partial pivoting, so `LINEST`,
+`LOGEST`, `TREND` and `GROWTH` cannot disagree with each other. Predictors that
+repeat each other leave the system singular and report `#NUM!` rather than
+returning an arbitrary answer. The suite checks the new functions against the
+scalar ones that take a different route: `LINEST` against `SLOPE` and
+`INTERCEPT`, `TREND` against `FORECAST`.
+
+That takes the engine to 321 function names.
+
 ## 2.20.0
 
 The statistical library is complete. Every distribution Excel offers, both of

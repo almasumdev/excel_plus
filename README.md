@@ -214,7 +214,9 @@ Flutter platform. Expand a group for details:
   hypothesis tests, regression and correlation, and the pre-2010 spellings so
   older workbooks evaluate unchanged
 - Incremental recalculation: `recalculate(changed: [...])` recomputes only the formulas affected by the changed cells
-- Dynamic-array spilling: `SEQUENCE` / `FILTER` / `SORT` / `UNIQUE` fill a spill range on `recalculate`, with Excel `#SPILL!` collision handling
+- Dynamic-array spilling: `SEQUENCE` / `FILTER` / `SORT` / `UNIQUE` / `FREQUENCY` /
+  `LINEST` / `TREND` / `TRANSPOSE` fill a spill range on `recalculate`, with
+  Excel `#SPILL!` collision handling
 - Excel tables (ListObjects)
 - Pivot tables: read & write (row / column / page / nested fields + measures)
 - Find & replace
@@ -245,7 +247,6 @@ Flutter platform. Expand a group for details:
 
 ## Limitations
 
-- ❌ Array-returning statistics: FREQUENCY, MODE.MULT, LINEST, TREND, GROWTH
 - ❌ R1C1-style references (A1-style only)
 
 ## Roadmap
@@ -253,8 +254,7 @@ Flutter platform. Expand a group for details:
 What ships next is driven by user requests on the
 [issue tracker](https://github.com/almasumdev/excel_plus/issues):
 
-- ⬜ Array-returning statistical functions (FREQUENCY, LINEST, TREND), which
-  need a formula to spill a computed block rather than read one from the sheet
+- ⬜ R1C1-style reference parsing
 
 Shipped milestones are in the
 [changelog](https://github.com/almasumdev/excel_plus/blob/main/CHANGELOG.md).

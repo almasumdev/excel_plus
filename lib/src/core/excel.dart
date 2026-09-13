@@ -48,6 +48,15 @@ class Excel {
   /// after the built-in library.
   final Map<String, ExcelFunction> _customFunctions = {};
 
+  /// The spill range each anchor committed on the last [recalculate], keyed by
+  /// sheet name and the anchor's column and row.
+  ///
+  /// [FormulaCellValue._arrayRef] carries the same range, but it lives on the
+  /// cell value, so replacing a spilling formula with a fresh
+  /// [FormulaCellValue] would drop it and leave the old spill's cells behind to
+  /// block the new one. This map survives that replacement.
+  final Map<(String, int, int), String> _spillAnchors = {};
+
   /// Canonical default [CellStyle] per number format, shared by every
   /// value-only cell write instead of allocating (and later value-hashing) a
   /// fresh equal instance per cell. Instances are marked `_shared`;
@@ -343,7 +352,10 @@ class Excel {
     // clear the cells it owns before recomputing.
     final priorSpills = <(String, String)>[]; // (sheetName, spill ref)
     for (final (data, name) in targets) {
-      final ref = (data.value as FormulaCellValue)._arrayRef;
+      final index = data.cellIndex;
+      final ref =
+          (data.value as FormulaCellValue)._arrayRef ??
+          _spillAnchors[(name, index.columnIndex, index.rowIndex)];
       if (ref != null) priorSpills.add((name, ref));
     }
 
@@ -391,6 +403,7 @@ class Excel {
           : 1;
 
       if (raw is! _ArrayVal || (rows <= 1 && cols <= 1)) {
+        _spillAnchors.remove((name, c0, r0));
         final (cached, type) = _cachedFor(_evalToCell(raw));
         anchorWrites.add((
           data,
@@ -415,6 +428,7 @@ class Excel {
         }
       }
       if (blocked) {
+        _spillAnchors.remove((name, c0, r0));
         final (cached, type) = _cachedFor(_spillError);
         anchorWrites.add((
           data,
@@ -424,6 +438,7 @@ class Excel {
       }
 
       final ref = getSpanCellId(c0, r0, c0 + cols - 1, r0 + rows - 1);
+      _spillAnchors[(name, c0, r0)] = ref;
       final (cached, type) = _cachedFor(_evalToCell(raw.rows[0][0]));
       anchorWrites.add((
         data,
