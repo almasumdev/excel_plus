@@ -247,14 +247,15 @@ Flutter platform. Expand a group for details:
 
 ## Limitations
 
-- ❌ R1C1-style references (A1-style only)
+- ❌ Whole-row and whole-column R1C1 references (`R2`, `C3`) in `INDIRECT`;
+  single cells and ranges in either style work
 
 ## Roadmap
 
 What ships next is driven by user requests on the
 [issue tracker](https://github.com/almasumdev/excel_plus/issues):
 
-- ⬜ R1C1-style reference parsing
+- ⬜ Whole-row and whole-column R1C1 references
 
 Shipped milestones are in the
 [changelog](https://github.com/almasumdev/excel_plus/blob/main/CHANGELOG.md).

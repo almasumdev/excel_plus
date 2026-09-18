@@ -1,3 +1,34 @@
+## 2.22.0
+
+`INDIRECT` reads R1C1 references, and `ADDRESS` joins the engine to write
+them.
+
+### New
+
+- **`INDIRECT` honours its second argument.** With `FALSE` the text is read as
+  R1C1: absolute parts such as `R2C3`, relative ones such as `R[-1]C[2]`, and a
+  bare `R` or `C` for the formula's own row or column. Relative parts are
+  measured from the cell holding the formula, a sheet prefix is kept, and a
+  two-cell range works inside an aggregate.
+- **`ADDRESS`**, which was missing entirely. It writes an A1 or R1C1 reference
+  for a row and column, with all four anchoring modes and an optional sheet
+  name, quoted when the name needs it. `INDIRECT(ADDRESS(...))` round trips in
+  both styles.
+
+### Fixed
+
+- `INDIRECT` used to ignore its second argument, so `INDIRECT("R2C3", FALSE)`
+  was read as A1 text and failed with `#REF!`.
+
+### Notes
+
+A reference that would fall off the grid, such as `R[-1]C` in row 1, is
+`#REF!`, and A1 text passed with `FALSE` is rejected rather than quietly read
+the other way. Whole-row and whole-column R1C1 forms (`R2`, `C3`) are not
+supported yet.
+
+That takes the engine to 322 function names.
+
 ## 2.21.0
 
 The array-returning statistics land, which closes the last gap the README

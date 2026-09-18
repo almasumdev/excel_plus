@@ -103,7 +103,11 @@ RIGHT · MID · PROPER · REPT · EXACT · SUBSTITUTE · REPLACE · FIND · SEAR
 VALUE · TEXTJOIN · CHAR · CODE · T
 
 **Lookup & reference**: MATCH · INDEX · VLOOKUP · HLOOKUP · LOOKUP · XLOOKUP ·
-CHOOSE · OFFSET · INDIRECT · ROW · COLUMN · ROWS · COLUMNS
+CHOOSE · OFFSET · INDIRECT · ADDRESS · ROW · COLUMN · ROWS · COLUMNS
+
+`INDIRECT` reads R1C1 text when its second argument is `FALSE`, including
+relative parts such as `R[-1]C`, which are measured from the formula's own
+cell. `ADDRESS` writes either style, so the two round trip.
 
 **Financial**: PMT · FV · PV · NPER · NPV · IRR · RATE
 
@@ -134,4 +138,4 @@ functions (e.g. `SUM(UNIQUE(A1:A100))`).
 
 ## Not yet supported
 
-- R1C1-style `INDIRECT` (only A1-style text is resolved)
+- Whole-row and whole-column R1C1 references (`R2`, `C3`) in `INDIRECT`

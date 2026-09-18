@@ -126,8 +126,14 @@ void _registerReferenceFunctions(Map<String, _FormulaFn> r) {
     return a.ctx.rangeValue(s, c1, r1, c1 + width - 1, r1 + height - 1);
   });
   r['INDIRECT'] = _guard((a) {
-    final text = _coerceText(a.evalScalar(0)).trim();
+    var text = _coerceText(a.evalScalar(0)).trim();
     if (text.isEmpty) return const _ErrVal(CellErrorValue.reference);
+    // A second argument of FALSE means the text is in R1C1 style.
+    if (a.length > 1 && !_coerceBool(a.evalScalar(1))) {
+      final a1 = _r1c1ToA1(text, a.ctx._curRow, a.ctx._curCol);
+      if (a1 == null) return const _ErrVal(CellErrorValue.reference);
+      text = a1;
+    }
     _FNode node;
     try {
       node = _parseFormula(text);
@@ -138,6 +144,41 @@ void _registerReferenceFunctions(Map<String, _FormulaFn> r) {
       return const _ErrVal(CellErrorValue.reference);
     }
     return _evalNode(node, a.ctx, a.sheet);
+  });
+
+  r['ADDRESS'] = _guard((a) {
+    final row = _coerceNum(a.evalScalar(0)).truncate();
+    final col = _coerceNum(a.evalScalar(1)).truncate();
+    // 1 = both absolute, 2 = row only, 3 = column only, 4 = both relative.
+    final absNum = a.length > 2 ? _coerceNum(a.evalScalar(2)).truncate() : 1;
+    final a1 = a.length > 3 ? _coerceBool(a.evalScalar(3)) : true;
+    if (row < 1 || row > 1048576 || col < 1 || col > 16384) {
+      return const _ErrVal(CellErrorValue.valueError);
+    }
+    if (absNum < 1 || absNum > 4) {
+      return const _ErrVal(CellErrorValue.valueError);
+    }
+    final rowAbs = absNum == 1 || absNum == 2;
+    final colAbs = absNum == 1 || absNum == 3;
+
+    String ref;
+    if (a1) {
+      ref =
+          '${colAbs ? r'$' : ''}${getColumnAlphabet(col - 1)}'
+          '${rowAbs ? r'$' : ''}$row';
+    } else {
+      // A relative R1C1 part keeps the number as given, in brackets, the way
+      // Excel writes it; it is not resolved against any cell.
+      ref =
+          'R${rowAbs ? '$row' : '[$row]'}'
+          'C${colAbs ? '$col' : '[$col]'}';
+    }
+
+    if (a.length > 4) {
+      final sheet = _coerceText(a.evalScalar(4));
+      if (sheet.isNotEmpty) ref = '${_quoteSheetName(sheet)}!$ref';
+    }
+    return _TextVal(ref);
   });
 
   // --- dynamic arrays (return an _ArrayVal; spill on recalculate) ---
@@ -233,4 +274,68 @@ void _registerReferenceFunctions(Map<String, _FormulaFn> r) {
     }
     return _ArrayVal(out);
   });
+}
+
+/// One R1C1 cell such as `R5C2`, `R[-1]C`, or `RC[3]`.
+final _r1c1Cell = RegExp(r'^[Rr](\[-?\d+\]|\d+)?[Cc](\[-?\d+\]|\d+)?$');
+
+/// Rewrites an R1C1-style reference as A1, or returns null when it is not one.
+///
+/// Absolute parts (`R5`) become `$`-anchored, relative parts (`R[-1]`, or a
+/// bare `R` for the same row) are resolved against the formula's own cell at
+/// [curRow] and [curCol], which are 0-based. A sheet prefix is kept as it is.
+/// A single cell and a two-cell range are accepted; whole rows and columns are
+/// not.
+String? _r1c1ToA1(String text, int? curRow, int? curCol) {
+  var prefix = '';
+  var body = text;
+  final bang = text.lastIndexOf('!');
+  if (bang >= 0) {
+    prefix = text.substring(0, bang + 1);
+    body = text.substring(bang + 1);
+  }
+  final parts = body.split(':');
+  if (parts.isEmpty || parts.length > 2) return null;
+
+  /// Resolves one axis to a 1-based index and whether it was absolute.
+  (int, bool)? axis(String? spec, int? current) {
+    if (spec == null) {
+      if (current == null) return null;
+      return (current + 1, false);
+    }
+    if (spec.startsWith('[')) {
+      if (current == null) return null;
+      final offset = int.tryParse(spec.substring(1, spec.length - 1));
+      if (offset == null) return null;
+      return (current + 1 + offset, false);
+    }
+    final n = int.tryParse(spec);
+    return n == null ? null : (n, true);
+  }
+
+  final out = <String>[];
+  for (final part in parts) {
+    final m = _r1c1Cell.firstMatch(part.trim());
+    if (m == null) return null;
+    final row = axis(m.group(1), curRow);
+    final col = axis(m.group(2), curCol);
+    if (row == null || col == null) return null;
+    // Excel's grid is 1,048,576 rows by 16,384 columns.
+    if (row.$1 < 1 || row.$1 > 1048576) return null;
+    if (col.$1 < 1 || col.$1 > 16384) return null;
+    out.add(
+      '${col.$2 ? r'$' : ''}${getColumnAlphabet(col.$1 - 1)}'
+      '${row.$2 ? r'$' : ''}${row.$1}',
+    );
+  }
+  return prefix + out.join(':');
+}
+
+/// Quotes a sheet name for use in a reference when it needs it: anything but
+/// letters, digits and underscores, or a leading digit, gets single quotes, and
+/// an apostrophe inside is doubled.
+String _quoteSheetName(String name) {
+  final plain = RegExp(r'^[A-Za-z_][A-Za-z0-9_]*$').hasMatch(name);
+  if (plain) return name;
+  return "'${name.replaceAll("'", "''")}'";
 }
