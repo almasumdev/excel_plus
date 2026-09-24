@@ -135,6 +135,34 @@ void main() {
       expect(_err(_evalOn(s, 'INDIRECT("R1C16385",FALSE)')), '#REF!');
     });
 
+    test('a row-only part is the whole row', () {
+      final s = _sheetWithA([10, 20, 30]);
+      // Row 2 holds only A2, so summing the row gives that one value.
+      expect(_num(_evalOn(s, 'SUM(INDIRECT("R2",FALSE))', 'Z9')), 20);
+    });
+
+    test('a column-only part is the whole column', () {
+      final s = _sheetWithA([10, 20, 30]);
+      expect(_num(_evalOn(s, 'SUM(INDIRECT("C1",FALSE))', 'Z9')), 60);
+    });
+
+    test('a span of rows or of columns works', () {
+      final s = _sheetWithA([10, 20, 30]);
+      expect(_num(_evalOn(s, 'SUM(INDIRECT("R1:R2",FALSE))', 'Z9')), 30);
+      expect(_num(_evalOn(s, 'SUM(INDIRECT("C1:C1",FALSE))', 'Z9')), 60);
+    });
+
+    test('a relative whole axis is measured from the formula cell', () {
+      final s = _sheetWithA([10, 20, 30]);
+      // From B3, one row up is row 2.
+      expect(_num(_evalOn(s, 'SUM(INDIRECT("R[-1]",FALSE))', 'B3')), 20);
+    });
+
+    test('mixing a row part with a column part is #REF!', () {
+      final s = _sheetWithA([10, 20, 30]);
+      expect(_err(_evalOn(s, 'INDIRECT("R2:C3",FALSE)', 'Z9')), '#REF!');
+    });
+
     test('A1 text in R1C1 mode is not silently accepted', () {
       final s = _sheetWithA([10, 20, 30]);
       expect(_err(_evalOn(s, 'INDIRECT("A2",FALSE)')), '#REF!');

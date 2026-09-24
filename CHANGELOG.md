@@ -1,3 +1,24 @@
+## 2.23.0
+
+`INDIRECT` finishes R1C1: whole rows and whole columns work too.
+
+### New
+
+- **Whole-row and whole-column R1C1 references in `INDIRECT`.** A part naming
+  only rows (`R2`, `R1:R3`) or only columns (`C3`, `C1:C2`) now resolves to the
+  whole row or column, and the relative forms (`R[-1]`, a bare `R` or `C`) are
+  measured from the formula's own cell as usual. That was the last gap the
+  README listed.
+
+### Notes
+
+Both halves of a range have to be the same kind, so a mix such as `R2:C3` is
+`#REF!` rather than a guess. Whole-row and whole-column references already
+worked in A1, so these resolve onto the same path the engine already had.
+
+Formulas themselves are still always A1, which is how the file format stores
+them; `INDIRECT` and `ADDRESS` are where R1C1 text is read and written.
+
 ## 2.22.0
 
 `INDIRECT` reads R1C1 references, and `ADDRESS` joins the engine to write

@@ -279,6 +279,10 @@ void _registerReferenceFunctions(Map<String, _FormulaFn> r) {
 /// One R1C1 cell such as `R5C2`, `R[-1]C`, or `RC[3]`.
 final _r1c1Cell = RegExp(r'^[Rr](\[-?\d+\]|\d+)?[Cc](\[-?\d+\]|\d+)?$');
 
+/// One whole-row or whole-column R1C1 part such as `R2`, `C[-1]`, or a bare
+/// `R`, which names the row or column the formula itself sits in.
+final _r1c1WholeAxis = RegExp(r'^([RrCc])(\[-?\d+\]|\d+)?$');
+
 /// Rewrites an R1C1-style reference as A1, or returns null when it is not one.
 ///
 /// Absolute parts (`R5`) become `$`-anchored, relative parts (`R[-1]`, or a
@@ -313,9 +317,28 @@ String? _r1c1ToA1(String text, int? curRow, int? curCol) {
     return n == null ? null : (n, true);
   }
 
-  final out = <String>[];
+  // A part naming only rows (R2) or only columns (C3) is a whole-row or
+  // whole-column reference. Both parts of a range must be the same kind.
+  final rowsOnly = <int>[];
+  final colsOnly = <int>[];
+  final cells = <String>[];
   for (final part in parts) {
-    final m = _r1c1Cell.firstMatch(part.trim());
+    final trimmed = part.trim();
+    final whole = _r1c1WholeAxis.firstMatch(trimmed);
+    if (whole != null) {
+      final isRow = whole.group(1)!.toUpperCase() == 'R';
+      final v = axis(whole.group(2), isRow ? curRow : curCol);
+      if (v == null) return null;
+      if (isRow) {
+        if (v.$1 < 1 || v.$1 > 1048576) return null;
+        rowsOnly.add(v.$1);
+      } else {
+        if (v.$1 < 1 || v.$1 > 16384) return null;
+        colsOnly.add(v.$1);
+      }
+      continue;
+    }
+    final m = _r1c1Cell.firstMatch(trimmed);
     if (m == null) return null;
     final row = axis(m.group(1), curRow);
     final col = axis(m.group(2), curCol);
@@ -323,12 +346,29 @@ String? _r1c1ToA1(String text, int? curRow, int? curCol) {
     // Excel's grid is 1,048,576 rows by 16,384 columns.
     if (row.$1 < 1 || row.$1 > 1048576) return null;
     if (col.$1 < 1 || col.$1 > 16384) return null;
-    out.add(
+    cells.add(
       '${col.$2 ? r'$' : ''}${getColumnAlphabet(col.$1 - 1)}'
       '${row.$2 ? r'$' : ''}${row.$1}',
     );
   }
-  return prefix + out.join(':');
+
+  // Mixing kinds, such as R2:C3, is not a reference.
+  final kinds = [rowsOnly, colsOnly, cells].where((l) => l.isNotEmpty).length;
+  if (kinds != 1) return null;
+
+  if (rowsOnly.isNotEmpty) {
+    final a = rowsOnly.first;
+    final b = rowsOnly.length == 2 ? rowsOnly[1] : a;
+    return '$prefix$a:$b';
+  }
+  if (colsOnly.isNotEmpty) {
+    final a = getColumnAlphabet(colsOnly.first - 1);
+    final b = getColumnAlphabet(
+      (colsOnly.length == 2 ? colsOnly[1] : colsOnly.first) - 1,
+    );
+    return '$prefix$a:$b';
+  }
+  return prefix + cells.join(':');
 }
 
 /// Quotes a sheet name for use in a reference when it needs it: anything but

@@ -247,15 +247,16 @@ Flutter platform. Expand a group for details:
 
 ## Limitations
 
-- ❌ Whole-row and whole-column R1C1 references (`R2`, `C3`) in `INDIRECT`;
-  single cells and ranges in either style work
+- ❌ Formulas written in R1C1 notation. `INDIRECT` reads R1C1 text and
+  `ADDRESS` writes it; the formula itself is always A1, as it is in the file
+  format.
 
 ## Roadmap
 
 What ships next is driven by user requests on the
 [issue tracker](https://github.com/almasumdev/excel_plus/issues):
 
-- ⬜ Whole-row and whole-column R1C1 references
+- ⬜ Driven by what turns up on the issue tracker
 
 Shipped milestones are in the
 [changelog](https://github.com/almasumdev/excel_plus/blob/main/CHANGELOG.md).
