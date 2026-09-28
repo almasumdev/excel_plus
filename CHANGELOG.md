@@ -1,3 +1,28 @@
+## 2.24.0
+
+The date and time functions a spreadsheet of schedules needs.
+
+### New
+
+- **`WORKDAY`, `WORKDAY.INTL`, `NETWORKDAYS`, `NETWORKDAYS.INTL`**: step over
+  weekends and holidays, or count the working days between two dates. The
+  `.INTL` pair takes a weekend code or a seven-character pattern such as
+  `"0000011"`, so a working week that is not Monday to Friday is expressible.
+- **`WEEKNUM` and `ISOWEEKNUM`**, including `WEEKNUM`'s type 21, which is the
+  ISO system.
+- **`YEARFRAC`** on all five day-count bases, which is what a term or an
+  interest calculation divides by.
+- **`DATEVALUE` and `TIMEVALUE`**, which read a date or a time out of text.
+  Together they rebuild a full timestamp.
+
+### Notes
+
+Reversing the two dates given to `NETWORKDAYS` returns the same count negated,
+and `YEARFRAC` is unaffected by their order, both matching Excel. A weekend
+pattern of every day off is `#NUM!` rather than a count that never finishes.
+
+That takes the engine to 331 function names.
+
 ## 2.23.0
 
 `INDIRECT` finishes R1C1: whole rows and whole columns work too.

@@ -122,7 +122,14 @@ BITXOR · BITLSHIFT · BITRSHIFT · ERF · ERF.PRECISE · ERFC · ERFC.PRECISE �
 DELTA · GESTEP · CONVERT (common length, mass, time, and temperature units)
 
 **Date & time**: DATE · TIME · TODAY · NOW · YEAR · MONTH · DAY · HOUR ·
-MINUTE · SECOND · WEEKDAY · DAYS · DATEDIF · EDATE · EOMONTH
+MINUTE · SECOND · WEEKDAY · WEEKNUM · ISOWEEKNUM · DAYS · DATEDIF ·
+EDATE · EOMONTH · WORKDAY · WORKDAY.INTL · NETWORKDAYS ·
+NETWORKDAYS.INTL · YEARFRAC · DATEVALUE · TIMEVALUE
+
+The `.INTL` pair takes either a weekend code (1 for Saturday and Sunday, 11
+through 17 for a single day) or a seven-character pattern such as `"0000011"`,
+where position one is Monday and `1` marks a day off. Both also take a list of
+holiday dates.
 
 **Dynamic arrays**: FILTER · SORT · UNIQUE · SEQUENCE · TRANSPOSE
 

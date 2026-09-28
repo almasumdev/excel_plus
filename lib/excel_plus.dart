@@ -166,6 +166,7 @@ part 'src/formula/formula_functions.dart';
 part 'src/formula/formula_functions_extra.dart';
 part 'src/formula/formula_functions_lookup.dart';
 part 'src/formula/formula_functions_datetime.dart';
+part 'src/formula/formula_functions_datetime_extra.dart';
 part 'src/formula/formula_functions_stats.dart';
 part 'src/formula/formula_functions_stats_extra.dart';
 part 'src/formula/formula_functions_distributions.dart';
