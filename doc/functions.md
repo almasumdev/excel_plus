@@ -23,6 +23,9 @@ excel.formula.registerFunction('TRIPLE', (args) {
 
 - Operators: `+ - * / ^ %`, comparisons (`= <> < <= > >=`), `&`, unary minus
 - References: relative & absolute (`A1`, `$A$1`) and ranges (`A1:B10`)
+- Structured table references: `Sales[Amount]`, the section keywords
+  (`[#Data]`, `[#Headers]`, `[#Totals]`, `[#All]`), a column span
+  (`Sales[[Q1]:[Q4]]`), and the this-row form `[@Amount]` inside a table
 - Cross-sheet references (`Sheet2!A1`)
 - Defined names / named ranges
 - Array broadcasting (`A1:A5>2`)

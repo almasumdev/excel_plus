@@ -173,6 +173,9 @@ class _FormulaParser {
       case _TokKind.error:
         _consume();
         return _ErrNode(t.text);
+      case _TokKind.structured:
+        _consume();
+        return _structuredRef(t.text);
       case _TokKind.lparen:
         _consume();
         final e = _parseExpr(1);
@@ -224,6 +227,18 @@ class _FormulaParser {
       throw FormulaParseException('Expected ${kind.name} in formula');
     }
     _consume();
+  }
+
+  /// Splits a structured reference token into its table name and specifier.
+  ///
+  /// The token arrives whole from the lexer (`Sales[Amount]`), so the split is
+  /// at the first `[`; a token with nothing before it is the this-row form.
+  _FNode _structuredRef(String text) {
+    final open = text.indexOf('[');
+    if (open == -1) return _NameNode(text);
+    final table = text.substring(0, open);
+    final inner = text.substring(open + 1, text.length - 1);
+    return _TableRefNode(table.isEmpty ? null : table, inner);
   }
 
   _FNode _classifyWord(String w) {

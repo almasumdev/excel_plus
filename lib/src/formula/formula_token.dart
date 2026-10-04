@@ -13,6 +13,9 @@ enum _TokKind {
   bang,
   word,
   quotedSheet,
+
+  /// A structured table reference, brackets included (`Sales[Amount]`).
+  structured,
 }
 
 /// A single lexical token in a formula string.
@@ -182,14 +185,36 @@ List<_Tok> _tokenizeFormula(String input) {
       continue;
     }
 
-    // Word: cell reference, function name, defined name, TRUE/FALSE.
+    // Word: cell reference, function name, defined name, TRUE/FALSE, or the
+    // table name of a structured reference.
     if (_isWordStart(code)) {
       final start = i;
       while (i < n && _isWordChar(input.codeUnitAt(i))) {
         i++;
       }
+      // `Sales[Amount]` is one reference, not a word beside a bracket group,
+      // so the brackets are taken with it.
+      if (i < n && input[i] == '[') {
+        final end = _structuredEnd(input, i);
+        if (end != -1) {
+          tokens.add(_Tok(_TokKind.structured, input.substring(start, end)));
+          i = end;
+          continue;
+        }
+      }
       tokens.add(_Tok(_TokKind.word, input.substring(start, i)));
       continue;
+    }
+
+    // A bracket group with no table name in front is the this-row form,
+    // `[@Amount]`, which means the table the formula's own cell sits in.
+    if (c == '[') {
+      final end = _structuredEnd(input, i);
+      if (end != -1) {
+        tokens.add(_Tok(_TokKind.structured, input.substring(i, end)));
+        i = end;
+        continue;
+      }
     }
 
     throw FormulaParseException(
@@ -217,3 +242,26 @@ bool _isWordChar(int c) =>
 // `/`, `!`, `?`, `.` (covers #DIV/0!, #N/A, #NAME?, #NULL!, ...).
 bool _isErrorChar(int c) =>
     _isLetter(c) || _isDigit(c) || c == 47 || c == 33 || c == 63 || c == 46;
+
+/// The index just past the `]` that closes the bracket group starting at
+/// [open] in [input], or -1 when it is never closed.
+///
+/// A column name may itself be bracketed (`Sales[[Total Due]]`) and a
+/// multi-part specifier nests them, so the brackets are counted rather than
+/// scanned for the first `]`.
+int _structuredEnd(String input, int open) {
+  var depth = 0;
+  for (var i = open; i < input.length; i++) {
+    final ch = input[i];
+    if (ch == '[') {
+      depth++;
+    } else if (ch == ']') {
+      depth--;
+      if (depth == 0) return i + 1;
+    } else if (ch == "'") {
+      // An escaped bracket inside a column name.
+      i++;
+    }
+  }
+  return -1;
+}

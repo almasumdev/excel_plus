@@ -307,4 +307,116 @@ void main() {
       expect(back.displayText, '500.00');
     });
   });
+  group('Japanese Era Formats', () {
+    /// The Excel serial for [date].
+    double serial(DateTime date) =>
+        date.difference(DateTime.utc(1899, 12, 30)).inDays.toDouble();
+
+    test('the era name is written at the width g asks for', () {
+      final reiwa = serial(DateTime.utc(2023, 3, 15));
+      expect(_display('g', reiwa), 'R');
+      expect(_display('gg', reiwa), '令');
+      expect(_display('ggg', reiwa), '令和');
+    });
+
+    test('e is the year within the era, not the Gregorian year', () {
+      // 2023 is Reiwa 5.
+      expect(_display('ggge', serial(DateTime.utc(2023, 3, 15))), '令和5');
+      expect(_display('ge', serial(DateTime.utc(2023, 3, 15))), 'R5');
+      expect(_display('ggee', serial(DateTime.utc(2023, 3, 15))), '令05');
+    });
+
+    test('a full Japanese date reads as Excel writes it', () {
+      expect(
+        _display(r'[$-411]ggge"年"m"月"d"日"', serial(DateTime.utc(2023, 3, 15))),
+        '令和5年3月15日',
+      );
+      expect(
+        _display(r'[$-411]ge.m.d', serial(DateTime.utc(2023, 3, 15))),
+        'R5.3.15',
+      );
+    });
+
+    test('each era is recognised from its own first day', () {
+      for (final (date, name, year) in [
+        (DateTime.utc(2019, 5), '令和', 1),
+        (DateTime.utc(2019, 4, 30), '平成', 31),
+        (DateTime.utc(1989, 1, 8), '平成', 1),
+        (DateTime.utc(1989, 1, 7), '昭和', 64),
+        (DateTime.utc(1926, 12, 25), '昭和', 1),
+        (DateTime.utc(1926, 12, 24), '大正', 15),
+        (DateTime.utc(1912, 7, 30), '大正', 1),
+        (DateTime.utc(1912, 7, 29), '明治', 45),
+      ]) {
+        expect(_display('ggge', serial(date)), '$name$year', reason: '$date');
+      }
+    });
+
+    test('the first year of an era is 1, not 0', () {
+      // 1989 is both Showa 64 and Heisei 1, decided by the day.
+      expect(_display('ggge', serial(DateTime.utc(1989, 1, 7))), '昭和64');
+      expect(_display('ggge', serial(DateTime.utc(1989, 1, 8))), '平成1');
+    });
+
+    test('a date before Meiji has no era to name', () {
+      // Rather than inventing one, the era name is left empty.
+      expect(_display('ggg', serial(DateTime.utc(1850, 1, 1))), '');
+    });
+
+    test('e on its own is the Gregorian year', () {
+      expect(_display('e/m/d', serial(DateTime.utc(2023, 3, 15))), '2023/3/15');
+    });
+
+    test('a numeric exponent is not mistaken for an era year', () {
+      // `E` in `0.00E+00` must keep the code numeric.
+      _expectFormat('0.00E+00', 1234.5, '1.23E+03');
+    });
+  });
+  group('Scientific Notation Formats', () {
+    test('the mantissa and exponent are split at the E', () {
+      _expectFormat('0.00E+00', 1234.5, '1.23E+03');
+      _expectFormat('0.0E+0', 1234.5, '1.2E+3');
+      _expectFormat('0.00E+00', 1, '1.00E+00');
+    });
+
+    test('a small value gets a negative exponent', () {
+      _expectFormat('0.00E+00', 0.000123, '1.23E-04');
+      _expectFormat('0.0E+0', 0.05, '5.0E-2');
+    });
+
+    test('a negative value keeps its sign on the mantissa', () {
+      _expectFormat('0.00E+00', -1234.5, '-1.23E+03');
+    });
+
+    test('zero is zero at exponent zero', () {
+      _expectFormat('0.00E+00', 0, '0.00E+00');
+    });
+
+    test('E- shows the sign only when the exponent is negative', () {
+      _expectFormat('0.00E-00', 1234.5, '1.23E03');
+      _expectFormat('0.00E-00', 0.000123, '1.23E-04');
+    });
+
+    test('three integer placeholders give the engineering form', () {
+      // `##0.0E+0` moves the exponent in steps of three.
+      _expectFormat('##0.0E+0', 1234.5, '1.2E+3');
+      _expectFormat('##0.0E+0', 123456, '123.5E+3');
+      _expectFormat('##0.0E+0', 12345678, '12.3E+6');
+    });
+
+    test('a mantissa that rounds up a decade is renormalised', () {
+      // 9.99 to one decimal is 10.0, which no longer fits the single integer
+      // placeholder the format asked for, so it moves into the exponent.
+      _expectFormat('0.0E+0', 9.99, '1.0E+1');
+    });
+
+    test('the exponent is padded to its placeholders', () {
+      _expectFormat('0.00E+000', 1234.5, '1.23E+003');
+    });
+
+    test('a code without a signed E is not scientific', () {
+      // A bare `E` is a literal, as is an `E` with no digits after the sign.
+      expect(_display('0"E"', 5.0), '5E');
+    });
+  });
 }

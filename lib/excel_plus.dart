@@ -160,6 +160,7 @@ part 'src/writer/span_corrector.dart';
 /// Formula
 part 'src/formula/formula_token.dart';
 part 'src/formula/formula_ast.dart';
+part 'src/formula/formula_table_ref.dart';
 part 'src/formula/formula_parser.dart';
 part 'src/formula/formula_value.dart';
 part 'src/formula/formula_evaluator.dart';

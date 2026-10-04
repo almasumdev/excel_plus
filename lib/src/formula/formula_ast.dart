@@ -145,3 +145,23 @@ class _FuncNode extends _FNode {
   @override
   String toString() => '${name.toUpperCase()}(${args.join(',')})';
 }
+
+/// A structured table reference such as `Sales[Amount]`, `Sales[#Totals]` or
+/// the this-row form `[@Amount]`.
+///
+/// The table and the part of it being named are kept as written and resolved
+/// at evaluation time, because the range a table covers changes as rows are
+/// added to it.
+class _TableRefNode extends _FNode {
+  /// The table's name, or null for the unqualified `[@Column]` form, which
+  /// means the table the formula's own cell sits in.
+  final String? table;
+
+  /// What inside the table is named, with the outer brackets stripped.
+  final String specifier;
+
+  const _TableRefNode(this.table, this.specifier);
+
+  @override
+  String toString() => '${table ?? ''}[$specifier]';
+}

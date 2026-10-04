@@ -119,6 +119,13 @@ _EvalValue _evalNode(_FNode node, _FormulaContext ctx, String sheet) {
     return ctx.cellValue(node.sheet ?? sheet, node.col!, node.row!);
   }
   if (node is _RangeNode) return _resolveRange(node, ctx, sheet);
+  if (node is _TableRefNode) {
+    // A table's extent changes as rows are added, so the reference resolves
+    // to a range here rather than at parse time.
+    final range = _resolveTableRef(node, ctx, sheet);
+    if (range == null) return const _ErrVal(CellErrorValue.reference);
+    return _resolveRange(range, ctx, sheet);
+  }
   if (node is _NameNode) return _resolveName(node, ctx, sheet);
   if (node is _UnaryNode) return _evalUnary(node, ctx, sheet);
   if (node is _BinaryNode) return _evalBinary(node, ctx, sheet);

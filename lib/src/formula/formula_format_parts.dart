@@ -482,3 +482,168 @@ String? _formatTextCode(String text, String code) {
   }
   return sb.toString();
 }
+
+/// One Japanese imperial era, as a date format's `g` and `e` tokens need it.
+class _JapaneseEra {
+  /// First day of the era.
+  final DateTime from;
+
+  /// The romaji initial, which `g` writes.
+  final String initial;
+
+  /// The first kanji of the name, which `gg` writes.
+  final String shortName;
+
+  /// The full name, which `ggg` writes.
+  final String longName;
+
+  const _JapaneseEra(this.from, this.initial, this.shortName, this.longName);
+}
+
+/// The eras a Japanese date format can land in, newest first so a lookup
+/// stops at the first one that has begun.
+///
+/// Dates before Meiji have no era in this calendar, so they fall back to the
+/// Gregorian year rather than guessing.
+final List<_JapaneseEra> _japaneseEras = [
+  _JapaneseEra(DateTime.utc(2019, 5), 'R', '令', '令和'),
+  _JapaneseEra(DateTime.utc(1989, 1, 8), 'H', '平', '平成'),
+  _JapaneseEra(DateTime.utc(1926, 12, 25), 'S', '昭', '昭和'),
+  _JapaneseEra(DateTime.utc(1912, 7, 30), 'T', '大', '大正'),
+  _JapaneseEra(DateTime.utc(1868, 9, 8), 'M', '明', '明治'),
+];
+
+/// The era [date] falls in, or null when it predates Meiji.
+_JapaneseEra? _eraOf(DateTime date) {
+  for (final era in _japaneseEras) {
+    if (!date.isBefore(era.from)) return era;
+  }
+  return null;
+}
+
+/// The era name for [date] at the width a `g` run asks for.
+///
+/// `g` is the romaji initial, `gg` the first kanji, and `ggg` the full name.
+String _eraName(DateTime date, int length) {
+  final era = _eraOf(date);
+  if (era == null) return '';
+  return switch (length) {
+    1 => era.initial,
+    2 => era.shortName,
+    _ => era.longName,
+  };
+}
+
+/// The year of [date] within its era, counting the first year as 1.
+///
+/// Excel writes the first year of an era as 1 rather than 0, so 1989 is both
+/// Showa 64 and Heisei 1 depending on the day.
+int _eraYear(DateTime date) {
+  final era = _eraOf(date);
+  if (era == null) return date.year;
+  return date.year - era.from.year + 1;
+}
+
+/// Matches the exponent marker of a scientific-notation format, which is an
+/// `E` or `e` followed by a mandatory sign.
+final _exponentMarker = RegExp(r'[Ee][+-]');
+
+/// The index of the unquoted exponent marker in [section], or -1.
+int _exponentMarkerIndex(String section) {
+  var inQuote = false;
+  for (var i = 0; i < section.length - 1; i++) {
+    final ch = section[i];
+    if (ch == '"') {
+      inQuote = !inQuote;
+      continue;
+    }
+    if (ch == r'\') {
+      i++;
+      continue;
+    }
+    if (inQuote) continue;
+    if (_exponentMarker.hasMatch(section.substring(i, i + 2))) return i;
+  }
+  return -1;
+}
+
+/// A scientific-notation format split at its exponent marker.
+class _ScientificFormat {
+  /// The format for the mantissa, left of the `E`.
+  final String mantissaFormat;
+
+  /// The format for the exponent's digits, right of the sign.
+  final String exponentFormat;
+
+  /// Whether the sign is always shown (`E+`) or only when negative (`E-`).
+  final bool alwaysSign;
+
+  const _ScientificFormat(
+    this.mantissaFormat,
+    this.exponentFormat,
+    this.alwaysSign,
+  );
+
+  /// How many digits the mantissa keeps left of its point.
+  ///
+  /// One is ordinary scientific notation; three is the engineering form
+  /// (`##0.0E+0`), where the exponent moves in steps of three.
+  int get mantissaIntegerDigits {
+    final dot = _indexUnquoted(mantissaFormat, '.');
+    final intPart = dot >= 0
+        ? mantissaFormat.substring(0, dot)
+        : mantissaFormat;
+    final count = _placeholderCount(intPart);
+    return count < 1 ? 1 : count;
+  }
+}
+
+/// Reads [section] as a scientific-notation format, or null when it is not
+/// one.
+_ScientificFormat? _parseScientificFormat(String section) {
+  final at = _exponentMarkerIndex(section);
+  if (at <= 0) return null;
+  final mantissa = section.substring(0, at);
+  if (_placeholderCount(mantissa) == 0) return null;
+  final exponent = section.substring(at + 2);
+  if (_placeholderCount(exponent) == 0) return null;
+  return _ScientificFormat(mantissa, exponent, section[at + 1] == '+');
+}
+
+/// Renders [value] in scientific notation using [format].
+///
+/// The exponent is chosen so the mantissa carries the number of integer
+/// digits the placeholders ask for, which is what makes `##0.0E+0` the
+/// engineering form: three integer digits means the exponent moves in threes.
+String _formatScientific(double value, _ScientificFormat format, String sign) {
+  final magnitude = value.abs();
+  final step = format.mantissaIntegerDigits;
+
+  var exponent = 0;
+  if (magnitude != 0 && magnitude.isFinite) {
+    // Round the base-10 logarithm down to a multiple of the step.
+    final decade = (log(magnitude) / ln10).floor();
+    exponent = (decade / step).floor() * step;
+  }
+  var mantissa = magnitude == 0 ? 0.0 : magnitude / pow(10, exponent);
+
+  // Rounding the mantissa for display can push it up a decade (9.99 shown to
+  // one place is 10.0), which belongs in the exponent instead.
+  final dot = _indexUnquoted(format.mantissaFormat, '.');
+  final decimals = dot >= 0
+      ? _placeholderCount(format.mantissaFormat.substring(dot + 1))
+      : 0;
+  final limit = pow(10, step).toDouble();
+  if (mantissa != 0 && _roundTo(mantissa, decimals) >= limit) {
+    exponent += step;
+    mantissa = magnitude / pow(10, exponent);
+  }
+
+  final mantissaText = _formatNumberCode(mantissa, format.mantissaFormat);
+  final exponentSign = exponent < 0 ? '-' : (format.alwaysSign ? '+' : '');
+  final exponentText = _renderPlaceholderRun(
+    exponent.abs().toString(),
+    format.exponentFormat,
+  );
+  return '$sign${mantissaText}E$exponentSign$exponentText';
+}

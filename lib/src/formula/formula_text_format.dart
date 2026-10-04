@@ -25,7 +25,9 @@ bool _isDateTimeCode(String code) {
       i = close;
       continue;
     }
-    if ('ymdhsYMDHS'.contains(ch)) return true;
+    // `g` (the Japanese era) makes a code temporal; `e` alone does not, since
+    // it is the exponent in a numeric code such as `0.00E+00`.
+    if ('ymdhsgYMDHSG'.contains(ch)) return true;
   }
   return false;
 }
@@ -159,6 +161,11 @@ String _formatNumberCode(double value, String code) {
   // denominator chosen to fit the placeholders.
   final fraction = _parseFractionFormat(sec);
   if (fraction != null) return _formatFraction(value, fraction, sign);
+
+  // Scientific notation splits the value into a mantissa and an exponent, so
+  // it too needs its own renderer rather than one pass over the placeholders.
+  final scientific = _parseScientificFormat(sec);
+  if (scientific != null) return _formatScientific(value, scientific, sign);
 
   var scaled = value.abs();
   final pct = _countUnquoted(sec, '%');
@@ -386,7 +393,10 @@ String _formatDateTimeCode(double serial, String rawCode) {
       continue;
     }
     final lower = ch.toLowerCase();
-    if ('ymdhs'.contains(lower)) {
+    // `g` is the Japanese era name and `e` the year within it. `e` is only a
+    // date token here because reaching this formatter at all means the code
+    // held a date letter, so a numeric `0.00E+00` never arrives.
+    if ('ymdhsge'.contains(lower)) {
       final start = i;
       while (i < n && code[i].toLowerCase() == lower) {
         i++;
@@ -494,7 +504,11 @@ String _formatDateTimeCode(double serial, String rawCode) {
   final hasSubsec = tokens.any((t) => t.type == 'subsec');
   final totalSeconds = hasSubsec ? exactSeconds.floor() : exactSeconds.round();
 
-  final sb = StringBuffer(negated ? '-' : '');
+  // A sign belongs on an elapsed duration, which can genuinely be negative.
+  // A plain date code with a negative serial is simply a date before the
+  // epoch, and prefixing it with `-` would be nonsense.
+  final isElapsed = tokens.any((t) => t.type.startsWith('elapsed_'));
+  final sb = StringBuffer(negated && isElapsed ? '-' : '');
   for (final t in tokens) {
     switch (t.type) {
       case 'elapsed_h':
@@ -515,6 +529,19 @@ String _formatDateTimeCode(double serial, String rawCode) {
         final ticks = (exactSeconds * unit).round() % unit;
         sb.write('.');
         sb.write(ticks.toString().padLeft(places, '0'));
+      case 'g':
+        sb.write(_eraName(dt, t.text.length));
+      case 'e':
+        // An era year beside a `g` counts from the era; on its own it is the
+        // Gregorian year, which is what Excel shows.
+        final eraYear = tokens.any((x) => x.type == 'g')
+            ? _eraYear(dt)
+            : dt.year;
+        sb.write(
+          t.text.length >= 2
+              ? eraYear.toString().padLeft(2, '0')
+              : eraYear.toString(),
+        );
       case 'y':
         sb.write(
           t.text.length <= 2

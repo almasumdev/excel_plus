@@ -209,6 +209,8 @@ Flutter platform. Expand a group for details:
 - Formula-evaluation engine with over 300 functions
   ([function reference](https://github.com/almasumdev/excel_plus/blob/main/doc/functions.md)),
   plus `registerFunction` for your own
+- Structured table references in formulas (`SUM(Sales[Amount])`, `[#Totals]`,
+  `[@Amount]`), which follow the table as rows are added
 - Full statistical library: every distribution and its inverse (normal,
   lognormal, binomial, Poisson, gamma, beta, chi-square, t, F), the four
   hypothesis tests, regression and correlation, and the pre-2010 spellings so
@@ -1117,6 +1119,16 @@ sheet.appendTableRow('Sales', [
 ]);
 
 final table = sheet.table('Sales'); // by name, ignoring case
+```
+
+Formulas can name a table instead of a cell range, so they keep working as
+rows are added:
+
+```dart
+cell.setFormula('SUM(Sales[Amount])');          // the Amount column's data
+cell.setFormula('SUM(Sales[[Q1]:[Q4]])');       // a span of columns
+cell.setFormula('COUNTA(Sales[#Headers])');     // or [#Data] / [#Totals] / [#All]
+cell.setFormula('[@Amount]*0.2');               // this row, inside the table
 ```
 
 ### Insert an image

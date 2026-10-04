@@ -1,3 +1,52 @@
+## 2.27.0
+
+Structured table references in formulas, Japanese era dates, and scientific
+notation, which closes out the number-format work.
+
+### New
+
+- **Structured table references.** A formula can name a table instead of a
+  cell range, so it keeps working as rows are added:
+
+  ```dart
+  cell.setFormula('SUM(Sales[Amount])');      // a column's data cells
+  cell.setFormula('SUM(Sales[[Q1]:[Q4]])');   // a span of columns
+  cell.setFormula('COUNTA(Sales[#Headers])'); // or [#Data] / [#Totals] / [#All]
+  cell.setFormula('[@Amount]*0.2');           // this row, inside the table
+  ```
+
+  The reference resolves when the formula is evaluated rather than when it is
+  parsed, so appending a row or inserting one above the table is picked up
+  without rewriting anything. A table is found by name anywhere in the
+  workbook; the unqualified `[@Column]` form means the table the formula's own
+  cell sits in, and is `#REF!` outside one, as in Excel. Column names are
+  matched ignoring case, and a name holding a space or a comma can be written
+  `[[Total Due]]`.
+
+### Fixed
+
+- **Japanese era date formats did nothing.** `ggge` rendered as the literal
+  text `ggge`. The `g` tokens now write the era (`g` the romaji initial, `gg`
+  the first kanji, `ggg` the full name) and `e` the year within it, so
+  `[$-411]ggge"年"m"月"d"日"` reads `令和5年3月15日`. All five eras from Meiji
+  are covered, each from its own first day, and a date before Meiji leaves the
+  era empty rather than inventing one.
+- **Scientific notation did nothing.** `0.00E+00` on 1234.5 gave
+  `1234.5000E+`, because the `E` was a literal and the exponent's placeholders
+  were read as more mantissa digits. The value is now split into a mantissa and
+  an exponent, `E-` shows its sign only when negative, and three integer
+  placeholders give the engineering form, so `##0.0E+0` on 123456 reads
+  `123.5E+3`.
+- **A date before 1900 was prefixed with a minus sign.** Its serial is
+  negative, which only means something for an elapsed duration, not for a
+  date.
+
+### Notes
+
+A mantissa that rounds up a decade is renormalised, so `0.0E+0` on 9.99 reads
+`1.0E+1` rather than `10.0E+0`, keeping the one integer digit the format asked
+for.
+
 ## 2.26.0
 
 The number-format display path was mangling several common codes, and three
