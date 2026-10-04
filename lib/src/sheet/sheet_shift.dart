@@ -478,6 +478,7 @@ extension _SheetShiftState on _SheetBase {
       _tablesChanged = true;
     }
 
+    _shiftFloatingObjects(shift);
     _excel._shiftDefinedNames(shift, targetSheet: sheetName);
     _excel._shiftFormulas(shift, targetSheet: sheetName);
   }
@@ -541,5 +542,242 @@ extension _ExcelShift on Excel {
     // Spill anchors are keyed by the cell that produced them, so they cannot
     // survive a shift; a recalculation lays them down again.
     _spillAnchors.removeWhere((key, _) => key.$1 == targetSheet);
+  }
+}
+
+/// Shifts a reference that may carry a sheet qualifier, the form a chart
+/// series, a sparkline or a pivot source takes.
+///
+/// A bare reference belongs to [onSheet]; a qualified one to whatever its
+/// qualifier names. Either way it only moves when that sheet is the one being
+/// edited. Returns null when nothing of the range is left.
+String? _shiftQualifiedRange(
+  String ref,
+  _Shift shift, {
+  required String onSheet,
+  required String targetSheet,
+}) {
+  final bang = ref.lastIndexOf('!');
+  if (bang == -1) {
+    if (onSheet != targetSheet) return ref;
+    return _shiftRangeText(ref, shift) ?? _shiftWholeAxis(ref, shift);
+  }
+  var owner = ref.substring(0, bang);
+  if (owner.startsWith("'") && owner.endsWith("'") && owner.length > 1) {
+    owner = owner.substring(1, owner.length - 1).replaceAll("''", "'");
+  }
+  if (owner != targetSheet) return ref;
+  final qualifier = ref.substring(0, bang + 1);
+  final body = ref.substring(bang + 1);
+  final moved = _wholeAxisRange.hasMatch(body)
+      ? _shiftWholeAxis(body, shift)
+      : _shiftRangeText(body, shift);
+  return moved == null ? null : '$qualifier$moved';
+}
+
+/// Shifts the cell a floating object is anchored to, or null when that cell's
+/// row or column was removed.
+CellIndex? _shiftAnchor(CellIndex anchor, _Shift shift) {
+  if (shift.isRow) {
+    final row = shift.index(anchor.rowIndex);
+    if (row == null) return null;
+    return CellIndex.indexByColumnRow(
+      columnIndex: anchor.columnIndex,
+      rowIndex: row,
+    );
+  }
+  final column = shift.index(anchor.columnIndex);
+  if (column == null) return null;
+  return CellIndex.indexByColumnRow(
+    columnIndex: column,
+    rowIndex: anchor.rowIndex,
+  );
+}
+
+/// Moves the floating objects on a sheet: images, charts, pivot tables and
+/// sparklines, each of which is pinned to a cell and most of which also read
+/// from a range.
+extension _SheetShiftObjects on _SheetBase {
+  void _shiftFloatingObjects(_Shift shift) {
+    for (var i = _images.length - 1; i >= 0; i--) {
+      final image = _images[i];
+      final anchor = _shiftAnchor(image.anchor, shift);
+      if (anchor == null) {
+        _images.removeAt(i);
+      } else if (anchor != image.anchor) {
+        _images[i] = ExcelImage._(
+          bytes: image.bytes,
+          extension: image.extension,
+          anchor: anchor,
+          width: image.width,
+          height: image.height,
+          isNew: image._isNew,
+        );
+      } else {
+        continue;
+      }
+      _imagesChanged = true;
+    }
+
+    for (var i = _charts.length - 1; i >= 0; i--) {
+      final chart = _charts[i];
+      final anchor = _shiftAnchor(chart.anchor, shift);
+      if (anchor == null) {
+        _charts.removeAt(i);
+        _chartsChanged = true;
+        continue;
+      }
+      _charts[i] = Chart(
+        type: chart.type,
+        anchor: anchor,
+        series: [
+          for (final s in chart.series)
+            ChartSeries(
+              name: s.name,
+              values:
+                  _shiftQualifiedRange(
+                    s.values,
+                    shift,
+                    onSheet: sheetName,
+                    targetSheet: sheetName,
+                  ) ??
+                  s.values,
+              xValues: s.xValues == null
+                  ? null
+                  : _shiftQualifiedRange(
+                      s.xValues!,
+                      shift,
+                      onSheet: sheetName,
+                      targetSheet: sheetName,
+                    ),
+              color: s.color,
+              pointColors: s.pointColors,
+            ),
+        ],
+        title: chart.title,
+        categories: chart.categories == null
+            ? null
+            : _shiftQualifiedRange(
+                chart.categories!,
+                shift,
+                onSheet: sheetName,
+                targetSheet: sheetName,
+              ),
+        grouping: chart.grouping,
+        legend: chart.legend,
+        width: chart.width,
+        height: chart.height,
+        xAxisTitle: chart.xAxisTitle,
+        yAxisTitle: chart.yAxisTitle,
+        plotVisibleOnly: chart.plotVisibleOnly,
+        anchorTo: chart.anchorTo == null
+            ? null
+            : _shiftAnchor(chart.anchorTo!, shift),
+        radarStyle: chart.radarStyle,
+        dataLabels: chart.dataLabels,
+      );
+      _chartsChanged = true;
+    }
+
+    for (var i = _pivotTables.length - 1; i >= 0; i--) {
+      final pivot = _pivotTables[i];
+      final anchor = _shiftAnchor(pivot.anchor, shift);
+      if (anchor == null) {
+        _pivotTables.removeAt(i);
+        _pivotTablesChanged = true;
+        continue;
+      }
+      // The source range only moves when it reads from the edited sheet.
+      final readsHere = pivot.sourceSheet == null
+          ? true
+          : pivot.sourceSheet == sheetName;
+      var from = pivot.sourceFrom;
+      var to = pivot.sourceTo;
+      if (readsHere) {
+        final moved = _shiftRangeText(
+          getSpanCellId(
+            from.columnIndex,
+            from.rowIndex,
+            to.columnIndex,
+            to.rowIndex,
+          ),
+          shift,
+        );
+        if (moved == null) {
+          _pivotTables.removeAt(i);
+          _pivotTablesChanged = true;
+          continue;
+        }
+        final halves = moved.split(':');
+        from = CellIndex.indexByString(halves.first);
+        to = CellIndex.indexByString(halves.last);
+      }
+      _pivotTables[i] = PivotTable(
+        name: pivot.name,
+        anchor: anchor,
+        sourceFrom: from,
+        sourceTo: to,
+        rowField: pivot.rowField,
+        dataFields: pivot.dataFields,
+        subRowFields: pivot.subRowFields,
+        columnField: pivot.columnField,
+        pageFields: pivot.pageFields,
+        sourceSheet: pivot.sourceSheet,
+      );
+      _pivotTablesChanged = true;
+    }
+
+    for (final groups in [_sparklineGroups, _parsedSparklineGroups]) {
+      for (var i = groups.length - 1; i >= 0; i--) {
+        final group = groups[i];
+        final kept = <Sparkline>[];
+        var touched = false;
+        for (final line in group.sparklines) {
+          final data = _shiftQualifiedRange(
+            line.dataRange,
+            shift,
+            onSheet: sheetName,
+            targetSheet: sheetName,
+          );
+          final location = _shiftRangeText(line.location, shift);
+          if (data == null || location == null) {
+            touched = true;
+            continue;
+          }
+          if (data == line.dataRange && location == line.location) {
+            kept.add(line);
+            continue;
+          }
+          kept.add(Sparkline(dataRange: data, location: location));
+          touched = true;
+        }
+        if (!touched) continue;
+        _sparklinesChanged = true;
+        if (kept.isEmpty) {
+          groups.removeAt(i);
+          continue;
+        }
+        // The group is rebuilt rather than edited in place, because the list a
+        // caller handed us may well be a const one.
+        groups[i] = SparklineGroup(
+          type: group.type,
+          color: group.color,
+          negativeColor: group.negativeColor,
+          markerColor: group.markerColor,
+          highColor: group.highColor,
+          lowColor: group.lowColor,
+          firstColor: group.firstColor,
+          lastColor: group.lastColor,
+          markers: group.markers,
+          high: group.high,
+          low: group.low,
+          first: group.first,
+          last: group.last,
+          negative: group.negative,
+          lineWeight: group.lineWeight,
+          sparklines: kept,
+        );
+      }
+    }
   }
 }

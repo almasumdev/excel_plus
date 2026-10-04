@@ -616,4 +616,161 @@ void main() {
       expect(_formula(back, 'H2'), 'SUM(B3:B5)');
     });
   });
+  group('Floating Objects', () {
+    /// A PNG header declaring a 120x60 image, enough for [Sheet.insertImage].
+    List<int> png() => [
+      0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, //
+      0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52,
+      0, 0, 0, 120, 0, 0, 0, 60,
+      0x08, 0x06, 0x00, 0x00, 0x00,
+    ];
+
+    test('an image moves with the cell it is anchored to', () {
+      final (_, sheet) = _grid();
+      sheet.insertImage(png(), anchor: CellIndex.indexByString('B2'));
+      sheet.insertRow(0);
+      expect(sheet.images.single.anchor.rowIndex, 2);
+      expect(sheet.images.single.anchor.columnIndex, 1);
+      sheet.insertColumn(0);
+      expect(sheet.images.single.anchor.columnIndex, 2);
+      // The bytes and the measured size survive the rebuild.
+      expect(sheet.images.single.width, 120);
+      expect(sheet.images.single.extension, 'png');
+    });
+
+    test('an image anchored to a removed row goes with it', () {
+      final (_, sheet) = _grid();
+      sheet.insertImage(png(), anchor: CellIndex.indexByString('B2'));
+      sheet.removeRow(1);
+      expect(sheet.images, isEmpty);
+    });
+
+    test('a chart moves and its series follow the data', () {
+      final (_, sheet) = _grid();
+      sheet.addChart(
+        Chart.column(
+          anchor: CellIndex.indexByString('H2'),
+          categories: 'A2:A5',
+          series: [const ChartSeries(name: 'S', values: 'B2:B5')],
+          title: 'Sales',
+        ),
+      );
+      sheet.insertRow(0);
+      final chart = sheet.charts.single;
+      expect(chart.anchor.rowIndex, 2, reason: 'H2 became H3');
+      expect(chart.series.single.values, 'B3:B6');
+      expect(chart.categories, 'A3:A6');
+      // The rest of the chart is unchanged.
+      expect(chart.title, 'Sales');
+      expect(chart.type, ChartType.column);
+      expect(chart.series.single.name, 'S');
+    });
+
+    test('a chart series qualified with the sheet name still moves', () {
+      final (_, sheet) = _grid();
+      sheet.addChart(
+        Chart.column(
+          anchor: CellIndex.indexByString('H2'),
+          series: [
+            const ChartSeries(name: 'S', values: "'Sheet1'!\$B\$2:\$B\$5"),
+          ],
+        ),
+      );
+      sheet.insertRow(0);
+      expect(
+        sheet.charts.single.series.single.values,
+        "'Sheet1'!\$B\$3:\$B\$6",
+      );
+    });
+
+    test('a chart series on another sheet is left alone', () {
+      final (excel, sheet) = _grid();
+      excel['Other'].addChart(
+        Chart.column(
+          anchor: CellIndex.indexByString('H2'),
+          series: [const ChartSeries(name: 'S', values: 'B2:B5')],
+        ),
+      );
+      sheet.insertRow(0);
+      expect(excel['Other'].charts.single.series.single.values, 'B2:B5');
+      expect(excel['Other'].charts.single.anchor.rowIndex, 1);
+    });
+
+    test('a two-cell chart anchor moves at both corners', () {
+      final (_, sheet) = _grid();
+      sheet.addChart(
+        Chart.column(
+          anchor: CellIndex.indexByString('H2'),
+          anchorTo: CellIndex.indexByString('L10'),
+          series: [const ChartSeries(name: 'S', values: 'B2:B5')],
+        ),
+      );
+      sheet.insertColumn(0);
+      expect(sheet.charts.single.anchor.columnIndex, 8, reason: 'H became I');
+      expect(sheet.charts.single.anchorTo!.columnIndex, 12);
+    });
+
+    test('a sparkline moves both its data and its location', () {
+      final (_, sheet) = _grid();
+      sheet.addSparkline(location: 'H2', dataRange: 'B2:F2');
+      sheet.insertRow(0);
+      final line = sheet.sparklineGroups.single.sparklines.single;
+      expect(line.location, 'H3');
+      expect(line.dataRange, 'B3:F3');
+    });
+
+    test('a sparkline whose row goes is dropped with its group', () {
+      final (_, sheet) = _grid();
+      sheet.addSparkline(location: 'H2', dataRange: 'B2:F2');
+      sheet.removeRow(1);
+      expect(sheet.sparklineGroups, isEmpty);
+    });
+
+    test('a pivot table moves its anchor and its source range', () {
+      final (_, sheet) = _grid();
+      sheet.addPivotTable(
+        PivotTable(
+          name: 'P1',
+          anchor: CellIndex.indexByString('H2'),
+          sourceFrom: CellIndex.indexByString('A1'),
+          sourceTo: CellIndex.indexByString('C5'),
+          rowField: 0,
+          dataFields: [const PivotDataField(1)],
+        ),
+      );
+      sheet.insertRow(0);
+      final pivot = sheet.pivotTables.single;
+      expect(pivot.anchor.rowIndex, 2);
+      expect(pivot.sourceFrom.rowIndex, 1);
+      expect(pivot.sourceTo.rowIndex, 5, reason: 'the source range grew');
+      expect(pivot.name, 'P1');
+      expect(pivot.rowField, 0);
+    });
+  });
+  group('Caller-Owned Collections', () {
+    test('a group built with a const sparkline list still shifts', () {
+      final (_, sheet) = _grid();
+      sheet.addSparklineGroup(
+        SparklineGroup(
+          sparklines: const [Sparkline(dataRange: 'B2:F2', location: 'H2')],
+        ),
+      );
+      sheet.insertRow(0);
+      final line = sheet.sparklineGroups.single.sparklines.single;
+      expect(line.location, 'H3');
+      expect(line.dataRange, 'B3:F3');
+    });
+
+    test('a chart built with a const series list still shifts', () {
+      final (_, sheet) = _grid();
+      sheet.addChart(
+        Chart.column(
+          anchor: CellIndex.indexByString('H2'),
+          series: const [ChartSeries(name: 'S', values: 'B2:B5')],
+        ),
+      );
+      sheet.insertRow(0);
+      expect(sheet.charts.single.series.single.values, 'B3:B6');
+    });
+  });
 }

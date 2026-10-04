@@ -12,7 +12,10 @@ just the cells. Saved files no longer carry a stale calculation chain.
   they belong to: heights, widths and auto-fit flags, hidden and collapsed
   state, outline levels, page breaks, hyperlinks, comments, data validations,
   conditional formats, the autofilter, tables, the print area, repeating print
-  titles, and named ranges.
+  titles, and named ranges. Floating objects move too: an image, chart, pivot
+  table or sparkline follows the cell it is anchored to, and a chart series, a
+  sparkline's data range and a pivot source range all follow the data they
+  read.
 - **Formulas are retargeted.** A formula used to move with its cell while still
   naming the old addresses, so `SUM(B2:B4)` kept summing `B2:B4` after a row
   went in above it. References are now rewritten across the whole workbook,

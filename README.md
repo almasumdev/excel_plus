@@ -664,10 +664,14 @@ sheet.removeColumn(3); // delete column 3
 
 Everything attached to a row or column travels with it: heights and widths,
 hidden and grouped state, page breaks, merges, hyperlinks, comments, data
-validations, conditional formats, the autofilter, tables, the print area and
-repeating print titles, and named ranges. Formulas are retargeted across the
-whole workbook, so a reference keeps pointing at the same data; a reference to
-a row or column you deleted becomes `#REF!`, as it does in Excel.
+validations, conditional formats, the autofilter, tables, the print area,
+repeating print titles, and named ranges. Images, charts, pivot tables and
+sparklines move with their anchor cell and with the ranges they read.
+
+Formulas are retargeted across the whole workbook, so a reference keeps
+pointing at the same data. A reference to a row or column you deleted becomes
+`#REF!`, as it does in Excel, while a range that merely spanned it gets
+shorter.
 
 ### Append a row
 
