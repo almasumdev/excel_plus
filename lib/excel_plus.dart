@@ -115,6 +115,7 @@ part 'src/models/num_format_temporal.dart';
 
 /// Sheet
 part 'src/sheet/sheet_base.dart';
+part 'src/sheet/sheet_shift.dart';
 part 'src/sheet/sheet_row_column.dart';
 part 'src/sheet/sheet_merge.dart';
 part 'src/sheet/sheet.dart';

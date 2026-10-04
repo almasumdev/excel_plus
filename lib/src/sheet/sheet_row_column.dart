@@ -2,9 +2,17 @@ part of '../../excel_plus.dart';
 
 /// Mixin providing row and column insert/remove operations for [Sheet].
 mixin _SheetRowColumnMixin on _SheetBase {
+  /// Removes the column at [columnIndex], shifting everything to its right one
+  /// column left. Does nothing if [columnIndex] is out of range.
   ///
-  /// If `sheet` exists and `columnIndex < maxColumns` then it removes column at index = `columnIndex`
-  ///
+  /// Everything attached to a column travels with it: widths and auto-fit
+  /// flags, hidden and grouped state, page breaks, merges, hyperlinks,
+  /// comments, data validations, conditional formats, the autofilter, tables,
+  /// the print area and repeating print titles, and named ranges. Formulas
+  /// across the whole workbook are retargeted, so a reference that pointed at
+  /// a cell one column over still points at it. A reference to the removed
+  /// column itself becomes `#REF!`, as it does in Excel, while a range that
+  /// merely spanned it gets one column shorter.
   void removeColumn(int columnIndex) {
     _checkMaxColumn(columnIndex);
     if (columnIndex < 0 || columnIndex >= maxColumns) {
@@ -77,7 +85,9 @@ mixin _SheetRowColumnMixin on _SheetBase {
               _sheetData[rowKey]!.remove(columnKey);
             }
             if (columnIndex < columnKey) {
-              columnMap[columnKey - 1] = _sheetData[rowKey]![columnKey]!;
+              final moved = _sheetData[rowKey]![columnKey]!;
+              moved._columnIndex--;
+              columnMap[columnKey - 1] = moved;
               _sheetData[rowKey]!.remove(columnKey);
             }
           }
@@ -90,15 +100,17 @@ mixin _SheetRowColumnMixin on _SheetBase {
     if (_maxColumns - 1 <= columnIndex) {
       _maxColumns -= 1;
     }
+
+    _applyShift(_Shift(_ShiftAxis.column, columnIndex, -1));
   }
 
+  /// Inserts an empty column at [columnIndex], shifting that column and
+  /// everything to its right one column right. Does nothing if [columnIndex]
+  /// is negative.
   ///
-  /// Inserts an empty `column` in sheet at position = `columnIndex`.
-  ///
-  /// If `columnIndex == null` or `columnIndex < 0` if will not execute
-  ///
-  /// If the `sheet` does not exists then it will be created automatically.
-  ///
+  /// Everything attached to a column travels with it: see [removeColumn] for
+  /// the list. Formulas across the whole workbook are retargeted, and a range
+  /// that straddles the new column grows to include it.
   void insertColumn(int columnIndex) {
     if (columnIndex < 0) {
       return;
@@ -163,7 +175,9 @@ mixin _SheetRowColumnMixin on _SheetBase {
                 columnMap[columnKey] = _sheetData[rowKey]![columnKey]!;
               }
               if (columnIndex <= columnKey) {
-                columnMap[columnKey + 1] = _sheetData[rowKey]![columnKey]!;
+                final moved = _sheetData[rowKey]![columnKey]!;
+                moved._columnIndex++;
+                columnMap[columnKey + 1] = moved;
               }
             }
           }
@@ -193,11 +207,21 @@ mixin _SheetRowColumnMixin on _SheetBase {
     } else {
       _maxColumns = columnIndex + 1;
     }
+
+    _applyShift(_Shift(_ShiftAxis.column, columnIndex, 1));
   }
 
+  /// Removes the row at [rowIndex], shifting everything below it one row up.
+  /// Does nothing if [rowIndex] is out of range.
   ///
-  /// If `sheet` exists and `rowIndex < maxRows` then it removes row at index = `rowIndex`
-  ///
+  /// Everything attached to a row travels with it: heights, hidden and grouped
+  /// state, page breaks, merges, hyperlinks, comments, data validations,
+  /// conditional formats, the autofilter, tables, the print area and repeating
+  /// print titles, and named ranges. Formulas across the whole workbook are
+  /// retargeted, so a reference that pointed at a cell one row down still
+  /// points at it. A reference to the removed row itself becomes `#REF!`, as
+  /// it does in Excel, while a range that merely spanned it gets one row
+  /// shorter.
   void removeRow(int rowIndex) {
     if (rowIndex < 0 || rowIndex >= _maxRows) {
       return;
@@ -264,7 +288,11 @@ mixin _SheetRowColumnMixin on _SheetBase {
             data[rowKey] = Map<int, Data>.from(_sheetData[rowKey]!);
           }
           if (rowIndex < rowKey && _sheetData[rowKey] != null) {
-            data[rowKey - 1] = Map<int, Data>.from(_sheetData[rowKey]!);
+            final moved = Map<int, Data>.from(_sheetData[rowKey]!);
+            for (final cell in moved.values) {
+              cell._rowIndex--;
+            }
+            data[rowKey - 1] = moved;
           }
         }
         _sheetData = Map<int, Map<int, Data>>.from(data);
@@ -277,15 +305,16 @@ mixin _SheetRowColumnMixin on _SheetBase {
     if (_maxRows - 1 <= rowIndex) {
       _maxRows -= 1;
     }
+
+    _applyShift(_Shift(_ShiftAxis.row, rowIndex, -1));
   }
 
+  /// Inserts an empty row at [rowIndex], shifting that row and everything
+  /// below it one row down. Does nothing if [rowIndex] is negative.
   ///
-  /// Inserts an empty row in `sheet` at position = `rowIndex`.
-  ///
-  /// If `rowIndex == null` or `rowIndex < 0` if will not execute
-  ///
-  /// If the `sheet` does not exists then it will be created automatically.
-  ///
+  /// Everything attached to a row travels with it: see [removeRow] for the
+  /// list. Formulas across the whole workbook are retargeted, and a range that
+  /// straddles the new row grows to include it.
   void insertRow(int rowIndex) {
     if (rowIndex < 0) {
       return;
@@ -360,5 +389,7 @@ mixin _SheetRowColumnMixin on _SheetBase {
     } else {
       _maxRows += 1;
     }
+
+    _applyShift(_Shift(_ShiftAxis.row, rowIndex, 1));
   }
 }

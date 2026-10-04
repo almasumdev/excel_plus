@@ -662,6 +662,13 @@ sheet.insertColumn(1); // insert a blank column at index 1
 sheet.removeColumn(3); // delete column 3
 ```
 
+Everything attached to a row or column travels with it: heights and widths,
+hidden and grouped state, page breaks, merges, hyperlinks, comments, data
+validations, conditional formats, the autofilter, tables, the print area and
+repeating print titles, and named ranges. Formulas are retargeted across the
+whole workbook, so a reference keeps pointing at the same data; a reference to
+a row or column you deleted becomes `#REF!`, as it does in Excel.
+
 ### Append a row
 
 ```dart

@@ -461,4 +461,24 @@ abstract class _WriterBase {
       ]),
     );
   }
+
+  /// Drops `xl/calcChain.xml`, the cached order Excel evaluates formulas in.
+  ///
+  /// The chain names each formula cell, so once cells have been added, removed
+  /// or changed it no longer matches the sheets and Excel offers to repair the
+  /// file on open. It is only a cache, so removing it costs nothing: Excel
+  /// rebuilds it on the first recalculation. The relationship goes with it,
+  /// since a relationship pointing at a missing part is itself a repair prompt.
+  void _dropCalcChain() {
+    const path = 'xl/calcChain.xml';
+    _removePart(path);
+    _excel._xmlFiles['xl/_rels/workbook.xml.rels']?.rootElement.children
+        .removeWhere(
+          (node) =>
+              node is XmlElement &&
+              node.name.local == 'Relationship' &&
+              (node.getAttribute('Target') == 'calcChain.xml' ||
+                  node.getAttribute('Target') == '/$path'),
+        );
+  }
 }

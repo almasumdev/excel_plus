@@ -1,3 +1,49 @@
+## 2.25.0
+
+Inserting or removing a row or a column now moves everything on the sheet, not
+just the cells. Saved files no longer carry a stale calculation chain.
+
+### Fixed
+
+- **A row or column edit moves what was attached to it.** Only the cells and
+  the merges used to shift; everything else kept the index it started at, so
+  inserting a row at the top left all your row heights, hidden flags and
+  grouping one row out of step. Now these all travel with the row or column
+  they belong to: heights, widths and auto-fit flags, hidden and collapsed
+  state, outline levels, page breaks, hyperlinks, comments, data validations,
+  conditional formats, the autofilter, tables, the print area, repeating print
+  titles, and named ranges.
+- **Formulas are retargeted.** A formula used to move with its cell while still
+  naming the old addresses, so `SUM(B2:B4)` kept summing `B2:B4` after a row
+  went in above it. References are now rewritten across the whole workbook,
+  including ones qualified with a sheet name, and `$` markers are preserved. A
+  reference to a row or column that was removed becomes `#REF!`, matching
+  Excel, while a range that merely spanned it gets shorter. A range that
+  straddles an inserted row or column grows to include it.
+- **A saved file no longer carries a stale `xl/calcChain.xml`.** The chain names
+  every formula cell, so once a value changed it no longer matched the sheets
+  and Excel offered to repair a file it had written itself. It is only a cache,
+  so it is now dropped on save along with its relationship, and Excel rebuilds
+  it on the first recalculation.
+- **A cell handle kept across an edit writes to its own cell.** `removeRow`,
+  `insertColumn` and `removeColumn` left the coordinates on a live `Data`
+  object pointing at where the cell used to be, so a later `data.value = ...`,
+  or reading `data.hyperlink` or `data.comment`, silently landed on the wrong
+  cell.
+
+### Notes
+
+Text inside a formula is left alone, so `CONCATENATE("B2 and ", A1)` keeps its
+`"B2 and "` intact, and an existing `#REF!` literal is not mistaken for a
+reference. Function names, defined names and whole-row or whole-column ranges
+are recognized as such and not rewritten as cells.
+
+A structural edit now brings every sheet in rather than leaving the unopened
+ones lazy, because a formula on a sheet you have not touched still has to move
+when it refers to the sheet you are editing. Saving already did this, so in
+practice nothing extra is read. On a 500x20 sheet, a hundred inserts take about
+120ms with formulas present and 31ms without.
+
 ## 2.24.0
 
 The date and time functions a spreadsheet of schedules needs.

@@ -33,6 +33,7 @@ class ExcelWriter extends _WriterBase
       _setDefaultSheet(_excel._defaultSheet);
     }
     _setSharedStrings();
+    _dropCalcChain();
 
     for (var xmlFile in _excel._xmlFiles.keys) {
       if (_archiveFiles.containsKey(xmlFile)) continue;
