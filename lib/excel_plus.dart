@@ -106,6 +106,7 @@ part 'src/models/image.dart';
 part 'src/models/page_setup.dart';
 part 'src/models/outline_settings.dart';
 part 'src/models/comment.dart';
+part 'src/models/table_style.dart';
 part 'src/models/excel_table.dart';
 part 'src/models/chart.dart';
 part 'src/models/pivot_table.dart';

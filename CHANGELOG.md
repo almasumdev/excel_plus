@@ -1,3 +1,19 @@
+## 2.27.1
+
+### New
+
+- **Every built-in table style is named.** `TableStyle` exposed five of
+  Excel's sixty, so the other fifty-five had to be written as raw strings.
+  All of them are now constants: `light1` to `light21`, `medium1` to
+  `medium28`, `dark1` to `dark11`, plus `none`. A style is only a name in the
+  file, so an arbitrary string still works and always did; this is for
+  checking the name at compile time rather than guessing it.
+
+### Notes
+
+The five names that existed before keep the same values, so nothing changes
+for code already using them.
+
 ## 2.27.0
 
 Structured table references in formulas, Japanese era dates, and scientific
