@@ -352,7 +352,7 @@ sealed class NumFormat {
   /// ```
   String format(Object? value) {
     if (value == null) return '';
-    if (value is String) return value;
+    if (value is String) return _formatTextCode(value, formatCode) ?? value;
     if (formatCode == 'General') {
       if (value is DateTime) return value.toIso8601String();
       if (value is num) {
@@ -654,7 +654,9 @@ class CustomNumericNumFormat extends NumericNumFormat
     null => true,
     FormulaCellValue() => true,
     IntCellValue() => true,
-    TextCellValue() => false,
+    // A fourth section is the text section, so a code that has one does apply
+    // to a text cell; one without it has nothing to say about text.
+    TextCellValue() => _formatTextCode('', formatCode) != null,
     BoolCellValue() => true,
     DoubleCellValue() => true,
     CellErrorValue() => true,

@@ -15,6 +15,16 @@ bool _isDateTimeCode(String code) {
       continue;
     }
     if (inQuote) continue;
+    if (ch == '[') {
+      // A bracket is a colour, a currency tag or a condition, none of which
+      // makes a code temporal. Only an elapsed-time token does, and `[Red]`
+      // must not be read as a date on the `d` in its name.
+      final close = code.indexOf(']', i);
+      if (close == -1) return false;
+      if (_elapsedBracket.hasMatch(code.substring(i, close + 1))) return true;
+      i = close;
+      continue;
+    }
     if ('ymdhsYMDHS'.contains(ch)) return true;
   }
   return false;
@@ -137,17 +147,18 @@ String _groupThousands(String digits) {
 /// (`0 # ?`), the decimal point, thousands grouping (`,`), percent (`%`),
 /// quoted/escaped literals, currency symbols, and `;`-separated sections.
 String _formatNumberCode(double value, String code) {
-  final sections = _splitSections(code);
-  String sec;
-  var sign = '';
-  if (value < 0 && sections.length > 1) {
-    sec = sections[1]; // negative section carries its own sign formatting
-  } else if (value == 0 && sections.length > 2) {
-    sec = sections[2];
-  } else {
-    sec = sections[0];
-    if (value < 0) sign = '-';
-  }
+  final sections = [
+    for (final raw in _splitSections(code)) _resolveFormatBrackets(raw),
+  ];
+  final chosen = _pickFormatSection(sections, value);
+  final sec = chosen.section.code;
+  var sign = chosen.addSign ? '-' : '';
+
+  // A fraction format is a different renderer, not a variation of the digit
+  // one: there is no decimal part to lay out, only a numerator and a
+  // denominator chosen to fit the placeholders.
+  final fraction = _parseFractionFormat(sec);
+  if (fraction != null) return _formatFraction(value, fraction, sign);
 
   var scaled = value.abs();
   final pct = _countUnquoted(sec, '%');
@@ -209,6 +220,15 @@ String _formatNumberCode(double value, String code) {
   if (intDigits.length < minInt) intDigits = intDigits.padLeft(minInt, '0');
   if (grouping) intDigits = _groupThousands(intDigits);
 
+  // A small negative that rounds away to nothing is shown without a sign:
+  // `-0.00` reads as a real quantity when the value is simply zero at this
+  // precision, which is what Excel avoids.
+  if (sign == '-' &&
+      !intDigits.contains(RegExp(r'[1-9]')) &&
+      !fracDigits.contains(RegExp(r'[1-9]'))) {
+    sign = '';
+  }
+
   final sb = StringBuffer();
   var emittedInt = false;
   var inFrac = false;
@@ -245,9 +265,27 @@ String _formatNumberCode(double value, String code) {
       continue;
     }
     if (ch == ',') continue; // grouping flag, already applied
+    if (ch == '_') {
+      // `_)` reserves the width of the next character so that a positive
+      // number lines up with a bracketed negative one. Display text has no
+      // column to align in, so it becomes the space it stands for.
+      if (i + 1 < sec.length) i++;
+      sb.write(' ');
+      continue;
+    }
+    if (ch == '*') {
+      // `*-` repeats the next character to fill the column. The width is a
+      // property of the column, not the value, so there is nothing to repeat.
+      if (i + 1 < sec.length) i++;
+      continue;
+    }
     sb.write(ch);
   }
-  if (!emittedInt) {
+  // A section such as `.00` has placeholders the loop skipped as fractional,
+  // so the integer digits still have to go in front. A section of pure
+  // literals (`"zero"`) has none, and showing a stray `0` before its text
+  // would be wrong.
+  if (!emittedInt && _placeholderCount(sec) > 0) {
     return sign + intDigits + sb.toString();
   }
   return sign + sb.toString();
@@ -299,13 +337,34 @@ String _dayToken(DateTime dt, int len) {
 /// Renders the Excel serial [serial] using a date/time format [code]. Disambiguates
 /// `m` runs as month vs. minute by their neighbours (after hours / before
 /// seconds to minute).
-String _formatDateTimeCode(double serial, String code) {
+String _formatDateTimeCode(double serial, String rawCode) {
+  // A date code carries the same bracket constructs a numeric one does, and
+  // picks a section the same way (an elapsed duration can be negative).
+  final sections = [
+    for (final raw in _splitSections(rawCode)) _resolveFormatBrackets(raw),
+  ];
+  final chosen = _pickFormatSection(sections, serial);
+  final body = chosen.section.code;
+  final negated = chosen.addSign;
+
   final dt = _dateFromSerial(serial);
   final tokens = <_DtTok>[];
   var i = 0;
-  final n = code.length;
+  final n = body.length;
+  final code = body;
   while (i < n) {
     final ch = code[i];
+    if (ch == '[') {
+      final close = code.indexOf(']', i);
+      if (close != -1) {
+        final inner = code.substring(i + 1, close);
+        // `[h]`, `[mm]`, `[ss]`: a duration that keeps counting past the
+        // point where the clock field would wrap.
+        tokens.add(_DtTok('elapsed_${inner[0].toLowerCase()}', inner));
+        i = close + 1;
+        continue;
+      }
+    }
     if (ch == '"') {
       i++;
       final sb = StringBuffer();
@@ -348,8 +407,60 @@ String _formatDateTimeCode(double serial, String code) {
         continue;
       }
     }
+    if (ch == '_') {
+      // Reserves the width of the next character; see the numeric path.
+      tokens.add(const _DtTok('lit', ' '));
+      i += i + 1 < n ? 2 : 1;
+      continue;
+    }
+    if (ch == '*') {
+      // A column fill, which display text has no width to fill.
+      i += i + 1 < n ? 2 : 1;
+      continue;
+    }
     tokens.add(_DtTok('lit', ch));
     i++;
+  }
+
+  // A fractional-seconds group is written `ss.0`, so a decimal point that
+  // follows a seconds token belongs to it rather than being a literal.
+  for (var k = 1; k < tokens.length; k++) {
+    if (tokens[k].type != 'lit' || !tokens[k].text.startsWith('.')) continue;
+    final prev = tokens[k - 1];
+    if (prev.type != 's' && prev.type != 'elapsed_s') continue;
+    // The zeros may be their own run, either inside this literal or next.
+    var digits = 0;
+    final rest = tokens[k].text.substring(1);
+    var trailing = '';
+    for (var c = 0; c < rest.length; c++) {
+      if (rest[c] == '0') {
+        digits++;
+      } else {
+        trailing = rest.substring(c);
+        break;
+      }
+    }
+    // The tokenizer emits one literal per character, so the zeros of `.00`
+    // arrive as separate tokens and all of them belong to the fraction.
+    while (digits == 0 || trailing.isEmpty) {
+      if (k + 1 >= tokens.length) break;
+      final next = tokens[k + 1];
+      if (next.type != 'lit' || !next.text.startsWith('0')) break;
+      for (var c = 0; c < next.text.length; c++) {
+        if (next.text[c] == '0') {
+          digits++;
+        } else {
+          trailing = next.text.substring(c);
+          break;
+        }
+      }
+      tokens.removeAt(k + 1);
+    }
+    if (digits == 0) continue;
+    tokens[k] = _DtTok('subsec', '0' * digits);
+    if (trailing.isNotEmpty) {
+      tokens.insert(k + 1, _DtTok('lit', trailing));
+    }
   }
 
   final has12 = tokens.any((t) => t.type == 'ap');
@@ -359,7 +470,9 @@ String _formatDateTimeCode(double serial, String code) {
     for (var p = k - 1; p >= 0; p--) {
       final t = tokens[p];
       if (t.type == 'lit' || t.type == 'ap') continue;
-      minute = t.type == 'h';
+      // An elapsed hour counts as an hour here, so the `mm` in `[h]:mm` is
+      // minutes rather than a month.
+      minute = t.type == 'h' || t.type == 'elapsed_h';
       break;
     }
     if (!minute) {
@@ -373,9 +486,35 @@ String _formatDateTimeCode(double serial, String code) {
     tokens[k] = _DtTok(minute ? 'min' : 'mon', tokens[k].text);
   }
 
-  final sb = StringBuffer();
+  // An elapsed duration is measured from the serial itself, not from the
+  // wall-clock fields, so that it can run past 24 hours or 60 minutes. When a
+  // fractional part follows it, the whole part has to truncate or the two
+  // would disagree (1.5s must read `1.5`, not `2.5`).
+  final exactSeconds = serial.abs() * 86400;
+  final hasSubsec = tokens.any((t) => t.type == 'subsec');
+  final totalSeconds = hasSubsec ? exactSeconds.floor() : exactSeconds.round();
+
+  final sb = StringBuffer(negated ? '-' : '');
   for (final t in tokens) {
     switch (t.type) {
+      case 'elapsed_h':
+        sb.write((totalSeconds ~/ 3600).toString().padLeft(t.text.length, '0'));
+      case 'elapsed_m':
+        sb.write((totalSeconds ~/ 60).toString().padLeft(t.text.length, '0'));
+      case 'elapsed_s':
+        sb.write(totalSeconds.toString().padLeft(t.text.length, '0'));
+      case 'subsec':
+        // The fraction of a second the serial holds, to as many places as the
+        // format asked for. Scaling the whole value before taking the
+        // remainder keeps a serial such as 1.25/86400 off a rounding edge.
+        final places = t.text.length;
+        var unit = 1;
+        for (var p = 0; p < places; p++) {
+          unit *= 10;
+        }
+        final ticks = (exactSeconds * unit).round() % unit;
+        sb.write('.');
+        sb.write(ticks.toString().padLeft(places, '0'));
       case 'y':
         sb.write(
           t.text.length <= 2

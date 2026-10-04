@@ -119,7 +119,10 @@ class Data {
     if (v == null) return '';
     final fmt = _cellStyle?.numberFormat ?? NumFormat.standard_0;
     return switch (v) {
-      TextCellValue() => v.value.toString(),
+      // A format's fourth section applies to text, so a code such as
+      // `0.00;-0.00;"zero";"["@"]"` wraps it; without one the text is its own
+      // display form.
+      TextCellValue() => fmt.format(v.value.toString()),
       IntCellValue() => fmt.format(v.value),
       DoubleCellValue() => fmt.format(v.value),
       BoolCellValue() => v.value ? 'TRUE' : 'FALSE',
