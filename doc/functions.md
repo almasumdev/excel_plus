@@ -57,6 +57,13 @@ KURT
 The `A` variants count text as zero and a boolean as one or zero, where their
 plain counterparts skip both.
 
+**Aggregation**: SUBTOTAL
+
+`SUBTOTAL(code, ref...)` picks its aggregate by number, 1 to 11 for AVERAGE,
+COUNT, COUNTA, MAX, MIN, PRODUCT, STDEV, STDEVP, SUM, VAR and VARP. Add 100 to
+the code and rows you have hidden are left out, so `SUBTOTAL(109, A1:A10)` sums
+only the visible ones. This is what a table's totals row uses.
+
 **Rank & percentile**: LARGE · SMALL · RANK · RANK.EQ · RANK.AVG ·
 PERCENTILE · PERCENTILE.INC · PERCENTILE.EXC · QUARTILE · QUARTILE.INC ·
 QUARTILE.EXC · PERCENTRANK · PERCENTRANK.INC · PERCENTRANK.EXC

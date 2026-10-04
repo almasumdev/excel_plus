@@ -204,6 +204,61 @@ mixin _WriterChartsMixin on _WriterBase {
     ),
   ]);
 
+  /// The OOXML `val` for a dash pattern.
+  String _dashVal(ChartLineDash d) => switch (d) {
+    ChartLineDash.solid => 'solid',
+    ChartLineDash.dot => 'sysDot',
+    ChartLineDash.dash => 'dash',
+    ChartLineDash.dashDot => 'dashDot',
+    ChartLineDash.longDash => 'lgDash',
+  };
+
+  /// The `<c:spPr>` for a series, honouring [ChartSeries.style] when it has
+  /// one and otherwise painting the series as it always was.
+  ///
+  /// [asLine] picks which half of the style the single colour drives: a line
+  /// series is coloured on its stroke, a bar or bubble on its fill.
+  XmlElement _seriesSpPr(ChartSeries s, int index, {required bool asLine}) {
+    final style = s.style;
+    if (style == null) {
+      final hex = _resolvedSeriesColor(s, index);
+      return asLine ? _lineSpPr(hex) : _fillSpPr(hex);
+    }
+
+    final fillHex = _colorHex(style.fill) ?? _resolvedSeriesColor(s, index);
+    final strokeHex = _colorHex(style.stroke);
+    // Points are EMU: 12700 per point.
+    final width = style.strokeWidth == null
+        ? null
+        : (style.strokeWidth! * 12700).round().toString();
+
+    final lnChildren = <XmlNode>[
+      if (strokeHex != null)
+        _ca('solidFill', [], [_srgb(strokeHex)])
+      else if (asLine)
+        _ca('solidFill', [], [_srgb(fillHex)]),
+      if (style.dash != ChartLineDash.solid)
+        _ca('prstDash', [XmlAttribute(_xmlName('val'), _dashVal(style.dash))]),
+    ];
+
+    return _c('spPr', [], [
+      // A line series' colour lives on its stroke, so it takes no fill; a
+      // shape series fills unless asked not to.
+      if (!asLine && !style.noFill)
+        _ca('solidFill', [], [_srgb(fillHex)])
+      else if (!asLine)
+        _ca('noFill'),
+      // An outline is only suppressed when the style asked for nothing at
+      // all; a width on its own is still a visible outline to draw.
+      if (lnChildren.isEmpty && width == null && !asLine)
+        _ca('ln', [], [_ca('noFill')])
+      else
+        _ca('ln', [
+          if (width != null) XmlAttribute(_xmlName('w'), width),
+        ], lnChildren),
+    ]);
+  }
+
   /// A coloured `<c:dPt>` so each pie/doughnut slice gets its own colour.
   XmlElement _dPt(int idx, String hex) => _c('dPt', [], [
     _cVal('idx', '$idx'),
@@ -253,10 +308,7 @@ mixin _WriterChartsMixin on _WriterBase {
         _c('tx', [], [
           _c('v', [], [XmlText(s.name!)]),
         ]),
-      if (asLine)
-        _lineSpPr(_resolvedSeriesColor(s, index))
-      else if (!isPieLike)
-        _fillSpPr(_resolvedSeriesColor(s, index)),
+      if (asLine || !isPieLike) _seriesSpPr(s, index, asLine: asLine),
       if (type == ChartType.column || type == ChartType.bar)
         _cVal('invertIfNegative', '0'),
       if (isPieLike)
@@ -276,7 +328,7 @@ mixin _WriterChartsMixin on _WriterBase {
         _c('tx', [], [
           _c('v', [], [XmlText(s.name!)]),
         ]),
-      _lineSpPr(_resolvedSeriesColor(s, index)),
+      _seriesSpPr(s, index, asLine: true),
       _c('xVal', [], [_numRef(sheetName, s.xValues ?? s.values)]),
       _c('yVal', [], [_numRef(sheetName, s.values)]),
     ]);
@@ -446,8 +498,105 @@ mixin _WriterChartsMixin on _WriterBase {
           ]),
           ..._categoryValueAxes(chart),
         ];
+      case ChartType.bubble:
+        return [
+          _c('bubbleChart', [], [
+            _cVal('varyColors', '0'),
+            for (var i = 0; i < chart.series.length; i++)
+              _bubbleSeries(sheetName, chart.series[i], i),
+            ..._dLbls(chart),
+            _cVal('bubbleScale', '100'),
+            _cVal('showNegBubbles', '0'),
+            ...axIds,
+          ]),
+          // A bubble chart measures both axes, like a scatter.
+          ..._scatterAxes(chart),
+        ];
+      case ChartType.stock:
+        return [
+          _c('stockChart', [], [
+            // A stock chart is a line chart with no markers; the high-low
+            // bars come from Excel reading the series in order.
+            for (var i = 0; i < chart.series.length; i++)
+              _stockSeries(sheetName, chart.series[i], i, chart.categories),
+            ..._dLbls(chart),
+            _c('hiLowLines', [], const []),
+            ...axIds,
+          ]),
+          ..._categoryValueAxes(chart),
+        ];
+      case ChartType.ofPie:
+        final split = chart.ofPieSplit;
+        return [
+          _c('ofPieChart', [], [
+            _cVal('ofPieType', split?.type == OfPieType.bar ? 'bar' : 'pie'),
+            _cVal('varyColors', '1'),
+            _categorySeries(
+              ChartType.pie,
+              sheetName,
+              chart.series.first,
+              0,
+              chart.categories,
+            ),
+            ..._dLbls(chart),
+            if (split != null) ...[
+              _cVal('splitType', split.splitType),
+              _cVal('splitPos', _num(split.position)),
+            ] else
+              _cVal('splitType', 'auto'),
+            _c('serLines', [], const []),
+          ]),
+        ];
     }
   }
+
+  /// Builds the `<c:ser>` for a bubble chart: x, y and a size per point.
+  XmlElement _bubbleSeries(String sheetName, ChartSeries s, int index) {
+    return _c('ser', [], [
+      _cVal('idx', '$index'),
+      _cVal('order', '$index'),
+      if (s.name != null)
+        _c('tx', [], [
+          _c('v', [], [XmlText(s.name!)]),
+        ]),
+      _seriesSpPr(s, index, asLine: false),
+      _c('xVal', [], [_numRef(sheetName, s.xValues ?? s.values)]),
+      _c('yVal', [], [_numRef(sheetName, s.values)]),
+      // Without sizes every bubble would be drawn the same, which is a
+      // scatter; fall back to the values so the chart still opens.
+      _c('bubbleSize', [], [_numRef(sheetName, s.bubbleSizes ?? s.values)]),
+      _cVal('bubble3D', '0'),
+    ]);
+  }
+
+  /// Builds the `<c:ser>` for a stock chart: a line with no marker, so the
+  /// high-low lines and close marker are all Excel draws.
+  XmlElement _stockSeries(
+    String sheetName,
+    ChartSeries s,
+    int index,
+    String? categories,
+  ) {
+    return _c('ser', [], [
+      _cVal('idx', '$index'),
+      _cVal('order', '$index'),
+      if (s.name != null)
+        _c('tx', [], [
+          _c('v', [], [XmlText(s.name!)]),
+        ]),
+      _c('spPr', [], [
+        _ca('ln', [], [_ca('noFill')]),
+      ]),
+      _c('marker', [], [_cVal('symbol', 'none')]),
+      if (categories != null) _c('cat', [], [_strRef(sheetName, categories)]),
+      _c('val', [], [_numRef(sheetName, s.values)]),
+    ]);
+  }
+
+  /// Formats [v] without a trailing `.0`, which the schema's numeric
+  /// attributes do not accept for an integral split position.
+  String _num(double v) =>
+      v == v.roundToDouble() ? v.toInt().toString() : v.toString();
 
   String _radarStyleVal(RadarStyle s) => switch (s) {
     RadarStyle.standard => 'standard',

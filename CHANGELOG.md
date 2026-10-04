@@ -1,3 +1,72 @@
+## 2.26.0
+
+The number-format display path was mangling several common codes, and three
+chart types, table totals and outline placement were missing.
+
+### Fixed
+
+- **Square brackets in a format code corrupted the result.** They were not
+  handled at all, and the failure was not graceful: `[Red]0.00` came out as
+  `[Re31]0.00`, because the `d` in the colour name sent the whole code to the
+  date formatter, and `[$$-409]#,##0.00` had the `409` read as digit
+  placeholders. Now a colour is dropped, a currency tag keeps its symbol and
+  drops its locale id, a condition such as `[>100]` selects the section, and
+  an elapsed token is passed to the date formatter.
+- **Fraction formats did nothing.** `# ?/?` on a third gave `0 /`. The
+  denominator is now chosen to fit the placeholders, or taken as written for a
+  fixed scale such as `?/8`, and `?` reserves a blank so a column of fractions
+  lines up on the slash.
+- **Elapsed durations printed their brackets.** `[h]:mm` on a day and a half
+  read `[12]:00` instead of `36:00`. `[h]`, `[m]` and `[s]` now measure the
+  whole duration rather than wrapping at the clock field, and the `mm` after
+  an elapsed hour reads as minutes rather than as a month.
+- **A fractional-seconds group always printed zero.** `mm:ss.0` on one and a
+  half seconds gave `00:01.0`. The whole seconds also truncate now, so the two
+  halves cannot disagree by a rounding.
+- **A negative too small to show kept its sign**, so a value that is simply
+  zero at the format's precision displayed as `-0.00`.
+- **`_` and `*` were printed literally.** `_)` reserves the width of a
+  character and `*-` fills the column, which every built-in accounting format
+  uses, so those formats showed stray markers.
+- **A section of pure literals had a `0` put in front of it**, so the zero
+  section of `0.00;-0.00;"zero"` read `0zero`.
+- **The fourth (text) section never ran.** A custom code was rejected on a
+  text cell before it could, so a format whose job was to label or wrap text
+  did nothing. `0.00;-0.00;"zero";"["@"]"` now shows `hi` as `[hi]`.
+- **A new workbook declared its group summaries above and to the left.** The
+  bundled template carried `<outlinePr summaryBelow="0" summaryRight="0"/>`,
+  the opposite of Excel's default, so the outline arrows on a grouped sheet
+  pointed at the wrong row. A created workbook now starts on the default.
+
+### New
+
+- **Three more chart types.** `Chart.bubble` (an XY scatter where each point
+  carries a size, via `ChartSeries.bubbleSizes`), `Chart.stock` (high-low-close
+  or open-high-low-close, by series order), and `Chart.ofPie` (a pie with its
+  small slices broken out into a second pie or a bar, by `OfPieSplit`). All
+  three read back as themselves.
+- **`ChartSeriesStyle`** gives a series a fill and a stroke, with a width in
+  points and a dash pattern, so a dashed or outline-only series is expressible
+  rather than just a single colour.
+- **A table totals row.** `ExcelTable.totals` says what each column shows: a
+  label, or one of nine aggregates. Each is written as a `SUBTOTAL` over the
+  column, so a filtered-out row drops out of it as it does in Excel.
+- **`Sheet.appendTableRow`, `Sheet.tableRowsAsMaps` and `Sheet.table`.**
+  Appending to a table has to grow the table's range too, or the new row sits
+  outside its banding and its filter; reading one back by column name is the
+  other half of that.
+- **`Sheet.outlineSettings`** places a group's summary row and column, and can
+  hide the outline symbols, for a sheet whose totals sit above or to the left
+  of their detail.
+- **`SUBTOTAL`**, with the 1-11 codes and the 101-111 variants that leave
+  hidden rows out. That takes the engine to 332 function names.
+
+### Notes
+
+A stock chart is fixed at three or four series by the schema, and Excel refuses
+the file outright otherwise, so `Chart.stock` rejects anything else up front
+rather than letting it become a repair prompt.
+
 ## 2.25.0
 
 Inserting or removing a row or a column now moves everything on the sheet, not

@@ -186,10 +186,17 @@ mixin _ParserDrawingsMixin on _ParserBase {
         type = ChartType.scatter;
       case 'radarChart':
         type = ChartType.radar;
+      case 'bubbleChart':
+        type = ChartType.bubble;
+      case 'stockChart':
+        type = ChartType.stock;
+      case 'ofPieChart':
+        type = ChartType.ofPie;
       default:
         return null;
     }
-    final isScatter = type == ChartType.scatter;
+    // A bubble chart carries x/y pairs and two value axes, like a scatter.
+    final isXY = type == ChartType.scatter || type == ChartType.bubble;
 
     final titleEl = chartEl.childElements
         .where((e) => e.name.local == 'title')
@@ -200,7 +207,7 @@ mixin _ParserDrawingsMixin on _ParserBase {
 
     String? xTitle;
     String? yTitle;
-    if (isScatter) {
+    if (isXY) {
       final valAxes = plotArea.childElements
           .where((e) => e.name.local == 'valAx')
           .toList();
@@ -223,11 +230,16 @@ mixin _ParserDrawingsMixin on _ParserBase {
     final series = <ChartSeries>[];
     for (final ser in plot.childElements.where((e) => e.name.local == 'ser')) {
       final name = _refText(ser, 'tx', leaf: 'v');
-      if (isScatter) {
+      if (isXY) {
         final y = _refText(ser, 'yVal');
         if (y == null) continue;
         series.add(
-          ChartSeries(name: name, values: y, xValues: _refText(ser, 'xVal')),
+          ChartSeries(
+            name: name,
+            values: y,
+            xValues: _refText(ser, 'xVal'),
+            bubbleSizes: _refText(ser, 'bubbleSize'),
+          ),
         );
       } else {
         final v = _refText(ser, 'val');
@@ -258,7 +270,24 @@ mixin _ParserDrawingsMixin on _ParserBase {
           ? _radarStyleFromVal(_childVal(plot, 'radarStyle'))
           : RadarStyle.marker,
       dataLabels: _dataLabelsFrom(plot),
+      ofPieSplit: type == ChartType.ofPie ? _ofPieSplitFrom(plot) : null,
     );
+  }
+
+  /// Reads an `<c:ofPieChart>`'s split settings, or null when it leaves them
+  /// to Excel.
+  OfPieSplit? _ofPieSplitFrom(XmlElement plot) {
+    final splitType = _childVal(plot, 'splitType');
+    if (splitType == null || splitType == 'auto') return null;
+    final type = _childVal(plot, 'ofPieType') == 'bar'
+        ? OfPieType.bar
+        : OfPieType.pie;
+    final pos = double.tryParse(_childVal(plot, 'splitPos') ?? '') ?? 2;
+    return switch (splitType) {
+      'val' => OfPieSplit.below(pos, type: type),
+      'percent' => OfPieSplit.underPercent(pos, type: type),
+      _ => OfPieSplit.lastSlices(pos.toInt(), type: type),
+    };
   }
 
   /// Maps an OOXML `radarStyle` value to a [RadarStyle], defaulting to marker.

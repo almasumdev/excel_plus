@@ -159,7 +159,19 @@ class Excel {
 
   /// Creates a new blank Excel workbook with a default sheet.
   factory Excel.createExcel() {
-    return Excel.decodeBytes(Base64Decoder().convert(_newSheet));
+    final excel = Excel.decodeBytes(Base64Decoder().convert(_newSheet));
+    // The bundled template carries `<outlinePr summaryBelow="0"
+    // summaryRight="0"/>`, which tells Excel that a group's total sits above
+    // and to the left of its detail. That is the opposite of Excel's own
+    // default and wrong for almost every sheet, so a new workbook is put back
+    // on the default; assigning it also drops the element on save. Parsing
+    // the template first costs nothing, since it holds one empty sheet, and a
+    // file the caller opened keeps whatever it says.
+    excel.parser._ensureAllSheetsParsed();
+    for (final sheet in excel._sheetMap.values) {
+      sheet.outlineSettings = const OutlineSettings();
+    }
+    return excel;
   }
 
   /// Decodes an `.xlsx` or legacy binary `.xls` file from a byte list.

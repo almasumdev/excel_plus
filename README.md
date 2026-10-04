@@ -185,7 +185,7 @@ Flutter platform. Expand a group for details:
 
 - Insert / delete / clear rows & columns
 - Column width, row height & auto-fit
-- Grouping & outline levels
+- Grouping & outline levels, with summary row and column placement
 - Page & print setup
 
 </details>
@@ -226,7 +226,7 @@ Flutter platform. Expand a group for details:
 <details>
 <summary><b>🖼️ Objects & media</b></summary>
 
-- Charts: read & write (column, bar, line, area, pie, doughnut, scatter, radar), with optional data labels
+- Charts: read & write (column, bar, line, area, pie, doughnut, scatter, radar, bubble, stock, of-pie), with data labels and per-series fill and stroke
 - Sparklines: in-cell mini charts (line / column / win-loss)
 - Images: PNG, JPEG, GIF, BMP, TIFF, WebP, ICO, EMF & WMF, with automatic size detection
 - Comments / notes
@@ -854,9 +854,58 @@ for (final c in sheet.charts) {
 Also `Chart.bar`, `Chart.line`, `Chart.area`, `Chart.pie`, `Chart.doughnut`,
 `Chart.scatter`, and `Chart.radar` (pass `RadarStyle.filled` to fill it).
 
+Three more carry their own data shape:
+
+```dart
+// A bubble chart: an XY scatter where each point also has a size.
+sheet.addChart(Chart.bubble(
+  anchor: CellIndex.indexByString('E2'),
+  series: [ChartSeries(
+    name: 'Regions',
+    xValues: 'B2:B10',
+    values: 'C2:C10',
+    bubbleSizes: 'D2:D10',
+  )],
+));
+
+// A stock chart, read in order as high, low, close (or open first, for four).
+sheet.addChart(Chart.stock(
+  anchor: CellIndex.indexByString('E20'),
+  categories: 'A2:A10',
+  series: [
+    ChartSeries(name: 'High', values: 'B2:B10'),
+    ChartSeries(name: 'Low', values: 'C2:C10'),
+    ChartSeries(name: 'Close', values: 'D2:D10'),
+  ],
+));
+
+// A pie with the small slices broken out into a bar.
+sheet.addChart(Chart.ofPie(
+  anchor: CellIndex.indexByString('E40'),
+  categories: 'A2:A10',
+  series: [ChartSeries(name: 'Spend', values: 'B2:B10')],
+  split: OfPieSplit.underPercent(5, type: OfPieType.bar),
+));
+```
+
 Pass `dataLabels: ChartDataLabels(...)` to print values on the chart (or the
 category, series name, or percentage), for example
 `dataLabels: ChartDataLabels(value: true)`.
+
+A series takes a `style` for its fill and its stroke, so a dashed or
+outline-only series is expressible rather than just a single colour:
+
+```dart
+ChartSeries(
+  values: 'B2:B10',
+  style: ChartSeriesStyle(
+    fill: ExcelColor.red,
+    stroke: ExcelColor.black,
+    strokeWidth: 2.5,          // points
+    dash: ChartLineDash.dash,  // or .dot / .dashDot / .longDash
+  ),
+)
+```
 
 ### Sparklines
 
@@ -1033,6 +1082,41 @@ sheet.addTable(ExcelTable(
   to: CellIndex.indexByString('C13'),
   style: TableStyle.medium9,
 ));
+```
+
+Add a `totals` row by saying what each column shows. `to` stays on the last row
+of data; the totals row goes below it and the table grows by one on save:
+
+```dart
+sheet.addTable(ExcelTable(
+  name: 'Sales',
+  from: CellIndex.indexByString('A1'),
+  to: CellIndex.indexByString('C13'),
+  totals: [
+    TableTotal.label('Total'),
+    TableTotal(TableTotalFunction.sum),
+    TableTotal(TableTotalFunction.average),
+  ],
+));
+```
+
+Each total is written as a `SUBTOTAL` over the column, so a filtered-out row
+drops out of it the way Excel's own totals row behaves.
+
+Working with the rows inside a table:
+
+```dart
+for (final row in sheet.tableRowsAsMaps('Sales')) {
+  print('${row['Region']}: ${row['Amount']}');
+}
+
+// Appends the row and grows the table's range to cover it.
+sheet.appendTableRow('Sales', [
+  TextCellValue('West'),
+  IntCellValue(1200),
+]);
+
+final table = sheet.table('Sales'); // by name, ignoring case
 ```
 
 ### Insert an image

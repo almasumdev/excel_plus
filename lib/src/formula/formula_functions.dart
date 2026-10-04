@@ -300,5 +300,6 @@ Map<String, _FormulaFn> _buildFunctionRegistry() {
   _registerEngineeringFunctions(r);
   _registerReferenceFunctions(r);
   _registerTextFormatFunctions(r);
+  _registerSubtotalFunctions(r);
   return r;
 }

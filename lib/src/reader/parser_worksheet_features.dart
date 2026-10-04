@@ -337,6 +337,26 @@ mixin _ParserWorksheetFeaturesMixin on _ParserBase {
     sheet._protectionAllow = allow;
   }
 
+  /// Reads `<sheetPr><outlinePr>` into the sheet model, so a sheet whose
+  /// totals sit above or to the left of their detail keeps saying so.
+  void _parseOutlineSettingsForSheet(String sheetName) {
+    final sheet = _excel._sheetMap[sheetName];
+    final partPath = _excel._xmlSheetId[sheetName];
+    if (sheet == null || partPath == null) return;
+    final doc = _excel._xmlFiles[partPath];
+    if (doc == null) return;
+
+    final sheetPr = doc.findAllElements('sheetPr').firstOrNull;
+    final outlinePr = sheetPr?.findElements('outlinePr').firstOrNull;
+    if (outlinePr == null) return;
+
+    sheet._outlineSettings = OutlineSettings(
+      summaryBelow: outlinePr.getAttribute('summaryBelow') != '0',
+      summaryRight: outlinePr.getAttribute('summaryRight') != '0',
+      showOutlineSymbols: outlinePr.getAttribute('showOutlineSymbols') != '0',
+    );
+  }
+
   /// Reads `<sheetPr><tabColor>` into the sheet model, resolving rgb / theme /
   /// indexed references to ARGB. The element is left untouched on save unless
   /// the API changes it (so a theme reference round-trips as-is).

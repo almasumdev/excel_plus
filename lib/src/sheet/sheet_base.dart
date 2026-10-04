@@ -155,6 +155,13 @@ class _SheetBase {
   /// Summary-column indices marked collapsed (the `<col collapsed="1">` flag).
   final Set<int> _columnCollapsed = {};
 
+  /// Where group summaries sit; see [outlineSettings].
+  OutlineSettings _outlineSettings = const OutlineSettings();
+
+  /// Set when the API changed [outlineSettings], so an untouched sheet's
+  /// `<outlinePr>` round-trips exactly as it was read.
+  bool _outlineSettingsChanged = false;
+
   /// Cell comments (notes), keyed by cell reference (e.g. `"B2"`). Lazily
   /// populated when the sheet is parsed.
   final Map<String, Comment> _comments = {};
@@ -1024,6 +1031,22 @@ class _SheetBase {
   /// The outline (grouping) level of [columnIndex], `0` when not grouped.
   int columnOutlineLevel(int columnIndex) =>
       _columnOutlineLevel[columnIndex] ?? 0;
+
+  /// Where this sheet's group summaries sit, and whether the outline symbols
+  /// are shown. Defaults to Excel's own: summary below and to the right.
+  ///
+  /// ```dart
+  /// sheet.groupRows(1, 4);
+  /// // The total for rows 2-5 is on row 1, above them.
+  /// sheet.outlineSettings = const OutlineSettings(summaryBelow: false);
+  /// ```
+  OutlineSettings get outlineSettings => _outlineSettings;
+
+  set outlineSettings(OutlineSettings value) {
+    if (value == _outlineSettings) return;
+    _outlineSettings = value;
+    _outlineSettingsChanged = true;
+  }
 
   /// Whether [rowIndex] is hidden.
   bool isRowHidden(int rowIndex) => _rowHidden.contains(rowIndex);

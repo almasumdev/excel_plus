@@ -81,6 +81,7 @@ part 'src/core/excel.dart';
 part 'src/core/config.dart';
 part 'src/core/csv.dart';
 part 'src/core/json.dart';
+part 'src/core/table_rows.dart';
 
 /// Models
 part 'src/models/exceptions.dart';
@@ -103,6 +104,7 @@ part 'src/models/conditional_format.dart';
 part 'src/models/sparkline.dart';
 part 'src/models/image.dart';
 part 'src/models/page_setup.dart';
+part 'src/models/outline_settings.dart';
 part 'src/models/comment.dart';
 part 'src/models/excel_table.dart';
 part 'src/models/chart.dart';
@@ -180,6 +182,7 @@ part 'src/formula/formula_functions_database.dart';
 part 'src/formula/formula_functions_engineering.dart';
 part 'src/formula/formula_functions_reference.dart';
 part 'src/formula/formula_format_parts.dart';
+part 'src/formula/formula_functions_subtotal.dart';
 part 'src/formula/formula_text_format.dart';
 part 'src/formula/formula_api.dart';
 

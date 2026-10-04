@@ -27,6 +27,120 @@ enum ChartType {
 
   /// A radar (spider) chart.
   radar,
+
+  /// A bubble chart: an XY scatter where each point also carries a size.
+  ///
+  /// Each series needs [ChartSeries.bubbleSizes] alongside its x and y ranges.
+  bubble,
+
+  /// A stock (high-low-close) chart.
+  ///
+  /// The series are read in order as high, low and close, or as open, high,
+  /// low and close when four are given, which is the order Excel expects the
+  /// columns in.
+  stock,
+
+  /// A pie chart with the smallest slices broken out into a second plot.
+  ///
+  /// [Chart.ofPieSplit] chooses whether that second plot is a pie or a bar,
+  /// and how many slices move into it.
+  ofPie,
+}
+
+/// Whether an [ChartType.ofPie] chart breaks its small slices out into a
+/// second pie or into a stacked bar.
+///
+/// {@category Charts}
+enum OfPieType {
+  /// A second pie (OOXML `pie`).
+  pie,
+
+  /// A stacked bar (OOXML `bar`); Excel's "bar of pie".
+  bar,
+}
+
+/// How many slices an [ChartType.ofPie] chart moves into its second plot.
+///
+/// {@category Charts}
+class OfPieSplit {
+  /// Whether the second plot is a pie or a bar.
+  final OfPieType type;
+
+  /// The OOXML `splitType`: `pos` takes the last [position] slices, `val`
+  /// takes those below [position], and `percent` those under [position]%.
+  final String splitType;
+
+  /// The threshold [splitType] is measured against.
+  final double position;
+
+  const OfPieSplit._(this.type, this.splitType, this.position);
+
+  /// Moves the last [count] slices of the source data into the second plot.
+  factory OfPieSplit.lastSlices(int count, {OfPieType type = OfPieType.pie}) =>
+      OfPieSplit._(type, 'pos', count.toDouble());
+
+  /// Moves every slice whose value is below [value].
+  factory OfPieSplit.below(double value, {OfPieType type = OfPieType.pie}) =>
+      OfPieSplit._(type, 'val', value);
+
+  /// Moves every slice making up less than [percent] of the total.
+  factory OfPieSplit.underPercent(
+    double percent, {
+    OfPieType type = OfPieType.pie,
+  }) => OfPieSplit._(type, 'percent', percent);
+}
+
+/// How a [ChartSeries] is painted, beyond the single [ChartSeries.color].
+///
+/// A series' fill is only half of its look: a dashed two-point border, or a
+/// thick line with no fill, needs the stroke described separately.
+///
+/// {@category Charts}
+class ChartSeriesStyle {
+  /// The fill or line colour, overriding [ChartSeries.color].
+  final ExcelColor? fill;
+
+  /// The outline colour for a bar or area, or the line colour for a line.
+  final ExcelColor? stroke;
+
+  /// Stroke width in points. Excel's default is 2.25pt for a line series.
+  final double? strokeWidth;
+
+  /// The stroke's dash pattern.
+  final ChartLineDash dash;
+
+  /// Whether to draw no fill at all, leaving only the stroke.
+  final bool noFill;
+
+  /// Creates a series style. Everything is optional: whatever is left out
+  /// keeps the look the series would have had.
+  const ChartSeriesStyle({
+    this.fill,
+    this.stroke,
+    this.strokeWidth,
+    this.dash = ChartLineDash.solid,
+    this.noFill = false,
+  });
+}
+
+/// A stroke dash pattern for [ChartSeriesStyle.dash].
+///
+/// {@category Charts}
+enum ChartLineDash {
+  /// An unbroken line (OOXML `solid`).
+  solid,
+
+  /// Evenly spaced dots (`sysDot`).
+  dot,
+
+  /// Short dashes (`dash`).
+  dash,
+
+  /// Alternating dashes and dots (`dashDot`).
+  dashDot,
+
+  /// Long dashes (`lgDash`).
+  longDash,
 }
 
 /// The visual style of a radar [Chart] (ignored by other chart types).
@@ -134,6 +248,14 @@ class ChartSeries {
   /// list colours only the leading slices. Ignored by other chart types.
   final List<ExcelColor?>? pointColors;
 
+  /// For a bubble chart, the range holding each point's size. Required by
+  /// [ChartType.bubble] and ignored by every other type.
+  final String? bubbleSizes;
+
+  /// Fill and stroke for this series, overriding [color] where both are given.
+  /// `null` paints the series the way it always did.
+  final ChartSeriesStyle? style;
+
   /// Creates a series over the [values] range, with an optional [name] and,
   /// for scatter charts, an [xValues] range. Pass [color] to override the
   /// series' palette colour, or [pointColors] to colour pie/doughnut slices.
@@ -143,6 +265,8 @@ class ChartSeries {
     this.xValues,
     this.color,
     this.pointColors,
+    this.bubbleSizes,
+    this.style,
   });
 }
 
@@ -220,6 +344,10 @@ class Chart {
   /// name), or `null` to draw no labels. Applies to every series.
   final ChartDataLabels? dataLabels;
 
+  /// For an [ChartType.ofPie] chart, which slices move to the second plot.
+  /// Defaults to breaking out the last two slices as a second pie.
+  final OfPieSplit? ofPieSplit;
+
   /// Set true once the chart has been written, so a re-save doesn't duplicate it.
   bool _written = false;
 
@@ -241,6 +369,7 @@ class Chart {
     this.anchorTo,
     this.radarStyle = RadarStyle.marker,
     this.dataLabels,
+    this.ofPieSplit,
   });
 
   /// A vertical bar (column) chart.
@@ -447,6 +576,140 @@ class Chart {
     height: height,
     xAxisTitle: xAxisTitle,
     yAxisTitle: yAxisTitle,
+    plotVisibleOnly: plotVisibleOnly,
+    anchorTo: anchorTo,
+    dataLabels: dataLabels,
+  );
+
+  /// A bubble chart: an XY scatter where each point also carries a size.
+  ///
+  /// Every series needs [ChartSeries.bubbleSizes] as well as its x and y
+  /// ranges, since the size is what distinguishes a bubble from a scatter.
+  ///
+  /// ```dart
+  /// Chart.bubble(
+  ///   anchor: CellIndex.indexByString('E2'),
+  ///   series: [
+  ///     ChartSeries(
+  ///       name: 'Regions',
+  ///       xValues: 'B2:B10',
+  ///       values: 'C2:C10',
+  ///       bubbleSizes: 'D2:D10',
+  ///     ),
+  ///   ],
+  /// );
+  /// ```
+  factory Chart.bubble({
+    required CellIndex anchor,
+    required List<ChartSeries> series,
+    String? title,
+    LegendPosition legend = LegendPosition.right,
+    int width = 480,
+    int height = 288,
+    String? xAxisTitle,
+    String? yAxisTitle,
+    bool plotVisibleOnly = true,
+    CellIndex? anchorTo,
+    ChartDataLabels? dataLabels,
+  }) => Chart(
+    type: ChartType.bubble,
+    anchor: anchor,
+    series: series,
+    title: title,
+    legend: legend,
+    width: width,
+    height: height,
+    xAxisTitle: xAxisTitle,
+    yAxisTitle: yAxisTitle,
+    plotVisibleOnly: plotVisibleOnly,
+    anchorTo: anchorTo,
+    dataLabels: dataLabels,
+  );
+
+  /// A stock (high-low-close) chart.
+  ///
+  /// Pass three series for high, low and close, or four for open, high, low
+  /// and close, in that order. Excel draws the close as a marker on a
+  /// high-low line, so the series order is what gives the chart its meaning
+  /// rather than any per-series setting.
+  factory Chart.stock({
+    required CellIndex anchor,
+    required List<ChartSeries> series,
+    String? categories,
+    String? title,
+    LegendPosition legend = LegendPosition.right,
+    int width = 480,
+    int height = 288,
+    String? xAxisTitle,
+    String? yAxisTitle,
+    bool plotVisibleOnly = true,
+    CellIndex? anchorTo,
+    ChartDataLabels? dataLabels,
+  }) {
+    // The schema fixes a stock chart at three or four series. Excel rejects
+    // anything else outright, so it is better caught here than as a repair
+    // prompt when the file is opened.
+    if (series.length < 3 || series.length > 4) {
+      throw ArgumentError.value(
+        series.length,
+        'series',
+        'a stock chart needs 3 series (high, low, close) or 4 '
+            '(open, high, low, close)',
+      );
+    }
+    return Chart(
+      type: ChartType.stock,
+      anchor: anchor,
+      series: series,
+      categories: categories,
+      title: title,
+      legend: legend,
+      width: width,
+      height: height,
+      xAxisTitle: xAxisTitle,
+      yAxisTitle: yAxisTitle,
+      plotVisibleOnly: plotVisibleOnly,
+      anchorTo: anchorTo,
+      dataLabels: dataLabels,
+    );
+  }
+
+  /// A pie chart with its smallest slices broken out into a second plot.
+  ///
+  /// [split] decides what moves and whether the second plot is a pie or a
+  /// stacked bar; it defaults to the last two slices as a second pie, which
+  /// is Excel's own default.
+  ///
+  /// ```dart
+  /// Chart.ofPie(
+  ///   anchor: CellIndex.indexByString('E2'),
+  ///   categories: 'A2:A8',
+  ///   series: [const ChartSeries(name: 'Spend', values: 'B2:B8')],
+  ///   split: OfPieSplit.underPercent(5, type: OfPieType.bar),
+  /// );
+  /// ```
+  factory Chart.ofPie({
+    required CellIndex anchor,
+    required List<ChartSeries> series,
+    String? categories,
+    String? title,
+    OfPieSplit? split,
+    LegendPosition legend = LegendPosition.right,
+    int width = 480,
+    int height = 288,
+    bool plotVisibleOnly = true,
+    CellIndex? anchorTo,
+    ChartDataLabels? dataLabels,
+  }) => Chart(
+    type: ChartType.ofPie,
+    anchor: anchor,
+    series: series,
+    categories: categories,
+    title: title,
+    ofPieSplit: split,
+    legend: legend,
+    width: width,
+    height: height,
     plotVisibleOnly: plotVisibleOnly,
     anchorTo: anchorTo,
     dataLabels: dataLabels,

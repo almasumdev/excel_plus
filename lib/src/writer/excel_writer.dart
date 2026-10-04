@@ -678,6 +678,10 @@ class ExcelWriter extends _WriterBase
       // Emit the tab colour into the DOM (only when changed via the API).
       _applyTabColorForSheet(sheetName);
 
+      // Outline settings share <sheetPr>, so this runs straight after the tab
+      // colour to keep that element in CT order.
+      _applyOutlineSettingsForSheet(sheetName);
+
       // Emit page/print setup and manual page breaks (only when changed). Runs
       // after the tab colour so a shared <sheetPr> is built in CT order.
       _applyPageSetupForSheet(sheetName);

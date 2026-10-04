@@ -108,6 +108,7 @@ class Parser extends _ParserBase
     _parseSparklinesForSheet(sheetName);
     _parseSheetProtectionForSheet(sheetName);
     _parseTabColorForSheet(sheetName);
+    _parseOutlineSettingsForSheet(sheetName);
     _parsePageSetupForSheet(sheetName);
     _parsePageBreaksForSheet(sheetName);
   }

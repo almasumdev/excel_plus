@@ -426,6 +426,57 @@ mixin _WriterWorksheetFeaturesMixin on _WriterBase {
     );
   }
 
+  /// Writes `<sheetPr><outlinePr>` for [sheetName] when the API changed it.
+  ///
+  /// `outlinePr` follows `tabColor` in the CT_SheetPr order, so it is inserted
+  /// after any tab colour rather than appended blindly.
+  void _applyOutlineSettingsForSheet(String sheetName) {
+    final sheet = _excel._sheetMap[sheetName];
+    final partPath = _excel._xmlSheetId[sheetName];
+    if (sheet == null || partPath == null) return;
+    if (!sheet._outlineSettingsChanged) return;
+    final doc = _excel._xmlFiles[partPath];
+    if (doc == null) return;
+    final worksheet = doc.findAllElements('worksheet').firstOrNull;
+    if (worksheet == null) return;
+
+    var sheetPr = worksheet.findElements('sheetPr').firstOrNull;
+    final settings = sheet._outlineSettings;
+
+    if (settings._isDefault) {
+      // Excel's defaults need no element, so drop ours and tidy up after it.
+      if (sheetPr != null) {
+        sheetPr.children.removeWhere(
+          (n) => n is XmlElement && n.name.local == 'outlinePr',
+        );
+        if (sheetPr.children.isEmpty && sheetPr.attributes.isEmpty) {
+          worksheet.children.remove(sheetPr);
+        }
+      }
+      return;
+    }
+
+    if (sheetPr == null) {
+      sheetPr = XmlElement(_xmlName('sheetPr'), [], []);
+      _insertWorksheetChildOrdered(worksheet, sheetPr);
+    }
+    sheetPr.children.removeWhere(
+      (n) => n is XmlElement && n.name.local == 'outlinePr',
+    );
+    final hasTabColor = sheetPr.childElements.any(
+      (e) => e.name.local == 'tabColor',
+    );
+    sheetPr.children.insert(
+      hasTabColor ? 1 : 0,
+      XmlElement(_xmlName('outlinePr'), [
+        if (!settings.showOutlineSymbols)
+          XmlAttribute(_xmlName('showOutlineSymbols'), '0'),
+        if (!settings.summaryBelow) XmlAttribute(_xmlName('summaryBelow'), '0'),
+        if (!settings.summaryRight) XmlAttribute(_xmlName('summaryRight'), '0'),
+      ]),
+    );
+  }
+
   /// Writes the tab colour into `<sheetPr><tabColor rgb>` (in place, so other
   /// `sheetPr` content is kept). Only runs when the API changed it, so an
   /// existing theme/indexed `<tabColor>` round-trips untouched.

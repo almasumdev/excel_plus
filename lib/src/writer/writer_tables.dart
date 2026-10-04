@@ -71,6 +71,7 @@ mixin _WriterTablesMixin on _WriterBase {
 
       table._id ??= _nextTableId();
       final columns = _resolveTableColumns(sheetName, table);
+      _writeTotalsRowCells(sheet, table);
 
       _registerXmlPart(tablePath, _buildTableXml(table, columns), isNew: true);
       _ensureOverrideContentType('/$tablePath', _contentTypeTable);
@@ -194,18 +195,69 @@ mixin _WriterTablesMixin on _WriterBase {
     return names;
   }
 
+  /// The totals-row attributes for column [index], empty when the table has
+  /// no totals row or says nothing about this column.
+  List<XmlAttribute> _totalsAttributes(ExcelTable table, int index) {
+    if (!table.hasTotalsRow || index >= table.totals!.length) return const [];
+    final total = table.totals![index];
+    final fn = total._functionName;
+    return [
+      if (total.label != null)
+        XmlAttribute(_xmlName('totalsRowLabel'), total.label!),
+      if (fn != null) XmlAttribute(_xmlName('totalsRowFunction'), fn),
+    ];
+  }
+
+  /// Fills a table's totals row with the labels and `SUBTOTAL` formulas the
+  /// column settings imply.
+  ///
+  /// Excel stores the aggregate twice: as the column's `totalsRowFunction`
+  /// and as a formula in the cell. Writing only the attribute leaves the row
+  /// visibly blank until Excel recalculates, so both go in.
+  void _writeTotalsRowCells(Sheet sheet, ExcelTable table) {
+    if (!table.hasTotalsRow) return;
+    final row = table.to.rowIndex + 1;
+    final firstDataRow = table.from.rowIndex + (table.headerRow ? 1 : 0);
+    if (firstDataRow > table.to.rowIndex) return;
+
+    for (var i = 0; i < table.totals!.length; i++) {
+      final column = table.from.columnIndex + i;
+      if (column > table.to.columnIndex) break;
+      final total = table.totals![i];
+      final at = CellIndex.indexByColumnRow(columnIndex: column, rowIndex: row);
+      if (total.label != null) {
+        sheet.updateCell(at, TextCellValue(total.label!));
+        continue;
+      }
+      final code = total._subtotalCode;
+      if (code == null) continue;
+      final range = getSpanCellId(
+        column,
+        firstDataRow,
+        column,
+        table.to.rowIndex,
+      );
+      sheet.updateCell(at, FormulaCellValue('SUBTOTAL($code,$range)'));
+    }
+  }
+
   String _buildTableXml(ExcelTable table, List<String> columns) {
     final attrs = <XmlAttribute>[
       XmlAttribute(_xmlName('xmlns'), _tableNamespace),
       XmlAttribute(_xmlName('id'), '${table._id}'),
       XmlAttribute(_xmlName('name'), table.name),
       XmlAttribute(_xmlName('displayName'), table.name),
-      XmlAttribute(_xmlName('ref'), table.ref),
+      XmlAttribute(_xmlName('ref'), table.writtenRef),
       if (!table.headerRow) XmlAttribute(_xmlName('headerRowCount'), '0'),
+      if (table.hasTotalsRow)
+        XmlAttribute(_xmlName('totalsRowCount'), '1')
+      else
+        XmlAttribute(_xmlName('totalsRowShown'), '0'),
     ];
 
     final children = <XmlElement>[];
     if (table.headerRow) {
+      // The filter covers the header and the data, never the totals row.
       children.add(
         XmlElement(_xmlName('autoFilter'), [
           XmlAttribute(_xmlName('ref'), table.ref),
@@ -221,6 +273,7 @@ mixin _WriterTablesMixin on _WriterBase {
             XmlElement(_xmlName('tableColumn'), [
               XmlAttribute(_xmlName('id'), '${i + 1}'),
               XmlAttribute(_xmlName('name'), columns[i]),
+              ..._totalsAttributes(table, i),
             ]),
         ],
       ),
