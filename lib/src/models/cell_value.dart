@@ -43,6 +43,11 @@ class FormulaCellValue extends CellValue {
 
   /// Creates a formula cell value from the given [formula] string, with an
   /// optional [cachedValue] result.
+  ///
+  /// A cache supplied through this constructor is written as an OOXML number.
+  /// For a typed text, boolean, or error result, preserve a formula read from a
+  /// workbook or use [Excel.recalculate]. This constructor does not infer a
+  /// result type from the cache's text.
   const FormulaCellValue(this.formula, {this.cachedValue})
     : _cachedType = null,
       _arrayRef = null;
