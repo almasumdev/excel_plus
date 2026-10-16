@@ -20,7 +20,7 @@ mixin _ParserTablesMixin on _ParserBase {
 
       final XmlDocument doc;
       try {
-        doc = XmlDocument.parse(utf8.decode(file.content));
+        doc = _parseXmlPart(utf8.decode(file.content));
       } catch (_) {
         continue; // malformed table part: degrade gracefully
       }

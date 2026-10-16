@@ -124,6 +124,7 @@ part 'src/sheet/sheet_merge.dart';
 part 'src/sheet/sheet.dart';
 
 /// Reader
+part 'src/reader/xml_namespace.dart';
 part 'src/reader/parser_base.dart';
 part 'src/reader/parser_theme.dart';
 part 'src/reader/parser_relations.dart';

@@ -30,7 +30,7 @@ class Parser extends _ParserBase
       _corruptArchive(part: 'xl/workbook.xml');
     }
     workbook!.decompress();
-    var document = XmlDocument.parse(utf8.decode(workbook.content));
+    var document = _parseXmlPart(utf8.decode(workbook.content));
     _excel._xmlFiles["xl/workbook.xml"] = document;
 
     document.findAllElements('sheet').forEach((node) {
@@ -207,14 +207,16 @@ class Parser extends _ParserBase
     }
     file.decompress();
 
-    var xmlStr = utf8.decode(file.content);
+    // Normalised first: the sheetData split below works on the text, so a
+    // part that prefixes its elements has to be unprefixed before then.
+    var xmlStr = _normalizeXmlPartText(utf8.decode(file.content));
 
     // Split XML into envelope (small) and sheetData (huge).
     // Parse envelope as DOM for writer; SAX-parse sheetData for cells.
     final sheetDataStart = xmlStr.indexOf('<sheetData');
     if (sheetDataStart == -1) {
       // No sheetData at all: parse as DOM fallback
-      var content = XmlDocument.parse(xmlStr);
+      var content = _parseXmlPart(xmlStr);
       _excel._xmlFiles['xl/$target'] = content;
       _excel._xmlSheetId[name] = 'xl/$target';
       _normalizeTable(sheetObject);
@@ -244,7 +246,7 @@ class Parser extends _ParserBase
     }
 
     // Parse the lightweight envelope DOM (no cell data, just worksheet structure)
-    var content = XmlDocument.parse(envelopeXml);
+    var content = _parseXmlPart(envelopeXml);
     var worksheet = content.findElements('worksheet').first;
 
     // RTL
@@ -645,7 +647,7 @@ class Parser extends _ParserBase
     );
 
     newSheet0!.decompress();
-    var document = XmlDocument.parse(utf8.decode(newSheet0.content));
+    var document = _parseXmlPart(utf8.decode(newSheet0.content));
     _excel._xmlFiles['xl/worksheets/sheet$sheetNumber.xml'] = document;
     _excel._xmlSheetId[newSheet] = 'xl/worksheets/sheet$sheetNumber.xml';
 

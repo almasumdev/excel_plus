@@ -132,7 +132,7 @@ mixin _ParserStylesMixin on _ParserBase {
     var styles = _excel._archive.findFile('xl/$stylesTarget');
     if (styles != null) {
       styles.decompress();
-      var document = XmlDocument.parse(utf8.decode(styles.content));
+      var document = _parseXmlPart(utf8.decode(styles.content));
       _excel._xmlFiles['xl/$stylesTarget'] = document;
 
       _excel._fontStyleList = <_FontStyle>[];

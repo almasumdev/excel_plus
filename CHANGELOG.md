@@ -1,3 +1,36 @@
+## 2.28.0
+
+### Fixed
+
+- **A workbook whose parts prefix every element was refused as corrupt.** Some
+  writers, the Open XML SDK among them, bind the SpreadsheetML namespace to a
+  prefix and use it throughout:
+
+  ```xml
+  <x:workbook xmlns:x="http://.../spreadsheetml/2006/main">
+    <x:sheets><x:sheet name="Sheet1" r:id="rId1"/></x:sheets>
+  </x:workbook>
+  ```
+
+  That is the same document as one declaring the namespace as the default, and
+  Excel opens both. Element lookups here were by qualified name, so such a file
+  read as having no sheets and threw. The prefix is now dropped once at parse
+  time, which covers values, shared strings, styles and merges, and a saved
+  copy declares the namespace as the default so it stays valid. Attribute
+  prefixes are untouched, since `r:id` and the drawing namespaces depend on
+  theirs.
+
+### Notes
+
+Shared strings are parsed as a stream rather than as a tree, and that path
+matched element names including any prefix. It now compares local names, as the
+cell parser already did.
+
+Two cases turned up alongside this one and already worked, now covered by tests
+so they stay that way: a typed cell carrying no `<v>` reads as empty rather
+than stopping the decode, and a relationship target written absolute from the
+package root (`/xl/worksheets/sheet1.xml`, as OpenPyXL writes) resolves.
+
 ## 2.27.2
 
 ### Fixed

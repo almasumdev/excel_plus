@@ -144,7 +144,7 @@ abstract class _ParserBase {
     var xmlStr = utf8.decode(sharedStrings.content);
 
     // Store a minimal empty <sst/> DOM so the writer can find the key.
-    _excel._xmlFiles["xl/${_excel._sharedStringsTarget}"] = XmlDocument.parse(
+    _excel._xmlFiles["xl/${_excel._sharedStringsTarget}"] = _parseXmlPart(
       '<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="0" uniqueCount="0"/>',
     );
 
@@ -172,7 +172,7 @@ abstract class _ParserBase {
 
     for (final event in parseEvents(xmlStr)) {
       if (event is XmlStartElementEvent) {
-        switch (event.name) {
+        switch (_localName(event.name)) {
           case 'si':
             if (event.isSelfClosing) {
               // <si/> is an empty shared string. parseEvents emits no end event
@@ -216,7 +216,7 @@ abstract class _ParserBase {
             richXmlBuf?.write(event.toString());
         }
       } else if (event is XmlEndElementEvent) {
-        switch (event.name) {
+        switch (_localName(event.name)) {
           case 'si':
             if (inSi) {
               if (hasRichContent && richXmlBuf != null) {
