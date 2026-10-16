@@ -226,7 +226,10 @@ abstract class _WriterBase {
         buf.write('<v>$v</v>');
       case DateTimeCellValue():
         final v = switch (numberFormat) {
-          DateTimeNumFormat() => numberFormat.writeDateTime(value),
+          DateTimeNumFormat() => numberFormat._writeDateTime(
+            value,
+            date1904: _excel._date1904,
+          ),
           _ => throw ExcelEncodeException(
             '$numberFormat does not work for ${value.runtimeType}',
           ),
@@ -234,7 +237,10 @@ abstract class _WriterBase {
         buf.write('<v>$v</v>');
       case DateCellValue():
         final v = switch (numberFormat) {
-          DateTimeNumFormat() => numberFormat.writeDate(value),
+          DateTimeNumFormat() => numberFormat._writeDate(
+            value,
+            date1904: _excel._date1904,
+          ),
           _ => throw ExcelEncodeException(
             '$numberFormat does not work for ${value.runtimeType}',
           ),

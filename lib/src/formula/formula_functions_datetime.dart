@@ -1,11 +1,5 @@
 part of '../../excel_plus.dart';
 
-/// Converts an Excel serial number to a UTC [DateTime] (shares [_excelEpoch]
-/// with the date/number-format code).
-DateTime _dateFromSerial(double serial) => _excelEpoch.add(
-  Duration(microseconds: (serial * Duration.microsecondsPerDay).round()),
-);
-
 /// Adds [months] to [d], clamping the day to the target month's length. With
 /// [endOfMonth], returns the last day of the target month (EOMONTH).
 DateTime _addMonths(DateTime d, int months, {required bool endOfMonth}) {
@@ -25,7 +19,7 @@ void _registerDateTimeFunctions(Map<String, _FormulaFn> r) {
     final y = _coerceNum(a.evalScalar(0)).toInt();
     final m = _coerceNum(a.evalScalar(1)).toInt();
     final d = _coerceNum(a.evalScalar(2)).toInt();
-    return _NumVal(_serialFromDate(DateTime.utc(y, m, d)));
+    return _NumVal(a.ctx._serialFromDate(DateTime.utc(y, m, d)));
   });
   r['TIME'] = _guard((a) {
     final h = _coerceNum(a.evalScalar(0));
@@ -36,41 +30,48 @@ void _registerDateTimeFunctions(Map<String, _FormulaFn> r) {
   });
   r['TODAY'] = _guard((a) {
     final n = DateTime.now();
-    return _NumVal(_serialFromDate(DateTime.utc(n.year, n.month, n.day)));
+    return _NumVal(a.ctx._serialFromDate(DateTime.utc(n.year, n.month, n.day)));
   });
   r['NOW'] = _guard((a) {
     final n = DateTime.now();
     return _NumVal(
-      _serialFromDate(
+      a.ctx._serialFromDate(
         DateTime.utc(n.year, n.month, n.day, n.hour, n.minute, n.second),
       ),
     );
   });
   r['YEAR'] = _guard(
-    (a) =>
-        _NumVal(_dateFromSerial(_coerceNum(a.evalScalar(0))).year.toDouble()),
+    (a) => _NumVal(
+      a.ctx._dateFromSerial(_coerceNum(a.evalScalar(0))).year.toDouble(),
+    ),
   );
   r['MONTH'] = _guard(
-    (a) =>
-        _NumVal(_dateFromSerial(_coerceNum(a.evalScalar(0))).month.toDouble()),
+    (a) => _NumVal(
+      a.ctx._dateFromSerial(_coerceNum(a.evalScalar(0))).month.toDouble(),
+    ),
   );
   r['DAY'] = _guard(
-    (a) => _NumVal(_dateFromSerial(_coerceNum(a.evalScalar(0))).day.toDouble()),
+    (a) => _NumVal(
+      a.ctx._dateFromSerial(_coerceNum(a.evalScalar(0))).day.toDouble(),
+    ),
   );
   r['HOUR'] = _guard(
-    (a) =>
-        _NumVal(_dateFromSerial(_coerceNum(a.evalScalar(0))).hour.toDouble()),
+    (a) => _NumVal(
+      a.ctx._dateFromSerial(_coerceNum(a.evalScalar(0))).hour.toDouble(),
+    ),
   );
   r['MINUTE'] = _guard(
-    (a) =>
-        _NumVal(_dateFromSerial(_coerceNum(a.evalScalar(0))).minute.toDouble()),
+    (a) => _NumVal(
+      a.ctx._dateFromSerial(_coerceNum(a.evalScalar(0))).minute.toDouble(),
+    ),
   );
   r['SECOND'] = _guard(
-    (a) =>
-        _NumVal(_dateFromSerial(_coerceNum(a.evalScalar(0))).second.toDouble()),
+    (a) => _NumVal(
+      a.ctx._dateFromSerial(_coerceNum(a.evalScalar(0))).second.toDouble(),
+    ),
   );
   r['WEEKDAY'] = _guard((a) {
-    final dt = _dateFromSerial(_coerceNum(a.evalScalar(0)));
+    final dt = a.ctx._dateFromSerial(_coerceNum(a.evalScalar(0)));
     final type = a.length > 1 ? _coerceNum(a.evalScalar(1)).toInt() : 1;
     // Dart: Monday=1..Sunday=7.
     final mondayBased = dt.weekday; // 1..7
@@ -100,8 +101,8 @@ void _registerDateTimeFunctions(Map<String, _FormulaFn> r) {
   });
   r['DATEDIF'] = _guard((a) {
     // DATEDIF(start, end, unit): Y/M/D complete units, MD/YM/YD remainders.
-    final start = _dateFromSerial(_coerceNum(a.evalScalar(0)));
-    final end = _dateFromSerial(_coerceNum(a.evalScalar(1)));
+    final start = a.ctx._dateFromSerial(_coerceNum(a.evalScalar(0)));
+    final end = a.ctx._dateFromSerial(_coerceNum(a.evalScalar(1)));
     final unit = _coerceText(a.evalScalar(2)).toUpperCase();
     if (end.isBefore(start)) return const _ErrVal(CellErrorValue.number);
     int daysInMonth(int y, int m) => DateTime(y, m + 1, 0).day;
@@ -134,13 +135,17 @@ void _registerDateTimeFunctions(Map<String, _FormulaFn> r) {
     }
   });
   r['EDATE'] = _guard((a) {
-    final d = _dateFromSerial(_coerceNum(a.evalScalar(0)));
+    final d = a.ctx._dateFromSerial(_coerceNum(a.evalScalar(0)));
     final months = _coerceNum(a.evalScalar(1)).toInt();
-    return _NumVal(_serialFromDate(_addMonths(d, months, endOfMonth: false)));
+    return _NumVal(
+      a.ctx._serialFromDate(_addMonths(d, months, endOfMonth: false)),
+    );
   });
   r['EOMONTH'] = _guard((a) {
-    final d = _dateFromSerial(_coerceNum(a.evalScalar(0)));
+    final d = a.ctx._dateFromSerial(_coerceNum(a.evalScalar(0)));
     final months = _coerceNum(a.evalScalar(1)).toInt();
-    return _NumVal(_serialFromDate(_addMonths(d, months, endOfMonth: true)));
+    return _NumVal(
+      a.ctx._serialFromDate(_addMonths(d, months, endOfMonth: true)),
+    );
   });
 }

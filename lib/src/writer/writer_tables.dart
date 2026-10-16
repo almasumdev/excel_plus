@@ -164,7 +164,7 @@ mixin _WriterTablesMixin on _WriterBase {
       }
       if (name == null && table.headerRow) {
         final v = sheet._sheetData[headerRowIndex]?[col]?.value;
-        final t = _asTextOrNull(_cellToEval(v));
+        final t = _asTextOrNull(_cellToEval(v, _excel._dateEpoch));
         if (t != null && t.trim().isNotEmpty) name = t.trim();
       }
       name ??= 'Column${i + 1}';

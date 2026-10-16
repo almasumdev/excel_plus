@@ -40,6 +40,13 @@ class Excel {
   String? _workbookPassword;
   bool _workbookProtectionChanged = false;
 
+  /// Whether the workbook counts date serials from the 1904 epoch
+  /// (`<workbookPr date1904="1"/>`), 1,462 days behind the default 1900 one.
+  bool _date1904 = false;
+
+  /// The epoch this workbook's date serials count from.
+  DateTime get _dateEpoch => _date1904 ? _excelEpoch1904 : _excelEpoch;
+
   /// Workbook defined names (named ranges/formulas), in document order.
   final List<DefinedName> _definedNames = [];
 

@@ -17,6 +17,17 @@ class _FormulaContext {
 
   _FormulaContext(this._excel);
 
+  /// The epoch the workbook's serials count from. Every date the engine reads
+  /// from a cell, builds (DATE, TODAY) or takes apart (YEAR, TEXT) uses it,
+  /// so a `date1904` workbook's formulas agree with the cells around them.
+  late final DateTime _epoch = _excel._dateEpoch;
+
+  /// The serial of [utc] on the workbook's epoch.
+  double _serialFromDate(DateTime utc) => _serialOnEpoch(utc, _epoch);
+
+  /// The UTC date and time the serial names on the workbook's epoch.
+  DateTime _dateFromSerial(double serial) => _dateOnEpoch(serial, _epoch);
+
   /// Resolves [name] to a worksheet, ensuring it is parsed. Returns null for an
   /// unknown sheet (so a bad reference becomes `#REF!` rather than creating a
   /// phantom sheet).
@@ -63,7 +74,7 @@ class _FormulaContext {
         _curRow = prevRow;
       }
     } else {
-      result = _cellToEval(cv);
+      result = _cellToEval(cv, _epoch);
     }
     _memo[key] = result;
     return result;
@@ -161,7 +172,7 @@ _EvalValue _callCustom(
     }
   }
   try {
-    return _cellToEval(fn(args));
+    return _cellToEval(fn(args), ctx._epoch);
   } catch (_) {
     return const _ErrVal(CellErrorValue.valueError);
   }

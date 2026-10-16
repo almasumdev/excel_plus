@@ -82,7 +82,7 @@ bool Function(DateTime)? _weekendTest(_FuncArgs a, int index, bool intl) {
 /// TIMEVALUE.
 void _registerDateTimeExtraFunctions(Map<String, _FormulaFn> r) {
   r['WEEKNUM'] = _guard((a) {
-    final date = _dateFromSerial(_coerceNum(a.evalScalar(0)));
+    final date = a.ctx._dateFromSerial(_coerceNum(a.evalScalar(0)));
     final type = a.length > 1 ? _coerceNum(a.evalScalar(1)).toInt() : 1;
     // Each type names the day a week starts on; 21 is the ISO system.
     const starts = {
@@ -108,13 +108,15 @@ void _registerDateTimeExtraFunctions(Map<String, _FormulaFn> r) {
 
   r['ISOWEEKNUM'] = _guard(
     (a) => _NumVal(
-      _isoWeekNumber(_dateFromSerial(_coerceNum(a.evalScalar(0)))).toDouble(),
+      _isoWeekNumber(
+        a.ctx._dateFromSerial(_coerceNum(a.evalScalar(0))),
+      ).toDouble(),
     ),
   );
 
   /// Shared body of WORKDAY and WORKDAY.INTL.
   _FormulaFn workday({required bool intl}) => _guard((a) {
-    final start = _dateFromSerial(_coerceNum(a.evalScalar(0)));
+    final start = a.ctx._dateFromSerial(_coerceNum(a.evalScalar(0)));
     final days = _coerceNum(a.evalScalar(1)).truncate();
     final isOff = _weekendTest(a, 2, intl);
     if (isOff == null) return const _ErrVal(CellErrorValue.number);
@@ -129,18 +131,18 @@ void _registerDateTimeExtraFunctions(Map<String, _FormulaFn> r) {
     while (remaining > 0) {
       cursor = cursor.add(Duration(days: step));
       if (isOff(cursor)) continue;
-      if (holidays.contains(_serialFromDate(cursor).floor())) continue;
+      if (holidays.contains(a.ctx._serialFromDate(cursor).floor())) continue;
       remaining--;
     }
-    return _NumVal(_serialFromDate(cursor).floorToDouble());
+    return _NumVal(a.ctx._serialFromDate(cursor).floorToDouble());
   });
   r['WORKDAY'] = workday(intl: false);
   r['WORKDAY.INTL'] = workday(intl: true);
 
   /// Shared body of NETWORKDAYS and NETWORKDAYS.INTL.
   _FormulaFn networkdays({required bool intl}) => _guard((a) {
-    var from = _dateFromSerial(_coerceNum(a.evalScalar(0)));
-    var to = _dateFromSerial(_coerceNum(a.evalScalar(1)));
+    var from = a.ctx._dateFromSerial(_coerceNum(a.evalScalar(0)));
+    var to = a.ctx._dateFromSerial(_coerceNum(a.evalScalar(1)));
     // Counting backwards gives the same total with the sign flipped.
     var sign = 1;
     if (from.isAfter(to)) {
@@ -160,7 +162,7 @@ void _registerDateTimeExtraFunctions(Map<String, _FormulaFn> r) {
     var cursor = from;
     while (!cursor.isAfter(to)) {
       if (!isOff(cursor) &&
-          !holidays.contains(_serialFromDate(cursor).floor())) {
+          !holidays.contains(a.ctx._serialFromDate(cursor).floor())) {
         count++;
       }
       cursor = cursor.add(const Duration(days: 1));
@@ -171,8 +173,8 @@ void _registerDateTimeExtraFunctions(Map<String, _FormulaFn> r) {
   r['NETWORKDAYS.INTL'] = networkdays(intl: true);
 
   r['YEARFRAC'] = _guard((a) {
-    var from = _dateFromSerial(_coerceNum(a.evalScalar(0)));
-    var to = _dateFromSerial(_coerceNum(a.evalScalar(1)));
+    var from = a.ctx._dateFromSerial(_coerceNum(a.evalScalar(0)));
+    var to = a.ctx._dateFromSerial(_coerceNum(a.evalScalar(1)));
     final basis = a.length > 2 ? _coerceNum(a.evalScalar(2)).toInt() : 0;
     if (basis < 0 || basis > 4) return const _ErrVal(CellErrorValue.number);
     if (from.isAfter(to)) {
@@ -202,9 +204,9 @@ void _registerDateTimeExtraFunctions(Map<String, _FormulaFn> r) {
     if (parsed == null) return const _ErrVal(CellErrorValue.valueError);
     // A date serial is whole days, so any time in the text is dropped.
     return _NumVal(
-      _serialFromDate(
-        DateTime.utc(parsed.year, parsed.month, parsed.day),
-      ).floorToDouble(),
+      a.ctx
+          ._serialFromDate(DateTime.utc(parsed.year, parsed.month, parsed.day))
+          .floorToDouble(),
     );
   });
 

@@ -58,6 +58,18 @@ class Parser extends _ParserBase
 
     _parseDefinedNames(document);
     _parseWorkbookProtection(document);
+    _parseWorkbookEpoch(document);
+  }
+
+  /// Reads the `date1904` flag off `<workbookPr>`, so date serials convert
+  /// from the epoch the workbook uses. The element itself round-trips via the
+  /// workbook DOM.
+  void _parseWorkbookEpoch(XmlDocument workbook) {
+    final flag = workbook
+        .findAllElements('workbookPr')
+        .firstOrNull
+        ?.getAttribute('date1904');
+    _excel._date1904 = flag == '1' || flag == 'true';
   }
 
   /// Reads `<workbookProtection>` flags into the workbook model. The element

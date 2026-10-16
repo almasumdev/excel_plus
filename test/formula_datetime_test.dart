@@ -1,6 +1,8 @@
 import 'package:excel_plus/excel_plus.dart';
 import 'package:test/test.dart';
 
+import 'test_helper.dart';
+
 CellValue? _eval(String formula) {
   final excel = Excel.createExcel();
   final sheet = excel['Sheet1'];
@@ -14,7 +16,68 @@ num? _num(CellValue? v) =>
 
 String? _err(CellValue? v) => v is CellErrorValue ? v.value : null;
 
+/// A `date1904` workbook whose style 1 is a date format.
+List<int> _workbook1904(String sheetDataInner) {
+  final base = buildXlsx('');
+  final workbook = readPart(
+    base,
+    'xl/workbook.xml',
+  ).replaceFirst('<sheets>', '<workbookPr date1904="1"/><sheets>');
+  final styles = readPart(
+    base,
+    'xl/styles.xml',
+  ).replaceFirst('numFmtId="0" fontId="1"', 'numFmtId="14" fontId="1"');
+  return buildXlsx(
+    sheetDataInner,
+    styles: styles,
+    extraParts: {'xl/workbook.xml': workbook},
+  );
+}
+
 void main() {
+  group('Date Serials In A 1904 Workbook', () {
+    CellValue? evalIn1904(String formula, {String cells = ''}) {
+      final excel = Excel.decodeBytes(
+        _workbook1904('<row r="1">$cells<c r="Z1"><f>$formula</f></c></row>'),
+      );
+      return excel['Sheet1'].evaluate(CellIndex.indexByString('Z1'));
+    }
+
+    test('DATE and YEAR count from the first of January 1904', () {
+      expect(_num(evalIn1904('DATE(2004,1,1)')), 36525);
+      expect(_num(evalIn1904('YEAR(36525)')), 2004);
+    });
+
+    test('a date cell enters a formula as its 1904 serial', () {
+      expect(
+        _num(evalIn1904('A1+1', cells: '<c r="A1" s="1"><v>1</v></c>')),
+        2,
+      );
+    });
+
+    test('TEXT renders a serial on the 1904 epoch', () {
+      expect(evalIn1904('TEXT(1,"yyyy-mm-dd")'), TextCellValue('1904-01-02'));
+    });
+
+    test('recalculate caches a 1904 serial into the file', () {
+      final excel = Excel.decodeBytes(
+        _workbook1904(
+          '<row r="1"><c r="A1" s="1"><v>1</v></c>'
+          '<c r="B1"><f>A1+1</f></c></row>',
+        ),
+      );
+      excel.recalculate();
+      final b1 =
+          excel['Sheet1'].cell(CellIndex.indexByString('B1')).value
+              as FormulaCellValue;
+      expect(double.parse(b1.cachedValue!), 2);
+      expect(
+        readPart(excel.encode()!, 'xl/worksheets/sheet1.xml'),
+        matches(RegExp(r'<c r="B1"[^>]*><f>A1\+1</f><v>2(\.0)?</v>')),
+      );
+    });
+  });
+
   group('Date Construction & Components', () {
     test('DATE round-trips through YEAR/MONTH/DAY', () {
       expect(_num(_eval('YEAR(DATE(2024,5,20))')), 2024);
