@@ -2,8 +2,23 @@ part of '../../excel_plus.dart';
 
 final _excelEpoch = DateTime.utc(1899, 12, 30);
 
+/// Days from the default 1900 epoch to the 1904 one: a serial stored in a
+/// `date1904` workbook is this much smaller than the 1900 serial of the same
+/// date.
+const int _epoch1904Offset = 1462;
+
 double _toDayFraction(Duration delta) =>
     delta.inMilliseconds.toDouble() / (1000 * 3600 * 24);
+
+/// [serial] moved by [days], keeping an integral serial free of a fraction so
+/// a shifted date still reads as a date rather than a date-time.
+String _shiftSerial(String serial, int days) {
+  final value = num.tryParse(serial);
+  if (value == null) return serial;
+  final shifted = value + days;
+  if (shifted == shifted.truncate()) return shifted.truncate().toString();
+  return shifted.toString();
+}
 
 /// Base class for date/time number formats.
 ///
@@ -12,7 +27,12 @@ sealed class DateTimeNumFormat extends NumFormat {
   const DateTimeNumFormat({required super.formatCode});
 
   @override
-  CellValue read(String v) {
+  CellValue read(String v) => _readSerial(v, date1904: false);
+
+  /// Reads the serial [v] as stored by a workbook on the 1900 epoch, or on
+  /// the 1904 one when [date1904], by moving it onto the 1900 epoch first.
+  CellValue _readSerial(String v, {required bool date1904}) {
+    if (date1904) v = _shiftSerial(v, _epoch1904Offset);
     if (v == '0') {
       return const TimeCellValue(
         hour: 0,
@@ -36,15 +56,25 @@ sealed class DateTimeNumFormat extends NumFormat {
   }
 
   /// Returns the raw serial-day string used to store [value] in the worksheet.
-  String writeDate(DateCellValue value) {
-    final delta = value.asDateTimeUtc().difference(_excelEpoch);
-    return _toDayFraction(delta).toString();
-  }
+  String writeDate(DateCellValue value) => _writeDate(value, date1904: false);
 
   /// Returns the raw serial-day string used to store [value] in the worksheet.
-  String writeDateTime(DateTimeCellValue value) {
-    final delta = value.asDateTimeUtc().difference(_excelEpoch);
-    return _toDayFraction(delta).toString();
+  String writeDateTime(DateTimeCellValue value) =>
+      _writeDateTime(value, date1904: false);
+
+  /// The serial of [value] on the workbook's epoch: the 1900 one, or the 1904
+  /// one when [date1904].
+  String _writeDate(DateCellValue value, {required bool date1904}) =>
+      _serialOf(value.asDateTimeUtc(), date1904: date1904);
+
+  /// The serial of [value] on the workbook's epoch: the 1900 one, or the 1904
+  /// one when [date1904].
+  String _writeDateTime(DateTimeCellValue value, {required bool date1904}) =>
+      _serialOf(value.asDateTimeUtc(), date1904: date1904);
+
+  static String _serialOf(DateTime utc, {required bool date1904}) {
+    final days = _toDayFraction(utc.difference(_excelEpoch));
+    return (date1904 ? days - _epoch1904Offset : days).toString();
   }
 
   @override

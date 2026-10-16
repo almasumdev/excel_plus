@@ -57,6 +57,9 @@ extension SheetStream on Excel {
         if (styleIndex > 0) {
           final numFmtId = _numFmtIds[styleIndex];
           final numFormat = _numFormats.getByNumFmtId(numFmtId);
+          if (numFormat is DateTimeNumFormat && _date1904) {
+            return numFormat._readSerial(rawValue, date1904: true);
+          }
           return (numFormat ?? NumFormat.defaultNumeric).read(rawValue);
         }
         return NumFormat.defaultNumeric.read(rawValue);
