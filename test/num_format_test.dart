@@ -6,14 +6,19 @@ import 'test_helper.dart';
 void main() {
   group('Xlsx Date Epoch', () {
     /// A workbook flagged `date1904` whose style 1 is a date format.
-    List<int> workbook1904(String sheetDataInner) {
+    List<int> workbook1904(String sheetDataInner, {int formatId = 164}) {
       final workbook = readPart(
         buildXlsx(''),
         'xl/workbook.xml',
       ).replaceFirst('<sheets>', '<workbookPr date1904="1"/><sheets>');
       return buildXlsx(
         sheetDataInner,
-        styles: _stylesWithNumFmt(164, 'yyyy-mm-dd'),
+        styles: formatId == 164
+            ? _stylesWithNumFmt(164, 'yyyy-mm-dd')
+            : readPart(buildXlsx(''), 'xl/styles.xml').replaceFirst(
+                'numFmtId="0" fontId="1"',
+                'numFmtId="$formatId" fontId="1"',
+              ),
         extraParts: {'xl/workbook.xml': workbook},
       );
     }
@@ -59,6 +64,49 @@ void main() {
       ]);
     });
 
+    for (final id in [21, 46]) {
+      test('preserves a multi-day time serial with format $id', () {
+        final excel = Excel.decodeBytes(
+          workbook1904(
+            '<row r="1"><c r="A1" s="1"><v>1.5</v></c>'
+            '<c r="B1"><f>A1+1</f></c></row>',
+            formatId: id,
+          ),
+        );
+        const expected = DateTimeCellValue(
+          year: 1904,
+          month: 1,
+          day: 2,
+          hour: 12,
+          minute: 0,
+        );
+        expect(a1(excel), expected);
+        expect(excel.streamRows('Sheet1').first.first, expected);
+        expect(
+          excel['Sheet1'].evaluate(CellIndex.indexByString('B1')),
+          const DoubleCellValue(2.5),
+        );
+        expect(
+          readPart(excel.encode()!, 'xl/worksheets/sheet1.xml'),
+          matches(RegExp(r'<c r="A1"[^>]*><v>1\.5</v>')),
+        );
+      });
+    }
+
+    test('keeps a time-only fraction independent of the workbook epoch', () {
+      final excel = Excel.decodeBytes(
+        workbook1904(
+          '<row r="1"><c r="A1" s="1"><v>0.5</v></c></row>',
+          formatId: 21,
+        ),
+      );
+      expect(a1(excel), const TimeCellValue(hour: 12, minute: 0));
+      expect(
+        readPart(excel.encode()!, 'xl/worksheets/sheet1.xml'),
+        matches(RegExp(r'<c r="A1"[^>]*><v>0\.5</v>')),
+      );
+    });
+
     test('an unchanged 1904 workbook keeps its flag and serial on save', () {
       final excel = Excel.decodeBytes(
         workbook1904('<row r="1"><c r="A1" s="1"><v>1</v></c></row>'),
@@ -97,14 +145,14 @@ void main() {
       );
     });
 
-    test('a 1900 workbook still reads serial 1 as the last day of 1899', () {
+    test('keeps dates in a 1900 workbook unchanged', () {
       final excel = Excel.decodeBytes(
         buildXlsx(
-          '<row r="1"><c r="A1" s="1"><v>1</v></c></row>',
+          '<row r="1"><c r="A1" s="1"><v>36526</v></c></row>',
           styles: _stylesWithNumFmt(164, 'yyyy-mm-dd'),
         ),
       );
-      expect(a1(excel), const DateCellValue(year: 1899, month: 12, day: 31));
+      expect(a1(excel), const DateCellValue(year: 2000, month: 1, day: 1));
     });
   });
 

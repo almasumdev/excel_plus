@@ -135,7 +135,14 @@ sealed class TimeNumFormat extends NumFormat {
   const TimeNumFormat({required super.formatCode});
 
   @override
-  CellValue read(String v) {
+  CellValue read(String v) => _readSerial(v, date1904: false);
+
+  CellValue _readSerial(String v, {required bool date1904}) {
+    // This reader represents serials >= 1 as dates. Keep those on the
+    // workbook epoch too, so saving does not subtract an unpaired offset.
+    if (date1904 && num.parse(v) >= 1) {
+      v = _shiftSerial(v, _epoch1904Offset);
+    }
     if (v == '0') {
       return const TimeCellValue(
         hour: 0,

@@ -60,6 +60,9 @@ extension SheetStream on Excel {
           if (numFormat is DateTimeNumFormat && _date1904) {
             return numFormat._readSerial(rawValue, date1904: true);
           }
+          if (numFormat is TimeNumFormat && _date1904) {
+            return numFormat._readSerial(rawValue, date1904: true);
+          }
           return (numFormat ?? NumFormat.defaultNumeric).read(rawValue);
         }
         return NumFormat.defaultNumeric.read(rawValue);
