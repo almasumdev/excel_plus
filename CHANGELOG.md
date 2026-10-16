@@ -1,3 +1,47 @@
+## 2.29.0
+
+Six fixes contributed by @cdeil, each with a reproduction and a test.
+
+### Fixed
+
+- **A malformed `.xls` container could be made to allocate without bound.** The
+  OLE2 reader trusted three 32-bit header fields the file controls, so a 1 KB
+  file declaring 50,000 DIFAT sectors, with its only one naming itself as the
+  next, grew the heap by about 95 MB before being rejected. A cyclic mini FAT
+  chain did the same. Every chain and count is now bounded by the sectors the
+  file physically holds, and a sector listed twice is rejected as corrupt
+  before it is read again. The reader is selected by magic bytes, so a file
+  named `.xlsx` reached this too.
+- **A cached formula result lost its type on save**, so a text, boolean or
+  error cache was written as an untyped cell. OOXML reads an untyped cell as
+  numeric, so other tools rejected the file even though this library read it
+  back happily: openpyxl raised `could not convert string to float` and a
+  cached boolean silently became the number 1. The cell's type now carries
+  into the cached result, in both the eager and the streaming reader.
+- **A merged range was cleared by the area it advertised rather than the cells
+  present.** One `<mergeCell ref="A1:XFD1048576">` around a single cell took
+  about three minutes before the first cell could be read, from a 2.4 KB file.
+  The walk now visits only the rows and cells the sheet actually stores inside
+  the range, which takes `A1:ALL10000` from about 100 ms to 3 ms.
+- **A `<row>` with no `r` attribute lost its cells.** The attribute is optional
+  and means the row after the previous one, but the reader left the index unset
+  and dropped the row, even a cell placed by its own `r="A1"`. An unindexed row
+  after an indexed one reused the previous index and overwrote it. Row height,
+  hidden and outline attributes written before `r` also attached to the wrong
+  row.
+- **`streamRows` could not read a worksheet that prefixes its elements.** The
+  eager reader learned this in 2.28.0, but the streaming path still searched
+  for a literal `<sheetData`, so such a file streamed no rows while
+  `excel['Sheet1']` read it correctly. It now walks XML events, which also
+  means a comment holding a tag cannot masquerade as the real one.
+- **A `date1904` workbook read and wrote its dates on the wrong epoch.** Such a
+  workbook counts serials from 1 January 1904, which is 1,462 days from the
+  default, and the `.xls` reader already honoured the equivalent record while
+  the `.xlsx` path did not. Serial 1 read as 1899-12-31 instead of 1904-01-02,
+  a date written through the API landed 1,462 days late, and formula evaluation
+  used the 1900 epoch whatever the file declared. `NumFormat.read`,
+  `writeDate` and `writeDateTime` keep their 1900-epoch meaning.
+
 ## 2.28.0
 
 ### Fixed
