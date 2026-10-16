@@ -23,6 +23,31 @@ List<List<CellValue?>> _streamedRows(Excel excel, String sheet) =>
 
 void main() {
   group('Streaming Namespace Parity', () {
+    test('accepts whitespace in a prefixed closing tag', () {
+      final bytes = buildXlsx(
+        '',
+        extraParts: {
+          'xl/worksheets/sheet1.xml':
+              '<x:worksheet xmlns:x="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+              '<x:sheetData><x:row r="1"><x:c r="A1"><x:v>42</x:v></x:c>'
+              '</x:row></x:sheetData ></x:worksheet>',
+        },
+      );
+      expect(Excel.decodeBytes(bytes).streamRows('Sheet1').toList(), [
+        [const IntCellValue(42)],
+      ]);
+    });
+
+    test('ignores a prefixed sheetData tag inside a comment', () {
+      final bytes = buildXlsx(
+        '<row r="1"><c r="A1"><v>42</v></c></row>',
+        beforeSheetData: '<!-- <x:sheetData/> -->',
+      );
+      expect(Excel.decodeBytes(bytes).streamRows('Sheet1').toList(), [
+        [const IntCellValue(42)],
+      ]);
+    });
+
     test('reads a worksheet with every element namespace prefixed', () {
       const ns = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
       final bytes = buildXlsx(
