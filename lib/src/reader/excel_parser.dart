@@ -508,11 +508,13 @@ class Parser extends _ParserBase
   static String? _cachedOrNull(String raw) => raw.isEmpty ? null : raw;
 
   /// Maps an OOXML cell `t` attribute to the cached-result type code carried by
-  /// [FormulaCellValue] (`'str'` / `'b'` / `'e'`, or `null` for numeric).
+  /// [FormulaCellValue] (`'str'` / `'b'` / `'e'` / `'d'`, or `null` for
+  /// numeric).
   static String? _cachedTypeCode(String? cellType) => switch (cellType) {
     'str' => 'str',
     'b' => 'b',
     'e' => 'e',
+    'd' => 'd',
     _ => null,
   };
 
@@ -521,7 +523,7 @@ class Parser extends _ParserBase
   /// to text if the value is not parseable instead of throwing.
   static CellValue? _readIsoDateCell(String rawValue, String? formula) {
     if (formula != null) {
-      return FormulaCellValue(formula, cachedValue: _cachedOrNull(rawValue));
+      return FormulaCellValue._typed(formula, _cachedOrNull(rawValue), 'd');
     }
     final dt = DateTime.tryParse(rawValue);
     if (dt == null) {

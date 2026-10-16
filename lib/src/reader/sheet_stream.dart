@@ -20,25 +20,32 @@ extension SheetStream on Excel {
         final ss = idx != null ? _sharedStrings.value(idx) : null;
         // Guard against out-of-range / non-numeric indexes instead of crashing.
         return ss != null ? TextCellValue.span(ss.textSpan) : null;
+      // A formula keeps the type of its cached result (the cell's `t`), so a
+      // save writes the cached text, boolean or error back as that type. Left
+      // untyped, `<v>hello</v>` would be written as a number, which other
+      // readers reject.
       case 'b': // boolean
         return formula != null
-            ? FormulaCellValue(
+            ? FormulaCellValue._typed(
                 formula,
-                cachedValue: Parser._cachedOrNull(rawValue),
+                Parser._cachedOrNull(rawValue),
+                'b',
               )
             : BoolCellValue(rawValue == '1');
       case 'e': // error value (e.g. #DIV/0!, #N/A)
         return formula != null
-            ? FormulaCellValue(
+            ? FormulaCellValue._typed(
                 formula,
-                cachedValue: Parser._cachedOrNull(rawValue),
+                Parser._cachedOrNull(rawValue),
+                'e',
               )
             : CellErrorValue(rawValue);
       case 'str': // formula string result
         return formula != null
-            ? FormulaCellValue(
+            ? FormulaCellValue._typed(
                 formula,
-                cachedValue: Parser._cachedOrNull(rawValue),
+                Parser._cachedOrNull(rawValue),
+                'str',
               )
             : TextCellValue(rawValue);
       case 'd': // ISO-8601 date string (ST_CellType "d")
