@@ -15,6 +15,11 @@ class _CompoundFile {
   final ByteData _data;
 
   late final int _sectorSize;
+
+  /// Sectors the file physically holds after the header: the bound on every
+  /// chain and count the header declares, since those are 32-bit fields the
+  /// file controls.
+  late final int _sectorCount;
   late final int _miniCutoff;
   final List<int> _fat = [];
   final List<int> _miniFat = [];
@@ -35,6 +40,7 @@ class _CompoundFile {
       );
     }
     _sectorSize = 1 << sectorShift;
+    _sectorCount = _bytes.length ~/ _sectorSize - 1;
     _miniCutoff = _u32(56);
     _readFat();
     _readDirectory(_u32(48));
@@ -63,21 +69,36 @@ class _CompoundFile {
     }
     var difatSector = _u32(68);
     final entriesPerSector = _sectorSize ~/ 4;
+    // Each DIFAT sector names the next; a sector that names itself or an
+    // earlier one would otherwise be read as often as the header's count
+    // says, and that count is not trusted.
+    final seenDifat = <int>{};
     for (
       var i = 0;
       i < numDifatSectors && difatSector <= _maxRegularSector;
       i++
     ) {
       _checkSector(difatSector);
+      if (!seenDifat.add(difatSector)) {
+        throw ExcelFormatException('Compound file DIFAT chain is cyclic.');
+      }
       final base = _sectorOffset(difatSector);
       for (var j = 0; j < entriesPerSector - 1; j++) {
         difat.add(_u32(base + j * 4));
       }
       difatSector = _u32(base + (entriesPerSector - 1) * 4);
     }
+    // A FAT sector is listed once; a repeat would shift every sector number
+    // after it, so the file is corrupt rather than merely unusual.
+    final seenFat = <int>{};
     for (final fatSector in difat) {
       if (fatSector > _maxRegularSector) continue;
       _checkSector(fatSector);
+      if (!seenFat.add(fatSector)) {
+        throw ExcelFormatException(
+          'Compound file lists FAT sector $fatSector twice.',
+        );
+      }
       final base = _sectorOffset(fatSector);
       for (var j = 0; j < entriesPerSector; j++) {
         _fat.add(_u32(base + j * 4));
@@ -86,15 +107,12 @@ class _CompoundFile {
   }
 
   void _readMiniFat(int firstSector, int count) {
-    var sector = firstSector;
     final entriesPerSector = _sectorSize ~/ 4;
-    for (var i = 0; i < count && sector <= _maxRegularSector; i++) {
-      _checkSector(sector);
+    for (final sector in _chain(firstSector).take(count)) {
       final base = _sectorOffset(sector);
       for (var j = 0; j < entriesPerSector; j++) {
         _miniFat.add(_u32(base + j * 4));
       }
-      sector = sector < _fat.length ? _fat[sector] : _endOfChain;
     }
   }
 
@@ -127,15 +145,16 @@ class _CompoundFile {
     }
   }
 
-  /// Walks a FAT chain from [first], bounded by the FAT size to guard against
-  /// cycles in corrupt files.
+  /// Walks a FAT chain from [first]. Every sector in it lies inside the file,
+  /// so a chain longer than the file's sector count repeats one: that bounds
+  /// the walk against cycles in corrupt files.
   List<int> _chain(int first) {
     final sectors = <int>[];
     var sector = first;
     while (sector <= _maxRegularSector) {
       _checkSector(sector);
       sectors.add(sector);
-      if (sectors.length > _fat.length + 1) {
+      if (sectors.length > _sectorCount) {
         throw ExcelFormatException('Compound file sector chain is cyclic.');
       }
       sector = sector < _fat.length ? _fat[sector] : _endOfChain;
@@ -157,26 +176,38 @@ class _CompoundFile {
   }
 
   Uint8List _readRegularStream(_CfbEntry entry) {
+    // The size is a field the file controls: it has to fit the chain before
+    // a buffer of that size is made for it.
+    final sectors = _chain(entry.startSector);
+    if (entry.size > sectors.length * _sectorSize) {
+      throw ExcelFormatException('Compound file stream is truncated.');
+    }
     final out = Uint8List(entry.size);
     var written = 0;
-    for (final sector in _chain(entry.startSector)) {
+    for (final sector in sectors) {
       if (written >= entry.size) break;
       final take = min(_sectorSize, entry.size - written);
       out.setRange(written, written + take, _bytes, _sectorOffset(sector));
       written += take;
     }
-    if (written < entry.size) {
-      throw ExcelFormatException('Compound file stream is truncated.');
-    }
     return out;
   }
 
   Uint8List _readMiniStream(_CfbEntry entry) {
+    if (entry.size > _miniContainerSectors.length * _sectorSize) {
+      throw ExcelFormatException('Compound file mini stream is truncated.');
+    }
     final out = Uint8List(entry.size);
     var written = 0;
     var mini = entry.startSector;
     final miniPerSector = _sectorSize ~/ 64;
+    var steps = 0;
     while (mini <= _maxRegularSector && written < entry.size) {
+      if (++steps > _miniFat.length + 1) {
+        throw ExcelFormatException(
+          'Compound file mini sector chain is cyclic.',
+        );
+      }
       final container = mini ~/ miniPerSector;
       if (container >= _miniContainerSectors.length) {
         throw ExcelFormatException(
