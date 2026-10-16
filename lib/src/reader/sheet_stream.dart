@@ -1,5 +1,10 @@
 part of '../../excel_plus.dart';
 
+/// The opening `<sheetData` tag, with whatever namespace prefix the part
+/// gives its elements (`<x:sheetData`); group 1 is the prefix including its
+/// colon, or null.
+final _sheetDataOpenTag = RegExp(r'<([A-Za-z_][\w.-]*:)?sheetData(?=[\s/>])');
+
 /// Memory-bounded reading of a worksheet, one row at a time.
 ///
 /// {@category Core}
@@ -138,13 +143,17 @@ extension SheetStream on Excel {
     file.decompress();
 
     final xmlStr = utf8.decode(file.content);
-    final start = xmlStr.indexOf('<sheetData');
-    if (start == -1) return;
-    final openEnd = xmlStr.indexOf('>', start);
+    // The eager reader strips a part's element prefix by re-serialising the
+    // whole part, which would cost the memory this path exists to avoid; the
+    // tag is located with its prefix instead, and the cell walk below already
+    // compares local names.
+    final open = _sheetDataOpenTag.firstMatch(xmlStr);
+    if (open == null) return;
+    final openEnd = xmlStr.indexOf('>', open.start);
     if (openEnd == -1) return;
     // <sheetData/> carries no rows at all.
     if (xmlStr[openEnd - 1] == '/') return;
-    final end = xmlStr.indexOf('</sheetData>', openEnd);
+    final end = xmlStr.indexOf('</${open[1] ?? ''}sheetData>', openEnd);
     if (end == -1) return;
 
     yield* _streamSheetData(xmlStr.substring(openEnd + 1, end));

@@ -22,6 +22,37 @@ List<List<CellValue?>> _streamedRows(Excel excel, String sheet) =>
     excel.streamRows(sheet).toList();
 
 void main() {
+  group('Streaming Namespace Parity', () {
+    test('reads a worksheet with every element namespace prefixed', () {
+      const ns = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
+      final bytes = buildXlsx(
+        '',
+        extraParts: {
+          'xl/worksheets/sheet1.xml':
+              '<x:worksheet xmlns:x="$ns"><x:sheetData><x:row r="1">'
+              '<x:c r="A1"><x:v>42</x:v></x:c>'
+              '</x:row></x:sheetData></x:worksheet>',
+        },
+      );
+      final excel = Excel.decodeBytes(bytes);
+      expect(excel.streamRows('Sheet1').toList(), [
+        [const IntCellValue(42)],
+      ]);
+    });
+
+    test('yields no rows for a prefixed worksheet with empty sheetData', () {
+      const ns = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
+      final bytes = buildXlsx(
+        '',
+        extraParts: {
+          'xl/worksheets/sheet1.xml':
+              '<x:worksheet xmlns:x="$ns"><x:sheetData/></x:worksheet>',
+        },
+      );
+      expect(Excel.decodeBytes(bytes).streamRows('Sheet1').toList(), isEmpty);
+    });
+  });
+
   group('Streaming Row Read', () {
     test('agrees with the eager reader on a generated workbook', () {
       final excel = Excel.createExcel();
