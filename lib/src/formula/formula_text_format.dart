@@ -344,7 +344,7 @@ String _dayToken(DateTime dt, int len) {
 /// Renders the Excel serial [serial] using a date/time format [code]. Disambiguates
 /// `m` runs as month vs. minute by their neighbours (after hours / before
 /// seconds to minute).
-String _formatDateTimeCode(double serial, String rawCode) {
+String _formatDateTimeCode(double serial, String rawCode, {DateTime? epoch}) {
   // A date code carries the same bracket constructs a numeric one does, and
   // picks a section the same way (an elapsed duration can be negative).
   final sections = [
@@ -354,7 +354,7 @@ String _formatDateTimeCode(double serial, String rawCode) {
   final body = chosen.section.code;
   final negated = chosen.addSign;
 
-  final dt = _dateFromSerial(serial);
+  final dt = _dateOnEpoch(serial, epoch ?? _excelEpoch);
   final tokens = <_DtTok>[];
   var i = 0;
   final n = body.length;
@@ -584,7 +584,9 @@ void _registerTextFormatFunctions(Map<String, _FormulaFn> r) {
     final v = _scalar(a.eval(0));
     if (code.toUpperCase() == 'GENERAL') return _TextVal(_coerceText(v));
     if (_isDateTimeCode(code)) {
-      return _TextVal(_formatDateTimeCode(_coerceNum(v), code));
+      return _TextVal(
+        _formatDateTimeCode(_coerceNum(v), code, epoch: a.ctx._epoch),
+      );
     }
     double? num;
     try {

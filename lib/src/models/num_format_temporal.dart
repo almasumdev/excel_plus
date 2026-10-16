@@ -2,6 +2,9 @@ part of '../../excel_plus.dart';
 
 final _excelEpoch = DateTime.utc(1899, 12, 30);
 
+/// The epoch a `date1904` workbook counts its serials from.
+final _excelEpoch1904 = DateTime.utc(1904, 1, 1);
+
 /// Days from the default 1900 epoch to the 1904 one: a serial stored in a
 /// `date1904` workbook is this much smaller than the 1900 serial of the same
 /// date.

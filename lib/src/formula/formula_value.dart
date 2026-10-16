@@ -177,17 +177,19 @@ String? _asTextOrNull(_EvalValue v) {
 }
 
 /// Converts a literal (non-formula) [CellValue] to an evaluation value. Date and
-/// time cells resolve to their Excel serial number.
-_EvalValue _cellToEval(CellValue? v) {
+/// time cells resolve to their Excel serial number counted from [epoch].
+_EvalValue _cellToEval(CellValue? v, DateTime epoch) {
   if (v == null) return _blankVal;
   if (v is IntCellValue) return _NumVal(v.value.toDouble());
   if (v is DoubleCellValue) return _NumVal(v.value);
   if (v is BoolCellValue) return _BoolVal(v.value);
   if (v is TextCellValue) return _TextVal(v.value.toString());
   if (v is CellErrorValue) return _ErrVal(v);
-  if (v is DateCellValue) return _NumVal(_serialFromDate(v.asDateTimeUtc()));
+  if (v is DateCellValue) {
+    return _NumVal(_serialOnEpoch(v.asDateTimeUtc(), epoch));
+  }
   if (v is DateTimeCellValue) {
-    return _NumVal(_serialFromDate(v.asDateTimeUtc()));
+    return _NumVal(_serialOnEpoch(v.asDateTimeUtc(), epoch));
   }
   if (v is TimeCellValue) {
     return _NumVal(v.asDuration().inMicroseconds / Duration.microsecondsPerDay);
@@ -202,8 +204,14 @@ _EvalValue _cellToEval(CellValue? v) {
   return _blankVal;
 }
 
-double _serialFromDate(DateTime utc) =>
-    utc.difference(_excelEpoch).inMicroseconds / Duration.microsecondsPerDay;
+/// The serial of [utc] counted from [epoch].
+double _serialOnEpoch(DateTime utc, DateTime epoch) =>
+    utc.difference(epoch).inMicroseconds / Duration.microsecondsPerDay;
+
+/// The UTC date and time [serial] names when counted from [epoch].
+DateTime _dateOnEpoch(double serial, DateTime epoch) => epoch.add(
+  Duration(microseconds: (serial * Duration.microsecondsPerDay).round()),
+);
 
 /// Maps an error literal string to its [CellErrorValue].
 CellErrorValue _errorFromText(String t) {
