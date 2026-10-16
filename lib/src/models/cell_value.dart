@@ -30,10 +30,10 @@ class FormulaCellValue extends CellValue {
   /// equality or [hashCode], so formula cells dedup by formula alone.
   final String? cachedValue;
 
-  /// OOXML value-type of [cachedValue] when it carries a recalculated result:
-  /// `null` = numeric, `'str'` = text, `'b'` = boolean, `'e'` = error. Set by
-  /// [Excel.recalculate] so the result is written with the correct cell type;
-  /// not part of equality.
+  /// OOXML value-type of [cachedValue]: `null` = numeric, `'str'` = text,
+  /// `'b'` = boolean, `'e'` = error, `'d'` = ISO-8601 date. Carried over from
+  /// the cell's `t` on read and set by [Excel.recalculate], so the cached
+  /// result is written back with the correct cell type; not part of equality.
   final String? _cachedType;
 
   /// The spill range (e.g. `"A1:A3"`) when this is the anchor of a recalculated
@@ -43,12 +43,18 @@ class FormulaCellValue extends CellValue {
 
   /// Creates a formula cell value from the given [formula] string, with an
   /// optional [cachedValue] result.
+  ///
+  /// A cache supplied through this constructor is written as an OOXML number.
+  /// For a typed text, boolean, or error result, preserve a formula read from a
+  /// workbook or use [Excel.recalculate]. This constructor does not infer a
+  /// result type from the cache's text.
   const FormulaCellValue(this.formula, {this.cachedValue})
     : _cachedType = null,
       _arrayRef = null;
 
-  /// Internal: a formula carrying a typed cached result from recalculation,
-  /// optionally as the anchor of an array spill ([arrayRef]).
+  /// Internal: a formula carrying a typed cached result, read from a file or
+  /// produced by recalculation, optionally as the anchor of an array spill
+  /// ([arrayRef]).
   const FormulaCellValue._typed(
     this.formula,
     this.cachedValue,
