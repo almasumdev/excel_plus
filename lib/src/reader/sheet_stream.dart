@@ -137,21 +137,12 @@ extension SheetStream on Excel {
     if (file == null) return;
     file.decompress();
 
-    final xmlStr = utf8.decode(file.content);
-    final start = xmlStr.indexOf('<sheetData');
-    if (start == -1) return;
-    final openEnd = xmlStr.indexOf('>', start);
-    if (openEnd == -1) return;
-    // <sheetData/> carries no rows at all.
-    if (xmlStr[openEnd - 1] == '/') return;
-    final end = xmlStr.indexOf('</sheetData>', openEnd);
-    if (end == -1) return;
-
-    yield* _streamSheetData(xmlStr.substring(openEnd + 1, end));
+    yield* _streamWorksheet(utf8.decode(file.content));
   }
 
-  /// SAX-walks the inner content of `<sheetData>` and yields one list per row.
-  Iterable<List<CellValue?>> _streamSheetData(String inner) sync* {
+  /// Lazily walks XML events inside `sheetData`, without building a tree or
+  /// matching tag-like text in comments. Stops at the end of the cell data.
+  Iterable<List<CellValue?>> _streamWorksheet(String xml) sync* {
     var row = <CellValue?>[];
     var col = -1;
     String? cellRef;
@@ -161,8 +152,21 @@ extension SheetStream on Excel {
     final valueBuf = StringBuffer();
     StringBuffer? formulaBuf;
     var inRow = false;
+    var inSheetData = false;
 
-    for (final event in parseEvents('<sheetData>$inner</sheetData>')) {
+    for (final event in parseEvents(xml)) {
+      if (!inSheetData) {
+        if (event is XmlStartElementEvent &&
+            _localName(event.name) == 'sheetData') {
+          if (event.isSelfClosing) return;
+          inSheetData = true;
+        }
+        continue;
+      }
+      if (event is XmlEndElementEvent &&
+          _localName(event.name) == 'sheetData') {
+        return;
+      }
       if (event is XmlStartElementEvent) {
         switch (_localName(event.name)) {
           case 'row':
