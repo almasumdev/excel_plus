@@ -166,19 +166,21 @@ class Parser extends _ParserBase
     final rowSpanStart = spanObj.rowSpanStart;
     final rowSpanEnd = spanObj.rowSpanEnd;
 
-    for (var columnI = columnSpanStart; columnI <= columnSpanEnd; columnI++) {
-      for (var rowI = rowSpanStart; rowI <= rowSpanEnd; rowI++) {
-        bool isTopLeftCellThatShouldNotBeDeleted =
-            columnI == columnSpanStart && rowI == rowSpanStart;
-
-        if (isTopLeftCellThatShouldNotBeDeleted) {
-          continue;
-        }
+    // The range comes from the file and may cover the whole grid while the
+    // sheet stores a few cells, so the walk visits the stored cells inside
+    // it rather than every position it advertises.
+    final rows = _storedKeysWithin(sheet._sheetData, rowSpanStart, rowSpanEnd);
+    for (final rowI in rows) {
+      final row = sheet._sheetData[rowI];
+      if (row == null) continue;
+      final columns = _storedKeysWithin(row, columnSpanStart, columnSpanEnd);
+      for (final columnI in columns) {
+        if (columnI == columnSpanStart && rowI == rowSpanStart) continue;
         // Excel draws a merged region's border from the covered cells' own
         // borders, so keep a covered cell's style and clear only its value
         // rather than removing the cell (which would lose the border). Cells
         // with no style are removed as before.
-        final covered = sheet._sheetData[rowI]?[columnI];
+        final covered = row[columnI];
         if (covered?._cellStyle != null) {
           covered!._value = null;
         } else {
@@ -186,6 +188,26 @@ class Parser extends _ParserBase
         }
       }
     }
+  }
+
+  /// The keys of [map] within [first]..[last], as a list so the caller can
+  /// change [map] while walking them. Costs the smaller of the range's width
+  /// and the map's size.
+  static List<int> _storedKeysWithin(
+    Map<int, Object> map,
+    int first,
+    int last,
+  ) {
+    if (last - first < map.length) {
+      return [
+        for (var key = first; key <= last; key++)
+          if (map.containsKey(key)) key,
+      ];
+    }
+    return [
+      for (final key in map.keys)
+        if (key >= first && key <= last) key,
+    ];
   }
 
   void _parseTable(XmlElement node) {
