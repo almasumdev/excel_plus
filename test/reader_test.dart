@@ -211,4 +211,44 @@ void main() {
       expect(thin?.topBorder.borderStyle, BorderStyle.Thin);
     });
   });
+
+  group('Merged Range Parsing', () {
+    Sheet read(String inner, String ref) => Excel.decodeBytes(
+      buildXlsx(
+        inner,
+        afterSheetData:
+            '<mergeCells count="1"><mergeCell ref="$ref"/></mergeCells>',
+      ),
+    )['Sheet1'];
+
+    Data cell(Sheet sheet, String ref) =>
+        sheet.cell(CellIndex.indexByString(ref));
+
+    test('a merge over the whole grid with one stored cell reads promptly', () {
+      // Clearing the covered cells must cost the cells the sheet holds, not
+      // the 17 billion positions the range advertises.
+      final sheet = read(
+        '<row r="1"><c r="A1"><v>42</v></c></row>',
+        'A1:XFD1048576',
+      );
+      expect(cell(sheet, 'A1').value, const IntCellValue(42));
+      expect(sheet.spannedItems, ['A1:XFD1048576']);
+      expect(sheet.maxRows, 1);
+    });
+
+    test('covered cells lose their value and keep their style', () {
+      final sheet = read(
+        '<row r="1"><c r="A1"><v>1</v></c><c r="B1" s="1"><v>2</v></c>'
+            '<c r="C1"><v>3</v></c></row>'
+            '<row r="3"><c r="A3"><v>4</v></c><c r="D3"><v>5</v></c></row>',
+        'A1:C3',
+      );
+      expect(cell(sheet, 'A1').value, const IntCellValue(1));
+      expect(cell(sheet, 'B1').value, isNull);
+      expect(cell(sheet, 'B1').cellStyle?.underline, Underline.Single);
+      expect(cell(sheet, 'C1').value, isNull);
+      expect(cell(sheet, 'A3').value, isNull);
+      expect(cell(sheet, 'D3').value, const IntCellValue(5));
+    });
+  });
 }
