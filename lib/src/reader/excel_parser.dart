@@ -320,27 +320,36 @@ class Parser extends _ParserBase
         switch (_localName(event.name)) {
           case 'row':
             currentCol = -1;
+            // `r` is optional (ECMA-376 18.3.1.73): a row that omits it
+            // follows the previous row. It is resolved before the other
+            // attributes, which key off the row index in whatever order the
+            // file wrote them.
+            String? rowRef;
             for (final attr in event.attributes) {
-              if (attr.localName == 'r') {
-                currentRow = (int.tryParse(attr.value) ?? 0) - 1;
-              } else if (attr.localName == 'ht') {
-                final height = double.tryParse(attr.value);
-                if (height != null && currentRow >= 0) {
-                  sheetObject._rowHeights[currentRow] = height;
-                }
-              } else if (attr.localName == 'outlineLevel') {
-                final level = int.tryParse(attr.value);
-                if (level != null && level > 0 && currentRow >= 0) {
-                  sheetObject._rowOutlineLevel[currentRow] = level;
-                }
-              } else if (attr.localName == 'hidden') {
-                if (attr.value == '1' && currentRow >= 0) {
-                  sheetObject._rowHidden.add(currentRow);
-                }
-              } else if (attr.localName == 'collapsed') {
-                if (attr.value == '1' && currentRow >= 0) {
-                  sheetObject._rowCollapsed.add(currentRow);
-                }
+              if (attr.localName == 'r') rowRef = attr.value;
+            }
+            currentRow = rowRef == null
+                ? currentRow + 1
+                : (int.tryParse(rowRef) ?? 0) - 1;
+            if (currentRow < 0) break;
+            for (final attr in event.attributes) {
+              switch (attr.localName) {
+                case 'ht':
+                  final height = double.tryParse(attr.value);
+                  if (height != null) {
+                    sheetObject._rowHeights[currentRow] = height;
+                  }
+                case 'outlineLevel':
+                  final level = int.tryParse(attr.value);
+                  if (level != null && level > 0) {
+                    sheetObject._rowOutlineLevel[currentRow] = level;
+                  }
+                case 'hidden':
+                  if (attr.value == '1') sheetObject._rowHidden.add(currentRow);
+                case 'collapsed':
+                  if (attr.value == '1') {
+                    sheetObject._rowCollapsed.add(currentRow);
+                  }
               }
             }
           case 'c':
@@ -363,7 +372,8 @@ class Parser extends _ParserBase
               }
             }
             // Cells may legally omit the `r` coordinate; in that case the
-            // column is the next one after the previous cell in this row.
+            // column is the next one after the previous cell in this row. A
+            // cell that carries `r` is placed by it, whatever its row says.
             if (cellRef != null) {
               currentCol = _cellCoordsFromCellId(cellRef).$2;
             } else {
@@ -376,10 +386,7 @@ class Parser extends _ParserBase
             // styled cell matters (there is no value in a self-closing cell);
             // this keeps a bordered-but-empty cell from being dropped along with
             // its style.
-            if (event.isSelfClosing &&
-                cellStyle > 0 &&
-                cellRef != null &&
-                currentRow >= 0) {
+            if (event.isSelfClosing && cellStyle > 0 && cellRef != null) {
               _processSaxCell(
                 sheetObject,
                 sheetName,
@@ -419,7 +426,7 @@ class Parser extends _ParserBase
       } else if (event is XmlEndElementEvent) {
         switch (_localName(event.name)) {
           case 'c':
-            if (cellRef != null && currentRow >= 0) {
+            if (cellRef != null) {
               _processSaxCell(
                 sheetObject,
                 sheetName,

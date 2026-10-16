@@ -4,6 +4,50 @@ import 'package:test/test.dart';
 import 'test_helper.dart';
 
 void main() {
+  group('Rows Without Explicit Indices', () {
+    CellValue? at(Excel excel, String ref) =>
+        excel['Sheet1'].cell(CellIndex.indexByString(ref)).value;
+
+    test('reads cells in rows whose r attribute is omitted', () {
+      final excel = Excel.decodeBytes(
+        buildXlsx('<row><c r="A1"><v>42</v></c></row>'),
+      );
+      expect(at(excel, 'A1'), const IntCellValue(42));
+    });
+
+    test('places an unindexed row after the previous indexed row', () {
+      final excel = Excel.decodeBytes(
+        buildXlsx(
+          '<row r="3"><c r="A3"><v>1</v></c></row>'
+          '<row><c><v>2</v></c><c><v>3</v></c></row>',
+        ),
+      );
+      expect(at(excel, 'A3'), const IntCellValue(1));
+      expect(at(excel, 'A4'), const IntCellValue(2));
+      expect(at(excel, 'B4'), const IntCellValue(3));
+    });
+
+    test('counts rows from the first one when none carries an index', () {
+      final excel = Excel.decodeBytes(
+        buildXlsx('<row><c><v>7</v></c></row><row><c><v>8</v></c></row>'),
+      );
+      expect(at(excel, 'A1'), const IntCellValue(7));
+      expect(at(excel, 'A2'), const IntCellValue(8));
+    });
+
+    test('applies row attributes written before the row index', () {
+      final sheet = Excel.decodeBytes(
+        buildXlsx(
+          '<row ht="30" customHeight="1" hidden="1" r="2">'
+          '<c r="A2"><v>1</v></c></row>',
+        ),
+      )['Sheet1'];
+      expect(sheet.getRowHeight(1), 30);
+      expect(sheet.isRowHidden(1), isTrue);
+      expect(sheet.getRowHeights.containsKey(-1), isFalse);
+    });
+  });
+
   group('Reading existing files', () {
     test('reads cells and dimensions from example.xlsx', () {
       var excel = Excel.decodeBytes(loadResource('example.xlsx'));
