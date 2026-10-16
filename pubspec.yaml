@@ -22,7 +22,7 @@ environment:
   sdk: ^3.11.4
 
 dependencies:
-  archive: ^4.0.9
+  archive: ^4.5.1
   xml: ^7.0.1
   web: ^1.1.1
   csv_plus: ^1.2.0
