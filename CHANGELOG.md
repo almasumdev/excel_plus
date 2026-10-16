@@ -1,3 +1,27 @@
+## 2.27.2
+
+### Fixed
+
+- **A negative number in a `.xls` file read as a large positive one on the
+  web.** `-45` came back as `4294967251` in a browser build, while the same
+  file read correctly on the Dart VM. The sign of an RK integer was extended
+  with a bitwise OR, and a bitwise operator works on unsigned 32-bit values
+  once compiled to JavaScript, so the mask was the wrong shape there. It is
+  now extended arithmetically, which gives the same answer on both. Thanks to
+  @vetemaa for the report, which pinned the cause and the fix exactly.
+- **Writing a file on the web could produce an archive Excel refused to
+  open.** The cause was in the `archive` package, and the minimum is now
+  `^4.5.1` so a resolve cannot land on a version with the bug. Thanks to
+  @ParthBaraiya, who traced it there and fixed it upstream.
+
+### Notes
+
+A test for the negative-number case already existed and passed, because the
+suite only ever ran on the VM while the web gate compiled the package without
+running it. Compiling cannot catch an answer that differs only at runtime, so
+there is now a parity suite covering the paths where the two platforms can
+disagree, and CI runs it in a browser alongside the compile gate.
+
 ## 2.27.1
 
 ### New
