@@ -63,6 +63,15 @@ jobs:
       - name: Compile with wasm
         run: dart compile wasm tool/web_smoke.dart -o "$RUNNER_TEMP/smoke.wasm"
 
+      # Compiling proves the code is valid for the web; it does not prove it
+      # computes the same answer there. A bitwise operator runs on unsigned
+      # 32-bit values in a browser, so sign extension and shifts can differ
+      # from the VM while both compile. This runs the paths where that matters
+      # in a real browser. The rest of the suite loads fixtures through
+      # `dart:io`, so it stays on the VM.
+      - name: Run the web parity tests in a browser
+        run: dart test -p chrome test/web_parity_test.dart
+
   pana:
     name: Pana score gate
     needs: checks

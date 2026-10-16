@@ -348,8 +348,12 @@ class _XlsParser {
   static double _decodeRk(int rk) {
     double value;
     if ((rk & 0x02) != 0) {
-      value = ((rk >> 2) | ((rk & 0x80000000) != 0 ? ~0x3FFFFFFF : 0))
-          .toDouble();
+      // The integer occupies bits 2 to 31, so the sign lives in bit 29 after
+      // the shift. `toSigned` is arithmetic rather than bitwise, which is what
+      // makes it agree across platforms: on the web a bitwise operator works
+      // on unsigned 32-bit values, so extending the sign by OR-ing `~0x3FFF
+      // FFFF` turned every negative number into a large positive one.
+      value = (rk >> 2).toSigned(30).toDouble();
     } else {
       final bits = ByteData(8)..setUint32(4, rk & 0xFFFFFFFC, Endian.little);
       value = bits.getFloat64(0, Endian.little);
