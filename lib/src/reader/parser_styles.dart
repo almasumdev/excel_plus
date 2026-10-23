@@ -128,7 +128,12 @@ mixin _ParserStylesMixin on _ParserBase {
     );
   }
 
-  void _parseStyles(String stylesTarget) {
+  void _parseStyles(String target) {
+    // A workbook may carry the part without a relationship naming it, so the
+    // conventional path is tried when there is no target to go on. Every
+    // writer puts it there.
+    final stylesTarget = target.isEmpty ? 'styles.xml' : target;
+    if (_excel._stylesTarget.isEmpty) _excel._stylesTarget = stylesTarget;
     var styles = _excel._archive.findFile('xl/$stylesTarget');
     if (styles != null) {
       styles.decompress();
@@ -471,10 +476,37 @@ mixin _ParserStylesMixin on _ParserBase {
         });
       });
     } else {
-      _damagedExcel(
-        text: 'Corrupt or unreadable styles part.',
-        part: 'xl/styles.xml',
+      // The styles part is optional in ECMA-376, so a generator that writes
+      // no styles produces a workbook Excel opens happily. An absent part is
+      // read as an empty styles table, which leaves every cell on the
+      // defaults, rather than refusing the file. Registering it means a save
+      // also emits a valid part instead of referencing a missing one.
+      final bytes = utf8.encode(_emptyStylesXml);
+      _excel._archive.addFile(
+        ArchiveFile('xl/$stylesTarget', bytes.length, bytes),
       );
+      _parseStyles(stylesTarget);
     }
   }
 }
+
+/// A styles part with one of everything the schema requires and nothing more,
+/// used when a workbook ships no styles of its own.
+const String _emptyStylesXml =
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+    '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+    '<fonts count="1"><font><sz val="11"/><name val="Calibri"/></font></fonts>'
+    '<fills count="2">'
+    '<fill><patternFill patternType="none"/></fill>'
+    '<fill><patternFill patternType="gray125"/></fill>'
+    '</fills>'
+    '<borders count="1">'
+    '<border><left/><right/><top/><bottom/><diagonal/></border>'
+    '</borders>'
+    '<cellStyleXfs count="1">'
+    '<xf numFmtId="0" fontId="0" fillId="0" borderId="0"/>'
+    '</cellStyleXfs>'
+    '<cellXfs count="1">'
+    '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'
+    '</cellXfs>'
+    '</styleSheet>';

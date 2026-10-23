@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:archive/archive.dart';
 import 'package:excel_plus/excel_plus.dart';
 import 'package:test/test.dart';
 
@@ -293,6 +296,119 @@ void main() {
       expect(cell(sheet, 'C1').value, isNull);
       expect(cell(sheet, 'A3').value, isNull);
       expect(cell(sheet, 'D3').value, const IntCellValue(5));
+    });
+  });
+  group('Workbooks Without A Styles Part', () {
+    /// A workbook with its optional styles part and every reference to it
+    /// removed, as a minimal generator would write.
+    List<int> withoutStyles({bool keepRelationship = false}) {
+      final excel = Excel.createExcel();
+      excel['Sheet1']
+        ..updateCell(CellIndex.indexByString('A1'), TextCellValue('hi'))
+        ..updateCell(CellIndex.indexByString('A2'), IntCellValue(42));
+      final source = ZipDecoder().decodeBytes(excel.encode()!);
+
+      final out = Archive();
+      for (final file in source.files) {
+        if (file.name == 'xl/styles.xml') continue;
+        var content = file.content as List<int>;
+        if (!keepRelationship &&
+            (file.name == '[Content_Types].xml' ||
+                file.name.endsWith('.rels'))) {
+          content = utf8.encode(
+            utf8
+                .decode(content)
+                .replaceAll(RegExp(r'<Override[^>]*styles\.xml[^>]*/>'), '')
+                .replaceAll(
+                  RegExp(r'<Relationship[^>]*styles\.xml[^>]*/>'),
+                  '',
+                ),
+          );
+        }
+        out.addFile(ArchiveFile(file.name, content.length, content));
+      }
+      return ZipEncoder().encode(out);
+    }
+
+    test('a workbook with no styles part opens', () {
+      // The part is optional in ECMA-376 and Excel opens such a file, but it
+      // was refused here as a corrupt styles part.
+      final excel = Excel.decodeBytes(withoutStyles());
+      expect(excel.tables.keys, ['Sheet1']);
+    });
+
+    test('its cells read, falling back to the defaults', () {
+      final sheet = Excel.decodeBytes(withoutStyles())['Sheet1'];
+      expect(
+        sheet.cell(CellIndex.indexByString('A1')).value,
+        TextCellValue('hi'),
+      );
+      expect(sheet.cell(CellIndex.indexByString('A2')).value, IntCellValue(42));
+    });
+
+    test('a relationship pointing at a missing part is survivable too', () {
+      // Here the reference remains but the part itself is gone.
+      final excel = Excel.decodeBytes(withoutStyles(keepRelationship: true));
+      expect(
+        excel['Sheet1'].cell(CellIndex.indexByString('A1')).value,
+        TextCellValue('hi'),
+      );
+    });
+
+    test('it saves again with a styles part of its own', () {
+      // A saved copy must not reference a part that is not there.
+      final excel = Excel.decodeBytes(withoutStyles());
+      final saved = ZipDecoder().decodeBytes(excel.encode()!);
+      expect(saved.findFile('xl/styles.xml'), isNotNull);
+
+      final reread = Excel.decodeBytes(excel.encode()!);
+      expect(
+        reread['Sheet1'].cell(CellIndex.indexByString('A1')).value,
+        TextCellValue('hi'),
+      );
+    });
+
+    test('a style can still be applied to such a workbook', () {
+      final excel = Excel.decodeBytes(withoutStyles());
+      excel['Sheet1'].updateCell(
+        CellIndex.indexByString('A3'),
+        TextCellValue('bold'),
+        cellStyle: CellStyle(bold: true),
+      );
+      final reread = Excel.decodeBytes(excel.encode()!);
+      expect(
+        reread['Sheet1'].cell(CellIndex.indexByString('A3')).cellStyle?.isBold,
+        isTrue,
+      );
+    });
+
+    test('a cell naming a style the file never defines does not abort', () {
+      // The shared cell decoder indexed the number-format list by the cell's
+      // style id, which a hand-assembled file can put out of range.
+      final excel = Excel.createExcel();
+      excel['Sheet1'].updateCell(
+        CellIndex.indexByString('A1'),
+        IntCellValue(1),
+      );
+      final source = ZipDecoder().decodeBytes(excel.encode()!);
+      final out = Archive();
+      for (final file in source.files) {
+        var content = file.content as List<int>;
+        if (file.name == 'xl/worksheets/sheet1.xml') {
+          content = utf8.encode(
+            utf8
+                .decode(content)
+                .replaceAll(RegExp(r'<c r="A1"[^>]*>'), '<c r="A1" s="9999">'),
+          );
+        }
+        out.addFile(ArchiveFile(file.name, content.length, content));
+      }
+
+      final reread = Excel.decodeBytes(ZipEncoder().encode(out));
+      expect(
+        reread['Sheet1'].cell(CellIndex.indexByString('A1')).value,
+        IntCellValue(1),
+      );
     });
   });
 }

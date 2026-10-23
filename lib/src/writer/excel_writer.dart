@@ -23,6 +23,7 @@ class ExcelWriter extends _WriterBase
     if (_excel._styleChanges) {
       _processStylesFile();
     }
+    _declareStylesPart();
 
     _setSheetElements();
     _applySheetVisibilities();
@@ -47,6 +48,36 @@ class ExcelWriter extends _WriterBase
       _archiveFiles,
       excludedFiles: _removedParts,
     );
+  }
+
+  /// Makes sure the styles part is declared in the package, both by a workbook
+  /// relationship and by a content-type override.
+  ///
+  /// A workbook opened without a styles part gets one on read, and its cell
+  /// `s` attributes point into it once a style is applied. Without the two
+  /// declarations the saved part is invisible: another tool ignores it, and a
+  /// re-read here would not find it either and start again from an empty one.
+  /// A part that is already declared is left exactly as it was.
+  void _declareStylesPart() {
+    final target = _excel._stylesTarget.isEmpty
+        ? 'styles.xml'
+        : _excel._stylesTarget;
+    final path = 'xl/$target';
+    if (_excel._xmlFiles[path] == null) return;
+
+    _ensureOverrideContentType(
+      '/$path',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml',
+    );
+
+    const stylesRelType =
+        'http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles';
+    final rels = _excel._xmlFiles['xl/_rels/workbook.xml.rels']?.rootElement;
+    if (rels == null) return;
+    final declared = rels.childElements.any(
+      (r) => r.getAttribute('Type') == stylesRelType,
+    );
+    if (!declared) _addWorkbookRel(stylesRelType, target);
   }
 
   /// Restores the DOM parts the writer mutates in place, `xl/styles.xml` and

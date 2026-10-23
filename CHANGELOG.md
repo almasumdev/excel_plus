@@ -1,3 +1,17 @@
+## 2.29.1
+
+### Fixed
+
+- **A workbook with no styles part was refused as corrupt.** The part is
+  optional in ECMA-376, so a minimal generator can leave it out, and Excel
+  opens such a file. It now reads as an empty styles table, with every cell on
+  the defaults. A part present at the usual path but missing its relationship
+  is found too, and a save declares the part properly so other tools see it.
+- **A cell naming a style the file never defines stopped the decode.** The
+  shared cell reader looked the style's number format up without a bounds
+  check, so a hand-assembled file with `s="9999"` threw a `RangeError`. Such a
+  cell now reads as unformatted.
+
 ## 2.29.0
 
 Six fixes contributed by @cdeil, each with a reproduction and a test.

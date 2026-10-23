@@ -61,7 +61,11 @@ extension SheetStream on Excel {
           );
         }
         if (rawValue.isEmpty) return null;
-        if (styleIndex > 0) {
+        // A cell may name a style the styles part does not define, which
+        // happens in a hand-assembled file or one whose styles part is
+        // missing entirely. Falling through to the untyped reading is the
+        // graceful answer; indexing past the list would abort the decode.
+        if (styleIndex > 0 && styleIndex < _numFmtIds.length) {
           final numFmtId = _numFmtIds[styleIndex];
           final numFormat = _numFormats.getByNumFmtId(numFmtId);
           if (numFormat is DateTimeNumFormat && _date1904) {
