@@ -66,7 +66,7 @@ class ExcelImage {
 
   /// Whether this image was added via the API (and so must be written into the
   /// drawing on save). Images parsed from a file are left untouched.
-  final bool _isNew;
+  bool _isNew;
 
   int get _cx => width * _emuPerPixel;
   int get _cy => height * _emuPerPixel;

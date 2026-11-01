@@ -1,3 +1,54 @@
+## 2.29.2
+
+Inserting and removing rows and columns, and editing a file you opened. If you
+use either, this one is worth taking.
+
+### Fixed
+
+- **`insertRow` at or past the end of the sheet erased the sheet.** Every
+  existing row was replaced by the one new row, so `sheet.insertRow(sheet.maxRows)`
+  lost all your data.
+- **`insertColumn` inside the sheet cut `rows` down.** The width was set to the
+  insert point, so `insertColumn(0)` on a five-column sheet left `rows` showing
+  one column and `removeColumn` then ignored the rest. Inserting at the last row
+  hid that row from `rows` in the same way, and removing a row or column inside
+  the sheet left the size one too high.
+- **Editing an opened file duplicated its charts and pivot tables.** Opening a
+  workbook, inserting a row and saving wrote each one twice. What a saved file
+  carries as written now moves in place: images and charts, chart series, pivot
+  locations and sources, conditional formats, sparklines, page breaks and
+  comments all stayed at their old addresses before.
+- **Saving a workbook with an inserted image more than once leaked parts.** Each
+  save added another drawing and another copy of the image, and later saves could
+  drop the worksheet's link to its drawing.
+- **A formula range lost an end when its first or last row was removed.**
+  `SUM(B2:B5)` became `SUM(#REF!:B4)` rather than `SUM(B2:B4)`, and whole-column
+  and whole-row ranges such as `SUM(B:C)` and `SUM(2:4)` did not move at all.
+- **A structured reference was rewritten as if it were a cell.** A column called
+  `Q1` turned `SUM(Sales[Q1])` into `SUM(Sales[Q2])` after an insert, which is
+  `#REF!`.
+- **An insert or remove threw away details it should have kept.** A table lost
+  its totals row, a chart lost its bubble sizes, series styling and of-pie split,
+  and a formula lost its cached result, so a viewer that does not recalculate
+  showed a blank. A column edit inside a table now takes the column's declared
+  name and total along.
+- **The table `count` and `countNums` totals were swapped.** `count` counted only
+  numbers and `countNums` counted everything, the opposite of Excel and of their
+  own documentation. A file from Excel read them the wrong way round too.
+
+### Changed
+
+- A chart, sparkline, validation list or internal link on another sheet now
+  follows the data it reads when that sheet has a row or column edit.
+- A chart, image or pivot already saved in a file is kept when the row or column
+  holding its corner is removed, and moves to the one that took its place, as in
+  Excel. One added since the last save is still removed along with its row.
+
+### Notes
+
+The size fixes change `maxRows`, `maxColumns` and `rows` after an insert or remove
+to the correct values. Code that worked around the old numbers may need a look.
+
 ## 2.29.1
 
 ### Fixed

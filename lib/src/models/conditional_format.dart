@@ -133,27 +133,28 @@ class ConditionalFormat {
   bool get isThreeColor => _threeColor;
 
   /// Returns a copy of this rule tagged with [sqref] as its [range].
-  ConditionalFormat _withRange(String sqref) => ConditionalFormat._(
-    typeName: _typeName,
-    operator: _operator,
-    formulas: _formulas,
-    style: style,
-    colors: _colors,
-    threeColor: _threeColor,
-    iconSetName: iconSetName,
-    iconReverse: iconReverse,
-    iconShowValue: iconShowValue,
-    iconThresholds: iconThresholds,
-    text: text,
-    rank: rank,
-    rankIsPercent: rankIsPercent,
-    rankFromBottom: rankFromBottom,
-    aboveAverage: aboveAverage,
-    equalAverage: equalAverage,
-    stdDev: stdDev,
-    timePeriod: timePeriod,
-    range: sqref,
-  );
+  ConditionalFormat _withRange(String sqref, {List<String>? formulas}) =>
+      ConditionalFormat._(
+        typeName: _typeName,
+        operator: _operator,
+        formulas: formulas ?? _formulas,
+        style: style,
+        colors: _colors,
+        threeColor: _threeColor,
+        iconSetName: iconSetName,
+        iconReverse: iconReverse,
+        iconShowValue: iconShowValue,
+        iconThresholds: iconThresholds,
+        text: text,
+        rank: rank,
+        rankIsPercent: rankIsPercent,
+        rankFromBottom: rankFromBottom,
+        aboveAverage: aboveAverage,
+        equalAverage: equalAverage,
+        stdDev: stdDev,
+        timePeriod: timePeriod,
+        range: sqref,
+      );
 
   static String _num(num value) => value.toString();
 

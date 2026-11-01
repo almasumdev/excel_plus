@@ -105,6 +105,28 @@ class PivotTable {
   int? _cacheId;
   bool _written = false;
 
+  /// A copy of this pivot at a new position and source range, with its fields
+  /// and its written state kept.
+  PivotTable _moved({
+    required CellIndex anchor,
+    required CellIndex sourceFrom,
+    required CellIndex sourceTo,
+  }) =>
+      PivotTable(
+          name: name,
+          anchor: anchor,
+          sourceFrom: sourceFrom,
+          sourceTo: sourceTo,
+          rowField: rowField,
+          dataFields: dataFields,
+          subRowFields: subRowFields,
+          columnField: columnField,
+          pageFields: pageFields,
+          sourceSheet: sourceSheet,
+        )
+        .._cacheId = _cacheId
+        .._written = _written;
+
   /// Creates a pivot table over the source range [sourceFrom]-[sourceTo],
   /// grouped by [rowField] and summarised by [dataFields], placed at [anchor].
   PivotTable({

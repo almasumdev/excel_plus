@@ -97,9 +97,9 @@ mixin _SheetRowColumnMixin on _SheetBase {
       _sheetData = Map<int, Map<int, Data>>.from(data);
     }
 
-    if (_maxColumns - 1 <= columnIndex) {
-      _maxColumns -= 1;
-    }
+    // The column is known to be in range, so the sheet is one narrower wherever
+    // it was, not only when it was the last.
+    if (_maxColumns > 0) _maxColumns -= 1;
 
     _applyShift(_Shift(_ShiftAxis.column, columnIndex, -1));
   }
@@ -202,11 +202,9 @@ mixin _SheetRowColumnMixin on _SheetBase {
         columnIndex: Data.newData(this as Sheet, 0, columnIndex),
       };
     }
-    if (_maxColumns - 1 <= columnIndex) {
-      _maxColumns += 1;
-    } else {
-      _maxColumns = columnIndex + 1;
-    }
+    // Inside the sheet it grows by one; past the end it reaches the new column.
+    // These were the wrong way round, which cut `rows` down to the insert point.
+    _maxColumns = columnIndex < _maxColumns ? _maxColumns + 1 : columnIndex + 1;
 
     _applyShift(_Shift(_ShiftAxis.column, columnIndex, 1));
   }
@@ -302,9 +300,9 @@ mixin _SheetRowColumnMixin on _SheetBase {
       _maxColumns = 0;
     }
 
-    if (_maxRows - 1 <= rowIndex) {
-      _maxRows -= 1;
-    }
+    // The row is known to be in range, so the sheet is one shorter wherever it
+    // was, not only when it was the last.
+    if (_maxRows > 0) _maxRows -= 1;
 
     _applyShift(_Shift(_ShiftAxis.row, rowIndex, -1));
   }
@@ -366,29 +364,27 @@ mixin _SheetRowColumnMixin on _SheetBase {
         ..sort((a, b) {
           return b.compareTo(a);
         });
-      if (rowIndex <= maxRows - 1) {
-        /// do the shifting task
-        for (var rowKey in sortedKeys) {
-          if (rowKey < rowIndex) {
-            data[rowKey] = _sheetData[rowKey]!;
-          }
-          if (rowIndex <= rowKey) {
-            data[rowKey + 1] = _sheetData[rowKey]!;
-            data[rowKey + 1]!.forEach((key, value) {
-              value._rowIndex++;
-            });
-          }
+      // Every existing row is carried over. This used to run only for an index
+      // inside the sheet, so inserting at or past the end replaced the whole
+      // sheet with the one new row.
+      for (var rowKey in sortedKeys) {
+        if (rowKey < rowIndex) {
+          data[rowKey] = _sheetData[rowKey]!;
+        }
+        if (rowIndex <= rowKey) {
+          data[rowKey + 1] = _sheetData[rowKey]!;
+          data[rowKey + 1]!.forEach((key, value) {
+            value._rowIndex++;
+          });
         }
       }
     }
     data[rowIndex] = {0: Data.newData(this as Sheet, rowIndex, 0)};
     _sheetData = Map<int, Map<int, Data>>.from(data);
 
-    if (_maxRows - 1 <= rowIndex) {
-      _maxRows = rowIndex + 1;
-    } else {
-      _maxRows += 1;
-    }
+    // Inside the sheet it grows by one, the last row included, whose contents
+    // move down; past the end it reaches the new row.
+    _maxRows = rowIndex < _maxRows ? _maxRows + 1 : rowIndex + 1;
 
     _applyShift(_Shift(_ShiftAxis.row, rowIndex, 1));
   }

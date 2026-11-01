@@ -62,8 +62,8 @@ class TableTotal {
     TableTotalFunction.none => null,
     TableTotalFunction.sum => 'sum',
     TableTotalFunction.average => 'average',
-    TableTotalFunction.count => 'countNums',
-    TableTotalFunction.countNums => 'count',
+    TableTotalFunction.count => 'count',
+    TableTotalFunction.countNums => 'countNums',
     TableTotalFunction.max => 'max',
     TableTotalFunction.min => 'min',
     TableTotalFunction.stdDev => 'stdDev',
@@ -75,8 +75,8 @@ class TableTotal {
   int? get _subtotalCode => switch (function) {
     TableTotalFunction.none => null,
     TableTotalFunction.average => 101,
-    TableTotalFunction.count => 102,
-    TableTotalFunction.countNums => 103,
+    TableTotalFunction.countNums => 102,
+    TableTotalFunction.count => 103,
     TableTotalFunction.max => 104,
     TableTotalFunction.min => 105,
     TableTotalFunction.stdDev => 107,
@@ -173,6 +173,26 @@ class ExcelTable {
 
   /// The table id from the source file (set on read; reused on write).
   int? _id;
+
+  /// A copy of this table over a new range, with its id and settings kept.
+  ExcelTable _moved({
+    required CellIndex from,
+    required CellIndex to,
+    required List<String>? columns,
+    required List<TableTotal>? totals,
+  }) => ExcelTable(
+    name: name,
+    from: from,
+    to: to,
+    headerRow: headerRow,
+    style: style,
+    showFirstColumn: showFirstColumn,
+    showLastColumn: showLastColumn,
+    showRowStripes: showRowStripes,
+    showColumnStripes: showColumnStripes,
+    columns: columns,
+    totals: totals,
+  ).._id = _id;
 
   /// Creates a table spanning the rectangle from [from] to [to] (inclusive).
   ExcelTable({

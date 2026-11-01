@@ -12,6 +12,14 @@ part of '../../excel_plus.dart';
 class Hyperlink {
   const Hyperlink._({this.target, this.location, this.display, this.tooltip});
 
+  /// A copy of this link pointing at a different internal [place].
+  Hyperlink _withLocation(String place) => Hyperlink._(
+    target: target,
+    location: place,
+    display: display,
+    tooltip: tooltip,
+  );
+
   /// External target URL (e.g. `https://...`, `mailto:...`), or `null` for an
   /// internal link.
   final String? target;

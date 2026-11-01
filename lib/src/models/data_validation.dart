@@ -100,6 +100,24 @@ class DataValidation {
     this.errorTitle,
   });
 
+  /// A copy of this rule with its operands changed, as when the cells a
+  /// list-from-range rule reads have moved.
+  DataValidation _withFormulas(String? first, String? second) =>
+      DataValidation._(
+        type: type,
+        operator: operator,
+        formula1: first,
+        formula2: second,
+        allowBlank: allowBlank,
+        showDropdown: showDropdown,
+        showErrorMessage: showErrorMessage,
+        errorStyle: errorStyle,
+        prompt: prompt,
+        promptTitle: promptTitle,
+        error: error,
+        errorTitle: errorTitle,
+      );
+
   /// The rule kind.
   final DataValidationType type;
 

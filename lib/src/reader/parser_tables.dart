@@ -76,8 +76,8 @@ mixin _ParserTablesMixin on _ParserBase {
     return switch (column.getAttribute('totalsRowFunction')) {
       'sum' => const TableTotal(TableTotalFunction.sum),
       'average' => const TableTotal(TableTotalFunction.average),
-      'countNums' => const TableTotal(TableTotalFunction.count),
-      'count' => const TableTotal(TableTotalFunction.countNums),
+      'count' => const TableTotal(TableTotalFunction.count),
+      'countNums' => const TableTotal(TableTotalFunction.countNums),
       'max' => const TableTotal(TableTotalFunction.max),
       'min' => const TableTotal(TableTotalFunction.min),
       'stdDev' => const TableTotal(TableTotalFunction.stdDev),

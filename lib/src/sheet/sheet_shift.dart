@@ -246,6 +246,35 @@ String _shiftFormula(
       continue;
     }
 
+    // A structured reference names a table's columns, and a column called `Q1`
+    // is not the cell Q1, so everything inside the brackets is left alone.
+    if (c == '[') {
+      final end = _structuredEnd(formula, i);
+      if (end != -1) {
+        out.write(formula.substring(i, end));
+        i = end;
+        qualifier = null;
+        continue;
+      }
+    }
+
+    // A whole-row range such as `2:4`, which reads as two numbers and a colon.
+    if (_isDigit(formula.codeUnitAt(i))) {
+      final row = _wholeRowAt.matchAsPrefix(formula, i);
+      if (row != null) {
+        final text = row.group(0)!;
+        final owner = qualifier ?? onSheet;
+        out.write(
+          owner == targetSheet
+              ? _shiftWholeAxis(text, shift) ?? CellErrorValue.reference.value
+              : text,
+        );
+        i = row.end;
+        qualifier = null;
+        continue;
+      }
+    }
+
     // A number, so its digits are not mistaken for a reference's row.
     if (_isDigit(formula.codeUnitAt(i))) {
       final start = i;
@@ -273,19 +302,46 @@ String _shiftFormula(
         i++;
       }
       final word = formula.substring(start, i);
-      // A word followed by `!` is a sheet name, and a word followed by `(` is
-      // a function, so neither is a reference to move.
+      // A word followed by `!` is a sheet name, a word followed by `(` is a
+      // function, and a word followed by `[` is a table, even one named like a
+      // cell, so none of them is a reference to move.
       if (i < n && formula[i] == '!') {
         qualifier = word;
         out.write(word);
         continue;
       }
-      if (i < n && formula[i] == '(') {
+      if (i < n && (formula[i] == '(' || formula[i] == '[')) {
         qualifier = null;
         out.write(word);
         continue;
       }
       final owner = qualifier ?? onSheet;
+      // The two ends of a range move as a range, so removing the row at one end
+      // shortens it rather than leaving `#REF!:B4`, and a whole-column or
+      // whole-row range moves too.
+      if (owner == targetSheet && i < n && formula[i] == ':') {
+        var far = i + 1;
+        while (far < n && _isWordChar(formula.codeUnitAt(far))) {
+          far++;
+        }
+        final text = formula.substring(start, far);
+        final other = formula.substring(i + 1, far);
+        String? moved;
+        if (far < n && formula[far] == '!') {
+          moved = null; // the far end names its own sheet
+        } else if (_parseRef(word) != null && _parseRef(other) != null) {
+          moved =
+              _shiftRangeText(text, shift) ?? CellErrorValue.reference.value;
+        } else if (_wholeAxisRange.hasMatch(text)) {
+          moved =
+              _shiftWholeAxis(text, shift) ?? CellErrorValue.reference.value;
+        }
+        if (moved != null) {
+          out.write(moved);
+          i = far;
+          continue;
+        }
+      }
       if (owner != targetSheet || _parseRef(word) == null) {
         out.write(word);
         continue;
@@ -320,8 +376,12 @@ void _shiftRangeKeys<V>(Map<String, V> map, _Shift shift) {
 /// Matches a whole-row (`$1:$2`) or whole-column (`$A:$B`) range, the form the
 /// built-in print-title names take.
 final _wholeAxisRange = RegExp(
-  r'^\$?([A-Za-z]{1,3}|[0-9]{1,7}):\$?([A-Za-z]{1,3}|[0-9]{1,7})$',
+  r'^(\$?)([A-Za-z]{1,3}|[0-9]{1,7}):(\$?)([A-Za-z]{1,3}|[0-9]{1,7})$',
 );
+
+/// Matches a whole-row range at a position in a formula, where it would
+/// otherwise read as two numbers around a colon.
+final _wholeRowAt = RegExp(r'[0-9]{1,7}:\$?[0-9]{1,7}(?![0-9A-Za-z_.])');
 
 /// Whether [body] is nothing but a cell reference or a span of two, the shape
 /// a print area or a named range takes, as opposed to a formula.
@@ -381,24 +441,23 @@ String? _shiftDefinedNameRef(
 String? _shiftWholeAxis(String body, _Shift shift) {
   final m = _wholeAxisRange.firstMatch(body);
   if (m == null) return null;
-  final first = m.group(1)!;
+  final first = m.group(2)!;
+  final last = m.group(4)!;
   final isRowRange = int.tryParse(first) != null;
+  // `A:3` is not a range of anything, so it is left as written.
+  if (isRowRange != (int.tryParse(last) != null)) return body;
   // A row insert does not move a column range, and the reverse.
   if (isRowRange != shift.isRow) return body;
-  final absolute = body.startsWith(r'$');
 
   final from = isRowRange ? int.parse(first) - 1 : lettersToNumeric(first) - 1;
-  final to = isRowRange
-      ? int.parse(m.group(2)!) - 1
-      : lettersToNumeric(m.group(2)!) - 1;
+  final to = isRowRange ? int.parse(last) - 1 : lettersToNumeric(last) - 1;
 
   final start = shift.rangeStart(from);
   final end = shift.rangeEnd(to);
   if (end < start) return null;
 
   String label(int i) => isRowRange ? '${i + 1}' : getColumnAlphabet(i);
-  final dollar = absolute ? r'$' : '';
-  return '$dollar${label(start)}:$dollar${label(end)}';
+  return '${m.group(1)}${label(start)}:${m.group(3)}${label(end)}';
 }
 
 /// Applies a row or column insert/remove to everything on a sheet other than
@@ -455,32 +514,90 @@ extension _SheetShiftState on _SheetBase {
     }
 
     for (var i = _tables.length - 1; i >= 0; i--) {
-      final table = _tables[i];
-      final moved = _shiftRangeText(table.ref, shift);
+      final moved = _shiftTable(_tables[i], shift);
       if (moved == null) {
         _tables.removeAt(i);
-        _tablesChanged = true;
-        continue;
+      } else {
+        _tables[i] = moved;
       }
-      final halves = moved.split(':');
-      _tables[i] = ExcelTable(
-        name: table.name,
-        from: CellIndex.indexByString(halves.first),
-        to: CellIndex.indexByString(halves.last),
-        headerRow: table.headerRow,
-        style: table.style,
-        showFirstColumn: table.showFirstColumn,
-        showLastColumn: table.showLastColumn,
-        showRowStripes: table.showRowStripes,
-        showColumnStripes: table.showColumnStripes,
-        columns: table.columns,
-      );
       _tablesChanged = true;
     }
 
-    _shiftFloatingObjects(shift);
+    // These two are written from the model only when flagged, so without this
+    // a save of an opened file keeps them where they were.
+    if (_rowBreaks.isNotEmpty || _colBreaks.isNotEmpty) {
+      _pageBreaksChanged = true;
+    }
+    if (_comments.isNotEmpty) _commentsChanged = true;
+
     _excel._shiftDefinedNames(shift, targetSheet: sheetName);
     _excel._shiftFormulas(shift, targetSheet: sheetName);
+    // Every sheet is parsed by now, which the rest needs: a chart, rule or link
+    // anywhere in the book may read from this sheet.
+    for (final sheet in _excel._sheetMap.values) {
+      sheet._shiftFloatingObjects(shift, targetSheet: sheetName);
+      sheet._shiftRuleFormulas(shift, targetSheet: sheetName);
+    }
+    _excel._shiftCarriedParts(shift, targetSheet: sheetName);
+  }
+
+  /// Where [table] lands after [shift], or null when nothing of it is left.
+  ///
+  /// The totals row counts as part of the table's extent, so a row inserted
+  /// directly above it lands in the data, and when that row is the one removed
+  /// the table simply stops having totals. A column inserted or removed inside
+  /// the table takes its declared name and total along, or the file would
+  /// declare a different number of columns than its range covers.
+  ExcelTable? _shiftTable(ExcelTable table, _Shift shift) {
+    var totals = table.totals;
+    final totalsRowGone =
+        shift.isRow &&
+        !shift.isInsert &&
+        table.hasTotalsRow &&
+        shift.at == table.to.rowIndex + 1;
+    final moved = totalsRowGone
+        ? table.ref
+        : _shiftRangeText(table.writtenRef, shift);
+    if (moved == null) return null;
+    final (from, shiftedTo) = _rangeCorners(moved);
+    final to = table.hasTotalsRow && !totalsRowGone
+        ? CellIndex.indexByColumnRow(
+            columnIndex: shiftedTo.columnIndex,
+            rowIndex: shiftedTo.rowIndex - 1,
+          )
+        : shiftedTo;
+    if (totalsRowGone) totals = null;
+
+    var columns = table.columns;
+    if (!shift.isRow) {
+      final offset = shift.at - table.from.columnIndex;
+      final inside = shift.isInsert
+          ? offset > 0 && shift.at <= table.to.columnIndex
+          : offset >= 0 && shift.at <= table.to.columnIndex;
+      if (inside) {
+        if (columns != null && offset <= columns.length) {
+          columns = [...columns];
+          if (shift.isInsert) {
+            var n = columns.length + 1;
+            while (columns.contains('Column$n')) {
+              n++;
+            }
+            columns.insert(offset, 'Column$n');
+          } else if (offset < columns.length) {
+            columns.removeAt(offset);
+          }
+        }
+        if (totals != null && offset <= totals.length) {
+          totals = [...totals];
+          if (shift.isInsert) {
+            totals.insert(offset, const TableTotal.blank());
+          } else if (offset < totals.length) {
+            totals.removeAt(offset);
+          }
+        }
+      }
+    }
+    return table._moved(from: from, to: to, columns: columns, totals: totals);
   }
 }
 
@@ -533,8 +650,20 @@ extension _ExcelShift on Excel {
             onSheet: onSheet,
             targetSheet: targetSheet,
           );
-          if (moved != value.formula) {
-            data._value = FormulaCellValue(moved);
+          final spill = value._arrayRef;
+          final movedSpill = spill != null && onSheet == targetSheet
+              ? _shiftRangeText(spill, shift)
+              : spill;
+          if (moved != value.formula || movedSpill != spill) {
+            // The cached result is still the right answer, since the formula
+            // points at the same data, and a viewer that does not recalculate
+            // has to keep showing it.
+            data._value = FormulaCellValue._typed(
+              moved,
+              value.cachedValue,
+              value._cachedType,
+              arrayRef: movedSpill,
+            );
           }
         }
       }
@@ -573,211 +702,4 @@ String? _shiftQualifiedRange(
       ? _shiftWholeAxis(body, shift)
       : _shiftRangeText(body, shift);
   return moved == null ? null : '$qualifier$moved';
-}
-
-/// Shifts the cell a floating object is anchored to, or null when that cell's
-/// row or column was removed.
-CellIndex? _shiftAnchor(CellIndex anchor, _Shift shift) {
-  if (shift.isRow) {
-    final row = shift.index(anchor.rowIndex);
-    if (row == null) return null;
-    return CellIndex.indexByColumnRow(
-      columnIndex: anchor.columnIndex,
-      rowIndex: row,
-    );
-  }
-  final column = shift.index(anchor.columnIndex);
-  if (column == null) return null;
-  return CellIndex.indexByColumnRow(
-    columnIndex: column,
-    rowIndex: anchor.rowIndex,
-  );
-}
-
-/// Moves the floating objects on a sheet: images, charts, pivot tables and
-/// sparklines, each of which is pinned to a cell and most of which also read
-/// from a range.
-extension _SheetShiftObjects on _SheetBase {
-  void _shiftFloatingObjects(_Shift shift) {
-    for (var i = _images.length - 1; i >= 0; i--) {
-      final image = _images[i];
-      final anchor = _shiftAnchor(image.anchor, shift);
-      if (anchor == null) {
-        _images.removeAt(i);
-      } else if (anchor != image.anchor) {
-        _images[i] = ExcelImage._(
-          bytes: image.bytes,
-          extension: image.extension,
-          anchor: anchor,
-          width: image.width,
-          height: image.height,
-          isNew: image._isNew,
-        );
-      } else {
-        continue;
-      }
-      _imagesChanged = true;
-    }
-
-    for (var i = _charts.length - 1; i >= 0; i--) {
-      final chart = _charts[i];
-      final anchor = _shiftAnchor(chart.anchor, shift);
-      if (anchor == null) {
-        _charts.removeAt(i);
-        _chartsChanged = true;
-        continue;
-      }
-      _charts[i] = Chart(
-        type: chart.type,
-        anchor: anchor,
-        series: [
-          for (final s in chart.series)
-            ChartSeries(
-              name: s.name,
-              values:
-                  _shiftQualifiedRange(
-                    s.values,
-                    shift,
-                    onSheet: sheetName,
-                    targetSheet: sheetName,
-                  ) ??
-                  s.values,
-              xValues: s.xValues == null
-                  ? null
-                  : _shiftQualifiedRange(
-                      s.xValues!,
-                      shift,
-                      onSheet: sheetName,
-                      targetSheet: sheetName,
-                    ),
-              color: s.color,
-              pointColors: s.pointColors,
-            ),
-        ],
-        title: chart.title,
-        categories: chart.categories == null
-            ? null
-            : _shiftQualifiedRange(
-                chart.categories!,
-                shift,
-                onSheet: sheetName,
-                targetSheet: sheetName,
-              ),
-        grouping: chart.grouping,
-        legend: chart.legend,
-        width: chart.width,
-        height: chart.height,
-        xAxisTitle: chart.xAxisTitle,
-        yAxisTitle: chart.yAxisTitle,
-        plotVisibleOnly: chart.plotVisibleOnly,
-        anchorTo: chart.anchorTo == null
-            ? null
-            : _shiftAnchor(chart.anchorTo!, shift),
-        radarStyle: chart.radarStyle,
-        dataLabels: chart.dataLabels,
-      );
-      _chartsChanged = true;
-    }
-
-    for (var i = _pivotTables.length - 1; i >= 0; i--) {
-      final pivot = _pivotTables[i];
-      final anchor = _shiftAnchor(pivot.anchor, shift);
-      if (anchor == null) {
-        _pivotTables.removeAt(i);
-        _pivotTablesChanged = true;
-        continue;
-      }
-      // The source range only moves when it reads from the edited sheet.
-      final readsHere = pivot.sourceSheet == null
-          ? true
-          : pivot.sourceSheet == sheetName;
-      var from = pivot.sourceFrom;
-      var to = pivot.sourceTo;
-      if (readsHere) {
-        final moved = _shiftRangeText(
-          getSpanCellId(
-            from.columnIndex,
-            from.rowIndex,
-            to.columnIndex,
-            to.rowIndex,
-          ),
-          shift,
-        );
-        if (moved == null) {
-          _pivotTables.removeAt(i);
-          _pivotTablesChanged = true;
-          continue;
-        }
-        final halves = moved.split(':');
-        from = CellIndex.indexByString(halves.first);
-        to = CellIndex.indexByString(halves.last);
-      }
-      _pivotTables[i] = PivotTable(
-        name: pivot.name,
-        anchor: anchor,
-        sourceFrom: from,
-        sourceTo: to,
-        rowField: pivot.rowField,
-        dataFields: pivot.dataFields,
-        subRowFields: pivot.subRowFields,
-        columnField: pivot.columnField,
-        pageFields: pivot.pageFields,
-        sourceSheet: pivot.sourceSheet,
-      );
-      _pivotTablesChanged = true;
-    }
-
-    for (final groups in [_sparklineGroups, _parsedSparklineGroups]) {
-      for (var i = groups.length - 1; i >= 0; i--) {
-        final group = groups[i];
-        final kept = <Sparkline>[];
-        var touched = false;
-        for (final line in group.sparklines) {
-          final data = _shiftQualifiedRange(
-            line.dataRange,
-            shift,
-            onSheet: sheetName,
-            targetSheet: sheetName,
-          );
-          final location = _shiftRangeText(line.location, shift);
-          if (data == null || location == null) {
-            touched = true;
-            continue;
-          }
-          if (data == line.dataRange && location == line.location) {
-            kept.add(line);
-            continue;
-          }
-          kept.add(Sparkline(dataRange: data, location: location));
-          touched = true;
-        }
-        if (!touched) continue;
-        _sparklinesChanged = true;
-        if (kept.isEmpty) {
-          groups.removeAt(i);
-          continue;
-        }
-        // The group is rebuilt rather than edited in place, because the list a
-        // caller handed us may well be a const one.
-        groups[i] = SparklineGroup(
-          type: group.type,
-          color: group.color,
-          negativeColor: group.negativeColor,
-          markerColor: group.markerColor,
-          highColor: group.highColor,
-          lowColor: group.lowColor,
-          firstColor: group.firstColor,
-          lastColor: group.lastColor,
-          markers: group.markers,
-          high: group.high,
-          low: group.low,
-          first: group.first,
-          last: group.last,
-          negative: group.negative,
-          lineWeight: group.lineWeight,
-          sparklines: kept,
-        );
-      }
-    }
-  }
 }

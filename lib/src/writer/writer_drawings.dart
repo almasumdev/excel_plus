@@ -76,6 +76,7 @@ mixin _WriterDrawingsMixin on _WriterBase, _WriterChartsMixin {
         ),
       );
       nextShapeId++;
+      image._isNew = false;
     }
 
     // Each new chart: a chart part, a drawing relationship to it, and a
@@ -123,6 +124,10 @@ mixin _WriterDrawingsMixin on _WriterBase, _WriterChartsMixin {
 
     // The drawing's own relationships (image embeds).
     _writeWorksheetRels(drawingPath, rels);
+
+    // Later saves start from the archive, so it has to hold this version.
+    _excel._archive.addFile(_archiveFiles[drawingPath]!);
+    _excel._archive.addFile(_archiveFiles[_relsPathFor(drawingPath)]!);
 
     // Ensure a <Default> content type for each image extension used.
     for (final ext in usedExtensions) {
@@ -172,6 +177,26 @@ mixin _WriterDrawingsMixin on _WriterBase, _WriterChartsMixin {
       XmlElement(_xmlName('drawing'), [XmlAttribute(_xmlName('id', 'r'), rId)]),
     );
     _ensureOverrideContentType('/$drawingPath', _contentTypeDrawing);
+
+    // The drawing outlives this save, so later saves have to know about it. The
+    // writer restores the worksheet from its snapshot each time, which would
+    // otherwise drop the element and leave a drawing nothing points at.
+    sheet._drawingPath = drawingPath;
+    final snapshot = _excel._partSnapshots?[partPath];
+    if (snapshot == null) return;
+    final doc = XmlDocument.parse(snapshot);
+    final saved = doc.findAllElements('worksheet').firstOrNull;
+    if (saved == null) return;
+    if (saved.getAttribute('xmlns:r') == null) {
+      saved.attributes.add(
+        XmlAttribute(_xmlName('r', 'xmlns'), _relationships),
+      );
+    }
+    _insertWorksheetChildOrdered(
+      saved,
+      XmlElement(_xmlName('drawing'), [XmlAttribute(_xmlName('id', 'r'), rId)]),
+    );
+    _excel._partSnapshots![partPath] = doc.toString();
   }
 
   /// Builds a `<xdr:oneCellAnchor>` picture element anchored at ([col], [row]).

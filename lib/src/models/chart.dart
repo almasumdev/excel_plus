@@ -256,6 +256,21 @@ class ChartSeries {
   /// `null` paints the series the way it always did.
   final ChartSeriesStyle? style;
 
+  /// A copy of this series reading from different ranges, its look unchanged.
+  ChartSeries _moved({
+    required String values,
+    required String? xValues,
+    required String? bubbleSizes,
+  }) => ChartSeries(
+    name: name,
+    values: values,
+    xValues: xValues,
+    color: color,
+    pointColors: pointColors,
+    bubbleSizes: bubbleSizes,
+    style: style,
+  );
+
   /// Creates a series over the [values] range, with an optional [name] and,
   /// for scatter charts, an [xValues] range. Pass [color] to override the
   /// series' palette colour, or [pointColors] to colour pie/doughnut slices.
@@ -350,6 +365,33 @@ class Chart {
 
   /// Set true once the chart has been written, so a re-save doesn't duplicate it.
   bool _written = false;
+
+  /// A copy of this chart with its position and data ranges changed, and every
+  /// other setting kept. A row or column edit goes through here, so a field
+  /// added to [Chart] only has to be added in one more place to survive one.
+  Chart _moved({
+    required CellIndex anchor,
+    required CellIndex? anchorTo,
+    required List<ChartSeries> series,
+    required String? categories,
+  }) => Chart(
+    type: type,
+    anchor: anchor,
+    series: series,
+    title: title,
+    categories: categories,
+    grouping: grouping,
+    legend: legend,
+    width: width,
+    height: height,
+    xAxisTitle: xAxisTitle,
+    yAxisTitle: yAxisTitle,
+    plotVisibleOnly: plotVisibleOnly,
+    anchorTo: anchorTo,
+    radarStyle: radarStyle,
+    dataLabels: dataLabels,
+    ofPieSplit: ofPieSplit,
+  ).._written = _written;
 
   /// Creates a chart of the given [type]; prefer the named factories
   /// ([Chart.column], [Chart.line], [Chart.pie], ...) for the common kinds.
