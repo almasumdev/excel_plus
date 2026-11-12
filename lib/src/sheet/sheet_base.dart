@@ -421,7 +421,7 @@ class _SheetBase {
 
   /// Check if columnIndex is not out of `Excel Column limits`.
   void _checkMaxColumn(int columnIndex) {
-    if (_maxColumns >= 16384 || columnIndex >= 16384) {
+    if (columnIndex >= 16384) {
       throw ArgumentError('Reached Max (16384) or (XFD) columns value.');
     }
     if (columnIndex < 0) {
@@ -431,7 +431,7 @@ class _SheetBase {
 
   /// Check if rowIndex is not out of `Excel Row limits`.
   void _checkMaxRow(int rowIndex) {
-    if (_maxRows >= 1048576 || rowIndex >= 1048576) {
+    if (rowIndex >= 1048576) {
       throw ArgumentError('Reached Max (1048576) rows value.');
     }
     if (rowIndex < 0) {

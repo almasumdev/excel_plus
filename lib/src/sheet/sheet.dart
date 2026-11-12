@@ -268,7 +268,7 @@ class Sheet extends _SheetBase with _SheetRowColumnMixin, _SheetMergeMixin {
     if (startingColumn > 0) {
       columnIndex = startingColumn;
     }
-    _checkMaxColumn(columnIndex + row.length);
+    _checkMaxColumn(columnIndex + row.length - 1);
     int rowsLength = _maxRows,
         maxIterationIndex = row.length - 1,
         currentRowPosition = 0; // position in [row] iterables

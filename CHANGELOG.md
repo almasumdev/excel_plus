@@ -1,3 +1,21 @@
+## 2.29.3
+
+Sheets that use the very last row or column.
+
+### Fixed
+
+- **A sheet with data in the last row or column became unusable.** Once a cell
+  existed in row 1048576 or column XFD, every later `cell`, `selectRange`,
+  `updateCell` or `removeRow` on that sheet threw "Reached Max rows value",
+  and so did opening a file that had two or more cells there. Only a cell
+  address past the limit is rejected now.
+- **`insertRowIterables` refused a row that ends exactly at column XFD.** The
+  check counted one column too many.
+- **`insertRow` and `insertColumn` now stop instead of pushing data off the
+  sheet.** If the last row (or the last column) already holds data they throw
+  an `ArgumentError`, as Excel refuses the same insert, and leave the sheet
+  as it was. The old row check used to block this by accident.
+
 ## 2.29.2
 
 Inserting and removing rows and columns, and editing a file you opened. If you

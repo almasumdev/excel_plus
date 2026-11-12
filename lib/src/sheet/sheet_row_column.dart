@@ -116,6 +116,12 @@ mixin _SheetRowColumnMixin on _SheetBase {
       return;
     }
     _checkMaxColumn(columnIndex);
+    if (_maxColumns >= 16384) {
+      throw ArgumentError(
+        'Cannot insert a column: the last column (XFD) already holds data '
+        'and would be pushed off the sheet.',
+      );
+    }
 
     bool updateSpanCell = false;
 
@@ -319,6 +325,12 @@ mixin _SheetRowColumnMixin on _SheetBase {
     }
 
     _checkMaxRow(rowIndex);
+    if (_maxRows >= 1048576) {
+      throw ArgumentError(
+        'Cannot insert a row: the last row (1048576) already holds data '
+        'and would be pushed off the sheet.',
+      );
+    }
 
     bool updateSpanCell = false;
 
